@@ -30,6 +30,8 @@ class BookingGroupController extends Controller
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,debit_card',
+            'payment_type' => 'nullable|in:full,dp',
+            'dp_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
 
@@ -49,13 +51,19 @@ $customPrice = $validated['price_per_night'] ?? null;
         $checkIn = Carbon::parse($validated['check_in']);
         $checkOut = Carbon::parse($validated['check_out']);
         $days = $checkIn->diffInDays($checkOut);
+        $paymentType = $validated['payment_type'] ?? 'full';
+        $dpAmount = $validated['dp_amount'] ?? 0;
 
-        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice, $roomPrices) {
+        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice, $roomPrices, $paymentType, $dpAmount) {
+            $totalAllRooms = 0;
+            $reservations = [];
+
             foreach ($rooms as $room) {
-                // Prioritas: harga per kamar > harga bulk > harga default kamar
                 $pricePerNight = $roomPrices[$room->id] ?? $customPrice ?? $room->price_per_night;
                 $totalAmount = $pricePerNight * $days;
-                Reservation::create([
+                $totalAllRooms += $totalAmount;
+
+                $reservation = Reservation::create([
                     'reservation_number' => 'RES-' . strtoupper(uniqid()),
                     'room_id' => $room->id,
                     'guest_id' => $guest->id,
@@ -68,10 +76,41 @@ $customPrice = $validated['price_per_night'] ?? null;
                     'notes' => $validated['notes'] ?? 'Booking grup',
                     'created_by' => auth()->id(),
                 ]);
+                $reservations[] = $reservation;
+            }
+
+            // Jika DP, buat transaksi DP
+            if ($paymentType === 'dp' && $dpAmount > 0) {
+                $dpPerRoom = $dpAmount / count($rooms);
+                foreach ($reservations as $reservation) {
+                    $reservation->update(['paid_amount' => $dpPerRoom]);
+                    Transaction::create([
+                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'reservation_id' => $reservation->id,
+                        'type' => 'dp',
+                        'amount' => $dpPerRoom,
+                        'payment_method' => $validated['payment_method'] ?? 'cash',
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+            } elseif ($paymentType === 'full') {
+                // Jika lunas, set paid_amount = total_amount
+                foreach ($reservations as $reservation) {
+                    $reservation->update(['paid_amount' => $reservation->total_amount]);
+                    Transaction::create([
+                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'reservation_id' => $reservation->id,
+                        'type' => 'pelunasan',
+                        'amount' => $reservation->total_amount,
+                        'payment_method' => $validated['payment_method'] ?? 'cash',
+                        'created_by' => auth()->id(),
+                    ]);
+                }
             }
         });
 
         $roomNumbers = $rooms->pluck('room_number')->implode(', ');
-        return redirect()->route('rooms.dashboard')->with('success', "Booking grup untuk kamar: {$roomNumbers} berhasil dibuat.");
+        $paymentLabel = $paymentType === 'dp' ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : ' (Lunas)';
+        return redirect()->route('rooms.dashboard')->with('success', "Booking grup untuk kamar: {$roomNumbers}{$paymentLabel} berhasil dibuat.");
     }
 }

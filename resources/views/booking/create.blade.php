@@ -3,8 +3,8 @@
 @section('title', 'Booking Kamar')
 
 @section('content')
-<div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
-    <h2 class="text-2xl font-bold mb-6">Booking Kamar</h2>
+<div class="bg-white rounded-lg shadow p-6 max-w-5xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6"><i class="fas fa-calendar-plus text-blue-500 mr-2"></i>Booking Kamar</h2>
 
     <!-- Status Ketersediaan -->
     <div id="availabilityStatus" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
@@ -12,8 +12,8 @@
     <form method="POST" action="{{ route('booking.store') }}">
         @csrf
 
-        <!-- Check-in & Check-out (di atas supaya user pilih tanggal dulu) -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <!-- Row 1: Check-in, Check-out, Kamar -->
+        <div class="grid grid-cols-3 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Check-in</label>
                 <input type="date" name="check_in" id="checkIn" class="w-full border rounded px-3 py-2" required>
@@ -22,25 +22,21 @@
                 <label class="block text-gray-700 font-bold mb-2">Check-out</label>
                 <input type="date" name="check_out" id="checkOut" class="w-full border rounded px-3 py-2" required>
             </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Pilih Kamar</label>
+                <select name="room_id" id="roomSelect" class="w-full border rounded px-3 py-2" required disabled>
+                    <option value="">-- Pilih tanggal dulu --</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1" id="roomInfo">Kamar tersedia muncul setelah pilih tanggal</p>
+            </div>
         </div>
 
-        <!-- Pilih Kamar (filter otomatis by tanggal) -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Pilih Kamar</label>
-            <select name="room_id" id="roomSelect" class="w-full border rounded px-3 py-2" required disabled>
-                <option value="">-- Pilih tanggal check-in & check-out dulu --</option>
-            </select>
-            <p class="text-xs text-gray-500 mt-1" id="roomInfo">Kamar yang tersedia akan muncul setelah memilih tanggal</p>
-        </div>
-
-        <!-- Nama Tamu -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
-            <input type="text" name="guest_name" class="w-full border rounded px-3 py-2" required placeholder="Masukkan nama tamu">
-        </div>
-
-        <!-- Identitas & Telepon -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <!-- Row 2: Nama Tamu, Identitas, Telepon -->
+        <div class="grid grid-cols-4 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
+                <input type="text" name="guest_name" class="w-full border rounded px-3 py-2" required placeholder="Nama tamu">
+            </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">No. Identitas</label>
                 <input type="text" name="id_number" class="w-full border rounded px-3 py-2" placeholder="KTP / SIM / Passport">
@@ -49,52 +45,57 @@
                 <label class="block text-gray-700 font-bold mb-2">Telepon</label>
                 <input type="text" name="phone" class="w-full border rounded px-3 py-2" placeholder="No. HP">
             </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Alamat</label>
+                <input type="text" name="address" class="w-full border rounded px-3 py-2" placeholder="Alamat (opsional)">
+            </div>
         </div>
 
-        <!-- Email -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Email</label>
-            <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email tamu (opsional)">
+        <!-- Row 3: Email, Harga, Metode Bayar -->
+        <div class="grid grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Email</label>
+                <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email (opsional)">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
+                <input type="number" name="price_per_night" id="pricePerNight" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Auto-fill dari kamar">
+                <p class="text-xs text-gray-500 mt-1">Bisa diubah manual</p>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
+                <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
+                    <option value="">-- Pilih Metode --</option>
+                    <option value="cash">Tunai</option>
+                    <option value="bank_transfer">Transfer Bank</option>
+                    <option value="credit_card">Kartu Kredit</option>
+                    <option value="debit_card">Kartu Debit</option>
+                </select>
+            </div>
         </div>
 
-        <!-- Harga per Malam (flexible) -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
-            <input type="number" name="price_per_night" id="pricePerNight" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan harga per malam">
-            <p class="text-xs text-gray-500 mt-1">Otomatis terisi dari harga kamar, bisa diubah sesuai kebutuhan</p>
-        </div>
-
-        <!-- Metode Pembayaran -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
-            <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
-                <option value="">-- Pilih Metode --</option>
-                <option value="cash">Tunai</option>
-                <option value="bank_transfer">Transfer Bank</option>
-                <option value="credit_card">Kartu Kredit</option>
-                <option value="debit_card">Kartu Debit</option>
-            </select>
-        </div>
-
-        <!-- DP (Down Payment) -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
-            <div class="flex space-x-4">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
-                    <span>Lunas (Bayar Penuh)</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
-                    <span>DP (Down Payment)</span>
-                </label>
+        <!-- Row 4: Tipe Pembayaran (Full / DP) -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
+                <div class="flex space-x-4 mt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                        <span>Lunas (Bayar Penuh)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                        <span>DP (Down Payment)</span>
+                    </label>
+                </div>
+            </div>
             </div>
         </div>
 
         <!-- DP Amount (hidden by default) -->
         <div class="mb-4 hidden" id="dpAmountSection">
             <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp)</label>
-            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" step="1000" placeholder="Masukkan nominal DP">
             <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar">Rp 0</span></p>
         </div>
 

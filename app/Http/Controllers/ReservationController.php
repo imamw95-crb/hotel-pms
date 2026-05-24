@@ -73,7 +73,7 @@ class ReservationController extends Controller
         $validated = $request->validate([
             'payment_type' => 'required|in:dp,pelunasan,tambahan',
             'payment_method' => 'required|in:cash,bank_transfer,credit_card,debit_card',
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:0',
         ]);
 
         $sisaBayar = $reservation->total_amount - $reservation->paid_amount;
@@ -135,5 +135,29 @@ class ReservationController extends Controller
         $reservation->room->update(['status' => 'available']);
 
         return redirect()->route('reservations.show', $reservation)->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}.");
+    }
+
+    /**
+     * Print Kwitansi
+     */
+    public function printKwitansi(Reservation $reservation)
+    {
+        $reservation->load(['guest', 'room', 'createdBy']);
+        $transactions = Transaction::where('reservation_id', $reservation->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('reservations.print-kwitansi', compact('reservation', 'transactions'));
+    }
+
+    /**
+     * Print Invoice
+     */
+    public function printInvoice(Reservation $reservation)
+    {
+        $reservation->load(['guest', 'room', 'createdBy']);
+        $transactions = Transaction::where('reservation_id', $reservation->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('reservations.print-invoice', compact('reservation', 'transactions'));
     }
 }

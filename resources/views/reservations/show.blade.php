@@ -166,7 +166,7 @@
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
-                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="1" step="1000" placeholder="Masukkan nominal" required>
+                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="0">
                     </div>
                     <div class="flex items-end space-x-2">
                         <button type="button" onclick="setMaxPayment()" class="bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300 w-full">Sisa: Rp {{ number_format($reservation->total_amount - $reservation->paid_amount, 0, ',', '.') }}</button>
@@ -191,11 +191,18 @@
     @endif
 
     <!-- Tombol Aksi -->
-    <div class="flex justify-between items-center mt-6">
+    <div class="flex justify-between items-center mt-6 no-print">
         <a href="{{ route('reservations.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
             <i class="fas fa-arrow-left mr-1"></i> Kembali
         </a>
         <div class="flex space-x-2">
+            <!-- Print Buttons -->
+            <a href="{{ route('reservations.print-kwitansi', $reservation) }}" target="_blank" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                <i class="fas fa-receipt mr-1"></i> Print Kwitansi
+            </a>
+            <a href="{{ route('reservations.print-invoice', $reservation) }}" target="_blank" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                <i class="fas fa-file-invoice mr-1"></i> Print Invoice
+            </a>
             @if($reservation->status === 'pending')
                 <form action="{{ route('reservations.checkin', $reservation) }}" method="POST">
                     @csrf

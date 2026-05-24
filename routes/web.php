@@ -64,6 +64,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->name('reservations.checkout');
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->name('reservations.add-payment');
+    Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->name('reservations.print-kwitansi');
+    Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->name('reservations.print-invoice');
     
     // Admin only
     Route::middleware(['role:admin'])->group(function () {

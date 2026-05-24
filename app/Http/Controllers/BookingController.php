@@ -74,6 +74,7 @@ class BookingController extends Controller
                 'guest_name' => $validated['guest_name'],
                 'phone' => $validated['phone'] ?? null,
                 'email' => $validated['email'] ?? null,
+                'address' => $request->input('address') ?? null,
             ]
         );
 

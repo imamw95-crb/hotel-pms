@@ -66,14 +66,12 @@
             </div>
         </div>
 
-        <!-- Nama Tamu -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Nama Tamu (Pemesan)</label>
-            <input type="text" name="guest_name" class="w-full border rounded px-3 py-2" required placeholder="Masukkan nama tamu">
-        </div>
-
-        <!-- Identitas & Telepon -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <!-- Row: Nama Tamu, Identitas, Telepon, Alamat -->
+        <div class="grid grid-cols-4 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
+                <input type="text" name="guest_name" class="w-full border rounded px-3 py-2" required placeholder="Nama tamu">
+            </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">No. Identitas</label>
                 <input type="text" name="id_number" class="w-full border rounded px-3 py-2" placeholder="KTP / SIM / Passport">
@@ -82,24 +80,52 @@
                 <label class="block text-gray-700 font-bold mb-2">Telepon</label>
                 <input type="text" name="phone" class="w-full border rounded px-3 py-2" placeholder="No. HP">
             </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Alamat</label>
+                <input type="text" name="address" class="w-full border rounded px-3 py-2" placeholder="Alamat (opsional)">
+            </div>
         </div>
 
-        <!-- Email -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Email</label>
-            <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email tamu (opsional)">
+        <!-- Row: Email -->
+        <div class="grid grid-cols-4 gap-4 mb-4">
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-bold mb-2">Email</label>
+                <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email tamu (opsional)">
+            </div>
         </div>
 
         <!-- Metode Pembayaran -->
         <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
-            <select name="payment_method" class="w-full border rounded px-3 py-2">
+            <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
                 <option value="">-- Pilih Metode --</option>
                 <option value="cash">Tunai</option>
                 <option value="bank_transfer">Transfer Bank</option>
                 <option value="credit_card">Kartu Kredit</option>
                 <option value="debit_card">Kartu Debit</option>
             </select>
+        </div>
+
+        <!-- Tipe Pembayaran (Full / DP) -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
+            <div class="flex space-x-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                    <span>Lunas (Bayar Penuh)</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                    <span>DP (Down Payment)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- DP Amount (hidden by default) -->
+        <div class="mb-4 hidden" id="dpAmountSection">
+            <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp)</label>
+            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+            <p class="text-xs text-gray-500 mt-1">Total semua kamar: <span id="totalSemuaKamar">Rp 0</span> | Sisa bayar: <span id="sisaBayarGroup">Rp 0</span></p>
         </div>
 
         <!-- Catatan -->
@@ -255,6 +281,16 @@
         });
 
         totalPerNightEl.textContent = 'Rp ' + total.toLocaleString('id-ID');
+
+        // Update total semua kamar (total amount = price * days)
+        const checkIn = checkInEl.value;
+        const checkOut = checkOutEl.value;
+        if (checkIn && checkOut) {
+            const days = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+            const totalAll = total * days;
+            document.getElementById('totalSemuaKamar').textContent = 'Rp ' + totalAll.toLocaleString('id-ID');
+            updateSisaBayar();
+        }
     }
 
     function updateRoomPrice(roomId, price) {
@@ -283,5 +319,26 @@
         });
         renderSelectedRooms();
     }
+
+    function toggleDpFields() {
+        const dpSection = document.getElementById('dpAmountSection');
+        const dpRadio = document.querySelector('input[name="payment_type"][value="dp"]');
+        if (dpRadio && dpRadio.checked) {
+            dpSection.classList.remove('hidden');
+        } else {
+            dpSection.classList.add('hidden');
+        }
+    }
+
+    function updateSisaBayar() {
+        const dpAmount = parseInt(document.getElementById('dpAmount').value) || 0;
+        const totalText = document.getElementById('totalSemuaKamar').textContent;
+        const total = parseInt(totalText.replace(/[^\d]/g, '')) || 0;
+        const sisa = total - dpAmount;
+        document.getElementById('sisaBayarGroup').textContent = 'Rp ' + (sisa > 0 ? sisa.toLocaleString('id-ID') : '0');
+    }
+
+    // Listen for DP amount changes
+    document.getElementById('dpAmount')?.addEventListener('input', updateSisaBayar);
 </script>
 @endsection
