@@ -54,8 +54,52 @@ class ReservationController extends Controller
 
     public function show(Reservation $reservation)
     {
-        $reservation->load(['guest', 'room', 'createdBy', 'transactions']);
-        return view('reservations.show', compact('reservation'));
+        $reservation->load(['guest', 'room', 'createdBy']);
+        $transactions = Transaction::where('reservation_id', $reservation->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return view('reservations.show', compact('reservation', 'transactions'));
+    }
+
+    /**
+     * Tambah pembayaran (DP / Pelunasan / Multi Payment)
+     */
+    public function addPayment(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
+            return back()->with('error', 'Tidak bisa menambah pembayaran untuk reservasi ini.');
+        }
+
+        $validated = $request->validate([
+            'payment_type' => 'required|in:dp,pelunasan,tambahan',
+            'payment_method' => 'required|in:cash,bank_transfer,credit_card,debit_card',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $sisaBayar = $reservation->total_amount - $reservation->paid_amount;
+
+        if ($validated['amount'] > $sisaBayar) {
+            return back()->with('error', 'Nominal pembayaran melebihi sisa bayar (Rp ' . number_format($sisaBayar, 0, ',', '.') . ')');
+        }
+
+        // Buat transaksi
+        Transaction::create([
+            'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+            'reservation_id' => $reservation->id,
+            'type' => $validated['payment_type'],
+            'amount' => $validated['amount'],
+            'payment_method' => $validated['payment_method'],
+            'created_by' => auth()->id(),
+        ]);
+
+        // Update paid_amount di reservasi
+        $reservation->paid_amount += $validated['amount'];
+        $reservation->save();
+
+        $typeLabel = $validated['payment_type'] === 'dp' ? 'DP' : ($validated['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Pembayaran tambahan');
+
+        return redirect()->route('reservations.show', $reservation)
+            ->with('success', "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.");
     }
 
     public function cancel(Reservation $reservation)

@@ -67,13 +67,35 @@
         <!-- Metode Pembayaran -->
         <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
-            <select name="payment_method" class="w-full border rounded px-3 py-2">
+            <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
                 <option value="">-- Pilih Metode --</option>
                 <option value="cash">Tunai</option>
                 <option value="bank_transfer">Transfer Bank</option>
                 <option value="credit_card">Kartu Kredit</option>
                 <option value="debit_card">Kartu Debit</option>
             </select>
+        </div>
+
+        <!-- DP (Down Payment) -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
+            <div class="flex space-x-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                    <span>Lunas (Bayar Penuh)</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                    <span>DP (Down Payment)</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- DP Amount (hidden by default) -->
+        <div class="mb-4 hidden" id="dpAmountSection">
+            <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp)</label>
+            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+            <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar">Rp 0</span></p>
         </div>
 
         <!-- Catatan -->

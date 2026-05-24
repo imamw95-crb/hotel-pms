@@ -44,14 +44,16 @@ class BookingGroupController extends Controller
             ]
         );
 
-        $customPrice = $validated['price_per_night'] ?? null;
+$customPrice = $validated['price_per_night'] ?? null;
+        $roomPrices = $request->input('room_prices', []);
         $checkIn = Carbon::parse($validated['check_in']);
         $checkOut = Carbon::parse($validated['check_out']);
         $days = $checkIn->diffInDays($checkOut);
 
-        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice) {
+        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice, $roomPrices) {
             foreach ($rooms as $room) {
-                $pricePerNight = $customPrice ?? $room->price_per_night;
+                // Prioritas: harga per kamar > harga bulk > harga default kamar
+                $pricePerNight = $roomPrices[$room->id] ?? $customPrice ?? $room->price_per_night;
                 $totalAmount = $pricePerNight * $days;
                 Reservation::create([
                     'reservation_number' => 'RES-' . strtoupper(uniqid()),

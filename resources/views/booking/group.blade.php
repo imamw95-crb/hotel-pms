@@ -3,13 +3,13 @@
 @section('title', 'Booking Group')
 
 @section('content')
-<div class="bg-white rounded-lg shadow p-6 max-w-3xl mx-auto">
+<div class="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Booking Group (Multiple Kamar)</h2>
 
     <!-- Status Ketersediaan -->
     <div id="availabilityStatus" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
 
-    <form method="POST" action="{{ route('booking.group.store') }}">
+    <form method="POST" action="{{ route('booking.group.store') }}" id="bookingGroupForm">
         @csrf
 
         <!-- Check-in & Check-out -->
@@ -27,10 +27,43 @@
         <!-- Pilih Kamar (filter otomatis by tanggal) -->
         <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2">Pilih Kamar (bisa lebih dari satu)</label>
-            <div id="roomsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-2 border rounded p-3 max-h-60 overflow-y-auto bg-gray-50">
+            <div id="roomsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded p-3 max-h-60 overflow-y-auto bg-gray-50">
                 <p class="col-span-full text-gray-500 text-center py-4">Pilih tanggal check-in & check-out dulu untuk melihat kamar tersedia</p>
             </div>
             <p class="text-xs text-gray-500 mt-1" id="roomInfo">Kamar yang tersedia akan muncul setelah memilih tanggal</p>
+        </div>
+
+        <!-- Selected Rooms with Individual Prices -->
+        <div id="selectedRoomsSection" class="hidden mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <label class="block text-gray-700 font-bold">Kamar Terpilih & Harga per Malam</label>
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm text-gray-600">Harga Semua Kamar:</label>
+                    <input type="number" id="bulkPrice" placeholder="Rp" class="w-32 border rounded px-2 py-1 text-sm" min="0" step="1000">
+                    <button type="button" onclick="applyBulkPrice()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Apply</button>
+                </div>
+            </div>
+            <div class="border rounded overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="text-left p-2 font-bold">Kamar</th>
+                            <th class="text-left p-2 font-bold">Tipe</th>
+                            <th class="text-center p-2 font-bold">Harga Default</th>
+                            <th class="text-center p-2 font-bold">Harga per Malam (Rp)</th>
+                            <th class="text-center p-2 font-bold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="selectedRoomsTable">
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-green-50 border-t-2 border-green-300">
+                            <td colspan="4" class="p-2 font-bold text-green-800 text-right">Total per Malam:</td>
+                            <td class="p-2 text-center font-bold text-green-700" id="totalPerNight">Rp 0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
 
         <!-- Nama Tamu -->
@@ -57,13 +90,6 @@
             <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email tamu (opsional)">
         </div>
 
-        <!-- Harga per Malam -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp) - Semua Kamar</label>
-            <input type="number" name="price_per_night" id="pricePerNight" class="w-full border rounded px-3 py-2" min="0" step="1000">
-            <p class="text-xs text-gray-500 mt-1">Bisa diisi manual atau kosongkan untuk harga default masing-masing kamar</p>
-        </div>
-
         <!-- Metode Pembayaran -->
         <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
@@ -84,7 +110,7 @@
 
         <div class="flex justify-end space-x-2">
             <a href="{{ route('rooms.dashboard') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</a>
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Booking Group</button>
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" id="btnSubmit" disabled>Booking Group</button>
         </div>
     </form>
 </div>
@@ -95,6 +121,14 @@
     const roomsContainer = document.getElementById('roomsContainer');
     const roomInfo = document.getElementById('roomInfo');
     const statusEl = document.getElementById('availabilityStatus');
+    const selectedRoomsSection = document.getElementById('selectedRoomsSection');
+    const selectedRoomsTable = document.getElementById('selectedRoomsTable');
+    const totalPerNightEl = document.getElementById('totalPerNight');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const bulkPriceInput = document.getElementById('bulkPrice');
+
+    let selectedRooms = {};
+    let availableRoomsData = [];
 
     const today = new Date().toISOString().split('T')[0];
     checkInEl.min = today;
@@ -138,24 +172,28 @@
         fetch('{{ route("booking.check-availability") }}?check_in=' + checkIn + '&check_out=' + checkOut)
             .then(res => res.json())
             .then(data => {
-                if (data.rooms && data.rooms.length > 0) {
+                availableRoomsData = data.rooms || [];
+                if (availableRoomsData.length > 0) {
                     roomsContainer.innerHTML = '';
-                    data.rooms.forEach(room => {
+                    availableRoomsData.forEach(room => {
+                        const isChecked = selectedRooms[room.id] ? 'checked' : '';
                         const label = document.createElement('label');
-                        label.className = 'flex items-center space-x-2 p-2 rounded hover:bg-blue-50 cursor-pointer transition';
-                        label.innerHTML = '<input type="checkbox" name="room_ids[]" value="' + room.id + '" class="rounded border-gray-300">' +
-                            '<span class="text-sm"><strong>' + room.room_number + '</strong> - ' + (room.room_type_name || 'Standard') + '<br><span class="text-xs text-gray-500">Rp ' + Number(room.price_per_night).toLocaleString('id-ID') + '/malam</span></span>';
+                        label.className = 'flex items-center space-x-2 p-2 rounded hover:bg-blue-50 cursor-pointer transition border ' + (selectedRooms[room.id] ? 'bg-blue-50 border-blue-300' : 'border-transparent');
+                        label.innerHTML =
+                            '<input type="checkbox" name="room_ids[]" value="' + room.id + '" class="rounded border-gray-300 room-checkbox" ' + isChecked + ' onchange="toggleRoom(' + room.id + ', this.checked)">' +
+                            '<span class="text-sm"><strong>' + room.room_number + '</strong> - ' + (room.room_type_name || 'Standard') + '</span>' +
+                            '<span class="text-xs text-gray-500 ml-auto">Rp ' + Number(room.price_per_night).toLocaleString('id-ID') + '</span>';
                         roomsContainer.appendChild(label);
                     });
-                    roomInfo.textContent = data.rooms.length + ' kamar tersedia untuk ' + fmt(checkIn) + ' - ' + fmt(checkOut);
+                    roomInfo.textContent = availableRoomsData.length + ' kamar tersedia — centang kamar yang ingin di-booking';
                     statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-green-100 border border-green-300 text-green-800';
-                    statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> <strong>' + data.rooms.length + ' kamar tersedia</strong> — centang kamar yang ingin di-booking';
+                    statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> <strong>' + availableRoomsData.length + ' kamar tersedia</strong>';
                     statusEl.classList.remove('hidden');
                 } else {
                     roomsContainer.innerHTML = '<p class="col-span-full text-yellow-600 text-center py-4"><i class="fas fa-exclamation-triangle mr-1"></i> Tidak ada kamar tersedia untuk tanggal ini</p>';
                     roomInfo.textContent = 'Semua kamar sudah dipesan pada tanggal tersebut';
                     statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-yellow-100 border border-yellow-300 text-yellow-800';
-                    statusEl.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> <strong>Tidak ada kamar tersedia</strong>. Pilih tanggal lain.';
+                    statusEl.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> <strong>Tidak ada kamar tersedia</strong>';
                     statusEl.classList.remove('hidden');
                 }
             })
@@ -167,6 +205,83 @@
             });
     }
 
-    function fmt(d) { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    function toggleRoom(roomId, isChecked) {
+        const room = availableRoomsData.find(r => r.id === roomId);
+        if (!room) return;
+
+        if (isChecked) {
+            selectedRooms[roomId] = {
+                id: room.id,
+                room_number: room.room_number,
+                room_type_name: room.room_type_name || 'Standard',
+                default_price: room.price_per_night,
+                price: room.price_per_night
+            };
+        } else {
+            delete selectedRooms[roomId];
+        }
+
+        renderSelectedRooms();
+    }
+
+    function renderSelectedRooms() {
+        const rooms = Object.values(selectedRooms);
+        if (rooms.length === 0) {
+            selectedRoomsSection.classList.add('hidden');
+            btnSubmit.disabled = true;
+            return;
+        }
+
+        selectedRoomsSection.classList.remove('hidden');
+        btnSubmit.disabled = false;
+        selectedRoomsTable.innerHTML = '';
+
+        let total = 0;
+        rooms.forEach(room => {
+            total += parseInt(room.price) || 0;
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-100';
+            tr.innerHTML =
+                '<td class="p-2 font-bold">' + room.room_number + '</td>' +
+                '<td class="p-2 text-gray-600">' + room.room_type_name + '</td>' +
+                '<td class="p-2 text-center text-gray-400">Rp ' + Number(room.default_price).toLocaleString('id-ID') + '</td>' +
+                '<td class="p-2 text-center">' +
+                    '<input type="number" name="room_prices[' + room.id + ']" value="' + room.price + '" min="0" step="1000" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="updateRoomPrice(' + room.id + ', this.value)">' +
+                '</td>' +
+                '<td class="p-2 text-center">' +
+                    '<button type="button" onclick="removeRoom(' + room.id + ')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>' +
+                '</td>';
+            selectedRoomsTable.appendChild(tr);
+        });
+
+        totalPerNightEl.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    }
+
+    function updateRoomPrice(roomId, price) {
+        if (selectedRooms[roomId]) {
+            selectedRooms[roomId].price = parseInt(price) || 0;
+            renderSelectedRooms();
+        }
+    }
+
+    function removeRoom(roomId) {
+        delete selectedRooms[roomId];
+        // Uncheck the checkbox
+        const checkbox = document.querySelector('.room-checkbox[value="' + roomId + '"]');
+        if (checkbox) {
+            checkbox.checked = false;
+            checkbox.closest('label').classList.remove('bg-blue-50', 'border-blue-300');
+            checkbox.closest('label').classList.add('border-transparent');
+        }
+        renderSelectedRooms();
+    }
+
+    function applyBulkPrice() {
+        const price = parseInt(bulkPriceInput.value) || 0;
+        Object.keys(selectedRooms).forEach(roomId => {
+            selectedRooms[roomId].price = price;
+        });
+        renderSelectedRooms();
+    }
 </script>
 @endsection

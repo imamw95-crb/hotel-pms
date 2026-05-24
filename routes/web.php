@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->name('reservations.checkout');
+    Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->name('reservations.add-payment');
     
     // Admin only
     Route::middleware(['role:admin'])->group(function () {
@@ -70,8 +71,10 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('room-types', RoomTypeController::class);
     });
     
-    // Owner only
-    Route::middleware(['role:owner'])->group(function () {
+    // Reports (Owner & Admin)
+    Route::middleware(['role:owner,admin'])->group(function () {
+        Route::get('/reports/night-audit', [ReportController::class, 'nightAudit'])->name('reports.night-audit');
+        Route::get('/reports/guest-list', [ReportController::class, 'guestList'])->name('reports.guest-list');
         Route::get('/reports/occupancy', [ReportController::class, 'occupancy'])->name('reports.occupancy');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');

@@ -10,6 +10,96 @@ use Illuminate\Http\Request;
 
 class ReportController extends Controller
 {
+    /**
+     * Night Audit Report
+     */
+    public function nightAudit(Request $request)
+    {
+        $date = $request->get('date', Carbon::today()->format('Y-m-d'));
+
+        $totalRooms = Room::count();
+        $occupiedRooms = Room::where('status', 'occupied')->count();
+        $availableRooms = Room::where('status', 'available')->count();
+        $maintenanceRooms = Room::where('status', 'maintenance')->count();
+
+        $checkinsToday = Reservation::whereDate('check_in', $date)
+            ->where('status', 'checked_in')
+            ->with(['guest', 'room'])
+            ->get();
+
+        $checkoutsToday = Reservation::whereDate('check_out', $date)
+            ->where('status', 'checked_out')
+            ->with(['guest', 'room'])
+            ->get();
+
+        $revenueToday = Transaction::whereDate('created_at', $date)->sum('amount');
+
+        // Pendapatan per metode pembayaran (summary)
+        $revenueByMethod = Transaction::whereDate('created_at', $date)
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        // Detail transaksi per metode (dengan nama tamu & status)
+        $transactionsByMethod = Transaction::whereDate('created_at', $date)
+            ->with(['reservation.guest', 'reservation.room'])
+            ->orderBy('payment_method')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('payment_method');
+
+        $inHouseGuests = Reservation::where('status', 'checked_in')
+            ->with(['guest', 'room'])
+            ->orderBy('check_out', 'asc')
+            ->get();
+
+        $newBookings = Reservation::whereDate('created_at', $date)
+            ->with(['guest', 'room'])
+            ->get();
+
+        return view('reports.night-audit', compact(
+            'date', 'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms',
+            'checkinsToday', 'checkoutsToday', 'revenueToday', 'revenueByMethod', 'transactionsByMethod', 'inHouseGuests', 'newBookings'
+        ));
+    }
+
+    /**
+     * Guest List Report dengan range tanggal
+     */
+    public function guestList(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::today()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
+        $status = $request->get('status', 'all');
+        $search = $request->get('search', '');
+
+        $query = Reservation::with(['guest', 'room'])
+            ->whereBetween('check_in', [$startDate, $endDate]);
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reservation_number', 'like', "%{$search}%")
+                  ->orWhereHas('guest', function ($q) use ($search) {
+                      $q->where('guest_name', 'like', "%{$search}%")
+                        ->orWhere('id_number', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('room', function ($q) use ($search) {
+                      $q->where('room_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $guests = $query->orderBy('check_in', 'desc')->paginate(25);
+
+        return view('reports.guest-list', compact(
+            'guests', 'startDate', 'endDate', 'status', 'search'
+        ));
+    }
+
     public function occupancy(Request $request)
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
