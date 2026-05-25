@@ -1,0 +1,109 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Room;
+use App\Models\Guest;
+use App\Models\Reservation;
+use App\Models\Transaction;
+use App\Services\MHSBridgeService;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+
+class CheckinController extends Controller
+{
+    protected $mhs;
+
+    public function __construct(MHSBridgeService $mhs)
+    {
+        $this->mhs = $mhs;
+    }
+
+    public function index()
+    {
+        $rooms = Room::where('status', 'available')->get();
+        return view('frontoffice.checkin', compact('rooms'));
+    }
+
+    public function process(Request $request)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'guest_name' => 'required|string|max:100',
+            'id_number' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:100',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+            'number_of_cards' => 'integer|min:1|max:5',
+            'payment_amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $room = Room::findOrFail($request->room_id);
+        
+        if (!$room->isAvailable($request->check_in, $request->check_out)) {
+            return back()->with('error', 'Kamar sudah dipesan untuk tanggal tersebut.');
+        }
+        
+        $checkIn = Carbon::parse($request->check_in)->format('YmdHi');
+        $checkOut = Carbon::parse($request->check_out)->format('YmdHi');
+        
+        $mhsResult = $this->mhs->checkin(
+            $room->room_number,
+            $request->guest_name,
+            $checkIn,
+            $checkOut
+        );
+        
+        if (!$mhsResult['success']) {
+            return back()->with('error', 'Gagal issue card: ' . ($mhsResult['response_message'] ?? 'Unknown error'));
+        }
+        
+        $guest = Guest::updateOrCreate(
+            ['id_number' => $request->id_number ?? null],
+            [
+                'guest_name' => $request->guest_name,
+                'phone' => $request->phone ?? null,
+                'email' => $request->email ?? null,
+            ]
+        );
+        
+        $days = Carbon::parse($request->check_in)->diffInDays(Carbon::parse($request->check_out));
+        $totalAmount = $room->price_per_night * $days;
+        
+        $reservation = Reservation::create([
+            'reservation_number' => 'RES-' . strtoupper(uniqid()),
+            'room_id' => $room->id,
+            'guest_id' => $guest->id,
+            'check_in' => $request->check_in,
+            'check_out' => $request->check_out,
+            'number_of_cards' => $request->number_of_cards ?? 1,
+            'status' => 'checked_in',
+            'total_amount' => $totalAmount,
+            'paid_amount' => $request->payment_amount ?? 0,
+            'created_by' => auth()->id(),
+        ]);
+        
+        if ($request->payment_amount > 0) {
+            Transaction::create([
+                'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                'reservation_id' => $reservation->id,
+                'type' => 'checkin_payment',
+                'amount' => $request->payment_amount,
+                'payment_method' => $request->payment_method ?? 'cash',
+                'created_by' => auth()->id(),
+            ]);
+        }
+        
+        $room->update(['status' => 'occupied']);
+        
+        return redirect()->route('checkin.success', $reservation->id)
+            ->with('success', 'Check-in berhasil! Kartu sudah di-issue.');
+    }
+
+    public function success($id)
+    {
+        $reservation = Reservation::with(['room', 'guest'])->findOrFail($id);
+        return view('frontoffice.checkin-success', compact('reservation'));
+    }
+}
