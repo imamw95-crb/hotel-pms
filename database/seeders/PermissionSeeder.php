@@ -80,6 +80,7 @@ class PermissionSeeder extends Seeder
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_room_dashboard',
             'view_reports',
+            'view_rooms', 'view_room_types',
         ]);
 
         $this->assignPermissionToRole('owner', [

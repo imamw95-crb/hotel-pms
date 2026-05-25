@@ -69,11 +69,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->middleware('permission:add_payment')->name('reservations.add-payment');
     Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->middleware('permission:view_reservations')->name('reservations.print-kwitansi');
     Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->middleware('permission:view_reservations')->name('reservations.print-invoice');
-    // Admin only
-    Route::middleware(['role:admin'])->group(function () {
-        Route::resource('rooms', RoomController::class);
-        Route::resource('room-types', RoomTypeController::class);
-    });
+    // Rooms & Room Types (all roles with permission)
+    Route::resource('rooms', RoomController::class);
+    Route::resource('room-types', RoomTypeController::class);
     
     // Reports (all roles)
     Route::middleware(['permission:view_reports'])->group(function () {
