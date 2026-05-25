@@ -13,6 +13,7 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\IssueCardController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DatabaseBackupController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -98,5 +99,14 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:owner'])->group(function () {
         Route::resource('admin/users', UserController::class, ['names' => 'admin.users']);
         Route::get('/admin/users/{user}/permissions', [UserController::class, 'permissions'])->name('admin.users.permissions');
+    });
+
+    // Database Backup (Owner only)
+    Route::middleware(['role:owner'])->group(function () {
+        Route::get('/admin/backups', [DatabaseBackupController::class, 'index'])->name('admin.backups.index');
+        Route::post('/admin/backups/create', [DatabaseBackupController::class, 'create'])->name('admin.backups.create');
+        Route::get('/admin/backups/download/{filename}', [DatabaseBackupController::class, 'download'])->name('admin.backups.download');
+        Route::post('/admin/backups/restore/{filename}', [DatabaseBackupController::class, 'restore'])->name('admin.backups.restore');
+        Route::delete('/admin/backups/{filename}', [DatabaseBackupController::class, 'destroy'])->name('admin.backups.destroy');
     });
 });

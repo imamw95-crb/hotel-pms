@@ -131,6 +131,11 @@ return [
                     'route' => 'admin.users.index',
                     'permission' => 'manage_users',
                 ],
+                [
+                    'label' => 'Backup Database',
+                    'route' => 'admin.backups.index',
+                    'permission' => 'manage_users',
+                ],
             ],
         ],
 
