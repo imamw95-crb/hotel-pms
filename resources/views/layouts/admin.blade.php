@@ -66,7 +66,7 @@
                     <i class="fas fa-users w-5 mr-2"></i> Booking Group
                 </a>
 
-                @if(auth()->user()->isAdmin())
+                @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
                     <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Manajemen</div>
                     <a href="{{ route('rooms.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('rooms.*') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-door-open w-5 mr-2"></i> Kelola Kamar

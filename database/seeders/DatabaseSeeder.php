@@ -12,10 +12,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
+        // Seed permissions first
+        $this->call(PermissionSeeder::class);
         // Users
         User::create(['name' => 'Owner Hotel', 'email' => 'owner@hotel.com', 'password' => Hash::make('password'), 'role' => 'owner']);
-        User::create(['name' => 'Admin Hotel', 'email' => '
-        ', 'password' => Hash::make('password'), 'role' => 'admin']);
+        User::create(['name' => 'Admin Hotel', 'email' => 'admin@hotel.com', 'password' => Hash::make('password'), 'role' => 'admin']);
         User::create(['name' => 'Front Office Staff', 'email' => 'frontoffice@hotel.com', 'password' => Hash::make('password'), 'role' => 'frontoffice']);
 
         // Room Types

@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Ensure helper functions are always loaded
+        if (file_exists($helper = app_path('Helpers/PermissionHelper.php'))) {
+            require_once $helper;
+        }
     }
 }

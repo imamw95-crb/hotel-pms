@@ -49,6 +49,12 @@
                 </a>
 
                 <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Transaksi</div>
+                <a href="{{ route('issue-card.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('issue-card.*') ? 'active' : 'hover:bg-blue-700' }}">
+                    <i class="fas fa-key w-5 mr-2"></i> Issue Card
+                </a>
+                <a href="{{ route('reservations.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reservations.*') ? 'active' : 'hover:bg-blue-700' }}">
+                    <i class="fas fa-clipboard-list w-5 mr-2"></i> Reservasi
+                </a>
                 <a href="{{ route('checkin.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('checkin.*') ? 'active' : 'hover:bg-blue-700' }}">
                     <i class="fas fa-sign-in-alt w-5 mr-2"></i> Check-in
                 </a>
@@ -61,7 +67,7 @@
                     <i class="fas fa-users w-5 mr-2"></i> Booking Group
                 </a>
 
-                @if(auth()->user()->isAdmin())
+                @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
                     <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Manajemen</div>
                     <a href="{{ route('rooms.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('rooms.*') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-door-open w-5 mr-2"></i> Kelola Kamar
@@ -71,8 +77,14 @@
                     </a>
                 @endif
 
-                @if(auth()->user()->isOwner())
+                @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
                     <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Laporan</div>
+                    <a href="{{ route('reports.night-audit') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.night-audit') ? 'active' : 'hover:bg-blue-700' }}">
+                        <i class="fas fa-moon w-5 mr-2"></i> Night Audit
+                    </a>
+                    <a href="{{ route('reports.guest-list') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.guest-list') ? 'active' : 'hover:bg-blue-700' }}">
+                        <i class="fas fa-users w-5 mr-2"></i> Guest List
+                    </a>
                     <a href="{{ route('reports.occupancy') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.occupancy') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-chart-line w-5 mr-2"></i> Okupansi
                     </a>
