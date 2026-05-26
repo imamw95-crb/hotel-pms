@@ -82,8 +82,12 @@ class IssueCardController extends Controller
             ]
         );
 
+        // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
+        $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
+        $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+
         // Hitung total
-        $days = Carbon::parse($validated['check_in'])->diffInDays(Carbon::parse($validated['check_out']));
+        $days = $checkInDate->diffInDays($checkOutDate);
         $totalAmount = $room->price_per_night * $days;
 
         // Buat reservasi
@@ -91,8 +95,8 @@ class IssueCardController extends Controller
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
             'room_id' => $room->id,
             'guest_id' => $guest->id,
-            'check_in' => $validated['check_in'],
-            'check_out' => $validated['check_out'],
+            'check_in' => $checkInDate,
+            'check_out' => $checkOutDate,
             'number_of_cards' => $validated['number_of_cards'],
             'status' => 'checked_in',
             'total_amount' => $totalAmount,
@@ -168,7 +172,13 @@ class IssueCardController extends Controller
             return back()->with('error', 'Gagal checkout: ' . ($mhsResult['response_message'] ?? 'Unknown error'));
         }
 
-        $reservation->update(['status' => 'checked_out']);
+        // Set check-out ke jam 12:00 siang hari ini (standard hotel time)
+        $checkoutTime = Carbon::today()->setTime(12, 0, 0);
+
+        $reservation->update([
+            'status' => 'checked_out',
+            'check_out' => $checkoutTime,
+        ]);
         $room->update(['status' => 'available']);
 
         if ($request->ajax() || $request->wantsJson()) {

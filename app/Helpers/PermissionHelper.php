@@ -79,3 +79,87 @@ if (!function_exists('getMenuItemsWithPermissions')) {
         return $menus;
     }
 }
+
+/**
+ * Convert number to Indonesian words (terbilang).
+ */
+if (!function_exists('terbilang')) {
+    function terbilang($number)
+    {
+        $number = abs((int) $number);
+        $words = [
+            '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan',
+            'Sepuluh', 'Sebelas', 'Dua Belas', 'Tiga Belas', 'Empat Belas', 'Lima Belas',
+            'Enam Belas', 'Tujuh Belas', 'Delapan Belas', 'Sembilan Belas'
+        ];
+
+        if ($number < 20) {
+            return $words[$number];
+        }
+
+        if ($number < 100) {
+            $tens = (int) ($number / 10);
+            $remainder = $number % 10;
+            $result = '';
+            if ($tens === 1) {
+                $result = 'Sepuluh';
+            } else {
+                $result = $words[$tens] . ' Puluh';
+            }
+            if ($remainder > 0) {
+                $result .= ' ' . $words[$remainder];
+            }
+            return $result;
+        }
+
+        if ($number < 200) {
+            return 'Seratus ' . terbilang($number - 100);
+        }
+
+        if ($number < 1000) {
+            $hundreds = (int) ($number / 100);
+            $remainder = $number % 100;
+            $result = $words[$hundreds] . ' Ratus';
+            if ($remainder > 0) {
+                $result .= ' ' . terbilang($remainder);
+            }
+            return $result;
+        }
+
+        if ($number < 2000) {
+            return 'Seribu ' . terbilang($number - 1000);
+        }
+
+        if ($number < 1000000) {
+            $thousands = (int) ($number / 1000);
+            $remainder = $number % 1000;
+            $result = terbilang($thousands) . ' Ribu';
+            if ($remainder > 0) {
+                $result .= ' ' . terbilang($remainder);
+            }
+            return $result;
+        }
+
+        if ($number < 1000000000) {
+            $millions = (int) ($number / 1000000);
+            $remainder = $number % 1000000;
+            $result = terbilang($millions) . ' Juta';
+            if ($remainder > 0) {
+                $result .= ' ' . terbilang($remainder);
+            }
+            return $result;
+        }
+
+        if ($number < 1000000000000) {
+            $billions = (int) ($number / 1000000000);
+            $remainder = $number % 1000000000;
+            $result = terbilang($billions) . ' Miliar';
+            if ($remainder > 0) {
+                $result .= ' ' . terbilang($remainder);
+            }
+            return $result;
+        }
+
+        return $number;
+    }
+}

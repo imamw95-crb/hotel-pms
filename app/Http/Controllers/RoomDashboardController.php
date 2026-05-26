@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Reservation;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class RoomDashboardController extends Controller
 {
     public function index()
     {
         $availableRoomsCount = Room::where('status', 'available')->count();
+        // Check-in/check-out jam 12:00 siang
         $checkinsToday = Reservation::whereDate('check_in', Carbon::today())
             ->where('status', 'pending')
             ->count();
@@ -38,6 +38,7 @@ class RoomDashboardController extends Controller
         return response()->json([
             'rooms' => $rooms,
             'available_count' => $rooms->where('status', 'available')->count(),
+            // Check-in/check-out jam 12:00 siang
             'checkins_today' => Reservation::whereDate('check_in', Carbon::today())->where('status', 'pending')->count(),
             'checkouts_today' => Reservation::whereDate('check_out', Carbon::today())->where('status', 'checked_in')->count(),
         ]);

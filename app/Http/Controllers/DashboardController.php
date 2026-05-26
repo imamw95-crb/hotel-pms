@@ -42,6 +42,7 @@ class DashboardController extends Controller
             ->whereYear('created_at', Carbon::now()->year)
             ->sum('amount');
 
+        // Check-in/check-out jam 12:00 siang
         $checkinsToday = Reservation::whereDate('check_in', Carbon::today())
             ->where('status', 'pending')->count();
         $checkoutsToday = Reservation::whereDate('check_out', Carbon::today())
@@ -52,9 +53,10 @@ class DashboardController extends Controller
             $date = Carbon::today()->subDays($i);
             $last7Days['labels'][] = $date->format('D');
 
+            // Occupancy: tamu yang check-out hari ini masih terhitung sampai jam 12:00 siang
             $occupied = Reservation::whereDate('check_in', '<=', $date)
                 ->whereDate('check_out', '>=', $date)
-                ->where('status', 'checked_in')
+                ->whereIn('status', ['checked_in', 'checked_out'])
                 ->count();
             $last7Days['occupancy'][] = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
 
@@ -94,6 +96,7 @@ class DashboardController extends Controller
     private function frontOfficeData()
     {
         $availableRooms = Room::where('status', 'available')->count();
+        // Check-in/check-out jam 12:00 siang
         $todayCheckins = Reservation::whereDate('check_in', Carbon::today())
             ->where('status', 'pending')->count();
         $todayCheckouts = Reservation::whereDate('check_out', Carbon::today())

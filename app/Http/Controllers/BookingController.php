@@ -78,16 +78,20 @@ class BookingController extends Controller
             ]
         );
 
+        // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
+        $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
+        $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+
         $pricePerNight = $validated['price_per_night'] ?? $room->price_per_night;
-        $days = Carbon::parse($validated['check_in'])->diffInDays(Carbon::parse($validated['check_out']));
+        $days = $checkInDate->diffInDays($checkOutDate);
         $totalAmount = $pricePerNight * $days;
 
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
             'room_id' => $room->id,
             'guest_id' => $guest->id,
-            'check_in' => $validated['check_in'],
-            'check_out' => $validated['check_out'],
+            'check_in' => $checkInDate,
+            'check_out' => $checkOutDate,
             'status' => 'pending',
             'total_amount' => $totalAmount,
             'paid_amount' => 0,

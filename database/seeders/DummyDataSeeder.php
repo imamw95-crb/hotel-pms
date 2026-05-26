@@ -107,8 +107,9 @@ class DummyDataSeeder extends Seeder
             for ($i = 0; $i < 10; $i++) {
                 $room = $rooms->random();
                 $guest = $guests->random();
-                $checkIn = Carbon::today()->addDays(rand(-2, 2));
-                $checkOut = (clone $checkIn)->addDays(rand(1, 4));
+                // Standard hotel time: check-in/check-out jam 12:00 siang
+                $checkIn = Carbon::today()->addDays(rand(-2, 2))->setTime(12, 0, 0);
+                $checkOut = (clone $checkIn)->addDays(rand(1, 4))->setTime(12, 0, 0);
                 $nights = $checkIn->diffInDays($checkOut);
                 $totalAmount = $room->price_per_night * $nights;
 

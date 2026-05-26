@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Deposit;
+use App\Models\Guest;
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+
+class DepositController extends Controller
+{
+    const DEFAULT_NOMINAL = 100000;
+
+    /**
+     * List semua deposit.
+     */
+    public function index(Request $request)
+    {
+        $query = Deposit::with(['guest', 'reservation.room', 'createdBy']);
+
+        // Filter tanggal
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        if ($dateFrom) {
+            $query->whereDate('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        // Pencarian
+        $search = $request->get('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('receipt_number', 'like', "%{$search}%")
+                  ->orWhereHas('guest', function ($q) use ($search) {
+                      $q->where('guest_name', 'like', "%{$search}%")
+                        ->orWhere('id_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $deposits = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        return view('deposits.index', compact('deposits', 'dateFrom', 'dateTo', 'search'));
+    }
+
+    /**
+     * Form tambah deposit.
+     */
+    public function create(Request $request)
+    {
+        $guests = Guest::orderBy('guest_name')->get();
+        $reservations = Reservation::with(['guest', 'room'])
+            ->whereIn('status', ['pending', 'checked_in'])
+            ->orderBy('check_in', 'desc')
+            ->get();
+
+        $selectedReservation = null;
+        if ($request->get('reservation_id')) {
+            $selectedReservation = Reservation::with(['guest', 'room'])->find($request->get('reservation_id'));
+        }
+
+        return view('deposits.create', compact('guests', 'reservations', 'selectedReservation'));
+    }
+
+    /**
+     * Simpan deposit baru.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'guest_id'        => 'required|exists:guests,id',
+            'reservation_id'  => 'nullable|exists:reservations,id',
+            'number_of_cards' => 'required|integer|min:1|max:10',
+            'nominal_per_card' => 'required|numeric|min:0',
+            'payment_method'  => 'required|in:cash,bank_transfer,credit_card,debit_card',
+            'notes'           => 'nullable|string|max:500',
+        ]);
+
+        $deposit = Deposit::create([
+            'guest_id'         => $validated['guest_id'],
+            'reservation_id'   => $validated['reservation_id'] ?? null,
+            'number_of_cards'  => $validated['number_of_cards'],
+            'nominal_per_card' => $validated['nominal_per_card'],
+            'total_amount'     => $validated['number_of_cards'] * $validated['nominal_per_card'],
+            'payment_method'   => $validated['payment_method'],
+            'notes'            => $validated['notes'] ?? null,
+            'created_by'       => auth()->id(),
+        ]);
+
+        return redirect()->route('deposits.show', $deposit)
+            ->with('success', 'Deposit berhasil disimpan.');
+    }
+
+    /**
+     * Detail deposit + print.
+     */
+    public function show(Deposit $deposit)
+    {
+        $deposit->load(['guest', 'reservation.room', 'createdBy']);
+        return view('deposits.show', compact('deposit'));
+    }
+}

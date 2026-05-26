@@ -56,9 +56,20 @@
     <!-- Header -->
     <div class="header">
         <div class="hotel-info">
-            <h1>HOTEL PMS</h1>
-            <p>Jl. Contoh Alamat No. 123, Kota</p>
-            <p>Telp: (021) 123-4567 | Email: info@hotelpms.com</p>
+            @php $hotel = \App\Models\HotelSetting::get(); @endphp
+            @if($hotel->logo_path)
+                <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:50px; margin-bottom:8px;">
+            @endif
+            <h1>{{ strtoupper($hotel->hotel_name ?? 'HOTEL PMS') }}</h1>
+            @if($hotel->address)<p>{{ $hotel->address }}</p>@endif
+            @if($hotel->phone || $hotel->email)
+                <p>
+                    @if($hotel->phone)Telp: {{ $hotel->phone }}@endif
+                    @if($hotel->phone && $hotel->email) | @endif
+                    @if($hotel->email){{ $hotel->email }}@endif
+                </p>
+            @endif
+            @if($hotel->website)<p>{{ $hotel->website }}</p>@endif
         </div>
         <div class="invoice-info">
             <h2>INVOICE</h2>
@@ -83,8 +94,7 @@
         <div class="details-box">
             <h3>Info Kamar</h3>
             <table>
-                <tr><td>No. Kamar</td><td>: {{ $reservation->room->room_number ?? '-' }}</td></tr>
-                <tr><td>Tipe Kamar</td><td>: {{ $reservation->room->room_type_name ?? '-' }}</td></tr>
+                <tr><td>Tipe Kamar</td><td>: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
                 <tr><td>Check-in</td><td>: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
                 <tr><td>Check-out</td><td>: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
                 <tr><td>Durasi</td><td>: {{ $reservation->check_in->diffInDays($reservation->check_out) }} malam</td></tr>
@@ -130,6 +140,14 @@
                 <td>Rp {{ number_format(max(0, $reservation->total_amount - $reservation->paid_amount), 0, ',', '.') }}</td>
             </tr>
         </table>
+    </div>
+    <!-- Terbilang -->
+    <div style="margin: 10px 0; padding: 8px 12px; border: 1px solid #333; font-size: 12px; font-style: italic; width: 100%; box-sizing: border-box;">
+        <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
+    </div>
+    <!-- Terbilang -->
+    <div style="margin: 10px 0; padding: 8px 12px; border: 1px solid #333; font-size: 12px; font-style: italic; width: 100%; box-sizing: border-box;">
+        <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
     </div>
 
     <!-- Payment History -->

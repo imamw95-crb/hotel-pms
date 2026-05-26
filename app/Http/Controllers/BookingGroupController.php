@@ -47,10 +47,11 @@ class BookingGroupController extends Controller
             ]
         );
 
-$customPrice = $validated['price_per_night'] ?? null;
+        // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
+        $checkIn = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
+        $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+        $customPrice = $validated['price_per_night'] ?? null;
         $roomPrices = $request->input('room_prices', []);
-        $checkIn = Carbon::parse($validated['check_in']);
-        $checkOut = Carbon::parse($validated['check_out']);
         $days = $checkIn->diffInDays($checkOut);
         $paymentType = $validated['payment_type'] ?? 'full';
         $dpAmount = $validated['dp_amount'] ?? 0;
@@ -68,8 +69,8 @@ $customPrice = $validated['price_per_night'] ?? null;
                     'reservation_number' => 'RES-' . strtoupper(uniqid()),
                     'room_id' => $room->id,
                     'guest_id' => $guest->id,
-                    'check_in' => $validated['check_in'],
-                    'check_out' => $validated['check_out'],
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
                     'status' => 'pending',
                     'total_amount' => $totalAmount,
                     'paid_amount' => 0,

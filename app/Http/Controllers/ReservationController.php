@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
-use App\Models\Room;
-use App\Models\Guest;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -131,7 +129,13 @@ class ReservationController extends Controller
             return back()->with('error', 'Hanya reservasi yang sudah check-in yang bisa di-check-out.');
         }
 
-        $reservation->update(['status' => 'checked_out']);
+        // Set check-out ke jam 12:00 siang hari ini (standard hotel time)
+        $checkoutTime = Carbon::today()->setTime(12, 0, 0);
+
+        $reservation->update([
+            'status' => 'checked_out',
+            'check_out' => $checkoutTime,
+        ]);
         $reservation->room->update(['status' => 'available']);
 
         return redirect()->route('reservations.show', $reservation)->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}.");

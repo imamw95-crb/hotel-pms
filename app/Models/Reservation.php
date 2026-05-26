@@ -57,7 +57,12 @@ class Reservation extends Model
 
     public function getNightsAttribute()
     {
-        return $this->check_in->diffInDays($this->check_out);
+        // Standard hotel: check-in jam 12:00 siang, check-out jam 12:00 siang
+        // Jumlah malam = selisih hari antara check_in dan check_out
+        if (!$this->check_in || !$this->check_out) {
+            return 0;
+        }
+        return $this->check_in->startOfDay()->diffInDays($this->check_out->startOfDay());
     }
 
     public function getStatusLabelAttribute()

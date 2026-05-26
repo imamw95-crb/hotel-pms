@@ -72,8 +72,12 @@ class CheckinController extends Controller
             return back()->with('error', 'Kamar sudah dipesan untuk tanggal tersebut.');
         }
         
-        $checkIn = Carbon::parse($request->check_in)->format('YmdHi');
-        $checkOut = Carbon::parse($request->check_out)->format('YmdHi');
+        // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
+        $checkInDate = Carbon::parse($request->check_in)->setTime(12, 0, 0);
+        $checkOutDate = Carbon::parse($request->check_out)->setTime(12, 0, 0);
+
+        $checkIn = $checkInDate->format('YmdHi');
+        $checkOut = $checkOutDate->format('YmdHi');
         
         $mhsResult = $this->mhs->checkin(
             $room->room_number,
@@ -95,15 +99,15 @@ class CheckinController extends Controller
             ]
         );
         
-        $days = Carbon::parse($request->check_in)->diffInDays(Carbon::parse($request->check_out));
+        $days = $checkInDate->diffInDays($checkOutDate);
         $totalAmount = $room->price_per_night * $days;
         
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
             'room_id' => $room->id,
             'guest_id' => $guest->id,
-            'check_in' => $request->check_in,
-            'check_out' => $request->check_out,
+            'check_in' => $checkInDate,
+            'check_out' => $checkOutDate,
             'number_of_cards' => $request->number_of_cards ?? 1,
             'status' => 'checked_in',
             'total_amount' => $totalAmount,

@@ -162,9 +162,14 @@
 
     <!-- Header -->
     <div class="header">
-        <h1>Hotel PMS</h1>
-        <p>Jl. Contoh Alamat No. 123, Kota</p>
-        <p>Telp: (021) 123-4567</p>
+        @php $hotel = \App\Models\HotelSetting::get(); @endphp
+        @if($hotel->logo_path)
+            <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:40px; margin-bottom:4px;">
+        @endif
+        <h1>{{ strtoupper($hotel->hotel_name ?? 'HOTEL PMS') }}</h1>
+        @if($hotel->address)<p>{{ $hotel->address }}</p>@endif
+        @if($hotel->phone)<p>Telp: {{ $hotel->phone }}</p>@endif
+        @if($hotel->website)<p>{{ $hotel->website }}</p>@endif
     </div>
 
     <div class="kwitansi-no">
@@ -182,7 +187,7 @@
         </div>
         <div class="info-right">
             <table>
-                <tr><td>No. Kamar</td><td>: {{ $reservation->room->room_number ?? '-' }}</td></tr>
+                <tr><td>Tipe Kamar</td><td>: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
                 <tr><td>Check-in</td><td>: {{ $reservation->check_in->format('d/m/Y') }}</td></tr>
                 <tr><td>Check-out</td><td>: {{ $reservation->check_out->format('d/m/Y') }}</td></tr>
             </table>
@@ -230,6 +235,11 @@
     </table>
 
     <div class="divider"></div>
+
+    <!-- Terbilang -->
+    <div style="margin: 8px 0; padding: 6px 8px; border: 1px solid #000; font-size: 11px; font-style: italic;">
+        <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
+    </div>
 
     <!-- Summary -->
     <div class="summary-line">

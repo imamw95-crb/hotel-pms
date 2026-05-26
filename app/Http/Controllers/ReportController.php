@@ -22,11 +22,14 @@ class ReportController extends Controller
         $availableRooms = Room::where('status', 'available')->count();
         $maintenanceRooms = Room::where('status', 'maintenance')->count();
 
+        // Check-in: jam 12:00 siang — tamu yang check-in hari ini
         $checkinsToday = Reservation::whereDate('check_in', $date)
             ->where('status', 'checked_in')
             ->with(['guest', 'room'])
             ->get();
 
+        // Check-out: jam 12:00 siang — tamu yang check-out hari ini
+        // (masih in-house sampai jam 12:00 siang hari ini)
         $checkoutsToday = Reservation::whereDate('check_out', $date)
             ->where('status', 'checked_out')
             ->with(['guest', 'room'])
@@ -48,7 +51,14 @@ class ReportController extends Controller
             ->get()
             ->groupBy('payment_method');
 
-        $inHouseGuests = Reservation::where('status', 'checked_in')
+        // In-house: checked_in ATAU checked_out hari ini (check-out jam 12:00 siang, masih in-house sampai siang)
+        $inHouseGuests = Reservation::where(function ($q) use ($date) {
+                $q->where('status', 'checked_in')
+                    ->orWhere(function ($sub) use ($date) {
+                        $sub->where('status', 'checked_out')
+                            ->whereDate('check_out', $date);
+                    });
+            })
             ->with(['guest', 'room'])
             ->orderBy('check_out', 'asc')
             ->get();
@@ -116,9 +126,12 @@ class ReportController extends Controller
             $date = $current->format('Y-m-d');
             $dates[] = $current->format('d M');
             
+            // Occupancy: kamar terisi jika check_in <= hari ini DAN check_out >= hari ini
+            // Check-out jam 12:00 siang = kamar masih terisi sampai siang hari itu
+            // Jadi tamu yang check-out hari ini MASIH terhitung occupied
             $occupied = Reservation::whereDate('check_in', '<=', $date)
                 ->whereDate('check_out', '>=', $date)
-                ->where('status', 'checked_in')
+                ->whereIn('status', ['checked_in', 'checked_out'])
                 ->count();
             
             $occupancyData[] = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;

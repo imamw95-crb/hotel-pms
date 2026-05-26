@@ -15,6 +15,8 @@ use App\Http\Controllers\IssueCardController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DatabaseBackupController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\DepositController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -111,5 +113,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/backups/download/{filename}', [DatabaseBackupController::class, 'download'])->name('admin.backups.download');
         Route::post('/admin/backups/restore/{filename}', [DatabaseBackupController::class, 'restore'])->name('admin.backups.restore');
         Route::delete('/admin/backups/{filename}', [DatabaseBackupController::class, 'destroy'])->name('admin.backups.destroy');
+    });
+
+    // Hotel Settings (Owner only)
+    Route::middleware(['role:owner'])->group(function () {
+        Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings');
+        Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+    });
+
+    // Deposit Kartu
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/deposits', [DepositController::class, 'index'])->name('deposits.index');
+        Route::get('/deposits/create', [DepositController::class, 'create'])->name('deposits.create');
+        Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.store');
+        Route::get('/deposits/{deposit}', [DepositController::class, 'show'])->name('deposits.show');
     });
 });
