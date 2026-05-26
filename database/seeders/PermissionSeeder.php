@@ -39,6 +39,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Delete Room', 'slug' => 'delete_room', 'group' => 'room', 'description' => 'Dapat menghapus kamar'],
             ['name' => 'View Room Dashboard', 'slug' => 'view_room_dashboard', 'group' => 'room', 'description' => 'Dapat melihat room dashboard'],
             ['name' => 'Manage Rooms', 'slug' => 'manage_rooms', 'group' => 'room', 'description' => 'Dapat mengelola semua kamar'],
+            ['name' => 'Pindah Kamar', 'slug' => 'change_room', 'group' => 'room', 'description' => 'Dapat memindahkan tamu ke kamar lain'],
 
             // Room Type Permissions
             ['name' => 'View Room Types', 'slug' => 'view_room_types', 'group' => 'room', 'description' => 'Dapat melihat tipe kamar'],
@@ -72,7 +73,7 @@ class PermissionSeeder extends Seeder
             'create_booking', 'view_bookings', 'edit_booking', 'delete_booking', 'create_booking_group',
             'view_reservations', 'edit_reservation', 'cancel_reservation', 'add_payment',
             'checkin', 'checkout', 'issue_card', 'reissue_card',
-            'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms',
+            'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms', 'change_room',
             'view_room_types', 'create_room_type', 'edit_room_type', 'delete_room_type',
             'view_reports', 'manage_guests',
         ]);
@@ -81,7 +82,7 @@ class PermissionSeeder extends Seeder
             'create_booking', 'view_bookings',
             'view_reservations', 'add_payment',
             'checkin', 'checkout', 'issue_card', 'reissue_card',
-            'view_room_dashboard',
+            'view_room_dashboard', 'change_room',
             'view_reports',
             'view_rooms', 'view_room_types', 'manage_guests',
         ]);

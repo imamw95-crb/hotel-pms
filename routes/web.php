@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\RestoController;
+use App\Http\Controllers\PaymentMethodController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -71,6 +72,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->middleware('permission:checkin')->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->middleware('permission:checkout')->name('reservations.checkout');
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->middleware('permission:add_payment')->name('reservations.add-payment');
+    Route::get('/reservations/{reservation}/room-change', [ReservationController::class, 'showRoomChange'])->middleware('permission:change_room')->name('reservations.room-change');
+    Route::post('/reservations/{reservation}/room-change', [ReservationController::class, 'changeRoom'])->middleware('permission:change_room')->name('reservations.room-change.store');
     Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->middleware('permission:view_reservations')->name('reservations.print-kwitansi');
     Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->middleware('permission:view_reservations')->name('reservations.print-invoice');
     // Rooms & Room Types (all roles with permission)
@@ -127,6 +130,11 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:owner'])->group(function () {
         Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings');
         Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+    });
+
+    // Master Metode Pembayaran (Owner only)
+    Route::middleware(['role:owner'])->group(function () {
+        Route::resource('admin/payment-methods', PaymentMethodController::class, ['names' => 'admin.payment-methods']);
     });
 
     // Deposit Kartu

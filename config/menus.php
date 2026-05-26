@@ -181,6 +181,19 @@ return [
             ],
         ],
 
+        // ─── Master Data ─────────────────────────────────────────────
+        [
+            'label'  => 'Master Data',
+            'icon'   => 'database',
+            'children' => [
+                [
+                    'label'      => 'Metode Pembayaran',
+                    'route'      => 'admin.payment-methods.index',
+                    'permission' => 'manage_users',
+                ],
+            ],
+        ],
+
         // ─── Setting ─────────────────────────────────────────────────
         [
             'label'      => 'Setting Hotel',

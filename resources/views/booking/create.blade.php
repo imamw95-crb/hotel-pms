@@ -51,11 +51,15 @@
             </div>
         </div>
 
-        <!-- Row 3: Email, Harga, Metode Bayar -->
-        <div class="grid grid-cols-3 gap-4 mb-4">
+        <!-- Row 3: Email, No. Reservasi OTA, Harga, Metode Bayar -->
+        <div class="grid grid-cols-4 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Email</label>
                 <input type="email" name="email" class="w-full border rounded px-3 py-2" placeholder="Email (opsional)">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">No. Reservasi OTA</label>
+                <input type="text" name="ota_reservation_number" class="w-full border rounded px-3 py-2" placeholder="Opsional (cth: BKNG-12345)">
             </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
@@ -66,10 +70,10 @@
                 <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
                 <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
                     <option value="">-- Pilih Metode --</option>
-                    <option value="cash">Tunai</option>
-                    <option value="bank_transfer">Transfer Bank</option>
-                    <option value="credit_card">Kartu Kredit</option>
-                    <option value="debit_card">Kartu Debit</option>
+                    @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                    @foreach($paymentMethods as $pm)
+                        <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                    @endforeach
                 </select>
             </div>
         </div>

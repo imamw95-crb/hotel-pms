@@ -100,10 +100,10 @@
                 <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
                 <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2">
                     <option value="">-- Pilih --</option>
-                    <option value="cash">Tunai</option>
-                    <option value="bank_transfer">Transfer Bank</option>
-                    <option value="credit_card">Kartu Kredit</option>
-                    <option value="debit_card">Kartu Debit</option>
+                    @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                    @foreach($paymentMethods as $pm)
+                        <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                    @endforeach
                 </select>
             </div>
             <div>

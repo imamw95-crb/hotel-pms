@@ -66,6 +66,7 @@ class BookingController extends Controller
             'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,debit_card',
             'payment_type' => 'nullable|in:full,dp',
             'dp_amount' => 'nullable|numeric|min:0',
+            'ota_reservation_number' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
 
@@ -99,6 +100,7 @@ class BookingController extends Controller
 
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
+            'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
             'room_id' => $room->id,
             'guest_id' => $guest->id,
             'check_in' => $checkInDate,

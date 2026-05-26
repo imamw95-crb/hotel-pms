@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
+use App\Models\Room;
 use App\Models\Transaction;
+use App\Models\MHSLog;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -139,6 +141,124 @@ class ReservationController extends Controller
         $reservation->room->update(['status' => 'available']);
 
         return redirect()->route('reservations.show', $reservation)->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}.");
+    }
+
+    /**
+     * Tampilkan form pindah kamar
+     */
+    public function showRoomChange(Reservation $reservation)
+    {
+        if ($reservation->status !== 'checked_in') {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi yang sudah check-in.');
+        }
+
+        $reservation->load(['guest', 'room']);
+
+        // Ambil kamar yang available untuk tanggal reservasi ini
+        $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
+        $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
+
+        $availableRooms = Room::where('status', 'available')
+            ->where('id', '!=', $reservation->room_id)
+            ->where(function ($query) use ($checkIn, $checkOut, $reservation) {
+                $query->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut, $reservation) {
+                    $q->where(function ($sq) use ($checkIn, $checkOut) {
+                        $sq->whereBetween('check_in', [$checkIn, $checkOut])
+                           ->orWhereBetween('check_out', [$checkIn, $checkOut])
+                           ->orWhere(function ($sq) use ($checkIn, $checkOut) {
+                               $sq->where('check_in', '<=', $checkIn)
+                                  ->where('check_out', '>=', $checkOut);
+                           });
+                    })
+                    ->whereIn('status', ['pending', 'checked_in'])
+                    ->where('id', '!=', $reservation->id);
+                });
+            })
+            ->orderBy('room_number')
+            ->get();
+
+        return view('reservations.room-change', compact('reservation', 'availableRooms'));
+    }
+
+    /**
+     * Proses pindah kamar
+     */
+    public function changeRoom(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'checked_in') {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi yang sudah check-in.');
+        }
+
+        $validated = $request->validate([
+            'new_room_id' => 'required|exists:rooms,id',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $newRoom = Room::findOrFail($validated['new_room_id']);
+
+        // Pastikan kamar baru tersedia untuk tanggal reservasi ini
+        $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
+        $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
+
+        $isAvailable = $newRoom->isAvailable($checkIn, $checkOut, $reservation->id);
+        if (!$isAvailable) {
+            return back()->with('error', "Kamar {$newRoom->room_number} tidak tersedia untuk periode tanggal tersebut.");
+        }
+
+        if ($newRoom->status !== 'available') {
+            return back()->with('error', "Kamar {$newRoom->room_number} tidak dalam status available.");
+        }
+
+        $oldRoom = $reservation->room;
+        $oldRoomNumber = $oldRoom->room_number;
+        $newRoomNumber = $newRoom->room_number;
+
+        // Simpan room_type_name baru jika berbeda tipe
+        $newRoomTypeName = $newRoom->room_type_name;
+        $newPricePerNight = $newRoom->price_per_night;
+        $oldPricePerNight = $oldRoom->price_per_night;
+
+        // Hitung ulang total_amount jika harga kamar berbeda
+        $nights = $reservation->nights;
+        $newTotalAmount = $newPricePerNight * $nights;
+
+        // Update reservasi
+        $reservation->room_id = $newRoom->id;
+        $reservation->room_type_name = $newRoomTypeName;
+        $reservation->total_amount = $newTotalAmount;
+        if ($validated['reason']) {
+            $reservation->notes = ($reservation->notes ? $reservation->notes . "\n" : '') . '[' . now()->format('d/m/Y H:i') . '] Pindah kamar dari ' . $oldRoomNumber . ' ke ' . $newRoomNumber . ': ' . $validated['reason'];
+        }
+        $reservation->save();
+
+        // Update status kamar lama menjadi available
+        $oldRoom->update(['status' => 'cleaning']);
+
+        // Update status kamar baru menjadi occupied
+        $newRoom->update(['status' => 'occupied']);
+
+        // Log aktivitas
+        MHSLog::create([
+            'command' => 'room_change',
+            'reservation_id' => $reservation->id,
+            'request_data' => [
+                'old_room_id' => $oldRoom->id,
+                'old_room_number' => $oldRoomNumber,
+                'new_room_id' => $newRoom->id,
+                'new_room_number' => $newRoomNumber,
+                'reason' => $validated['reason'] ?? null,
+                'old_total_amount' => $oldPricePerNight * $nights,
+                'new_total_amount' => $newTotalAmount,
+            ],
+            'response_data' => [
+                'success' => true,
+                'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
+            ],
+            'success' => true,
+        ]);
+
+        return redirect()->route('reservations.show', $reservation)
+            ->with('success', "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.");
     }
 
     /**
