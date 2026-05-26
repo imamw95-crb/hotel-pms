@@ -81,7 +81,7 @@
                     <td class="p-3 font-medium">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
                     <td class="p-3">
                         <span class="px-2 py-1 rounded text-xs font-bold
-                            @if($res->status === 'pending') bg-yellow-100 text-yellow-800
+                            @if($res->status === 'pending') bg-indigo-100 text-indigo-800
                             @elseif($res->status === 'checked_in') bg-green-100 text-green-800
                             @elseif($res->status === 'checked_out') bg-blue-100 text-blue-800
                             @elseif($res->status === 'cancelled') bg-red-100 text-red-800
@@ -162,11 +162,11 @@
         .text-3xl { font-size: 16px !important; }
         .text-sm { font-size: 9px !important; }
         .text-xs { font-size: 8px !important; }
-        .bg-yellow-100 { background: #fef9c3 !important; -webkit-print-color-adjust: exact; }
+        .bg-indigo-100 { background: #e0e7ff !important; -webkit-print-color-adjust: exact; }
         .bg-green-100 { background: #dcfce7 !important; -webkit-print-color-adjust: exact; }
         .bg-blue-100 { background: #dbeafe !important; -webkit-print-color-adjust: exact; }
         .bg-red-100 { background: #fee2e2 !important; -webkit-print-color-adjust: exact; }
-        .text-yellow-800 { color: #854d0e !important; }
+        .text-indigo-800 { color: #3730a3 !important; }
         .text-green-800 { color: #166534 !important; }
         .text-blue-800 { color: #1e40af !important; }
         .text-red-800 { color: #991b1b !important; }

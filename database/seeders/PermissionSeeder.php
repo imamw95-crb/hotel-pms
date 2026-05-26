@@ -55,6 +55,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Create User', 'slug' => 'create_user', 'group' => 'user', 'description' => 'Dapat membuat pengguna'],
             ['name' => 'Edit User', 'slug' => 'edit_user', 'group' => 'user', 'description' => 'Dapat mengubah pengguna'],
             ['name' => 'Delete User', 'slug' => 'delete_user', 'group' => 'user', 'description' => 'Dapat menghapus pengguna'],
+            
+            // Guest Permissions
+            ['name' => 'Manage Guests', 'slug' => 'manage_guests', 'group' => 'guest', 'description' => 'Dapat mengelola data tamu'],
         ];
 
         foreach ($permissions as $permission) {
@@ -71,7 +74,7 @@ class PermissionSeeder extends Seeder
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms',
             'view_room_types', 'create_room_type', 'edit_room_type', 'delete_room_type',
-            'view_reports',
+            'view_reports', 'manage_guests',
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
@@ -80,7 +83,7 @@ class PermissionSeeder extends Seeder
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_room_dashboard',
             'view_reports',
-            'view_rooms', 'view_room_types',
+            'view_rooms', 'view_room_types', 'manage_guests',
         ]);
 
         $this->assignPermissionToRole('owner', [

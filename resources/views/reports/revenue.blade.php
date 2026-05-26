@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
 @section('title', 'Laporan Pendapatan')
 @section('header', 'Laporan Pendapatan')
@@ -84,33 +84,37 @@
         </tbody>
     </table>
 </div>
+@endsection
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@section('scripts')
+<script src="{{ asset('js/chart.min.js') }}"></script>
 <script>
     @if(!empty($byMethod))
-    new Chart(document.getElementById('revenueChart'), {
-        type: 'pie',
-        data: {
-            labels: [
-                @foreach($byMethod as $method => $amount)
-                    '{{ str_replace('_', ' ', $method) }}',
-                @endforeach
-            ],
-            datasets: [{
-                data: [
+    document.addEventListener('DOMContentLoaded', function() {
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'pie',
+            data: {
+                labels: [
                     @foreach($byMethod as $method => $amount)
-                        {{ $amount }},
+                        '{{ str_replace('_', ' ', $method) }}',
                     @endforeach
                 ],
-                backgroundColor: [
-                    '#3b82f6',
-                    '#10b981',
-                    '#f59e0b',
-                    '#ef4444',
-                    '#8b5cf6'
-                ]
-            }]
-        }
+                datasets: [{
+                    data: [
+                        @foreach($byMethod as $method => $amount)
+                            {{ $amount }},
+                        @endforeach
+                    ],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#6366f1',
+                        '#ef4444',
+                        '#8b5cf6'
+                    ]
+                }]
+            }
+        });
     });
     @endif
 </script>

@@ -8,6 +8,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingGroupController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\IssueCardController;
@@ -26,8 +27,8 @@ Route::get('/', function () {
     return redirect()->route('rooms.dashboard');
 })->middleware('auth')->name('home');
 
-// Dashboard shortcut — redirect to role-specific dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth')->name('dashboard');
+// Dashboard shortcut — restrict to owner only
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard routes — all use the same controller method which adapts to role
@@ -72,6 +73,10 @@ Route::middleware(['auth'])->group(function () {
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);
     Route::resource('room-types', RoomTypeController::class);
+    
+    // Guests
+    Route::resource('guests', GuestController::class)->middleware('permission:manage_guests');
+    Route::get('/guests/export/csv', [GuestController::class, 'export'])->middleware('permission:manage_guests')->name('guests.export');
     
     // Reports (all roles)
     Route::middleware(['permission:view_reports'])->group(function () {

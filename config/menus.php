@@ -7,6 +7,7 @@ return [
             'label' => 'Dashboard Owner',
             'icon' => 'chart-line',
             'route' => 'dashboard',
+            'permission' => 'manage_users',
         ],
         [
             'label' => 'Dashboard Kamar',
@@ -70,6 +71,11 @@ return [
                     'route' => 'room-types.index',
                     'permission' => 'view_room_types',
                 ],
+                [
+                    'label' => 'Master Tamu',
+                    'route' => 'guests.index',
+                    'permission' => 'manage_guests',
+                ],
             ],
         ],
 
@@ -99,7 +105,7 @@ return [
                     'permission' => 'view_reports',
                 ],
                 [
-                    'label' => 'Reservasi',
+                    'label' => 'Lap. Reservasi',
                     'route' => 'reports.reservations',
                     'permission' => 'view_reports',
                 ],

@@ -19,10 +19,37 @@ class CheckinController extends Controller
         $this->mhs = $mhs;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $rooms = Room::where('status', 'available')->get();
-        return view('frontoffice.checkin', compact('rooms'));
+        $rooms = Room::orderBy('room_number')->get();
+        // Fetch pending and upcoming reservations for check-in
+        $pendingReservations = Reservation::with(['guest', 'room'])
+            ->when($request->input('search'), function ($query, $search) {
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('reservation_number', 'like', '%' . $search . '%')
+                        ->orWhereHas('guest', function ($guestQuery) use ($search) {
+                            $guestQuery->where('guest_name', 'like', '%' . $search . '%')
+                                ->orWhere('id_number', 'like', '%' . $search . '%');
+                        })
+                        ->orWhereHas('room', function ($roomQuery) use ($search) {
+                            $roomQuery->where('room_number', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->when($request->input('room_id'), function ($query, $roomId) {
+                $query->where('room_id', $roomId);
+            })
+            ->where(function ($query) {
+                $query->where('status', 'pending')
+                    ->orWhere(function ($sub) {
+                        $sub->where('status', 'checked_in')
+                            ->where('check_in', '<=', now())
+                            ->where('check_out', '>', now());
+                    });
+            })
+            ->orderBy('check_in')
+            ->get();
+        return view('frontoffice.checkin', compact('rooms', 'pendingReservations'));
     }
 
     public function process(Request $request)

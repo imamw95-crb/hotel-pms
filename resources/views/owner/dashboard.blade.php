@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Owner Dashboard')
+//@section('title', 'Owner Dashboard')
 
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -57,12 +57,12 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="font-bold text-lg mb-4">Okupansi 7 Hari Terakhir</h3>
-        <canvas id="occupancyChart" height="200"></canvas>
+        <canvas id="occupancyChart" height="200" data-labels='@json($last7Days["labels"])' data-occupancy='@json($last7Days["occupancy"])'></canvas>
     </div>
     
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="font-bold text-lg mb-4">Pendapatan 7 Hari Terakhir</h3>
-        <canvas id="revenueChart" height="200"></canvas>
+        <canvas id="revenueChart" height="200" data-labels='@json($last7Days["labels"])' data-revenue='@json($last7Days["revenue"])'></canvas>
     </div>
 </div>
 
@@ -103,31 +103,5 @@
     </div>
 </div>
 
-<script>
-    new Chart(document.getElementById('occupancyChart'), {
-        type: 'line',
-        data: {
-            labels: @json($last7Days['labels']),
-            datasets: [{
-                label: 'Okupansi (%)',
-                data: @json($last7Days['occupancy']),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true
-            }]
-        }
-    });
-    
-    new Chart(document.getElementById('revenueChart'), {
-        type: 'bar',
-        data: {
-            labels: @json($last7Days['labels']),
-            datasets: [{
-                label: 'Pendapatan (Rp)',
-                data: @json($last7Days['revenue']),
-                backgroundColor: '#10b981'
-            }]
-        }
-    });
-</script>
+<script src="{{ asset('js/dashboard-charts.js') }}"></script>
 @endsection

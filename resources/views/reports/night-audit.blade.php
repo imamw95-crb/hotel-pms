@@ -47,9 +47,9 @@
             <div class="text-xs uppercase text-gray-500 font-bold">Available</div>
             <div class="text-4xl font-bold text-green-700">{{ $availableRooms }}</div>
         </div>
-        <div class="border-2 border-yellow-400 rounded-lg p-4 text-center bg-yellow-50">
+        <div class="border-2 border-orange-400 rounded-lg p-4 text-center bg-orange-50">
             <div class="text-xs uppercase text-gray-500 font-bold">Out of Order</div>
-            <div class="text-4xl font-bold text-yellow-700">{{ $maintenanceRooms }}</div>
+            <div class="text-4xl font-bold text-orange-700">{{ $maintenanceRooms }}</div>
         </div>
     </div>
 
@@ -107,7 +107,7 @@
                         <td class="p-1 text-center">
                             @php
                                 $statusColors = [
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'pending' => 'bg-indigo-100 text-indigo-800',
                                     'checked_in' => 'bg-green-100 text-green-800',
                                     'checked_out' => 'bg-blue-100 text-blue-800',
                                     'cancelled' => 'bg-red-100 text-red-800',
@@ -165,13 +165,13 @@
 
         <!-- Check-out -->
         <div>
-            <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-yellow-600 pb-1 text-yellow-700">
+            <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-blue-600 pb-1 text-blue-700">
                 Check-out ({{ $checkoutsToday->count() }})
             </h2>
             @if($checkoutsToday->count() > 0)
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="bg-yellow-50 border-b border-yellow-200">
+                    <tr class="bg-blue-50 border-b border-blue-200">
                         <th class="text-left p-2 font-bold text-xs">NO. RES</th>
                         <th class="text-left p-2 font-bold text-xs">TAMU</th>
                         <th class="text-center p-2 font-bold text-xs">KAMAR</th>
@@ -224,7 +224,7 @@
                     <td class="p-2 text-center text-xs">{{ $res->check_in->format('d/m/Y') }}</td>
                     <td class="p-2 text-center text-xs">{{ $res->check_out->format('d/m/Y') }}</td>
                     <td class="p-2 text-center">
-                        <span class="px-2 py-1 rounded text-xs font-bold {{ $daysLeft <= 1 ? 'bg-red-100 text-red-800' : ($daysLeft <= 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
+                        <span class="px-2 py-1 rounded text-xs font-bold {{ $daysLeft <= 1 ? 'bg-red-100 text-red-800' : ($daysLeft <= 3 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800') }}">
                             {{ $daysLeft }} hari
                         </span>
                     </td>
@@ -266,7 +266,7 @@
                     <td class="p-2 text-center text-xs">{{ $res->check_out->format('d/m/Y') }}</td>
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
-                            @if($res->status === 'pending') bg-yellow-100 text-yellow-800
+                            @if($res->status === 'pending') bg-indigo-100 text-indigo-800
                             @elseif($res->status === 'checked_in') bg-green-100 text-green-800
                             @elseif($res->status === 'checked_out') bg-blue-100 text-blue-800
                             @else bg-gray-100 text-gray-800 @endif">
@@ -373,7 +373,7 @@
         /* Warna background print */
         .bg-blue-50 { background: #eff6ff !important; -webkit-print-color-adjust: exact; }
         .bg-green-50 { background: #f0fdf4 !important; -webkit-print-color-adjust: exact; }
-        .bg-yellow-50 { background: #fefce8 !important; -webkit-print-color-adjust: exact; }
+        .bg-blue-50 { background: #eff6ff !important; -webkit-print-color-adjust: exact; }
         .bg-purple-50 { background: #faf5ff !important; -webkit-print-color-adjust: exact; }
         .bg-gray-50 { background: #f9fafb !important; -webkit-print-color-adjust: exact; }
         .bg-gray-100 { background: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
@@ -384,7 +384,7 @@
         .text-green-800 { color: #166534 !important; }
         .text-blue-700 { color: #1d4ed8 !important; }
         .text-red-700 { color: #b91c1c !important; }
-        .text-yellow-700 { color: #a16207 !important; }
+        .text-blue-700 { color: #1d4ed8 !important; }
         .text-purple-700 { color: #7e22ce !important; }
 
         /* Progress bar */
@@ -392,11 +392,11 @@
         .bg-gray-200 { background: #e5e7eb !important; -webkit-print-color-adjust: exact; }
 
         /* Status badges */
-        .bg-yellow-100 { background: #fef9c3 !important; -webkit-print-color-adjust: exact; }
+        .bg-indigo-100 { background: #e0e7ff !important; -webkit-print-color-adjust: exact; }
         .bg-green-100 { background: #dcfce7 !important; -webkit-print-color-adjust: exact; }
         .bg-blue-100 { background: #dbeafe !important; -webkit-print-color-adjust: exact; }
         .bg-red-100 { background: #fee2e2 !important; -webkit-print-color-adjust: exact; }
-        .text-yellow-800 { color: #854d0e !important; }
+        .text-indigo-800 { color: #3730a3 !important; }
         .text-green-800 { color: #166534 !important; }
         .text-blue-800 { color: #1e40af !important; }
         .text-red-800 { color: #991b1b !important; }
