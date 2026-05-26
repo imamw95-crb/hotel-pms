@@ -58,7 +58,8 @@
                     <th class="text-center p-3 font-semibold">Jumlah Kartu</th>
                     <th class="text-right p-3 font-semibold">Total</th>
                     <th class="text-center p-3 font-semibold">Metode</th>
-                    <th class="text-center p-3 font-semibold w-24">Aksi</th>
+                    <th class="text-center p-3 font-semibold">Status</th>
+                    <th class="text-center p-3 font-semibold w-32">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,11 +81,32 @@
                         </span>
                     </td>
                     <td class="p-3 text-center">
-                        <a href="{{ route('deposits.show', $deposit) }}"
-                           class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                           title="Lihat / Print">
-                            <i class="fas fa-eye mr-1"></i> Lihat
-                        </a>
+                        @if($deposit->status === 'returned')
+                            <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
+                                <i class="fas fa-check-circle mr-1"></i> Dikembalikan
+                            </span>
+                        @else
+                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
+                                <i class="fas fa-clock mr-1"></i> Aktif
+                            </span>
+                        @endif
+                    </td>
+                    <td class="p-3 text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            <a href="{{ route('deposits.show', $deposit) }}"
+                               class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                               title="Lihat / Print">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            @if($deposit->status === 'active')
+                                <form method="POST" action="{{ route('deposits.return', $deposit) }}" class="inline" onsubmit="return confirm('Tandai deposit ini sebagai sudah dikembalikan?');">
+                                    @csrf
+                                    <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium" title="Sudah Dikembalikan">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @empty

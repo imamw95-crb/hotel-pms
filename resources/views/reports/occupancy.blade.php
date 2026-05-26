@@ -15,8 +15,10 @@
             <label class="block text-sm">End Date</label>
             <input type="date" name="end_date" value="{{ $endDate }}" class="border rounded px-2 py-1">
         </div>
-        <div class="flex items-end">
+        <div class="flex items-end gap-2">
             <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded">Filter</button>
+            <a href="{{ route('reports.occupancy.export', request()->query()) }}" class="bg-orange-600 text-white px-3 py-1 rounded">Export CSV</a>
+            <button type="button" onclick="window.print()" class="bg-green-600 text-white px-3 py-1 rounded">Print</button>
         </div>
     </form>
     
@@ -29,7 +31,7 @@
 </div>
 
 <script>
-    new Chart(document.getElementById('occupancyChart'), {
+    /* @php-ignore */ new Chart(document.getElementById('occupancyChart'), {
         type: 'line',
         data: {
             labels: @json($dates),

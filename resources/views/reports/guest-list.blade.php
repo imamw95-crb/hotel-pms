@@ -34,6 +34,9 @@
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     <i class="fas fa-search mr-1"></i> Cari
                 </button>
+                <a href="{{ route('reports.guest-list.export', request()->query()) }}" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+                    <i class="fas fa-file-csv mr-1"></i> Export CSV
+                </a>
                 <button type="button" onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                     <i class="fas fa-print mr-1"></i> Print
                 </button>

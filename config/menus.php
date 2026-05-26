@@ -18,7 +18,15 @@ return [
             'label'      => 'Dashboard',
             'icon'       => 'tachometer-alt',
             'route'      => 'dashboard',
-            'permission' => null,
+            'permission' => 'manage_users',
+        ],
+
+        // ─── Dashboard Operasional ──────────────────────────────────
+        [
+            'label'      => 'Dashboard Operasional',
+            'icon'       => 'th-large',
+            'route'      => 'rooms.dashboard',
+            'permission' => 'view_rooms',
         ],
 
         // ─── Front Desk ──────────────────────────────────────────────
@@ -82,11 +90,7 @@ return [
                     'route'      => 'room-types.index',
                     'permission' => 'view_room_types',
                 ],
-                [
-                    'label'      => 'Room Dashboard',
-                    'route'      => 'rooms.dashboard',
-                    'permission' => 'view_rooms',
-                ],
+
             ],
         ],
 

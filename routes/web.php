@@ -88,6 +88,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/occupancy', [ReportController::class, 'occupancy'])->name('reports.occupancy');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');
+
+        // Export routes
+        Route::get('/reports/night-audit/export', [ReportController::class, 'exportNightAudit'])->name('reports.night-audit.export');
+        Route::get('/reports/guest-list/export', [ReportController::class, 'exportGuestList'])->name('reports.guest-list.export');
+        Route::get('/reports/occupancy/export', [ReportController::class, 'exportOccupancy'])->name('reports.occupancy.export');
+        Route::get('/reports/revenue/export', [ReportController::class, 'exportRevenue'])->name('reports.revenue.export');
+        Route::get('/reports/reservations/export', [ReportController::class, 'exportReservations'])->name('reports.reservations.export');
     });
 
     // Admin: Permission Management (Owner only)
@@ -128,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/deposits/create', [DepositController::class, 'create'])->name('deposits.create');
         Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.store');
         Route::get('/deposits/{deposit}', [DepositController::class, 'show'])->name('deposits.show');
+        Route::post('/deposits/{deposit}/return', [DepositController::class, 'returnDeposit'])->name('deposits.return');
     });
 
     // Pendapatan Resto

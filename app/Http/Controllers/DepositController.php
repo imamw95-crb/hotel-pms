@@ -101,4 +101,19 @@ class DepositController extends Controller
         $deposit->load(['guest', 'reservation.room', 'createdBy']);
         return view('deposits.show', compact('deposit'));
     }
+
+    /**
+     * Tandai deposit sudah dikembalikan.
+     */
+    public function returnDeposit(Deposit $deposit)
+    {
+        if ($deposit->status === 'returned') {
+            return back()->with('error', 'Deposit ini sudah dikembalikan sebelumnya.');
+        }
+
+        $deposit->update(['status' => 'returned']);
+
+        return redirect()->route('deposits.index')
+            ->with('success', "Deposit {$deposit->receipt_number} berhasil ditandai sebagai dikembalikan.");
+    }
 }

@@ -14,8 +14,10 @@
             <label class="block text-gray-700 text-sm font-bold mb-2">Sampai Tanggal</label>
             <input type="date" name="end_date" value="{{ $endDate }}" class="border rounded px-3 py-2">
         </div>
-        <div class="pt-6">
+        <div class="pt-6 flex gap-2">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
+            <a href="{{ route('reports.reservations.export', request()->query()) }}" class="bg-orange-600 text-white px-4 py-2 rounded">Export CSV</a>
+            <button type="button" onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded">Print</button>
         </div>
     </form>
 </div>

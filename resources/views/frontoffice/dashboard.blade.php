@@ -3,6 +3,15 @@
 @section('title', 'Front Office Dashboard')
 
 @section('content')
+
+{{-- Link ke Dashboard Operasional Hotel --}}
+<div class="mb-6">
+    <a href="{{ route('rooms.dashboard') }}"
+       class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition">
+        <i class="fas fa-th-large"></i> Dashboard Operasional Hotel
+    </a>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center">
@@ -38,6 +47,53 @@
                 <p class="text-2xl font-bold">{{ $todayCheckouts }}</p>
             </div>
         </div>
+    </div>
+</div>
+
+{{-- Denah Kamar --}}
+<div class="bg-white rounded-lg shadow p-4 mt-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-lg"><i class="fas fa-th-large text-blue-500 mr-2"></i>Status Kamar</h3>
+        <a href="{{ route('rooms.dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            Lihat Detail <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+    @php
+        $allRooms = \App\Models\Room::with(['roomType', 'reservations' => function ($q) {
+                $q->where('status', 'checked_in')
+                    ->orWhere(function ($sub) {
+                        $sub->where('status', 'pending')
+                            ->whereDate('check_in', \Carbon\Carbon::today());
+                    });
+            }, 'reservations.guest'])
+            ->orderBy('room_number')
+            ->get();
+    @endphp
+    <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+        @foreach($allRooms as $room)
+            @php
+                $statusColor = [
+                    'available' => 'bg-green-100 border-green-400 text-green-800',
+                    'occupied' => 'bg-red-100 border-red-400 text-red-800',
+                    'maintenance' => 'bg-gray-100 border-gray-400 text-gray-800',
+                    'cleaning' => 'bg-yellow-100 border-yellow-400 text-yellow-800',
+                ][$room->status] ?? 'bg-gray-100 border-gray-400';
+                $activeRes = $room->reservations->first();
+                $guestName = $activeRes && $activeRes->guest ? $activeRes->guest->guest_name : null;
+            @endphp
+            <div class="border rounded p-1.5 text-center text-xs {{ $statusColor }}" title="{{ $room->room_number }} - {{ $room->room_type_name ?? 'Standard' }}{{ $guestName ? ' - ' . $guestName : '' }}">
+                <p class="font-bold">{{ $room->room_number }}</p>
+                @if($guestName)
+                    <p class="truncate text-[10px] mt-0.5">{{ $guestName }}</p>
+                @endif
+            </div>
+        @endforeach
+    </div>
+    <div class="flex gap-4 mt-3 text-xs">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-100 border border-green-400"></span> Available</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-100 border border-red-400"></span> Occupied</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-100 border border-yellow-400"></span> Cleaning</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-100 border border-gray-400"></span> Maintenance</span>
     </div>
 </div>
 

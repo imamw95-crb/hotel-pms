@@ -15,6 +15,9 @@
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                 <i class="fas fa-search mr-1"></i> Tampilkan
             </button>
+            <a href="{{ route('reports.night-audit.export', request()->query()) }}" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+                <i class="fas fa-file-csv mr-1"></i> Export CSV
+            </a>
             <button type="button" onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                 <i class="fas fa-print mr-1"></i> Print
             </button>
@@ -85,7 +88,15 @@
         <div class="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-4">
             <div class="flex justify-between items-center">
                 <span class="text-lg font-bold text-green-800">TOTAL PENDAPATAN HARI INI</span>
-                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($revenueToday, 0, ',', '.') }}</span>
+                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($revenueToday + $restoRevenueToday, 0, ',', '.') }}</span>
+            </div>
+            <div class="flex justify-between items-center mt-2 text-sm">
+                <span class="text-gray-600">Pendapatan Kamar:</span>
+                <span class="font-semibold text-green-700">Rp {{ number_format($revenueToday, 0, ',', '.') }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">Pendapatan Resto/F&B:</span>
+                <span class="font-semibold text-orange-600">Rp {{ number_format($restoRevenueToday, 0, ',', '.') }}</span>
             </div>
         </div>
 
@@ -136,6 +147,64 @@
         @endforeach
         @endif
     </div>
+
+    {{-- Pendapatan Resto/F&B --}}
+    @if($restoTransactions->count() > 0)
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-gray-800 pb-1"><i class="fas fa-utensils text-orange-500 mr-2"></i>Pendapatan Resto / F&B</h2>
+
+        @if($restoRevenueByMethod->count() > 0)
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            @foreach($restoRevenueByMethod as $method => $total)
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">{{ ucwords(str_replace('_', ' ', $method)) }}</div>
+                <div class="text-lg font-bold text-orange-700">Rp {{ number_format($total, 0, ',', '.') }}</div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <table class="w-full text-xs mb-2">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-1 font-bold">No. Transaksi</th>
+                    <th class="text-left p-1 font-bold">Waktu</th>
+                    <th class="text-left p-1 font-bold">Tamu</th>
+                    <th class="text-left p-1 font-bold">Meja</th>
+                    <th class="text-left p-1 font-bold">Item</th>
+                    <th class="text-center p-1 font-bold">Metode</th>
+                    <th class="text-right p-1 font-bold">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($restoTransactions as $txn)
+                <tr class="border-b border-gray-100">
+                    <td class="p-1 font-medium">{{ $txn->transaction_number }}</td>
+                    <td class="p-1">{{ $txn->created_at->format('H:i') }}</td>
+                    <td class="p-1">{{ $txn->guest->guest_name ?? 'Walk-in' }}</td>
+                    <td class="p-1">{{ $txn->table_number ?? '-' }}</td>
+                    <td class="p-1">
+                        @foreach(array_slice($txn->items, 0, 2) as $item)
+                            <span class="inline-block bg-gray-100 rounded px-1 mr-1">{{ $item['name'] }} ×{{ $item['qty'] }}</span>
+                        @endforeach
+                        @if(count($txn->items) > 2)
+                            <span class="text-gray-400">+{{ count($txn->items) - 2 }}</span>
+                        @endif
+                    </td>
+                    <td class="p-1 text-center">{{ ucwords(str_replace('_', ' ', $txn->payment_method)) }}</td>
+                    <td class="p-1 text-right font-bold">Rp {{ number_format($txn->total_amount, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-orange-50 border-t-2 border-orange-300">
+                    <td colspan="6" class="p-2 text-right font-bold text-orange-800">TOTAL PENDAPATAN RESTO</td>
+                    <td class="p-2 text-right font-bold text-orange-700">Rp {{ number_format($restoRevenueToday, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
 
     <hr class="mb-6 border-t border-gray-300">
 

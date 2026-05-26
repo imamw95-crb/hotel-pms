@@ -9,7 +9,7 @@ class Deposit extends Model
 {
     protected $fillable = [
         'receipt_number', 'guest_id', 'reservation_id', 'number_of_cards',
-        'nominal_per_card', 'total_amount', 'payment_method', 'notes', 'created_by',
+        'nominal_per_card', 'total_amount', 'payment_method', 'notes', 'status', 'created_by',
     ];
 
     protected $casts = [
