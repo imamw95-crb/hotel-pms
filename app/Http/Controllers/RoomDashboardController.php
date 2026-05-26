@@ -5,17 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Reservation;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class RoomDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Default tanggal: hari ini
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
         $availableRoomsCount = Room::where('status', 'available')->count();
         // Check-in/check-out jam 12:00 siang
-        $checkinsToday = Reservation::whereDate('check_in', Carbon::today())
+        $checkinsToday = Reservation::whereDate('check_in', '>=', $dateFrom)
+            ->whereDate('check_in', '<=', $dateTo)
             ->where('status', 'pending')
             ->count();
-        $checkoutsToday = Reservation::whereDate('check_out', Carbon::today())
+        $checkoutsToday = Reservation::whereDate('check_out', '>=', $dateFrom)
+            ->whereDate('check_out', '<=', $dateTo)
             ->where('status', 'checked_in')
             ->count();
         $upcomingBookings = Reservation::whereDate('check_in', '>', Carbon::today())
@@ -24,23 +31,44 @@ class RoomDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $rooms = Room::with('roomType')->orderBy('room_number')->get();
+        $rooms = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo) {
+                $q->where('status', 'checked_in')
+                    ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                        $sub->where('status', 'pending')
+                            ->whereDate('check_in', '>=', $dateFrom)
+                            ->whereDate('check_in', '<=', $dateTo);
+                    });
+            }, 'reservations.guest'])
+            ->orderBy('room_number')
+            ->get();
 
         return view('rooms.dashboard', compact(
-            'availableRoomsCount', 'checkinsToday', 'checkoutsToday', 
-            'upcomingBookings', 'rooms'
+            'availableRoomsCount', 'checkinsToday', 'checkoutsToday',
+            'upcomingBookings', 'rooms', 'dateFrom', 'dateTo'
         ));
     }
 
-    public function apiRoomsStatus()
+    public function apiRoomsStatus(Request $request)
     {
-        $rooms = Room::with('roomType')->orderBy('room_number')->get();
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
+        $rooms = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo) {
+                $q->where('status', 'checked_in')
+                    ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                        $sub->where('status', 'pending')
+                            ->whereDate('check_in', '>=', $dateFrom)
+                            ->whereDate('check_in', '<=', $dateTo);
+                    });
+            }, 'reservations.guest'])
+            ->orderBy('room_number')
+            ->get();
+
         return response()->json([
             'rooms' => $rooms,
             'available_count' => $rooms->where('status', 'available')->count(),
-            // Check-in/check-out jam 12:00 siang
-            'checkins_today' => Reservation::whereDate('check_in', Carbon::today())->where('status', 'pending')->count(),
-            'checkouts_today' => Reservation::whereDate('check_out', Carbon::today())->where('status', 'checked_in')->count(),
+            'checkins_today' => Reservation::whereDate('check_in', '>=', $dateFrom)->whereDate('check_in', '<=', $dateTo)->where('status', 'pending')->count(),
+            'checkouts_today' => Reservation::whereDate('check_out', '>=', $dateFrom)->whereDate('check_out', '<=', $dateTo)->where('status', 'checked_in')->count(),
         ]);
     }
 }

@@ -22,6 +22,11 @@ class CheckinController extends Controller
     public function index(Request $request)
     {
         $rooms = Room::orderBy('room_number')->get();
+
+        // Default tanggal: hari ini
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
         // Fetch pending and upcoming reservations for check-in
         $pendingReservations = Reservation::with(['guest', 'room'])
             ->when($request->input('search'), function ($query, $search) {
@@ -39,17 +44,14 @@ class CheckinController extends Controller
             ->when($request->input('room_id'), function ($query, $roomId) {
                 $query->where('room_id', $roomId);
             })
-            ->where(function ($query) {
+            ->where(function ($query) use ($dateFrom, $dateTo) {
                 $query->where('status', 'pending')
-                    ->orWhere(function ($sub) {
-                        $sub->where('status', 'checked_in')
-                            ->where('check_in', '<=', now())
-                            ->where('check_out', '>', now());
-                    });
+                    ->whereDate('check_in', '>=', $dateFrom)
+                    ->whereDate('check_in', '<=', $dateTo);
             })
             ->orderBy('check_in')
             ->get();
-        return view('frontoffice.checkin', compact('rooms', 'pendingReservations'));
+        return view('frontoffice.checkin', compact('rooms', 'pendingReservations', 'dateFrom', 'dateTo'));
     }
 
     public function process(Request $request)

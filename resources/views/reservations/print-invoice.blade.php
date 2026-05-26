@@ -145,10 +145,6 @@
     <div style="margin: 10px 0; padding: 8px 12px; border: 1px solid #333; font-size: 12px; font-style: italic; width: 100%; box-sizing: border-box;">
         <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
     </div>
-    <!-- Terbilang -->
-    <div style="margin: 10px 0; padding: 8px 12px; border: 1px solid #333; font-size: 12px; font-style: italic; width: 100%; box-sizing: border-box;">
-        <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
-    </div>
 
     <!-- Payment History -->
     @if($transactions->count() > 0)

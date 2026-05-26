@@ -13,10 +13,18 @@
     </div>
 
     <form method="GET" action="{{ route('checkin.index') }}" class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
-        <div class="grid gap-4 lg:grid-cols-3">
+        <div class="grid gap-4 lg:grid-cols-5">
             <div>
                 <label class="block text-gray-700 mb-2 text-sm">Cari (Nama / Kode / Kamar)</label>
                 <input type="text" name="search" value="{{ request('search') }}" class="w-full border rounded px-3 py-2" placeholder="Cari...">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Dari Tanggal</label>
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Sampai Tanggal</label>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="w-full border rounded px-3 py-2">
             </div>
             <div>
                 <label class="block text-gray-700 mb-2 text-sm">Kamar</label>

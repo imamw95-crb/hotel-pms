@@ -50,9 +50,17 @@
 <div class="bg-white rounded-lg shadow p-4 mb-8">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Denah Kamar</h2>
-        <div class="flex space-x-3">
+        <div class="flex items-center gap-3">
+            <form method="GET" action="{{ route('rooms.dashboard') }}" class="flex items-center gap-2">
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="border rounded px-2 py-1 text-sm">
+                <span class="text-sm text-gray-500">s/d</span>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="border rounded px-2 py-1 text-sm">
+                <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </form>
             <button onclick="refreshRooms()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
-                <i class="fas fa-sync-alt"></i> Refresh
+                <i class="fas fa-sync-alt"></i>
             </button>
             <a href="{{ route('booking.group.create') }}" class="bg-green-600 text-white px-3 py-1 rounded text-sm">
                 <i class="fas fa-users"></i> Booking Group
@@ -77,12 +85,19 @@
                     'cleaning' => 'fa-broom',
                 ][$room->status] ?? 'fa-bed';
             @endphp
+            @php
+                $activeReservation = $room->reservations->first();
+                $guestName = $activeReservation && $activeReservation->guest ? $activeReservation->guest->guest_name : null;
+            @endphp
             <div class="border rounded-lg p-3 text-center cursor-pointer hover:shadow-md transition room-card" data-room-id="{{ $room->id }}" data-room-number="{{ $room->room_number }}" data-status="{{ $room->status }}" onclick="window.location.href='{{ route('booking.create', ['room_id' => $room->id]) }}'">
                 <div class="rounded-lg p-2 {{ $statusColor }}">
                     <i class="fas {{ $statusIcon }} text-lg"></i>
                     <p class="font-bold text-lg">{{ $room->room_number }}</p>
                     <p class="text-xs">{{ $room->room_type_name ?? 'Standard' }}</p>
-                    <p class="text-xs mt-1">{{ ucfirst($room->status) }}</p>
+                    <p class="text-xs mt-1 font-semibold">{{ ucfirst($room->status) }}</p>
+                    @if($guestName)
+                        <p class="text-xs mt-1 truncate text-blue-700 font-medium" title="{{ $guestName }}"><i class="fas fa-user mr-1"></i>{{ $guestName }}</p>
+                    @endif
                 </div>
             </div>
         @endforeach
@@ -131,7 +146,8 @@
         <h3 class="font-bold text-lg mb-3"><i class="fas fa-user-check text-green-500 mr-2"></i>Check-in Hari Ini</h3>
         @php
             $todayCheckins = \App\Models\Reservation::with(['guest', 'room'])
-                ->whereDate('check_in', \Carbon\Carbon::today())
+                ->whereDate('check_in', '>=', $dateFrom)
+                ->whereDate('check_in', '<=', $dateTo)
                 ->where('status', 'pending')
                 ->orderBy('check_in')
                 ->limit(10)
@@ -143,7 +159,9 @@
                     <tr class="border-b">
                         <th class="text-left p-2 text-sm">Nama Tamu</th>
                         <th class="text-left p-2 text-sm">Kamar</th>
+                        <th class="text-left p-2 text-sm">Check-in</th>
                         <th class="text-left p-2 text-sm">Check-out</th>
+                        <th class="text-left p-2 text-sm">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -151,21 +169,24 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-2 font-medium">{{ $res->guest->guest_name ?? '-' }}</td>
                         <td class="p-2">{{ $res->room->room_number ?? '-' }}</td>
-                        <td class="p-2 text-sm">{{ $res->check_out->format('d/m/Y') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_in->format('d/m/Y H:i') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_out->format('d/m/Y H:i') }}</td>
+                        <td class="p-2"><span class="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">Pending</span></td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
         @else
-            <p class="text-gray-500 text-center py-4">Tidak ada check-in hari ini</p>
+            <p class="text-gray-500 text-center py-4">Tidak ada check-in pada tanggal ini</p>
         @endif
     </div>
 
     <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="font-bold text-lg mb-3"><i class="fas fa-user-times text-yellow-500 mr-2"></i>Check-out Hari Ini</h3>
+        <h3 class="font-bold text-lg mb-3"><i class="fas fa-user-times text-yellow-500 mr-2"></i>Check-out</h3>
         @php
             $todayCheckouts = \App\Models\Reservation::with(['guest', 'room'])
-                ->whereDate('check_out', \Carbon\Carbon::today())
+                ->whereDate('check_out', '>=', $dateFrom)
+                ->whereDate('check_out', '<=', $dateTo)
                 ->where('status', 'checked_in')
                 ->orderBy('check_out')
                 ->limit(10)
@@ -178,6 +199,8 @@
                         <th class="text-left p-2 text-sm">Nama Tamu</th>
                         <th class="text-left p-2 text-sm">Kamar</th>
                         <th class="text-left p-2 text-sm">Check-in</th>
+                        <th class="text-left p-2 text-sm">Check-out</th>
+                        <th class="text-left p-2 text-sm">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -185,13 +208,15 @@
                     <tr class="border-b hover:bg-gray-50">
                         <td class="p-2 font-medium">{{ $res->guest->guest_name ?? '-' }}</td>
                         <td class="p-2">{{ $res->room->room_number ?? '-' }}</td>
-                        <td class="p-2 text-sm">{{ $res->check_in->format('d/m/Y') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_in->format('d/m/Y H:i') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_out->format('d/m/Y H:i') }}</td>
+                        <td class="p-2"><span class="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Checked In</span></td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
         @else
-            <p class="text-gray-500 text-center py-4">Tidak ada check-out hari ini</p>
+            <p class="text-gray-500 text-center py-4">Tidak ada check-out pada tanggal ini</p>
         @endif
     </div>
 </div>

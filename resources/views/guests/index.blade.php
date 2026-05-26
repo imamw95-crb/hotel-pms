@@ -23,14 +23,22 @@
     @endif
 
     <form method="GET" action="{{ route('guests.index') }}" class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
-        <div class="grid gap-4 lg:grid-cols-3">
+        <div class="grid gap-4 lg:grid-cols-4">
             <div>
                 <label class="block text-gray-700 mb-2 text-sm">Cari Nama / No. ID / Telepon</label>
                 <input type="text" name="search" value="{{ request('search') }}" class="w-full border rounded px-3 py-2" placeholder="Cari...">
             </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Dari Tanggal</label>
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Sampai Tanggal</label>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="w-full border rounded px-3 py-2">
+            </div>
             <div class="flex items-end gap-2">
                 <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    <i class="fas fa-search mr-1"></i> Cari
+                    <i class="fas fa-search mr-1"></i> Filter
                 </button>
                 <a href="{{ route('guests.index') }}" class="flex-1 text-center bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
                     Reset

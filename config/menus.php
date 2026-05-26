@@ -103,6 +103,14 @@ return [
             ],
         ],
 
+        // ─── Pendapatan Resto ────────────────────────────────────────
+        [
+            'label'      => 'Pendapatan Resto',
+            'icon'       => 'utensils',
+            'route'      => 'resto.index',
+            'permission' => null,
+        ],
+
         // ─── Reports ─────────────────────────────────────────────────
         [
             'label'  => 'Reports',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class GuestController extends Controller
@@ -10,6 +11,14 @@ class GuestController extends Controller
     public function index(Request $request)
     {
         $query = Guest::query();
+
+        // Default tanggal: hari ini
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
+        // Filter berdasarkan tanggal created_at (tanggal tamu ditambahkan/daftar)
+        $query->whereDate('created_at', '>=', $dateFrom)
+              ->whereDate('created_at', '<=', $dateTo);
 
         if ($request->input('search')) {
             $search = $request->input('search');
@@ -22,7 +31,7 @@ class GuestController extends Controller
         }
 
         $guests = $query->orderBy('guest_name')->paginate(25);
-        return view('guests.index', compact('guests'));
+        return view('guests.index', compact('guests', 'dateFrom', 'dateTo'));
     }
 
     public function create()

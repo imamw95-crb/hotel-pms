@@ -74,8 +74,8 @@
             </div>
         </div>
 
-        <!-- Row 4: Tipe Pembayaran (Full / DP) -->
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <!-- Row 4: Tipe Pembayaran & Nominal DP -->
+        <div class="grid grid-cols-3 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
                 <div class="flex space-x-4 mt-2">
@@ -89,14 +89,15 @@
                     </label>
                 </div>
             </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Total Tagihan</label>
+                <div class="w-full border rounded px-3 py-2 bg-gray-100 font-bold text-blue-700" id="totalTagihan">Rp 0</div>
             </div>
-        </div>
-
-        <!-- DP Amount (hidden by default) -->
-        <div class="mb-4 hidden" id="dpAmountSection">
-            <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp)</label>
-            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" step="1000" placeholder="Masukkan nominal DP">
-            <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar">Rp 0</span></p>
+            <div id="dpAmountSection" class="hidden">
+                <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp) <span class="text-red-500">*</span></label>
+                <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+                <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar" class="font-semibold text-orange-600">Rp 0</span></p>
+            </div>
         </div>
 
         <!-- Catatan -->
@@ -121,7 +122,7 @@
     const statusEl = document.getElementById('availabilityStatus');
 
     // Set minimum date ke hari ini
-    const today = new Date().toISOString().split('T')[0];
+    const today = new window.Date().toISOString().split('T')[0];
     checkInEl.min = today;
     checkOutEl.min = today;
 
@@ -131,6 +132,7 @@
             checkOutEl.value = '';
         }
         checkAvailability();
+        calculateTotal();
     });
 
     checkOutEl.addEventListener('change', function() {
@@ -180,6 +182,7 @@
                     statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-green-100 border border-green-300 text-green-800';
                     statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> <strong>' + data.rooms.length + ' kamar tersedia</strong>';
                     statusEl.classList.remove('hidden');
+                    calculateTotal();
                 } else {
                     roomSelect.innerHTML = '<option value="">-- Tidak ada kamar tersedia --</option>';
                     roomSelect.disabled = true;
@@ -200,17 +203,61 @@
 
     roomSelect.addEventListener('change', function() {
         const sel = this.options[this.selectedIndex];
-        // Hanya auto-fill jika user belum mengisi harga manual
         if (sel && sel.dataset.price && !priceInput.dataset.edited) {
             priceInput.value = sel.dataset.price;
         }
+        calculateTotal();
     });
 
-    // Tandai jika user edit harga manual
     priceInput.addEventListener('input', function() {
         this.dataset.edited = 'true';
+        calculateTotal();
     });
 
-    function fmt(d) { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    function calculateTotal() {
+        const checkIn = checkInEl.value;
+        const checkOut = checkOutEl.value;
+        const price = parseInt(priceInput.value) || 0;
+        const totalEl = document.getElementById('totalTagihan');
+
+        if (checkIn && checkOut && price > 0) {
+            const d1 = new window.Date(checkIn);
+            const d2 = new window.Date(checkOut);
+            const days = Math.max(1, Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)));
+            const total = price * days;
+            totalEl.textContent = 'Rp ' + total.toLocaleString('id-ID');
+            totalEl.dataset.total = total;
+        } else {
+            totalEl.textContent = 'Rp 0';
+            totalEl.dataset.total = 0;
+        }
+        updateSisaBayar();
+    }
+
+    function toggleDpFields() {
+        const isDp = document.querySelector('input[name="payment_type"]:checked').value === 'dp';
+        const dpSection = document.getElementById('dpAmountSection');
+        const dpInput = document.getElementById('dpAmount');
+        if (isDp) {
+            dpSection.classList.remove('hidden');
+            dpInput.setAttribute('required', 'required');
+        } else {
+            dpSection.classList.add('hidden');
+            dpInput.removeAttribute('required');
+            dpInput.value = '';
+        }
+        updateSisaBayar();
+    }
+
+    function updateSisaBayar() {
+        const total = parseInt(document.getElementById('totalTagihan').dataset.total) || 0;
+        const dpAmount = parseInt(document.getElementById('dpAmount').value) || 0;
+        const sisa = Math.max(0, total - dpAmount);
+        document.getElementById('sisaBayar').textContent = 'Rp ' + sisa.toLocaleString('id-ID');
+    }
+
+    document.getElementById('dpAmount').addEventListener('input', updateSisaBayar);
+
+    function fmt(d) { return new window.Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); }
 </script>
 @endsection

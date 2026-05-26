@@ -94,38 +94,40 @@
             </div>
         </div>
 
-        <!-- Metode Pembayaran -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
-            <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
-                <option value="">-- Pilih Metode --</option>
-                <option value="cash">Tunai</option>
-                <option value="bank_transfer">Transfer Bank</option>
-                <option value="credit_card">Kartu Kredit</option>
-                <option value="debit_card">Kartu Debit</option>
-            </select>
-        </div>
-
-        <!-- Tipe Pembayaran (Full / DP) -->
-        <div class="mb-4">
-            <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
-            <div class="flex space-x-4">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
-                    <span>Lunas (Bayar Penuh)</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
-                    <span>DP (Down Payment)</span>
-                </label>
+        {{-- Row: Metode Bayar + Tipe Pembayaran + Total Tagihan + Nominal DP --}}
+        <div class="grid grid-cols-4 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
+                <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2">
+                    <option value="">-- Pilih --</option>
+                    <option value="cash">Tunai</option>
+                    <option value="bank_transfer">Transfer Bank</option>
+                    <option value="credit_card">Kartu Kredit</option>
+                    <option value="debit_card">Kartu Debit</option>
+                </select>
             </div>
-        </div>
-
-        <!-- DP Amount (hidden by default) -->
-        <div class="mb-4 hidden" id="dpAmountSection">
-            <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp)</label>
-            <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
-            <p class="text-xs text-gray-500 mt-1">Total semua kamar: <span id="totalSemuaKamar">Rp 0</span> | Sisa bayar: <span id="sisaBayarGroup">Rp 0</span></p>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
+                <div class="flex space-x-3 mt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                        <span>Lunas</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                        <span>DP</span>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Total Tagihan</label>
+                <div class="w-full border rounded px-3 py-2 bg-gray-100 font-bold text-blue-700" id="totalTagihanGroup">Rp 0</div>
+            </div>
+            <div id="dpAmountSection" class="hidden">
+                <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp) <span class="text-red-500">*</span></label>
+                <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+                <p class="text-xs text-gray-500 mt-1">Sisa: <span id="sisaBayarGroup" class="font-semibold text-orange-600">Rp 0</span></p>
+            </div>
         </div>
 
         <!-- Catatan -->
@@ -156,7 +158,7 @@
     let selectedRooms = {};
     let availableRoomsData = [];
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new window.Date().toISOString().split('T')[0];
     checkInEl.min = today;
     checkOutEl.min = today;
 
@@ -286,9 +288,10 @@
         const checkIn = checkInEl.value;
         const checkOut = checkOutEl.value;
         if (checkIn && checkOut) {
-            const days = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+            const days = Math.ceil((new window.Date(checkOut) - new window.Date(checkIn)) / (1000 * 60 * 60 * 24));
             const totalAll = total * days;
-            document.getElementById('totalSemuaKamar').textContent = 'Rp ' + totalAll.toLocaleString('id-ID');
+            document.getElementById('totalTagihanGroup').textContent = 'Rp ' + totalAll.toLocaleString('id-ID');
+            document.getElementById('totalTagihanGroup').dataset.total = totalAll;
             updateSisaBayar();
         }
     }
@@ -332,10 +335,10 @@
 
     function updateSisaBayar() {
         const dpAmount = parseInt(document.getElementById('dpAmount').value) || 0;
-        const totalText = document.getElementById('totalSemuaKamar').textContent;
-        const total = parseInt(totalText.replace(/[^\d]/g, '')) || 0;
-        const sisa = total - dpAmount;
-        document.getElementById('sisaBayarGroup').textContent = 'Rp ' + (sisa > 0 ? sisa.toLocaleString('id-ID') : '0');
+        const totalEl = document.getElementById('totalTagihanGroup');
+        const total = parseInt(totalEl.dataset.total) || 0;
+        const sisa = Math.max(0, total - dpAmount);
+        document.getElementById('sisaBayarGroup').textContent = 'Rp ' + sisa.toLocaleString('id-ID');
     }
 
     // Listen for DP amount changes

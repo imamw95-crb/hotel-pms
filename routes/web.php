@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DepositController;
+use App\Http\Controllers\RestoController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -127,5 +128,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/deposits/create', [DepositController::class, 'create'])->name('deposits.create');
         Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.store');
         Route::get('/deposits/{deposit}', [DepositController::class, 'show'])->name('deposits.show');
+    });
+
+    // Pendapatan Resto
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/resto', [RestoController::class, 'index'])->name('resto.index');
+        Route::get('/resto/create', [RestoController::class, 'create'])->name('resto.create');
+        Route::post('/resto', [RestoController::class, 'store'])->name('resto.store');
+        Route::get('/resto/{restoTransaction}', [RestoController::class, 'show'])->name('resto.show');
     });
 });
