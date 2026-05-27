@@ -50,7 +50,17 @@ class GuestController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        Guest::create($request->all());
+        $guest = Guest::create($request->all());
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tamu berhasil ditambahkan',
+                'redirect_url' => route('guests.index'),
+                'guest' => $guest
+            ]);
+        }
 
         return redirect()->route('guests.index')->with('success', 'Tamu berhasil ditambahkan');
     }
@@ -73,12 +83,32 @@ class GuestController extends Controller
 
         $guest->update($request->all());
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tamu berhasil diperbarui',
+                'redirect_url' => route('guests.index'),
+                'guest' => $guest
+            ]);
+        }
+
         return redirect()->route('guests.index')->with('success', 'Tamu berhasil diperbarui');
     }
 
     public function destroy(Guest $guest)
     {
         $guest->delete();
+        
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tamu berhasil dihapus',
+                'redirect_url' => route('guests.index')
+            ]);
+        }
+        
         return redirect()->route('guests.index')->with('success', 'Tamu berhasil dihapus');
     }
 

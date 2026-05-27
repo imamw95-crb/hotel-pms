@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm">
+            <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm" data-ajax="true">
                 @csrf
                 <input type="hidden" name="reservation_id" id="reservationId" value="">
 

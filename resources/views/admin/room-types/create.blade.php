@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Tambah Tipe Kamar</h2>
-    <form method="POST" action="{{ route('room-types.store') }}">
+    <form method="POST" action="{{ route('room-types.store') }}" data-ajax="true">
         @csrf
         <div class="mb-4">
             <label class="block text-gray-700 mb-2">Kode Tipe</label>

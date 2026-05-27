@@ -59,6 +59,13 @@ class PermissionSeeder extends Seeder
             
             // Guest Permissions
             ['name' => 'Manage Guests', 'slug' => 'manage_guests', 'group' => 'guest', 'description' => 'Dapat mengelola data tamu'],
+
+            // Housekeeping Permissions
+            ['name' => 'View Housekeeping', 'slug' => 'view_housekeeping', 'group' => 'housekeeping', 'description' => 'Dapat melihat tugas housekeeping'],
+            ['name' => 'Create Housekeeping Task', 'slug' => 'create_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat membuat tugas housekeeping'],
+            ['name' => 'Update Housekeeping Status', 'slug' => 'update_housekeeping_status', 'group' => 'housekeeping', 'description' => 'Dapat mengubah status tugas housekeeping'],
+            ['name' => 'Assign Housekeeping Task', 'slug' => 'assign_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menugaskan staff housekeeping'],
+            ['name' => 'Delete Housekeeping Task', 'slug' => 'delete_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menghapus tugas housekeeping'],
         ];
 
         foreach ($permissions as $permission) {
@@ -76,6 +83,7 @@ class PermissionSeeder extends Seeder
             'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms', 'change_room',
             'view_room_types', 'create_room_type', 'edit_room_type', 'delete_room_type',
             'view_reports', 'manage_guests',
+            'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
@@ -85,6 +93,7 @@ class PermissionSeeder extends Seeder
             'view_room_dashboard', 'change_room',
             'view_reports',
             'view_rooms', 'view_room_types', 'manage_guests',
+            'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status',
         ]);
 
         $this->assignPermissionToRole('owner', [

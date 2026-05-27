@@ -18,7 +18,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.permissions.update-user', $user) }}" method="POST" class="bg-white rounded-lg shadow p-8">
+    <form action="{{ route('admin.permissions.update-user', $user) }}" method="POST" class="bg-white rounded-lg shadow p-8" data-ajax="true">
         @csrf
 
         <p class="mb-6 text-gray-600">

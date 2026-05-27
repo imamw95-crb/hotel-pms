@@ -79,9 +79,26 @@ class DatabaseBackupController extends Controller
                 $this->backupWithPHP($filepath);
             }
 
+            // Check if request is AJAX
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Backup berhasil dibuat: {$filename}",
+                    'redirect_url' => route('admin.backups.index')
+                ]);
+            }
+
             return redirect()->route('admin.backups.index')
                 ->with('success', "Backup berhasil dibuat: {$filename}");
         } catch (\Exception $e) {
+            // Check if request is AJAX
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membuat backup: ' . $e->getMessage(),
+                    'redirect_url' => route('admin.backups.index')
+                ], 500);
+            }
             return redirect()->route('admin.backups.index')
                 ->with('error', 'Gagal membuat backup: ' . $e->getMessage());
         }
@@ -113,8 +130,27 @@ class DatabaseBackupController extends Controller
 
         if (File::exists($filepath)) {
             File::delete($filepath);
+
+            // Check if request is AJAX
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Backup berhasil dihapus.',
+                    'redirect_url' => route('admin.backups.index')
+                ]);
+            }
+
             return redirect()->route('admin.backups.index')
                 ->with('success', 'Backup berhasil dihapus.');
+        }
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File backup tidak ditemukan.',
+                'redirect_url' => route('admin.backups.index')
+            ], 404);
         }
 
         return redirect()->route('admin.backups.index')
@@ -158,9 +194,26 @@ class DatabaseBackupController extends Controller
                     ->with('error', 'Gagal restore backup. Pastikan MySQL client terinstall.');
             }
 
+            // Check if request is AJAX
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Database berhasil di-restore dari: {$filename}",
+                    'redirect_url' => route('admin.backups.index')
+                ]);
+            }
+
             return redirect()->route('admin.backups.index')
                 ->with('success', "Database berhasil di-restore dari: {$filename}");
         } catch (\Exception $e) {
+            // Check if request is AJAX
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal restore backup: ' . $e->getMessage(),
+                    'redirect_url' => route('admin.backups.index')
+                ], 500);
+            }
             return redirect()->route('admin.backups.index')
                 ->with('error', 'Gagal restore backup: ' . $e->getMessage());
         }

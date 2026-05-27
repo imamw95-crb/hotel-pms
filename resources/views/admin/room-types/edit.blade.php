@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Edit Tipe Kamar</h2>
-    <form method="POST" action="{{ route('room-types.update', $roomType) }}">
+    <form method="POST" action="{{ route('room-types.update', $roomType) }}" data-ajax="true">
         @csrf
         @method('PUT')
         <div class="mb-4">

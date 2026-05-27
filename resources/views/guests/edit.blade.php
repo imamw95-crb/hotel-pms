@@ -6,7 +6,7 @@
 <div class="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
     <h2 class="text-2xl font-bold mb-6">Edit Tamu</h2>
 
-    <form method="POST" action="{{ route('guests.update', $guest->id) }}">
+    <form method="POST" action="{{ route('guests.update', $guest->id) }}" data-ajax="true">
         @csrf
         @method('PUT')
 

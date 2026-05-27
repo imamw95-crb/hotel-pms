@@ -69,7 +69,7 @@
                             <a href="{{ route('guests.edit', $guest->id) }}" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 mr-2">
                                 <i class="fas fa-edit mr-1"></i> Edit
                             </a>
-                            <form method="POST" action="{{ route('guests.destroy', $guest->id) }}" class="inline" onsubmit="return confirm('Yakin ingin menghapus tamu ini?');">
+                            <form method="POST" action="{{ route('guests.destroy', $guest->id) }}" class="inline" data-ajax="true">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">

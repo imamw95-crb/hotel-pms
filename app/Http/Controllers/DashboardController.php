@@ -48,6 +48,13 @@ class DashboardController extends Controller
         $checkoutsToday = Reservation::whereDate('check_out', Carbon::today())
             ->where('status', 'checked_in')->count();
 
+        // Due Out: kamar yang tamu-nya check-out HARI INI (masih occupied, akan kosong siang)
+        $dueOutRooms = Reservation::with(['room', 'guest'])
+            ->whereDate('check_out', Carbon::today())
+            ->where('status', 'checked_in')
+            ->orderBy('room_id')
+            ->get();
+
         $last7Days = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
@@ -71,7 +78,7 @@ class DashboardController extends Controller
         return view('dashboard.index', compact(
             'totalRooms', 'occupiedRooms', 'occupancyRate',
             'todayRevenue', 'monthRevenue', 'checkinsToday', 'checkoutsToday',
-            'last7Days', 'recentReservations'
+            'dueOutRooms', 'last7Days', 'recentReservations'
         ));
     }
 
@@ -102,8 +109,25 @@ class DashboardController extends Controller
         $todayCheckouts = Reservation::whereDate('check_out', Carbon::today())
             ->where('status', 'checked_in')->count();
 
+        // Due Out: kamar yang tamu-nya check-out HARI INI
+        // (masih occupied, akan kosong siang ini — siap untuk back-to-back check-in)
+        $dueOutRooms = Reservation::with(['room', 'guest'])
+            ->whereDate('check_out', Carbon::today())
+            ->where('status', 'checked_in')
+            ->orderBy('room_id')
+            ->get();
+
+        // Occupied (non-due-out): kamar yang masih benar-benar terisi
+        $trulyOccupiedRooms = Room::where('status', 'occupied')
+            ->whereDoesntHave('reservations', function ($q) {
+                $q->whereDate('check_out', Carbon::today())
+                  ->where('status', 'checked_in');
+            })
+            ->count();
+
         return view('dashboard.index', compact(
-            'availableRooms', 'todayCheckins', 'todayCheckouts'
+            'availableRooms', 'todayCheckins', 'todayCheckouts',
+            'dueOutRooms', 'trulyOccupiedRooms'
         ));
     }
 }

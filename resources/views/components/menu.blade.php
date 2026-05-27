@@ -28,8 +28,15 @@
             {{-- Single menu item (no children) --}}
             @if(!$hasChildren)
                 @if(!isset($item['permission']) || hasPermission($item['permission']))
+                    @php
+                        $isModal = isset($item['modal']) && $item['modal'];
+                    @endphp
                     <li class="menu-item {{ $isChildActive($item['route']) ? 'active' : '' }}">
-                        <a href="{{ route($item['route']) }}" class="menu-link">
+                        @if($isModal)
+                            <a href="javascript:void(0)" class="menu-link" onclick="Modal.open('{{ route($item['route']) }}'); return false;">
+                        @else
+                            <a href="{{ route($item['route']) }}" class="menu-link">
+                        @endif
                             <span class="menu-icon">
                                 <i class="fas fa-{{ $item['icon'] ?? 'circle' }}"></i>
                             </span>
@@ -64,8 +71,15 @@
                         <ul class="submenu">
                             @foreach($item['children'] as $child)
                                 @if(!isset($child['permission']) || hasPermission($child['permission']))
+                                    @php
+                                        $isChildModal = isset($child['modal']) && $child['modal'];
+                                    @endphp
                                     <li class="submenu-item {{ $isChildActive($child['route']) ? 'active' : '' }}">
-                                        <a href="{{ route($child['route']) }}" class="submenu-link">
+                                        @if($isChildModal)
+                                            <a href="javascript:void(0)" class="submenu-link" onclick="Modal.open('{{ route($child['route']) }}'); return false;">
+                                        @else
+                                            <a href="{{ route($child['route']) }}" class="submenu-link">
+                                        @endif
                                             <span class="submenu-dot"></span>
                                             <span class="submenu-label">{{ $child['label'] }}</span>
                                         </a>

@@ -21,14 +21,6 @@ return [
             'permission' => 'manage_users',
         ],
 
-        // ─── Dashboard Operasional ──────────────────────────────────
-        [
-            'label'      => 'Dashboard Operasional',
-            'icon'       => 'th-large',
-            'route'      => 'rooms.dashboard',
-            'permission' => 'view_rooms',
-        ],
-
         // ─── Front Desk ──────────────────────────────────────────────
         [
             'label'  => 'Front Desk',
@@ -37,12 +29,21 @@ return [
                 [
                     'label'      => 'Reservasi',
                     'route'      => 'reservations.index',
-                    'permission' => 'view_reservations',
                 ],
                 [
                     'label'      => 'Check-in',
                     'route'      => 'checkin.index',
                     'permission' => 'checkin',
+                ],
+                [
+                    'label'      => 'Checkout',
+                    'route'      => 'checkout.index',
+                    'permission' => 'checkout',
+                ],
+                [
+                    'label'      => 'Pindah Kamar',
+                    'route'      => 'room-change.index',
+                    'permission' => 'change_room',
                 ],
                 [
                     'label'      => 'Issue Card',
@@ -57,6 +58,24 @@ return [
             ],
         ],
 
+        // ─── Room Rack & Availability ────────────────────────────────
+        [
+            'label'  => 'Availability',
+            'icon'   => 'bed',
+            'children' => [
+                [
+                    'label'      => 'Room Rack',
+                    'route'      => 'room-rack.index',
+                    'permission' => 'view_rooms',
+                ],
+                [
+                    'label'      => 'Occupancy Calendar',
+                    'route'      => 'room-rack.occupancy',
+                    'permission' => 'view_rooms',
+                ],
+            ],
+        ],
+
         // ─── Booking ─────────────────────────────────────────────────
         [
             'label'  => 'Booking',
@@ -66,11 +85,13 @@ return [
                     'label'      => 'Booking Single',
                     'route'      => 'booking.create',
                     'permission' => 'create_booking',
+                    'modal'      => true,
                 ],
                 [
                     'label'      => 'Booking Group',
                     'route'      => 'booking.group.create',
                     'permission' => 'create_booking_group',
+                    'modal'      => true,
                 ],
             ],
         ],
@@ -92,6 +113,14 @@ return [
                 ],
 
             ],
+        ],
+
+        // ─── Housekeeping ────────────────────────────────────────────
+        [
+            'label'      => 'Housekeeping',
+            'icon'       => 'broom',
+            'route'      => 'housekeeping.index',
+            'permission' => 'view_rooms',
         ],
 
         // ─── Guest Management ────────────────────────────────────────

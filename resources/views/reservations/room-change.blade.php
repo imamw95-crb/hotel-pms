@@ -42,8 +42,13 @@
                 <p class="font-medium">{{ $reservation->check_out->format('d/m/Y H:i') }}</p>
             </div>
             <div>
-                <span class="text-gray-500 text-sm">Harga per Malam (Kamar Lama)</span>
-                <p class="font-medium">Rp {{ number_format($reservation->room->price_per_night ?? 0, 0, ',', '.') }}</p>
+                <span class="text-gray-500 text-sm">Harga Kamar Lama</span>
+                <p class="font-medium">
+                    Rp {{ number_format($reservation->room->price_per_night ?? 0, 0, ',', '.') }}
+                    @if($reservation->room->price_weekday > 0 || $reservation->room->price_weekend > 0)
+                        <span class="text-xs text-gray-500">(Wd: {{ number_format($reservation->room->price_weekday, 0, ',', '.') }} / We: {{ number_format($reservation->room->price_weekend, 0, ',', '.') }})</span>
+                    @endif
+                </p>
             </div>
             <div>
                 <span class="text-gray-500 text-sm">Total Tagihan Saat Ini</span>
@@ -65,7 +70,7 @@
                 <p class="text-yellow-600 text-sm mt-1">Semua kamar sudah terbooking untuk tanggal {{ $reservation->check_in->format('d/m/Y') }} - {{ $reservation->check_out->format('d/m/Y') }}.</p>
             </div>
         @else
-            <form action="{{ route('reservations.room-change.store', $reservation) }}" method="POST" id="roomChangeForm">
+            <form action="{{ route('reservations.room-change.store', $reservation) }}" method="POST" id="roomChangeForm" data-ajax="true">
                 @csrf
 
                 <div class="mb-4">
@@ -73,7 +78,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         @foreach($availableRooms as $room)
                             <label class="relative flex items-start p-4 border-2 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition {{ $loop->first ? 'border-blue-500 bg-blue-50' : 'border-gray-200' }} room-option">
-                                <input type="radio" name="new_room_id" value="{{ $room->id }}" class="mt-1 mr-3" {{ $loop->first ? 'checked' : '' }} onchange="updatePriceInfo(this)" data-price="{{ $room->price_per_night }}" data-type="{{ $room->room_type_name }}" data-number="{{ $room->room_number }}">
+                                <input type="radio" name="new_room_id" value="{{ $room->id }}" class="mt-1 mr-3" {{ $loop->first ? 'checked' : '' }} onchange="updatePriceInfo(this)" data-price-weekday="{{ $room->price_weekday ?? $room->price_per_night }}" data-price-weekend="{{ $room->price_weekend ?? $room->price_per_night }}" data-type="{{ $room->room_type_name }}" data-number="{{ $room->room_number }}">
                                 <div class="flex-1">
                                     <div class="flex justify-between items-start">
                                         <div>
@@ -83,7 +88,7 @@
                                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">AVAILABLE</span>
                                     </div>
                                     <div class="mt-2 text-sm text-gray-600">
-                                        <p><i class="fas fa-tag mr-1"></i>Harga: <span class="font-medium">Rp {{ number_format($room->price_per_night, 0, ',', '.') }}</span> / malam</p>
+                                        <p><i class="fas fa-tag mr-1"></i>Harga: <span class="font-medium">Weekday Rp {{ number_format($room->price_weekday ?? $room->price_per_night, 0, ',', '.') }}</span> / <span class="font-medium">Weekend Rp {{ number_format($room->price_weekend ?? $room->price_per_night, 0, ',', '.') }}</span></p>
                                         <p><i class="fas fa-users mr-1"></i>Kapasitas: {{ $room->max_occupancy }} orang</p>
                                         @if($room->facilities)
                                             <p class="mt-1">
@@ -104,26 +109,26 @@
 
                 <!-- Preview Harga Baru -->
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4" id="pricePreview">
-                    <h4 class="font-bold text-sm text-blue-700 mb-2"><i class="fas fa-calculator mr-1"></i>Estimasi Tagihan Baru</h4>
+                    <h4 class="font-bold text-sm text-blue-700 mb-2"><i class="fas fa-calculator mr-1"></i>Estimasi Tagihan Baru (Weekday/Weekend)</h4>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-gray-500">Harga per Malam (Baru)</span>
-                            <p class="font-bold" id="newPricePerNight">Rp {{ number_format($availableRooms->first()->price_per_night ?? 0, 0, ',', '.') }}</p>
+                            <span class="text-gray-500">Harga Weekday (Baru)</span>
+                            <p class="font-bold" id="newPriceWeekday">Rp {{ number_format($availableRooms->first()->price_weekday ?? $availableRooms->first()->price_per_night ?? 0, 0, ',', '.') }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Jumlah Malam</span>
-                            <p class="font-bold">{{ $reservation->nights }} malam</p>
+                            <span class="text-gray-500">Harga Weekend (Baru)</span>
+                            <p class="font-bold" id="newPriceWeekend">Rp {{ number_format($availableRooms->first()->price_weekend ?? $availableRooms->first()->price_per_night ?? 0, 0, ',', '.') }}</p>
                         </div>
                         <div>
                             <span class="text-gray-500">Total Tagihan Baru</span>
-                            <p class="font-bold text-blue-600" id="newTotalAmount">Rp {{ number_format(($availableRooms->first()->price_per_night ?? 0) * $reservation->nights, 0, ',', '.') }}</p>
+                            <p class="font-bold text-blue-600" id="newTotalAmount">Rp {{ number_format($availableRooms->first()->calculateTotalForRange($reservation->check_in, $reservation->check_out), 0, ',', '.') }}</p>
                         </div>
                         <div>
                             <span class="text-gray-500">Selisih</span>
                             <p class="font-bold" id="priceDifference">
                                 @php
-                                    $firstRoomPrice = ($availableRooms->first()->price_per_night ?? 0) * $reservation->nights;
-                                    $diff = $firstRoomPrice - $reservation->total_amount;
+                                    $firstRoomNewTotal = $availableRooms->first()->calculateTotalForRange($reservation->check_in, $reservation->check_out);
+                                    $diff = $firstRoomNewTotal - $reservation->total_amount;
                                 @endphp
                                 @if($diff > 0)
                                     <span class="text-red-600">+Rp {{ number_format($diff, 0, ',', '.') }}</span>
@@ -158,16 +163,38 @@
     </div>
 </div>
 
+@php
+    $checkInDate = $reservation->check_in->format('Y-m-d');
+    $checkOutDate = $reservation->check_out->format('Y-m-d');
+@endphp
 <script>
-    const nights = {{ $reservation->nights }};
     const currentTotal = {{ $reservation->total_amount }};
+    const ci = '{{ $checkInDate }}';
+    const co = '{{ $checkOutDate }}';
+
+    function calcRangeTotal(wd, we, start, end) {
+        if (!start || !end || !wd) return 0;
+        const d1 = new Date(start);
+        const d2 = new Date(end);
+        if (d2 <= d1) return 0;
+        let total = 0;
+        const cur = new Date(d1);
+        while (cur < d2) {
+            const day = cur.getDay();
+            total += (day === 0 || day === 6) ? (we || wd) : wd;
+            cur.setDate(cur.getDate() + 1);
+        }
+        return total;
+    }
 
     function updatePriceInfo(radio) {
-        const price = parseFloat(radio.dataset.price);
-        const newTotal = price * nights;
+        const wd = parseFloat(radio.dataset.priceWeekday);
+        const we = parseFloat(radio.dataset.priceWeekend);
+        const newTotal = calcRangeTotal(wd, we, ci, co);
         const diff = newTotal - currentTotal;
 
-        document.getElementById('newPricePerNight').textContent = 'Rp ' + price.toLocaleString('id-ID');
+        document.getElementById('newPriceWeekday').textContent = 'Rp ' + wd.toLocaleString('id-ID');
+        document.getElementById('newPriceWeekend').textContent = 'Rp ' + we.toLocaleString('id-ID');
         document.getElementById('newTotalAmount').textContent = 'Rp ' + newTotal.toLocaleString('id-ID');
 
         const diffEl = document.getElementById('priceDifference');

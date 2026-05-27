@@ -19,6 +19,7 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\RestoController;
 use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\HousekeepingController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -43,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
     // Room Dashboard
     Route::get('/rooms-dashboard', [RoomDashboardController::class, 'index'])->middleware('permission:view_room_dashboard')->name('rooms.dashboard');
     Route::get('/api/rooms-status', [RoomDashboardController::class, 'apiRoomsStatus'])->middleware('permission:view_room_dashboard')->name('rooms.api');
+    Route::patch('/rooms/{room}/status', [RoomDashboardController::class, 'updateStatus'])->middleware('permission:manage_rooms')->name('rooms.update-status');
+    Route::patch('/rooms/bulk-status', [RoomDashboardController::class, 'bulkUpdateStatus'])->middleware('permission:manage_rooms')->name('rooms.bulk-status');
     
     // Booking
     Route::get('/booking/create', [BookingController::class, 'create'])->middleware('permission:create_booking')->name('booking.create');
@@ -66,16 +69,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/issue-card/read', [IssueCardController::class, 'readCard'])->middleware('permission:issue_card')->name('issue-card.read');
 
     // Reservasi
-    Route::get('/reservations', [ReservationController::class, 'index'])->middleware('permission:view_reservations')->name('reservations.index');
-    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->middleware('permission:view_reservations')->name('reservations.show');
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->middleware('permission:checkin')->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->middleware('permission:checkout')->name('reservations.checkout');
+    Route::get('/checkout', [ReservationController::class, 'checkoutList'])->middleware('permission:checkout')->name('checkout.index');
+    Route::post('/rooms/{room}/checkout', [ReservationController::class, 'checkoutByRoom'])->middleware('permission:checkout')->name('rooms.checkout');
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->middleware('permission:add_payment')->name('reservations.add-payment');
+    Route::get('/room-change', [ReservationController::class, 'roomChangeList'])->middleware('permission:change_room')->name('room-change.index');
     Route::get('/reservations/{reservation}/room-change', [ReservationController::class, 'showRoomChange'])->middleware('permission:change_room')->name('reservations.room-change');
     Route::post('/reservations/{reservation}/room-change', [ReservationController::class, 'changeRoom'])->middleware('permission:change_room')->name('reservations.room-change.store');
-    Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->middleware('permission:view_reservations')->name('reservations.print-kwitansi');
-    Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->middleware('permission:view_reservations')->name('reservations.print-invoice');
+    Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->name('reservations.print-kwitansi');
+    Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->name('reservations.print-invoice');
+
+    // Room Rack & Availability
+    Route::get('/room-rack', [\App\Http\Controllers\RoomRackController::class, 'index'])->name('room-rack.index');
+    Route::get('/room-rack/check-availability', [\App\Http\Controllers\RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');
+    Route::get('/room-rack/occupancy', [\App\Http\Controllers\RoomRackController::class, 'occupancyCalendar'])->name('room-rack.occupancy');
+    Route::get('/room-rack/forecast', [\App\Http\Controllers\RoomRackController::class, 'forecast'])->name('room-rack.forecast');
+
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);
     Route::resource('room-types', RoomTypeController::class);
@@ -152,5 +165,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/resto/create', [RestoController::class, 'create'])->name('resto.create');
         Route::post('/resto', [RestoController::class, 'store'])->name('resto.store');
         Route::get('/resto/{restoTransaction}', [RestoController::class, 'show'])->name('resto.show');
+    });
+
+    // Housekeeping
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/housekeeping', [HousekeepingController::class, 'index'])->name('housekeeping.index');
+        Route::post('/housekeeping', [HousekeepingController::class, 'store'])->name('housekeeping.store');
+        Route::get('/housekeeping/stats', [HousekeepingController::class, 'stats'])->name('housekeeping.stats');
+        Route::get('/housekeeping/room/{room}/tasks', [HousekeepingController::class, 'roomTasks'])->name('housekeeping.room-tasks');
+        Route::get('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'show'])->name('housekeeping.show');
+        Route::patch('/housekeeping/{housekeepingTask}/status', [HousekeepingController::class, 'updateStatus'])->name('housekeeping.update-status');
+        Route::patch('/housekeeping/{housekeepingTask}/assign', [HousekeepingController::class, 'assign'])->name('housekeeping.assign');
+        Route::post('/housekeeping/bulk-create', [HousekeepingController::class, 'bulkCreate'])->name('housekeeping.bulk-create');
+        Route::delete('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'destroy'])->name('housekeeping.destroy');
     });
 });

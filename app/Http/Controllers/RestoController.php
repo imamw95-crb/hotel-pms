@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RestoTransaction;
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use Illuminate\Http\Request;
 
@@ -74,7 +75,7 @@ class RestoController extends Controller
             'items.*.price'  => 'required|numeric|min:0',
             'tax'            => 'nullable|numeric|min:0',
             'discount'       => 'nullable|numeric|min:0',
-            'payment_method' => 'required|in:cash,bank_transfer,credit_card,debit_card',
+            'payment_method' => 'required|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'notes'          => 'nullable|string|max:500',
         ]);
 
@@ -109,6 +110,16 @@ class RestoController extends Controller
             'notes'          => $validated['notes'] ?? null,
             'created_by'     => auth()->id(),
         ]);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi resto berhasil disimpan.',
+                'redirect_url' => route('resto.show', $transaction),
+                'transaction' => $transaction
+            ]);
+        }
 
         return redirect()->route('resto.show', $transaction)
             ->with('success', 'Transaksi resto berhasil disimpan.');

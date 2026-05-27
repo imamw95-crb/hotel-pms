@@ -69,7 +69,7 @@
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->check_in->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->check_out->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-3 border border-gray-200">
-                            <form method="POST" action="{{ route('reservations.checkin', $reservation->id) }}" class="inline">
+                            <form method="POST" action="{{ route('reservations.checkin', $reservation->id) }}" class="inline" data-ajax="true">
                                 @csrf
                                 <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
                                     <i class="fas fa-sign-in-alt mr-1"></i> Check-in

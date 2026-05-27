@@ -49,7 +49,7 @@
                                title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <form method="POST" action="{{ route('admin.payment-methods.destroy', $method) }}" class="inline" onsubmit="return confirm('Hapus metode pembayaran ini?');">
+                            <form method="POST" action="{{ route('admin.payment-methods.destroy', $method) }}" class="inline" data-ajax="true">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800 text-sm" title="Hapus">

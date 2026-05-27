@@ -1,0 +1,317 @@
+@extends('layouts.app')
+
+@section('title', 'Dashboard Kamar')
+
+@section('content')
+<div class="mb-6">
+    <h1 class="text-2xl font-bold">Dashboard Operasional Hotel</h1>
+    <p class="text-gray-600">Pilih kamar untuk melakukan reservasi / check-in cepat</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-green-100 border-l-4 border-green-500 p-4 rounded shadow">
+        <div class="flex items-center">
+            <i class="fas fa-bed text-green-600 text-2xl mr-3"></i>
+            <div>
+                <p class="text-sm text-gray-600">Kamar Tersedia</p>
+                <p class="text-2xl font-bold" id="availableCount">{{ $availableRoomsCount }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-blue-100 border-l-4 border-blue-500 p-4 rounded shadow">
+        <div class="flex items-center">
+            <i class="fas fa-sign-in-alt text-blue-600 text-2xl mr-3"></i>
+            <div>
+                <p class="text-sm text-gray-600">Check-in Hari Ini</p>
+                <p class="text-2xl font-bold" id="checkinsCount">{{ $checkinsToday }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded shadow">
+        <div class="flex items-center">
+            <i class="fas fa-sign-out-alt text-yellow-600 text-2xl mr-3"></i>
+            <div>
+                <p class="text-sm text-gray-600">Check-out Hari Ini</p>
+                <p class="text-2xl font-bold" id="checkoutsCount">{{ $checkoutsToday }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="bg-purple-100 border-l-4 border-purple-500 p-4 rounded shadow">
+        <div class="flex items-center">
+            <i class="fas fa-calendar-alt text-purple-600 text-2xl mr-3"></i>
+            <div>
+                <p class="text-sm text-gray-600">Booking Mendatang</p>
+                <p class="text-2xl font-bold">{{ $upcomingBookings->count() }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-4 mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Denah Kamar</h2>
+        <div class="flex items-center gap-3">
+            <form method="GET" action="{{ route('rooms.dashboard') }}" class="flex items-center gap-2 flex-wrap">
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="border rounded px-2 py-1 text-sm">
+                <span class="text-sm text-gray-500">s/d</span>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="border rounded px-2 py-1 text-sm">
+                <select name="status_filter" class="border rounded px-2 py-1 text-sm">
+                    <option value="all" {{ $statusFilter === 'all' ? 'selected' : '' }}>Semua Status</option>
+                    <option value="available" {{ $statusFilter === 'available' ? 'selected' : '' }}>Available</option>
+                    <option value="occupied" {{ $statusFilter === 'occupied' ? 'selected' : '' }}>Occupied</option>
+                    <option value="due_out" {{ $statusFilter === 'due_out' ? 'selected' : '' }}>Due Out</option>
+                    <option value="cleaning" {{ $statusFilter === 'cleaning' ? 'selected' : '' }}>Cleaning</option>
+                    <option value="maintenance" {{ $statusFilter === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                </select>
+                <select name="room_type" class="border rounded px-2 py-1 text-sm">
+                    <option value="all" {{ $roomTypeFilter === 'all' ? 'selected' : '' }}>Semua Tipe</option>
+                    @foreach($roomTypes as $type)
+                        <option value="{{ $type }}" {{ $roomTypeFilter === $type ? 'selected' : '' }}>{{ $type }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <a href="{{ route('rooms.dashboard') }}" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </form>
+            <button onclick="refreshRooms()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <a href="{{ route('booking.group.create') }}" class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                <i class="fas fa-users"></i> Booking Group
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="roomsGrid">
+        @foreach($rooms as $room)
+            @php
+                $isDueOut = in_array($room->id, $dueOutRoomIds);
+                $statusColor = [
+                    'available' => 'bg-green-100 border-green-500 text-green-800',
+                    'occupied' => $isDueOut ? 'bg-orange-100 border-orange-500 text-orange-800' : 'bg-red-100 border-red-500 text-red-800',
+                    'maintenance' => 'bg-gray-100 border-gray-500 text-gray-800',
+                    'cleaning' => 'bg-yellow-100 border-yellow-500 text-yellow-800',
+                ][$room->status] ?? 'bg-gray-100 border-gray-400';
+                
+                $statusIcon = [
+                    'available' => 'fa-check-circle',
+                    'occupied' => $isDueOut ? 'fa-clock' : 'fa-ban',
+                    'maintenance' => 'fa-tools',
+                    'cleaning' => 'fa-broom',
+                ][$room->status] ?? 'fa-bed';
+
+                $statusLabel = $isDueOut ? 'Due Out' : ucfirst($room->status);
+            @endphp
+            @php
+                $activeReservation = $room->reservations->first();
+                $guestName = $activeReservation && $activeReservation->guest ? $activeReservation->guest->guest_name : null;
+            @endphp
+            <div class="border rounded-lg p-3 text-center cursor-pointer hover:shadow-md transition room-card" data-room-id="{{ $room->id }}" data-room-number="{{ $room->room_number }}" data-status="{{ $room->status }}" onclick="window.location.href='{{ route('booking.create', ['room_id' => $room->id]) }}'">
+                <div class="rounded-lg p-2 {{ $statusColor }}">
+                    <i class="fas {{ $statusIcon }} text-lg"></i>
+                    <p class="font-bold text-lg">{{ $room->room_number }}</p>
+                    <p class="text-xs">{{ $room->room_type_name ?? 'Standard' }}</p>
+                    <p class="text-xs mt-1 font-semibold">{{ $statusLabel }}</p>
+                    @if($isDueOut && $activeReservation)
+                        <p class="text-xs mt-1 text-orange-700"><i class="fas fa-sign-out-alt mr-1"></i>CO: {{ $activeReservation->check_out->format('H:i') }}</p>
+                    @endif
+                    @if($guestName)
+                        <p class="text-xs mt-1 truncate text-blue-700 font-medium" title="{{ $guestName }}"><i class="fas fa-user mr-1"></i>{{ $guestName }}</p>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-4">
+    <h2 class="text-xl font-bold mb-3">Booking Mendatang</h2>
+    @if($upcomingBookings->count())
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left p-2">Tanggal</th>
+                        <th class="text-left p-2">Kamar</th>
+                        <th class="text-left p-2">Tamu</th>
+                        <th class="text-left p-2">Status</th>
+                        <th class="text-left p-2">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($upcomingBookings as $booking)
+                    <tr class="border-b">
+                        <td class="p-2">{{ $booking->check_in->format('d/m/Y') }} - {{ $booking->check_out->format('d/m/Y') }}</td>
+                        <td class="p-2">{{ $booking->room->room_number }}</td>
+                        <td class="p-2">{{ $booking->guest->guest_name }}</td>
+                        <td class="p-2">
+                            <span class="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">Pending</span>
+                        </td>
+                        <td class="p-2">
+                            <a href="{{ route('checkin.process') }}?reservation_id={{ $booking->id }}" class="text-blue-600 hover:underline">Check-in</a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <p class="text-gray-500">Tidak ada booking mendatang.</p>
+    @endif
+</div>
+
+<!-- Daftar Tamu Check-in & Check-out Hari Ini -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="font-bold text-lg mb-3"><i class="fas fa-user-check text-green-500 mr-2"></i>Check-in Hari Ini</h3>
+        @php
+            $todayCheckins = \App\Models\Reservation::with(['guest', 'room'])
+                ->whereDate('check_in', '>=', $dateFrom)
+                ->whereDate('check_in', '<=', $dateTo)
+                ->where('status', 'pending')
+                ->orderBy('check_in')
+                ->limit(10)
+                ->get();
+        @endphp
+        @if($todayCheckins->count() > 0)
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left p-2 text-sm">Nama Tamu</th>
+                        <th class="text-left p-2 text-sm">Kamar</th>
+                        <th class="text-left p-2 text-sm">Check-in</th>
+                        <th class="text-left p-2 text-sm">Check-out</th>
+                        <th class="text-left p-2 text-sm">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($todayCheckins as $res)
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2 font-medium">{{ $res->guest->guest_name ?? '-' }}</td>
+                        <td class="p-2">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_in->format('d/m/Y H:i') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_out->format('d/m/Y H:i') }}</td>
+                        <td class="p-2"><span class="px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800">Pending</span></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p class="text-gray-500 text-center py-4">Tidak ada check-in pada tanggal ini</p>
+        @endif
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="font-bold text-lg mb-3"><i class="fas fa-user-times text-yellow-500 mr-2"></i>Check-out</h3>
+        @php
+            $todayCheckouts = \App\Models\Reservation::with(['guest', 'room'])
+                ->whereDate('check_out', '>=', $dateFrom)
+                ->whereDate('check_out', '<=', $dateTo)
+                ->where('status', 'checked_in')
+                ->orderBy('check_out')
+                ->limit(10)
+                ->get();
+        @endphp
+        @if($todayCheckouts->count() > 0)
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left p-2 text-sm">Nama Tamu</th>
+                        <th class="text-left p-2 text-sm">Kamar</th>
+                        <th class="text-left p-2 text-sm">Check-in</th>
+                        <th class="text-left p-2 text-sm">Check-out</th>
+                        <th class="text-left p-2 text-sm">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($todayCheckouts as $res)
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2 font-medium">{{ $res->guest->guest_name ?? '-' }}</td>
+                        <td class="p-2">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_in->format('d/m/Y H:i') }}</td>
+                        <td class="p-2 text-sm">{{ $res->check_out->format('d/m/Y H:i') }}</td>
+                        <td class="p-2"><span class="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Checked In</span></td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p class="text-gray-500 text-center py-4">Tidak ada check-out pada tanggal ini</p>
+        @endif
+    </div>
+</div>
+
+
+<script>
+    function refreshRooms() {
+        var statusFilter = document.querySelector('select[name="status_filter"]') ? document.querySelector('select[name="status_filter"]').value : 'all';
+        var roomType = document.querySelector('select[name="room_type"]') ? document.querySelector('select[name="room_type"]').value : 'all';
+        var dateFrom = document.querySelector('input[name="date_from"]') ? document.querySelector('input[name="date_from"]').value : '';
+        var dateTo = document.querySelector('input[name="date_to"]') ? document.querySelector('input[name="date_to"]').value : '';
+
+        var params = new URLSearchParams({ status_filter: statusFilter, room_type: roomType, date_from: dateFrom, date_to: dateTo });
+        fetch('{{ route("rooms.api") }}?' + params.toString())
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                document.getElementById('availableCount').innerText = data.available_count;
+                document.getElementById('checkinsCount').innerText = data.checkins_today;
+                document.getElementById('checkoutsCount').innerText = data.checkouts_today;
+                
+                var grid = document.getElementById('roomsGrid');
+                grid.innerHTML = '';
+                data.rooms.forEach(function(room) {
+                    var isDueOut = data.due_out_room_ids.indexOf(room.id) !== -1;
+                    var statusClass = '', icon = '', statusLabel = '';
+                    if (room.status === 'available') {
+                        statusClass = 'bg-green-100 border-green-500 text-green-800';
+                        icon = 'fa-check-circle';
+                        statusLabel = 'Available';
+                    } else if (room.status === 'occupied') {
+                        if (isDueOut) {
+                            statusClass = 'bg-orange-100 border-orange-500 text-orange-800';
+                            icon = 'fa-clock';
+                            statusLabel = 'Due Out';
+                        } else {
+                            statusClass = 'bg-red-100 border-red-500 text-red-800';
+                            icon = 'fa-ban';
+                            statusLabel = 'Occupied';
+                        }
+                    } else if (room.status === 'maintenance') {
+                        statusClass = 'bg-gray-100 border-gray-500 text-gray-800';
+                        icon = 'fa-tools';
+                        statusLabel = 'Maintenance';
+                    } else {
+                        statusClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
+                        icon = 'fa-broom';
+                        statusLabel = room.status.charAt(0).toUpperCase() + room.status.slice(1);
+                    }
+
+                    var guestName = '';
+                    if (room.reservations && room.reservations.length > 0 && room.reservations[0].guest) {
+                        guestName = room.reservations[0].guest.guest_name;
+                    }
+
+                    var card = document.createElement('div');
+                    card.className = 'border rounded-lg p-3 text-center cursor-pointer hover:shadow-md transition';
+                    card.onclick = function() { window.location.href = '/booking/create?room_id=' + room.id; };
+
+                    var guestHtml = guestName ? '<p class="text-xs mt-1 truncate text-blue-700 font-medium" title="' + guestName + '"><i class="fas fa-user mr-1"></i>' + guestName + '</p>' : '';
+
+                    card.innerHTML = '<div class="rounded-lg p-2 ' + statusClass + '">' +
+                        '<i class="fas ' + icon + ' text-lg"></i>' +
+                        '<p class="font-bold text-lg">' + room.room_number + '</p>' +
+                        '<p class="text-xs">' + (room.room_type_name || 'Standard') + '</p>' +
+                        '<p class="text-xs mt-1 font-semibold">' + statusLabel + '</p>' +
+                        guestHtml +
+                        '</div>';
+                    grid.appendChild(card);
+                });
+            });
+    }
+    
+    setInterval(refreshRooms, 30000);
+</script>
+@endsection

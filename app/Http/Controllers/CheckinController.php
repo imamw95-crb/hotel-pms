@@ -102,7 +102,7 @@ class CheckinController extends Controller
         );
         
         $days = $checkInDate->diffInDays($checkOutDate);
-        $totalAmount = $room->price_per_night * $days;
+        $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
         
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
@@ -129,7 +129,17 @@ class CheckinController extends Controller
         }
         
         $room->update(['status' => 'occupied']);
-        
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-in berhasil! Kartu sudah di-issue.',
+                'redirect_url' => route('checkin.success', $reservation->id),
+                'reservation' => $reservation
+            ]);
+        }
+
         return redirect()->route('checkin.success', $reservation->id)
             ->with('success', 'Check-in berhasil! Kartu sudah di-issue.');
     }

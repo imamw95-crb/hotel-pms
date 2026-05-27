@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-xl mx-auto">
 
-    <form method="POST" action="{{ route('admin.payment-methods.update', $paymentMethod) }}" class="bg-white rounded-lg shadow">
+    <form method="POST" action="{{ route('admin.payment-methods.update', $paymentMethod) }}" class="bg-white rounded-lg shadow" data-ajax="true">
         @csrf
         @method('PUT')
 

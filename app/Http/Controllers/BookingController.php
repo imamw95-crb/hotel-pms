@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -13,7 +14,22 @@ class BookingController extends Controller
 {
     public function create(Request $request)
     {
-        return view('booking.create');
+        $selectedRoom = null;
+        if ($request->has('room_id')) {
+            $selectedRoom = Room::find($request->input('room_id'));
+        }
+        
+        // Set default tanggal jika tidak ada parameter
+        $checkIn = $request->input('check_in', Carbon::today()->format('Y-m-d'));
+        $checkOut = $request->input('check_out', Carbon::tomorrow()->format('Y-m-d'));
+        
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'view' => view('booking.modal-create', compact('selectedRoom', 'checkIn', 'checkOut'))->render()
+            ]);
+        }
+        return view('booking.create', compact('selectedRoom', 'checkIn', 'checkOut'));
     }
 
     /**
@@ -32,14 +48,12 @@ class BookingController extends Controller
         $allRooms = Room::where('status', '!=', 'maintenance')->get();
 
         // Filter kamar yang sudah di-booking di tanggal tersebut
+        // Back-to-Booking: check-out di hari yang sama dengan check-in baru
+        // TIDAK dianggap bentrok (check-out 12:00, check-in 14:00)
         $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
             ->where(function ($q) use ($checkIn, $checkOut) {
-                $q->whereBetween('check_in', [$checkIn, $checkOut])
-                  ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                  ->orWhere(function ($q) use ($checkIn, $checkOut) {
-                      $q->where('check_in', '<=', $checkIn)
-                        ->where('check_out', '>=', $checkOut);
-                  });
+                $q->where('check_in', '<', $checkOut)
+                  ->where('check_out', '>', $checkIn);
             })
             ->pluck('room_id')
             ->toArray();
@@ -63,7 +77,7 @@ class BookingController extends Controller
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,debit_card',
+            'payment_method' => 'nullable|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'payment_type' => 'nullable|in:full,dp',
             'dp_amount' => 'nullable|numeric|min:0',
             'ota_reservation_number' => 'nullable|string|max:100',
@@ -71,6 +85,13 @@ class BookingController extends Controller
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
+
+        // Validasi ketersediaan kamar (back-to-back aware)
+        $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
+        $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+        if (!$room->isAvailable($checkInDate, $checkOutDate)) {
+            return back()->with('error', "Kamar {$room->room_number} sudah dipesan untuk periode tersebut.")->withInput();
+        }
 
         $guest = Guest::updateOrCreate(
             ['id_number' => $validated['id_number'] ?? null],
@@ -83,12 +104,14 @@ class BookingController extends Controller
         );
 
         // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
-        $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
-        $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
-
-        $pricePerNight = $validated['price_per_night'] ?? $room->price_per_night;
+        // (sudah di-set di atas sebelum validasi)
+        // If custom price_per_night provided, use flat rate; otherwise use weekday/weekend dynamic pricing
         $days = $checkInDate->diffInDays($checkOutDate);
-        $totalAmount = $pricePerNight * $days;
+        if (!empty($validated['price_per_night'])) {
+            $totalAmount = $validated['price_per_night'] * $days;
+        } else {
+            $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
+        }
 
         // Determine paid amount based on payment type
         $paidAmount = 0;
@@ -125,6 +148,14 @@ class BookingController extends Controller
             ]);
         }
 
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Booking untuk kamar {$room->room_number} berhasil dibuat.",
+                'redirect_url' => route('rooms.dashboard'),
+                'reservation' => $reservation
+            ]);
+        }
         return redirect()->route('rooms.dashboard')->with('success', "Booking untuk kamar {$room->room_number} berhasil dibuat.");
     }
 }

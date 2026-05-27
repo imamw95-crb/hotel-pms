@@ -108,6 +108,16 @@ class IssueCardController extends Controller
         // Update status kamar
         $room->update(['status' => 'occupied']);
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}",
+                'redirect_url' => route('checkin.success', $reservation->id),
+                'reservation' => $reservation
+            ]);
+        }
+
         return redirect()->route('checkin.success', $reservation->id)
             ->with('success', "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}");
     }
@@ -145,6 +155,15 @@ class IssueCardController extends Controller
         $reservation->update([
             'number_of_cards' => $validated['number_of_cards'],
         ]);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Re-issue card berhasil untuk kamar {$room->room_number}!",
+                'reservation' => $reservation
+            ]);
+        }
 
         return back()->with('success', "Re-issue card berhasil untuk kamar {$room->room_number}!");
     }

@@ -9,7 +9,7 @@
     <!-- Status Ketersediaan -->
     <div id="availabilityStatus" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
 
-    <form method="POST" action="{{ route('booking.group.store') }}" id="bookingGroupForm">
+    <form method="POST" action="{{ route('booking.group.store') }}" id="bookingGroupForm" data-ajax="true">
         @csrf
 
         <!-- Check-in & Check-out -->
@@ -40,7 +40,7 @@
                 <div class="flex items-center space-x-2">
                     <label class="text-sm text-gray-600">Harga Semua Kamar:</label>
                     <input type="number" id="bulkPrice" placeholder="Rp" class="w-32 border rounded px-2 py-1 text-sm" min="0" step="1000">
-                    <button type="button" onclick="applyBulkPrice()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Apply</button>
+                    <button type="button" onclick="BookingGroup.applyBulkPrice()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Apply</button>
                 </div>
             </div>
             <div class="border rounded overflow-hidden">
@@ -110,11 +110,11 @@
                 <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
                 <div class="flex space-x-3 mt-2">
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                        <input type="radio" name="payment_type" value="full" checked onchange="BookingGroup.toggleDpFields()">
                         <span>Lunas</span>
                     </label>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                        <input type="radio" name="payment_type" value="dp" onchange="BookingGroup.toggleDpFields()">
                         <span>DP</span>
                     </label>
                 </div>
@@ -137,211 +137,12 @@
         </div>
 
         <div class="flex justify-end space-x-2">
-            <a href="{{ route('rooms.dashboard') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</a>
+            <button type="button" onclick="closeModal()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</button>
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" id="btnSubmit" disabled>Booking Group</button>
         </div>
     </form>
 </div>
 
-<script>
-    const checkInEl = document.getElementById('checkIn');
-    const checkOutEl = document.getElementById('checkOut');
-    const roomsContainer = document.getElementById('roomsContainer');
-    const roomInfo = document.getElementById('roomInfo');
-    const statusEl = document.getElementById('availabilityStatus');
-    const selectedRoomsSection = document.getElementById('selectedRoomsSection');
-    const selectedRoomsTable = document.getElementById('selectedRoomsTable');
-    const totalPerNightEl = document.getElementById('totalPerNight');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const bulkPriceInput = document.getElementById('bulkPrice');
-
-    let selectedRooms = {};
-    let availableRoomsData = [];
-
-    const today = new window.Date().toISOString().split('T')[0];
-    checkInEl.min = today;
-    checkOutEl.min = today;
-
-    checkInEl.addEventListener('change', function() {
-        checkOutEl.min = this.value;
-        if (checkOutEl.value && checkOutEl.value <= this.value) {
-            checkOutEl.value = '';
-        }
-        checkAvailability();
-    });
-
-    checkOutEl.addEventListener('change', function() {
-        if (checkInEl.value && this.value > checkInEl.value) {
-            checkAvailability();
-        }
-    });
-
-    function checkAvailability() {
-        const checkIn = checkInEl.value;
-        const checkOut = checkOutEl.value;
-
-        if (!checkIn || !checkOut) {
-            roomsContainer.innerHTML = '<p class="col-span-full text-gray-500 text-center py-4">Pilih tanggal check-in & check-out dulu</p>';
-            roomInfo.textContent = 'Kamar yang tersedia akan muncul setelah memilih tanggal';
-            statusEl.classList.add('hidden');
-            return;
-        }
-
-        if (checkOut <= checkIn) {
-            roomsContainer.innerHTML = '<p class="col-span-full text-gray-500 text-center py-4">Check-out harus setelah check-in</p>';
-            statusEl.classList.add('hidden');
-            return;
-        }
-
-        roomsContainer.innerHTML = '<p class="col-span-full text-gray-500 text-center py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Mengecek ketersediaan kamar...</p>';
-        roomInfo.textContent = 'Sedang mengecek ketersediaan...';
-        statusEl.classList.add('hidden');
-
-        fetch('{{ route("booking.check-availability") }}?check_in=' + checkIn + '&check_out=' + checkOut)
-            .then(res => res.json())
-            .then(data => {
-                availableRoomsData = data.rooms || [];
-                if (availableRoomsData.length > 0) {
-                    roomsContainer.innerHTML = '';
-                    availableRoomsData.forEach(room => {
-                        const isChecked = selectedRooms[room.id] ? 'checked' : '';
-                        const label = document.createElement('label');
-                        label.className = 'flex items-center space-x-2 p-2 rounded hover:bg-blue-50 cursor-pointer transition border ' + (selectedRooms[room.id] ? 'bg-blue-50 border-blue-300' : 'border-transparent');
-                        label.innerHTML =
-                            '<input type="checkbox" name="room_ids[]" value="' + room.id + '" class="rounded border-gray-300 room-checkbox" ' + isChecked + ' onchange="toggleRoom(' + room.id + ', this.checked)">' +
-                            '<span class="text-sm"><strong>' + room.room_number + '</strong> - ' + (room.room_type_name || 'Standard') + '</span>' +
-                            '<span class="text-xs text-gray-500 ml-auto">Rp ' + Number(room.price_per_night).toLocaleString('id-ID') + '</span>';
-                        roomsContainer.appendChild(label);
-                    });
-                    roomInfo.textContent = availableRoomsData.length + ' kamar tersedia — centang kamar yang ingin di-booking';
-                    statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-green-100 border border-green-300 text-green-800';
-                    statusEl.innerHTML = '<i class="fas fa-check-circle mr-1"></i> <strong>' + availableRoomsData.length + ' kamar tersedia</strong>';
-                    statusEl.classList.remove('hidden');
-                } else {
-                    roomsContainer.innerHTML = '<p class="col-span-full text-yellow-600 text-center py-4"><i class="fas fa-exclamation-triangle mr-1"></i> Tidak ada kamar tersedia untuk tanggal ini</p>';
-                    roomInfo.textContent = 'Semua kamar sudah dipesan pada tanggal tersebut';
-                    statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-yellow-100 border border-yellow-300 text-yellow-800';
-                    statusEl.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> <strong>Tidak ada kamar tersedia</strong>';
-                    statusEl.classList.remove('hidden');
-                }
-            })
-            .catch(err => {
-                roomsContainer.innerHTML = '<p class="col-span-full text-red-500 text-center py-4">Gagal mengecek: ' + err.message + '</p>';
-                statusEl.className = 'mb-4 p-3 rounded-lg text-sm bg-red-100 border border-red-300 text-red-800';
-                statusEl.innerHTML = '<i class="fas fa-times-circle mr-1"></i> <strong>Error:</strong> ' + err.message;
-                statusEl.classList.remove('hidden');
-            });
-    }
-
-    function toggleRoom(roomId, isChecked) {
-        const room = availableRoomsData.find(r => r.id === roomId);
-        if (!room) return;
-
-        if (isChecked) {
-            selectedRooms[roomId] = {
-                id: room.id,
-                room_number: room.room_number,
-                room_type_name: room.room_type_name || 'Standard',
-                default_price: room.price_per_night,
-                price: room.price_per_night
-            };
-        } else {
-            delete selectedRooms[roomId];
-        }
-
-        renderSelectedRooms();
-    }
-
-    function renderSelectedRooms() {
-        const rooms = Object.values(selectedRooms);
-        if (rooms.length === 0) {
-            selectedRoomsSection.classList.add('hidden');
-            btnSubmit.disabled = true;
-            return;
-        }
-
-        selectedRoomsSection.classList.remove('hidden');
-        btnSubmit.disabled = false;
-        selectedRoomsTable.innerHTML = '';
-
-        let total = 0;
-        rooms.forEach(room => {
-            total += parseInt(room.price) || 0;
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-gray-100';
-            tr.innerHTML =
-                '<td class="p-2 font-bold">' + room.room_number + '</td>' +
-                '<td class="p-2 text-gray-600">' + room.room_type_name + '</td>' +
-                '<td class="p-2 text-center text-gray-400">Rp ' + Number(room.default_price).toLocaleString('id-ID') + '</td>' +
-                '<td class="p-2 text-center">' +
-                    '<input type="number" name="room_prices[' + room.id + ']" value="' + room.price + '" min="0" step="1000" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="updateRoomPrice(' + room.id + ', this.value)">' +
-                '</td>' +
-                '<td class="p-2 text-center">' +
-                    '<button type="button" onclick="removeRoom(' + room.id + ')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>' +
-                '</td>';
-            selectedRoomsTable.appendChild(tr);
-        });
-
-        totalPerNightEl.textContent = 'Rp ' + total.toLocaleString('id-ID');
-
-        // Update total semua kamar (total amount = price * days)
-        const checkIn = checkInEl.value;
-        const checkOut = checkOutEl.value;
-        if (checkIn && checkOut) {
-            const days = Math.ceil((new window.Date(checkOut) - new window.Date(checkIn)) / (1000 * 60 * 60 * 24));
-            const totalAll = total * days;
-            document.getElementById('totalTagihanGroup').textContent = 'Rp ' + totalAll.toLocaleString('id-ID');
-            document.getElementById('totalTagihanGroup').dataset.total = totalAll;
-            updateSisaBayar();
-        }
-    }
-
-    function updateRoomPrice(roomId, price) {
-        if (selectedRooms[roomId]) {
-            selectedRooms[roomId].price = parseInt(price) || 0;
-            renderSelectedRooms();
-        }
-    }
-
-    function removeRoom(roomId) {
-        delete selectedRooms[roomId];
-        // Uncheck the checkbox
-        const checkbox = document.querySelector('.room-checkbox[value="' + roomId + '"]');
-        if (checkbox) {
-            checkbox.checked = false;
-            checkbox.closest('label').classList.remove('bg-blue-50', 'border-blue-300');
-            checkbox.closest('label').classList.add('border-transparent');
-        }
-        renderSelectedRooms();
-    }
-
-    function applyBulkPrice() {
-        const price = parseInt(bulkPriceInput.value) || 0;
-        Object.keys(selectedRooms).forEach(roomId => {
-            selectedRooms[roomId].price = price;
-        });
-        renderSelectedRooms();
-    }
-
-    function toggleDpFields() {
-        const dpSection = document.getElementById('dpAmountSection');
-        const dpRadio = document.querySelector('input[name="payment_type"][value="dp"]');
-        if (dpRadio && dpRadio.checked) {
-            dpSection.classList.remove('hidden');
-        } else {
-            dpSection.classList.add('hidden');
-        }
-    }
-
-    function updateSisaBayar() {
-        const dpAmount = parseInt(document.getElementById('dpAmount').value) || 0;
-        const totalEl = document.getElementById('totalTagihanGroup');
-        const total = parseInt(totalEl.dataset.total) || 0;
-        const sisa = Math.max(0, total - dpAmount);
-        document.getElementById('sisaBayarGroup').textContent = 'Rp ' + sisa.toLocaleString('id-ID');
-    }
-
-    // Listen for DP amount changes
-    document.getElementById('dpAmount')?.addEventListener('input', updateSisaBayar);
-</script>
+<meta name="booking-check-url" content="{{ route('booking.check-availability') }}">
+<script src="{{ asset('js/booking-group.js') }}"></script>
 @endsection

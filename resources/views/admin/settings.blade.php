@@ -14,7 +14,7 @@
         </p>
     </div>
 
-    <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="bg-white rounded-lg shadow">
+    <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data" class="bg-white rounded-lg shadow" data-ajax="true">
         @csrf
 
         {{-- Logo --}}

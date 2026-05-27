@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
 
-    <form method="POST" action="{{ route('deposits.store') }}" class="bg-white rounded-lg shadow" id="depositForm">
+    <form method="POST" action="{{ route('deposits.store') }}" class="bg-white rounded-lg shadow" id="depositForm" data-ajax="true">
         @csrf
 
         {{-- Info Box --}}

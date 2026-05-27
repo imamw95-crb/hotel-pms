@@ -54,15 +54,16 @@ class DummyDataSeeder extends Seeder
 
         // 3. Buat Rooms jika belum ada
         if (Room::count() == 0) {
+            // Format: [room_number, type_code, price_weekday, max_occupancy, price_weekend]
             $rooms = [
-                ['101', 'STD', 500000, 2],
-                ['102', 'STD', 500000, 2],
-                ['103', 'DLX', 750000, 2],
-                ['104', 'DLX', 750000, 2],
-                ['105', 'STE', 1200000, 3],
-                ['201', 'STD', 500000, 2],
-                ['202', 'DLX', 750000, 2],
-                ['203', 'STE', 1200000, 3],
+                ['101', 'STD', 500000, 2, 600000],
+                ['102', 'STD', 500000, 2, 600000],
+                ['103', 'DLX', 750000, 2, 900000],
+                ['104', 'DLX', 750000, 2, 900000],
+                ['105', 'STE', 1200000, 3, 1440000],
+                ['201', 'STD', 500000, 2, 600000],
+                ['202', 'DLX', 750000, 2, 900000],
+                ['203', 'STE', 1200000, 3, 1440000],
             ];
             foreach ($rooms as $room) {
                 $type = RoomType::where('code', $room[1])->first();
@@ -71,6 +72,8 @@ class DummyDataSeeder extends Seeder
                     'room_type_id' => $type->id,
                     'room_type_name' => $type->name,
                     'price_per_night' => $room[2],
+                    'price_weekday' => $room[2],
+                    'price_weekend' => $room[4],
                     'max_occupancy' => $room[3],
                     'status' => 'available',
                 ]);
@@ -111,7 +114,7 @@ class DummyDataSeeder extends Seeder
                 $checkIn = Carbon::today()->addDays(rand(-2, 2))->setTime(12, 0, 0);
                 $checkOut = (clone $checkIn)->addDays(rand(1, 4))->setTime(12, 0, 0);
                 $nights = $checkIn->diffInDays($checkOut);
-                $totalAmount = $room->price_per_night * $nights;
+                $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
 
                 $reservation = Reservation::create([
                     'reservation_number' => 'RES-' . strtoupper(uniqid()),

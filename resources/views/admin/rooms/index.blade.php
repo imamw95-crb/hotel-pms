@@ -17,7 +17,8 @@
                 <tr class="border-b">
                     <th class="text-left p-2">No. Kamar</th>
                     <th class="text-left p-2">Tipe Kamar</th>
-                    <th class="text-left p-2">Harga/malam</th>
+                    <th class="text-left p-2">Harga Weekday</th>
+                    <th class="text-left p-2">Harga Weekend</th>
                     <th class="text-left p-2">Max Occupancy</th>
                     <th class="text-left p-2">Status</th>
                     <th class="text-left p-2">Aksi</th>
@@ -26,9 +27,10 @@
             <tbody>
                 @foreach($rooms as $room)
                 <tr class="border-b">
-                    <td class="p-2">{{ $room->room_number }}</td>
+                    <td class="p-2 font-bold">{{ $room->room_number }}</td>
                     <td class="p-2">{{ $room->room_type_name ?? '-' }}</td>
-                    <td class="p-2">Rp {{ number_format($room->price_per_night,0,',','.') }}</td>
+                    <td class="p-2">Rp {{ number_format($room->price_weekday ?? $room->price_per_night, 0, ',', '.') }}</td>
+                    <td class="p-2">Rp {{ number_format($room->price_weekend ?? $room->price_per_night, 0, ',', '.') }}</td>
                     <td class="p-2">{{ $room->max_occupancy }} orang</td>
                     <td class="p-2">
                         <span class="px-2 py-1 rounded text-xs 
@@ -40,9 +42,9 @@
                     </td>
                     <td class="p-2">
                         <a href="{{ route('rooms.edit', $room) }}" class="text-blue-600 hover:underline">Edit</a>
-                        <form action="{{ route('rooms.destroy', $room) }}" method="POST" class="inline">
+                        <form action="{{ route('rooms.destroy', $room) }}" method="POST" class="inline" data-ajax="true">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:underline ml-2" onclick="return confirm('Hapus kamar ini?')">Hapus</button>
+                            <button type="submit" class="text-red-600 hover:underline ml-2">Hapus</button>
                         </form>
                     </td>
                 </tr>

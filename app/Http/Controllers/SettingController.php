@@ -50,6 +50,15 @@ class SettingController extends Controller
         $setting->website    = $validated['website'] ?? null;
         $setting->save();
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Setting hotel berhasil diperbarui.',
+                'redirect_url' => route('admin.settings')
+            ]);
+        }
+
         return redirect()->route('admin.settings')
             ->with('success', 'Setting hotel berhasil diperbarui.');
     }

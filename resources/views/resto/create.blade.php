@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-3xl mx-auto">
 
-    <form method="POST" action="{{ route('resto.store') }}" class="bg-white rounded-lg shadow" id="restoForm">
+    <form method="POST" action="{{ route('resto.store') }}" class="bg-white rounded-lg shadow" id="restoForm" data-ajax="true">
         @csrf
 
         {{-- Info Box --}}

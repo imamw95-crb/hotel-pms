@@ -26,6 +26,8 @@ class RoomController extends Controller
             'room_number' => 'required|string|unique:rooms',
             'room_type_id' => 'nullable|exists:room_types,id',
             'price_per_night' => 'required|numeric|min:0',
+            'price_weekday' => 'nullable|numeric|min:0',
+            'price_weekend' => 'nullable|numeric|min:0',
             'max_occupancy' => 'required|integer|min:1',
             'status' => 'required|in:available,occupied,maintenance,cleaning',
         ]);
@@ -35,7 +37,21 @@ class RoomController extends Controller
             $validated['room_type_name'] = $roomType->name;
         }
 
-        Room::create($validated);
+        // Default weekday/weekend to price_per_night if not set
+        $validated['price_weekday'] = $validated['price_weekday'] ?? $validated['price_per_night'];
+        $validated['price_weekend'] = $validated['price_weekend'] ?? $validated['price_per_night'];
+
+        $room = Room::create($validated);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kamar berhasil ditambahkan',
+                'redirect_url' => route('rooms.index'),
+                'room' => $room
+            ]);
+        }
 
         return redirect()->route('rooms.index')->with('success', 'Kamar berhasil ditambahkan');
     }
@@ -52,6 +68,8 @@ class RoomController extends Controller
             'room_number' => 'required|string|unique:rooms,room_number,' . $room->id,
             'room_type_id' => 'nullable|exists:room_types,id',
             'price_per_night' => 'required|numeric|min:0',
+            'price_weekday' => 'nullable|numeric|min:0',
+            'price_weekend' => 'nullable|numeric|min:0',
             'max_occupancy' => 'required|integer|min:1',
             'status' => 'required|in:available,occupied,maintenance,cleaning',
         ]);
@@ -61,7 +79,21 @@ class RoomController extends Controller
             $validated['room_type_name'] = $roomType->name;
         }
 
+        // Default weekday/weekend to price_per_night if not set
+        $validated['price_weekday'] = $validated['price_weekday'] ?? $validated['price_per_night'];
+        $validated['price_weekend'] = $validated['price_weekend'] ?? $validated['price_per_night'];
+
         $room->update($validated);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kamar berhasil diupdate',
+                'redirect_url' => route('rooms.index'),
+                'room' => $room
+            ]);
+        }
 
         return redirect()->route('rooms.index')->with('success', 'Kamar berhasil diupdate');
     }
@@ -69,6 +101,16 @@ class RoomController extends Controller
     public function destroy(Room $room)
     {
         $room->delete();
+        
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kamar berhasil dihapus',
+                'redirect_url' => route('rooms.index')
+            ]);
+        }
+        
         return redirect()->route('rooms.index')->with('success', 'Kamar berhasil dihapus');
     }
 }

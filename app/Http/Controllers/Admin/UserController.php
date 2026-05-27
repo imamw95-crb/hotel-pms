@@ -42,7 +42,17 @@ class UserController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
 
-        User::create($validated);
+        $user = User::create($validated);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil dibuat!',
+                'redirect_url' => route('admin.users.index'),
+                'user' => $user
+            ]);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dibuat!');
@@ -85,6 +95,16 @@ class UserController extends Controller
 
         $user->update($validated);
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil diupdate!',
+                'redirect_url' => route('admin.users.index'),
+                'user' => $user
+            ]);
+        }
+
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil diupdate!');
     }
@@ -100,6 +120,15 @@ class UserController extends Controller
         }
 
         $user->delete();
+        
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil dihapus!',
+                'redirect_url' => route('admin.users.index')
+            ]);
+        }
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User berhasil dihapus!');

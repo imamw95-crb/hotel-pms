@@ -10,7 +10,7 @@
             <h1 class="text-2xl font-bold">Database Backup</h1>
             <p class="text-gray-500 text-sm mt-1">Kelola backup database hotel_pms</p>
         </div>
-        <form action="{{ route('admin.backups.create') }}" method="POST">
+        <form action="{{ route('admin.backups.create') }}" method="POST" data-ajax="true">
             @csrf
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
                 <i class="fas fa-database mr-2"></i> Buat Backup
@@ -55,15 +55,13 @@
                                    class="text-blue-600 hover:text-blue-800" title="Download">
                                     <i class="fas fa-download"></i>
                                 </a>
-                                <form action="{{ route('admin.backups.restore', $backup['name']) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Yakin restore database? Data saat ini akan ditimpa!')">
+                                <form action="{{ route('admin.backups.restore', $backup['name']) }}" method="POST" class="inline" data-ajax="true">
                                     @csrf
                                     <button type="submit" class="text-green-600 hover:text-green-800" title="Restore">
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </form>
-                                <form action="{{ route('admin.backups.destroy', $backup['name']) }}" method="POST" class="inline"
-                                      onsubmit="return confirm('Yakin hapus backup ini?')">
+                                <form action="{{ route('admin.backups.destroy', $backup['name']) }}" method="POST" class="inline" data-ajax="true">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-800" title="Hapus">

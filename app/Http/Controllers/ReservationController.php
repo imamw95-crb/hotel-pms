@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\PaymentMethod;
 use App\Models\Transaction;
 use App\Models\MHSLog;
 use Illuminate\Http\Request;
@@ -49,7 +50,15 @@ class ReservationController extends Controller
 
         $reservations = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        return view('reservations.index', compact('reservations', 'search', 'status', 'dateFrom', 'dateTo'));
+        // Statistik ringkasan
+        $stats = [
+            'pending'     => Reservation::where('status', 'pending')->count(),
+            'checked_in'  => Reservation::where('status', 'checked_in')->count(),
+            'checked_out' => Reservation::where('status', 'checked_out')->count(),
+            'cancelled'   => Reservation::where('status', 'cancelled')->count(),
+        ];
+
+        return view('reservations.index', compact('reservations', 'search', 'status', 'dateFrom', 'dateTo', 'stats'));
     }
 
     public function show(Reservation $reservation)
@@ -72,7 +81,7 @@ class ReservationController extends Controller
 
         $validated = $request->validate([
             'payment_type' => 'required|in:dp,pelunasan,tambahan',
-            'payment_method' => 'required|in:cash,bank_transfer,credit_card,debit_card',
+            'payment_method' => 'required|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
         ]);
 
@@ -98,6 +107,16 @@ class ReservationController extends Controller
 
         $typeLabel = $validated['payment_type'] === 'dp' ? 'DP' : ($validated['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Pembayaran tambahan');
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.",
+                'redirect_url' => route('reservations.show', $reservation),
+                'reservation' => $reservation
+            ]);
+        }
+
         return redirect()->route('reservations.show', $reservation)
             ->with('success', "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.");
     }
@@ -110,6 +129,16 @@ class ReservationController extends Controller
 
         $reservation->update(['status' => 'cancelled']);
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Reservasi {$reservation->reservation_number} berhasil dibatalkan.",
+                'redirect_url' => route('reservations.index'),
+                'reservation' => $reservation
+            ]);
+        }
+
         return redirect()->route('reservations.index')->with('success', "Reservasi {$reservation->reservation_number} berhasil dibatalkan.");
     }
 
@@ -121,6 +150,16 @@ class ReservationController extends Controller
 
         $reservation->update(['status' => 'checked_in']);
         $reservation->room->update(['status' => 'occupied']);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Check-in berhasil untuk kamar {$reservation->room->room_number}.",
+                'redirect_url' => route('reservations.show', $reservation),
+                'reservation' => $reservation
+            ]);
+        }
 
         return redirect()->route('reservations.show', $reservation)->with('success', "Check-in berhasil untuk kamar {$reservation->room->room_number}.");
     }
@@ -140,7 +179,66 @@ class ReservationController extends Controller
         ]);
         $reservation->room->update(['status' => 'available']);
 
-        return redirect()->route('reservations.show', $reservation)->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}.");
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Check-out berhasil untuk kamar {$reservation->room->room_number}. Status kamar: Available.",
+                'redirect_url' => route('checkout.index'),
+                'reservation' => $reservation
+            ]);
+        }
+
+        return redirect()->route('checkout.index')->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}. Status kamar: Available.");
+    }
+
+    /**
+     * Halaman daftar kamar untuk pindah kamar
+     */
+    public function roomChangeList()
+    {
+        $reservations = Reservation::with(['guest', 'room'])
+            ->where('status', 'checked_in')
+            ->orderBy('check_out', 'asc')
+            ->get();
+
+        $availableRooms = Room::where('status', 'available')
+            ->orderBy('room_number')
+            ->get();
+
+        return view('reservations.room-change-list', compact('reservations', 'availableRooms'));
+    }
+
+    /**
+     * Halaman daftar kamar untuk checkout
+     */
+    public function checkoutList()
+    {
+        $reservations = Reservation::with(['guest', 'room'])
+            ->where('status', 'checked_in')
+            ->orderBy('check_out', 'asc')
+            ->get();
+
+        return view('reservations.checkout-list', compact('reservations'));
+    }
+
+    /**
+     * Checkout by room ID (from Room Rack)
+     */
+    public function checkoutByRoom(Room $room)
+    {
+        $reservation = Reservation::where('room_id', $room->id)
+            ->where('status', 'checked_in')
+            ->first();
+
+        if (!$reservation) {
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Tidak ada reservasi aktif untuk kamar ini.'], 404);
+            }
+            return back()->with('error', 'Tidak ada reservasi aktif untuk kamar ini.');
+        }
+
+        return $this->checkout($reservation);
     }
 
     /**
@@ -158,17 +256,15 @@ class ReservationController extends Controller
         $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
         $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
 
+        // Back-to-Booking: check-out di hari yang sama dengan check-in baru
+        // TIDAK dianggap bentrok (check-out 12:00, check-in 14:00)
         $availableRooms = Room::where('status', 'available')
             ->where('id', '!=', $reservation->room_id)
             ->where(function ($query) use ($checkIn, $checkOut, $reservation) {
                 $query->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut, $reservation) {
                     $q->where(function ($sq) use ($checkIn, $checkOut) {
-                        $sq->whereBetween('check_in', [$checkIn, $checkOut])
-                           ->orWhereBetween('check_out', [$checkIn, $checkOut])
-                           ->orWhere(function ($sq) use ($checkIn, $checkOut) {
-                               $sq->where('check_in', '<=', $checkIn)
-                                  ->where('check_out', '>=', $checkOut);
-                           });
+                        $sq->where('check_in', '<', $checkOut)
+                           ->where('check_out', '>', $checkIn);
                     })
                     ->whereIn('status', ['pending', 'checked_in'])
                     ->where('id', '!=', $reservation->id);
@@ -215,12 +311,9 @@ class ReservationController extends Controller
 
         // Simpan room_type_name baru jika berbeda tipe
         $newRoomTypeName = $newRoom->room_type_name;
-        $newPricePerNight = $newRoom->price_per_night;
-        $oldPricePerNight = $oldRoom->price_per_night;
 
-        // Hitung ulang total_amount jika harga kamar berbeda
-        $nights = $reservation->nights;
-        $newTotalAmount = $newPricePerNight * $nights;
+        // Hitung ulang total_amount menggunakan harga weekday/weekend dinamis
+        $newTotalAmount = $newRoom->calculateTotalForRange($reservation->check_in, $reservation->check_out);
 
         // Update reservasi
         $reservation->room_id = $newRoom->id;
@@ -256,6 +349,16 @@ class ReservationController extends Controller
             ],
             'success' => true,
         ]);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
+                'redirect_url' => route('reservations.show', $reservation),
+                'reservation' => $reservation
+            ]);
+        }
 
         return redirect()->route('reservations.show', $reservation)
             ->with('success', "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.");

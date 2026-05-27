@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-xl mx-auto">
 
-    <form method="POST" action="{{ route('admin.payment-methods.store') }}" class="bg-white rounded-lg shadow">
+    <form method="POST" action="{{ route('admin.payment-methods.store') }}" class="bg-white rounded-lg shadow" data-ajax="true">
         @csrf
 
         <div class="p-6 border-b">
@@ -34,4 +34,4 @@
     </form>
 
 </div>
-@endsection
+@endsecti

@@ -72,6 +72,15 @@ class PermissionController extends Controller
             ]);
         }
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Permissions untuk role '{$role}' berhasil diupdate!",
+                'redirect_url' => route('admin.permissions.dashboard')
+            ]);
+        }
+
         return back()->with('success', "Permissions untuk role '{$role}' berhasil diupdate!");
     }
 
@@ -100,6 +109,15 @@ class PermissionController extends Controller
 
         // Sync permissions
         $user->permissions()->sync($validated['permissions'] ?? []);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Permissions untuk user '{$user->name}' berhasil diupdate!",
+                'redirect_url' => route('admin.permissions.user-permissions')
+            ]);
+        }
 
         return back()->with('success', "Permissions untuk user '{$user->name}' berhasil diupdate!");
     }

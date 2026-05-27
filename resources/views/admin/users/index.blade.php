@@ -55,7 +55,7 @@
                                     <i class="fas fa-lock"></i>
                                 </a>
                                 @if($user->id !== auth()->id())
-                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?');">
+                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" data-ajax="true">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800">

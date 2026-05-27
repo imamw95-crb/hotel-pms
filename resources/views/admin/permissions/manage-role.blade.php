@@ -29,7 +29,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.permissions.update-role', $role) }}" method="POST" class="bg-white rounded-lg shadow p-8">
+    <form action="{{ route('admin.permissions.update-role', $role) }}" method="POST" class="bg-white rounded-lg shadow p-8" data-ajax="true">
         @csrf
         
         <div class="space-y-6">

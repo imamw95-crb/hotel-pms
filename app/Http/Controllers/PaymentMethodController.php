@@ -33,11 +33,21 @@ class PaymentMethodController extends Controller
             'name' => 'required|string|max:100|unique:payment_methods,name',
         ]);
 
-        PaymentMethod::create([
+        $paymentMethod = PaymentMethod::create([
             'name' => $validated['name'],
             'slug' => \Illuminate\Support\Str::slug($validated['name']),
             'is_active' => true,
         ]);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Metode pembayaran berhasil ditambahkan.',
+                'redirect_url' => route('admin.payment-methods.index'),
+                'paymentMethod' => $paymentMethod
+            ]);
+        }
 
         return redirect()->route('admin.payment-methods.index')
             ->with('success', 'Metode pembayaran berhasil ditambahkan.');
@@ -67,6 +77,16 @@ class PaymentMethodController extends Controller
             'is_active' => $request->has('is_active'),
         ]);
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Metode pembayaran berhasil diperbarui.',
+                'redirect_url' => route('admin.payment-methods.index'),
+                'paymentMethod' => $paymentMethod
+            ]);
+        }
+
         return redirect()->route('admin.payment-methods.index')
             ->with('success', 'Metode pembayaran berhasil diperbarui.');
     }
@@ -77,6 +97,16 @@ class PaymentMethodController extends Controller
     public function destroy(PaymentMethod $paymentMethod)
     {
         $paymentMethod->delete();
+        
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Metode pembayaran berhasil dihapus.',
+                'redirect_url' => route('admin.payment-methods.index')
+            ]);
+        }
+
         return redirect()->route('admin.payment-methods.index')
             ->with('success', 'Metode pembayaran berhasil dihapus.');
     }

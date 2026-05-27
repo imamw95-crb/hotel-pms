@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
@@ -14,6 +15,12 @@ class BookingGroupController extends Controller
 {
     public function create()
     {
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'view' => view('booking.modal-group')->render()
+            ]);
+        }
         $rooms = Room::where('status', 'available')->orderBy('room_number')->get();
         return view('booking.group', compact('rooms'));
     }
@@ -30,7 +37,7 @@ class BookingGroupController extends Controller
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:cash,bank_transfer,credit_card,debit_card',
+            'payment_method' => 'nullable|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'payment_type' => 'nullable|in:full,dp',
             'dp_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
@@ -61,8 +68,13 @@ class BookingGroupController extends Controller
             $reservations = [];
 
             foreach ($rooms as $room) {
-                $pricePerNight = $roomPrices[$room->id] ?? $customPrice ?? $room->price_per_night;
-                $totalAmount = $pricePerNight * $days;
+                // If custom price provided, use flat rate; otherwise use weekday/weekend dynamic pricing
+                $roomCustomPrice = $roomPrices[$room->id] ?? $customPrice;
+                if ($roomCustomPrice) {
+                    $totalAmount = $roomCustomPrice * $days;
+                } else {
+                    $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
+                }
                 $totalAllRooms += $totalAmount;
 
                 $reservation = Reservation::create([
@@ -113,6 +125,17 @@ class BookingGroupController extends Controller
 
         $roomNumbers = $rooms->pluck('room_number')->implode(', ');
         $paymentLabel = $paymentType === 'dp' ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : ' (Lunas)';
-        return redirect()->route('rooms.dashboard')->with('success', "Booking grup untuk kamar: {$roomNumbers}{$paymentLabel} berhasil dibuat.");
+        $message = "Booking grup untuk kamar: {$roomNumbers}{$paymentLabel} berhasil dibuat.";
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => route('rooms.dashboard')
+            ]);
+        }
+
+        return redirect()->route('rooms.dashboard')->with('success', $message);
     }
 }

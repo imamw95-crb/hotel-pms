@@ -144,7 +144,7 @@
             <h4 class="font-bold text-sm text-gray-600 mb-3 uppercase">
                 <i class="fas fa-plus-circle mr-1"></i>Tambah Pembayaran
             </h4>
-            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm">
+            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
@@ -158,10 +158,10 @@
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Metode</label>
                         <select name="payment_method" class="w-full border rounded px-2 py-2 text-sm" required>
-                            <option value="cash">Tunai</option>
-                            <option value="bank_transfer">Transfer Bank</option>
-                            <option value="credit_card">Kartu Kredit</option>
-                            <option value="debit_card">Kartu Debit</option>
+                            @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                            @foreach($paymentMethods as $pm)
+                                <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -204,15 +204,15 @@
                 <i class="fas fa-file-invoice mr-1"></i> Print Invoice
             </a>
             @if($reservation->status === 'pending')
-                <form action="{{ route('reservations.checkin', $reservation) }}" method="POST">
+                <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" data-ajax="true">
                     @csrf
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                         <i class="fas fa-sign-in-alt mr-1"></i> Check-in
                     </button>
                 </form>
-                <form action="{{ route('reservations.cancel', $reservation) }}" method="POST">
+                <form action="{{ route('reservations.cancel', $reservation) }}" method="POST" data-ajax="true">
                     @csrf
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700" onclick="return confirm('Batalkan reservasi ini?')">
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
                         <i class="fas fa-times mr-1"></i> Cancel
                     </button>
                 </form>
@@ -221,7 +221,7 @@
                 <a href="{{ route('reservations.room-change', $reservation) }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     <i class="fas fa-exchange-alt mr-1"></i> Pindah Kamar
                 </a>
-                <form action="{{ route('reservations.checkout', $reservation) }}" method="POST">
+                <form action="{{ route('reservations.checkout', $reservation) }}" method="POST" data-ajax="true" data-refresh="true">
                     @csrf
                     <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
                         <i class="fas fa-sign-out-alt mr-1"></i> Check-out

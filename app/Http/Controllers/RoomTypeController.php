@@ -26,7 +26,17 @@ class RoomTypeController extends Controller
             'sequence' => 'nullable|integer',
         ]);
 
-        RoomType::create($validated);
+        $roomType = RoomType::create($validated);
+
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tipe kamar berhasil ditambahkan',
+                'redirect_url' => route('room-types.index'),
+                'roomType' => $roomType
+            ]);
+        }
 
         return redirect()->route('room-types.index')->with('success', 'Tipe kamar berhasil ditambahkan');
     }
@@ -46,12 +56,32 @@ class RoomTypeController extends Controller
 
         $roomType->update($validated);
 
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tipe kamar berhasil diupdate',
+                'redirect_url' => route('room-types.index'),
+                'roomType' => $roomType
+            ]);
+        }
+
         return redirect()->route('room-types.index')->with('success', 'Tipe kamar berhasil diupdate');
     }
 
     public function destroy(RoomType $roomType)
     {
         $roomType->delete();
+        
+        // Check if request is AJAX
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tipe kamar berhasil dihapus',
+                'redirect_url' => route('room-types.index')
+            ]);
+        }
+        
         return redirect()->route('room-types.index')->with('success', 'Tipe kamar berhasil dihapus');
     }
 }
