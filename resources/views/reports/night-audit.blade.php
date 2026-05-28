@@ -41,7 +41,7 @@
         </div>
         <h1 class="text-2xl font-bold uppercase tracking-wider">Night Audit Report</h1>
         <p class="text-gray-600">{{ \Carbon\Carbon::parse($date)->format('l, d F Y') }}</p>
-        <p class="text-xs text-gray-400 no-print">Dicetak: {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
+        <p class="text-xs text-gray-400">Dicetak: {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
         <hr class="mt-4 border-t-2 border-gray-800">
     </div>
 

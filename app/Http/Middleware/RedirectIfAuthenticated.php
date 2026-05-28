@@ -19,6 +19,8 @@ class RedirectIfAuthenticated
                     return redirect()->route('owner.dashboard');
                 } elseif ($user->isAdmin()) {
                     return redirect()->route('admin.dashboard');
+                } elseif ($user->isHousekeeping()) {
+                    return redirect()->route('housekeeping.index');
                 } else {
                     return redirect()->route('frontoffice.dashboard');
                 }

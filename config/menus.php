@@ -28,10 +28,6 @@ return [
             'roles'  => ['owner', 'admin', 'frontoffice'],
             'children' => [
                 [
-                    'label'      => 'Room List',
-                    'route'      => 'room-list.index',
-                ],
-                [
                     'label'      => 'Reservasi',
                     'route'      => 'reservations.index',
                 ],
@@ -106,6 +102,10 @@ return [
             'label'  => 'Room Management',
             'icon'   => 'bed',
             'children' => [
+                [
+                    'label'      => 'Room List',
+                    'route'      => 'room-list.index',
+                ],
                 [
                     'label'      => 'Rooms',
                     'route'      => 'rooms.index',

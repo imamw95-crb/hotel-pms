@@ -63,7 +63,7 @@ if (!function_exists('getMenuItems')) {
 }
 
 /**
- * Get menu items with permission checks
+ * Get menu items with permission checks and role filtering
  */
 if (!function_exists('getMenuItemsWithPermissions')) {
     function getMenuItemsWithPermissions()
@@ -72,11 +72,29 @@ if (!function_exists('getMenuItemsWithPermissions')) {
             return [];
         }
 
+        $userRole = auth()->user()->role;
         $menus = config('menus.items', []);
 
-        // Return all menu items — no role filtering
-        // Permission checks are handled at the route middleware level
-        return $menus;
+        // Filter by role — hide items that specify roles not matching current user
+        return array_values(array_filter($menus, function ($menu) use ($userRole) {
+            if (isset($menu['roles'])) {
+                $allowedRoles = is_array($menu['roles']) ? $menu['roles'] : [$menu['roles']];
+                if (!in_array($userRole, $allowedRoles)) {
+                    return false;
+                }
+            }
+            // Also filter children by role
+            if (isset($menu['children'])) {
+                $menu['children'] = array_values(array_filter($menu['children'], function ($child) use ($userRole) {
+                    if (isset($child['roles'])) {
+                        $allowedRoles = is_array($child['roles']) ? $child['roles'] : [$child['roles']];
+                        return in_array($userRole, $allowedRoles);
+                    }
+                    return true;
+                }));
+            }
+            return true;
+        }));
     }
 }
 

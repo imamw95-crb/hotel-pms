@@ -335,4 +335,60 @@ class HousekeepingController extends Controller
 
         return redirect()->route('housekeeping.index')->with('success', 'Tugas housekeeping berhasil dihapus');
     }
+
+    /**
+     * Print housekeeping report
+     */
+    public function printReport(Request $request)
+    {
+        $statusFilter = $request->input('status', 'all');
+        $typeFilter = $request->input('type', 'all');
+        $priorityFilter = $request->input('priority', 'all');
+        $roomFilter = $request->input('room_id', 'all');
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
+        $tasksQuery = HousekeepingTask::with(['room', 'assignedTo', 'completedBy', 'createdBy']);
+
+        if ($statusFilter !== 'all') {
+            $tasksQuery->where('status', $statusFilter);
+        }
+        if ($typeFilter !== 'all') {
+            $tasksQuery->where('task_type', $typeFilter);
+        }
+        if ($priorityFilter !== 'all') {
+            $tasksQuery->where('priority', $priorityFilter);
+        }
+        if ($roomFilter !== 'all') {
+            $tasksQuery->where('room_id', $roomFilter);
+        }
+
+        $tasksQuery->whereDate('created_at', '>=', $dateFrom)
+            ->whereDate('created_at', '<=', $dateTo);
+
+        $tasks = $tasksQuery->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low') ASC")
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Group tasks by status for summary
+        $groupedTasks = $tasks->groupBy('status');
+
+        // Stats
+        $stats = [
+            'total'       => $tasks->count(),
+            'pending'     => $tasks->where('status', 'pending')->count(),
+            'in_progress' => $tasks->where('status', 'in_progress')->count(),
+            'completed'   => $tasks->where('status', 'completed')->count(),
+            'cancelled'   => $tasks->where('status', 'cancelled')->count(),
+            'urgent'      => $tasks->where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
+        ];
+
+        $hotel = \App\Models\HotelSetting::get();
+
+        return view('housekeeping.print', compact(
+            'tasks', 'groupedTasks', 'stats', 'hotel',
+            'statusFilter', 'typeFilter', 'priorityFilter', 'roomFilter',
+            'dateFrom', 'dateTo'
+        ));
+    }
 }

@@ -6,9 +6,9 @@
 <div class="bg-white rounded-lg shadow p-6">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Daftar Kamar</h2>
-        <a href="{{ route('rooms.create') }}" class="bg-blue-600 text-white px-3 py-1 rounded">
-            <i class="fas fa-plus"></i> Tambah Kamar
-        </a>
+        <button onclick="RoomsForm.open('{{ route('rooms.create') }}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer hover:bg-blue-700 transition">
+            <i class="fas fa-plus mr-1"></i> Tambah Kamar
+        </button>
     </div>
     
     <div class="overflow-x-auto">

@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-3xl mx-auto">
 
-    <form method="POST" action="{{ route('resto.store') }}" class="bg-white rounded-lg shadow" id="restoForm" data-ajax="true">
+    <form method="POST" action="{{ route('resto.store') }}" class="bg-white rounded-lg shadow" id="restoForm" data-ajax="true" data-refresh="true">
         @csrf
 
         {{-- Info Box --}}
@@ -68,14 +68,14 @@
                 <label class="block text-sm font-semibold text-gray-700">
                     <i class="fas fa-list text-blue-500 mr-1"></i> Item Pesanan
                 </label>
-                <button type="button" onclick="addItem()"
+                <button type="button" onclick="RestoForm.addItem()"
                         class="text-sm bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition">
                     <i class="fas fa-plus mr-1"></i> Tambah Item
                 </button>
             </div>
 
             <div id="itemsContainer" class="space-y-3">
-                {{-- Item rows will be added here --}}
+                {{-- Item rows will be added here by JS --}}
             </div>
             @error('items')
                 <p class="text-red-500 text-xs mt-2">{{ $message }}</p>
@@ -93,7 +93,7 @@
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
                         <input type="number" name="tax" id="tax" value="{{ old('tax', 0) }}" min="0" step="1000"
                                class="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-right"
-                               oninput="calculateTotal()">
+                               oninput="RestoForm._calculate()">
                     </div>
                 </div>
                 <div>
@@ -104,7 +104,7 @@
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
                         <input type="number" name="discount" id="discount" value="{{ old('discount', 0) }}" min="0" step="1000"
                                class="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-right"
-                               oninput="calculateTotal()">
+                               oninput="RestoForm._calculate()">
                     </div>
                 </div>
             </div>
@@ -156,10 +156,10 @@
         </div>
 
         {{-- Submit --}}
-        <div class="p-6 bg-gray-50 rounded-b-lg flex justify-between">
-            <a href="{{ route('resto.index') }}" class="text-gray-500 hover:text-gray-700 font-medium px-4 py-2.5 transition">
-                <i class="fas fa-arrow-left mr-1"></i> Kembali
-            </a>
+        <div class="p-6 bg-gray-50 rounded-b-lg flex justify-end">
+            <button type="button" onclick="Modal.close()" class="text-gray-500 hover:text-gray-700 font-medium px-4 py-2.5 transition mr-4">
+                <i class="fas fa-times mr-1"></i> Batal
+            </button>
             <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition flex items-center gap-2">
                 <i class="fas fa-save"></i> Simpan Transaksi
@@ -167,75 +167,4 @@
         </div>
     </form>
 </div>
-
-<script>
-    let itemIndex = 0;
-
-    function addItem() {
-        const container = document.getElementById('itemsContainer');
-        const row = document.createElement('div');
-        row.className = 'item-row flex gap-3 items-start';
-        row.innerHTML = `
-            <div class="flex-1">
-                <input type="text" name="items[${itemIndex}][name]" placeholder="Nama item (contoh: Nasi Goreng)"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
-            </div>
-            <div class="w-20">
-                <input type="number" name="items[${itemIndex}][qty]" placeholder="Qty" min="1" value="1"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required oninput="calculateTotal()">
-            </div>
-            <div class="w-32">
-                <input type="number" name="items[${itemIndex}][price]" placeholder="Harga" min="0" step="500"
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required oninput="calculateTotal()">
-            </div>
-            <div class="w-28 text-right py-2 text-sm font-semibold item-subtotal">Rp 0</div>
-            <button type="button" onclick="removeItem(this)" class="text-red-500 hover:text-red-700 py-2 px-1">
-                <i class="fas fa-trash"></i>
-            </button>
-        `;
-        container.appendChild(row);
-        itemIndex++;
-    }
-
-    function removeItem(btn) {
-        btn.closest('.item-row').remove();
-        calculateTotal();
-    }
-
-    function formatRupiah(num) {
-        return 'Rp ' + parseInt(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    }
-
-    function calculateTotal() {
-        let subtotal = 0;
-        document.querySelectorAll('.item-row').forEach(row => {
-            const qty = parseInt(row.querySelector('input[name*="[qty]"]').value) || 0;
-            const price = parseInt(row.querySelector('input[name*="[price]"]').value) || 0;
-            const itemSubtotal = qty * price;
-            subtotal += itemSubtotal;
-            row.querySelector('.item-subtotal').textContent = formatRupiah(itemSubtotal);
-        });
-
-        const tax = parseInt(document.getElementById('tax').value) || 0;
-        const discount = parseInt(document.getElementById('discount').value) || 0;
-        const total = subtotal + tax - discount;
-
-        document.getElementById('subtotalDisplay').textContent = formatRupiah(subtotal);
-        document.getElementById('taxDisplay').textContent = formatRupiah(tax);
-        document.getElementById('discountDisplay').textContent = formatRupiah(discount);
-        document.getElementById('totalDisplay').textContent = formatRupiah(total);
-    }
-
-    // Add first item on load
-    addItem();
-
-    // Auto-select guest when reservation is selected
-    document.getElementById('reservation_id').addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        const guestId = selected.getAttribute('data-guest');
-        if (guestId) {
-            document.getElementById('guest_id').value = guestId;
-        }
-    });
-</script>
 @endsection

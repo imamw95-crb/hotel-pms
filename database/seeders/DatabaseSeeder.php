@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         User::create(['name' => 'Owner Hotel', 'email' => 'owner@hotel.com', 'password' => Hash::make('password'), 'role' => 'owner']);
         User::create(['name' => 'Admin Hotel', 'email' => 'admin@hotel.com', 'password' => Hash::make('password'), 'role' => 'admin']);
         User::create(['name' => 'Front Office Staff', 'email' => 'frontoffice@hotel.com', 'password' => Hash::make('password'), 'role' => 'frontoffice']);
+        User::create(['name' => 'Housekeeping Staff', 'email' => 'housekeeping@hotel.com', 'password' => Hash::make('password'), 'role' => 'housekeeping']);
 
         // Room Types
         $roomTypes = [

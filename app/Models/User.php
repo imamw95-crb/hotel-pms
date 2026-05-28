@@ -47,6 +47,11 @@ class User extends Authenticatable
         return $this->role === 'frontoffice';
     }
 
+    public function isHousekeeping()
+    {
+        return $this->role === 'housekeeping';
+    }
+
     /**
      * Check apakah user memiliki permission berdasarkan role
      */

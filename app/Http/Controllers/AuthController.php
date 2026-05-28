@@ -28,6 +28,8 @@ class AuthController extends Controller
                 return redirect()->intended('/owner/dashboard');
             } elseif ($user->isAdmin()) {
                 return redirect()->intended('/admin/dashboard');
+            } elseif ($user->isHousekeeping()) {
+                return redirect()->intended('/housekeeping');
             } else {
                 return redirect()->intended('/frontoffice/dashboard');
             }

@@ -96,6 +96,11 @@ class PermissionSeeder extends Seeder
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status',
         ]);
 
+        $this->assignPermissionToRole('housekeeping', [
+            'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
+            'manage_guests',
+        ]);
+
         $this->assignPermissionToRole('owner', [
             'view_reports', 'export_reports',
             'manage_users',

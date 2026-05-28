@@ -60,6 +60,9 @@
             <button onclick="openBulkModal()" class="bg-purple-500 text-white px-4 py-2 rounded text-sm hover:bg-purple-600 transition">
                 <i class="fas fa-layer-group mr-1"></i> Bulk Create
             </button>
+            <a href="{{ route('housekeeping.print', request()->query()) }}" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition">
+                <i class="fas fa-print mr-1"></i> Print
+            </a>
         </div>
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
             <select onchange="filterTasks()" id="filterStatus" class="border rounded px-2 py-1 text-sm">
@@ -428,14 +431,13 @@
 <script>
 // ─── Filter ──────────────────────────────────────────────────────────
 function filterTasks() {
-    const params = new URLSearchParams(window.location.search);
-    params.set('status', document.getElementById('filterStatus').value);
-    params.set('type', document.getElementById('filterType').value);
-    params.set('priority', document.getElementById('filterPriority').value);
-    params.set('room_id', document.getElementById('filterRoom').value);
-    params.set('date_from', document.getElementById('filterDateFrom').value);
-    params.set('date_to', document.getElementById('filterDateTo').value);
-    window.location.href = '{{ route("housekeeping.index") }}?' + params.toString();
+    const fields = ['status','type','priority','room_id','date_from','date_to'];
+    const parts = [];
+    for (let i = 0; i < fields.length; i++) {
+        const el = document.getElementById('filter' + fields[i].charAt(0).toUpperCase() + fields[i].slice(1));
+        if (el) parts.push(encodeURIComponent(fields[i]) + '=' + encodeURIComponent(el.value));
+    }
+    window.location.href = '{{ route("housekeeping.index") }}?' + parts.join('&');
 }
 
 // ─── Create Modal ────────────────────────────────────────────────────
@@ -632,9 +634,9 @@ function renderTaskDetail(task) {
                 ? '<div><p class="text-sm text-gray-500">Catatan</p><p class="text-sm mt-1">' + task.notes + '</p></div>'
                 : '') +
             '<div class="grid grid-cols-2 gap-4 text-sm text-gray-500 pt-2 border-t">' +
-                '<div><p>Dibuat: ' + new Date(task.created_at).toLocaleString('id-ID') + '</p></div>' +
+                '<div><p>Dibuat: ' + task.created_at.replace('T',' ').substring(0,19).replace(/-/g,'/') + '</p></div>' +
                 (task.completed_at
-                    ? '<div><p>Selesai: ' + new Date(task.completed_at).toLocaleString('id-ID') + '</p></div>'
+                    ? '<div><p>Selesai: ' + task.completed_at.replace('T',' ').substring(0,19).replace(/-/g,'/') + '</p></div>'
                     : '') +
             '</div>' +
         '</div>';

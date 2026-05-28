@@ -11,10 +11,11 @@
         <div>
             <p class="text-sm text-gray-500">Kelola transaksi pendapatan resto / F&B.</p>
         </div>
-        <a href="{{ route('resto.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition flex items-center gap-2">
+        <button type="button"
+                onclick="RestoForm.open('{{ route('resto.create') }}')"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition flex items-center gap-2">
             <i class="fas fa-plus"></i> Transaksi Baru
-        </a>
+        </button>
     </div>
 
     {{-- Summary Cards --}}
