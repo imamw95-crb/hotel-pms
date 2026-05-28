@@ -25,7 +25,12 @@ return [
         [
             'label'  => 'Front Desk',
             'icon'   => 'concierge-bell',
+            'roles'  => ['owner', 'admin', 'frontoffice'],
             'children' => [
+                [
+                    'label'      => 'Room List',
+                    'route'      => 'room-list.index',
+                ],
                 [
                     'label'      => 'Reservasi',
                     'route'      => 'reservations.index',
@@ -120,7 +125,7 @@ return [
             'label'      => 'Housekeeping',
             'icon'       => 'broom',
             'route'      => 'housekeeping.index',
-            'permission' => 'view_rooms',
+            'permission' => 'view_housekeeping',
         ],
 
         // ─── Guest Management ────────────────────────────────────────
@@ -142,37 +147,44 @@ return [
             'icon'       => 'utensils',
             'route'      => 'resto.index',
             'permission' => null,
+            'roles'      => ['owner', 'admin', 'frontoffice'],
         ],
 
         // ─── Reports ─────────────────────────────────────────────────
         [
             'label'  => 'Reports',
             'icon'   => 'chart-bar',
+            'roles'  => ['owner', 'admin', 'frontoffice'],
             'children' => [
                 [
                     'label'      => 'Night Audit',
                     'route'      => 'reports.night-audit',
                     'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
                 [
                     'label'      => 'Guest List Report',
                     'route'      => 'reports.guest-list',
                     'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
                 [
                     'label'      => 'Occupancy',
                     'route'      => 'reports.occupancy',
                     'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
                 [
                     'label'      => 'Revenue',
                     'route'      => 'reports.revenue',
                     'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
                 [
                     'label'      => 'Reservation Report',
                     'route'      => 'reports.reservations',
                     'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
             ],
         ],

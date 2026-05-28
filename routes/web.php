@@ -89,6 +89,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-rack/occupancy', [\App\Http\Controllers\RoomRackController::class, 'occupancyCalendar'])->name('room-rack.occupancy');
     Route::get('/room-rack/forecast', [\App\Http\Controllers\RoomRackController::class, 'forecast'])->name('room-rack.forecast');
 
+    // Room List — all roles, no permission restriction
+    Route::get('/room-list', [\App\Http\Controllers\RoomListController::class, 'index'])->name('room-list.index');
+
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);
     Route::resource('room-types', RoomTypeController::class);
@@ -160,7 +163,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Pendapatan Resto
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'permission:view_reports'])->group(function () {
         Route::get('/resto', [RestoController::class, 'index'])->name('resto.index');
         Route::get('/resto/create', [RestoController::class, 'create'])->name('resto.create');
         Route::post('/resto', [RestoController::class, 'store'])->name('resto.store');
@@ -172,11 +175,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/housekeeping', [HousekeepingController::class, 'index'])->name('housekeeping.index');
         Route::post('/housekeeping', [HousekeepingController::class, 'store'])->name('housekeeping.store');
         Route::get('/housekeeping/stats', [HousekeepingController::class, 'stats'])->name('housekeeping.stats');
+        Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
         Route::get('/housekeeping/room/{room}/tasks', [HousekeepingController::class, 'roomTasks'])->name('housekeeping.room-tasks');
         Route::get('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'show'])->name('housekeeping.show');
         Route::patch('/housekeeping/{housekeepingTask}/status', [HousekeepingController::class, 'updateStatus'])->name('housekeeping.update-status');
         Route::patch('/housekeeping/{housekeepingTask}/assign', [HousekeepingController::class, 'assign'])->name('housekeeping.assign');
         Route::post('/housekeeping/bulk-create', [HousekeepingController::class, 'bulkCreate'])->name('housekeeping.bulk-create');
         Route::delete('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'destroy'])->name('housekeeping.destroy');
+        Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
     });
 });
