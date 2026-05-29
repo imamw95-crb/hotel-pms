@@ -82,6 +82,9 @@
                     <a href="{{ route('reports.night-audit') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.night-audit') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-moon w-5 mr-2"></i> Night Audit
                     </a>
+                    <a href="{{ route('reports.night-audit-v2.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.night-audit-v2*') ? 'active' : 'hover:bg-blue-700' }}">
+                        <i class="fas fa-moon text-yellow-300 w-5 mr-2"></i> Night Audit v2
+                    </a>
                     <a href="{{ route('reports.guest-list') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.guest-list') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-users w-5 mr-2"></i> Guest List
                     </a>

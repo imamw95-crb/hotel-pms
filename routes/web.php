@@ -21,6 +21,7 @@ use App\Http\Controllers\RestoController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\HousekeepingController;
+use App\Http\Controllers\NightAuditController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -113,6 +114,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/occupancy', [ReportController::class, 'occupancy'])->name('reports.occupancy');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');
+
+        // Night Audit v2 — Preview, Draft, Lock, History
+        Route::get('/reports/night-audit-v2', [NightAuditController::class, 'index'])->name('reports.night-audit-v2.index');
+        Route::get('/reports/night-audit-v2/preview', [NightAuditController::class, 'preview'])->name('reports.night-audit-v2.preview');
+        Route::post('/reports/night-audit-v2/save-draft', [NightAuditController::class, 'saveDraft'])->name('reports.night-audit-v2.save-draft');
+        Route::post('/reports/night-audit-v2/lock', [NightAuditController::class, 'lock'])->name('reports.night-audit-v2.lock');
+        Route::post('/reports/night-audit-v2/delete-draft', [NightAuditController::class, 'deleteDraft'])->name('reports.night-audit-v2.delete-draft');
+        Route::get('/reports/night-audit-v2/{id}', [NightAuditController::class, 'show'])->name('reports.night-audit-v2.show');
+        Route::get('/reports/night-audit-v2/{id}/export', [NightAuditController::class, 'export'])->name('reports.night-audit-v2.export');
 
         // Export routes
         Route::get('/reports/night-audit/export', [ReportController::class, 'exportNightAudit'])->name('reports.night-audit.export');
