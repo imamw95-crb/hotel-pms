@@ -419,7 +419,7 @@
     function openEditTotalModal(id, reservationNumber, totalAmount) {
         editTotalReservationId = id;
         document.getElementById('modalReservationNumber').value = reservationNumber;
-        document.getElementById('modalTotalAmount').value = new Intl.NumberFormat('id-ID').format(totalAmount);
+        document.getElementById('modalTotalAmount').value = new window.Intl.NumberFormat('id-ID').format(totalAmount);
         const modal = document.getElementById('editTotalModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -441,7 +441,7 @@
     document.getElementById('modalTotalAmount').addEventListener('input', function(e) {
         let value = this.value.replace(/[^0-9]/g, '');
         if (value) {
-            this.value = new Intl.NumberFormat('id-ID').format(value);
+            this.value = new window.Intl.NumberFormat('id-ID').format(value);
         }
     });
 
@@ -503,7 +503,7 @@
         editRateNights = 1;
 
         document.getElementById('rateModalReservationNumber').value = reservationNumber;
-        document.getElementById('rateModalDefaultPrice').value = 'Rp ' + new Intl.NumberFormat('id-ID').format(defaultPrice);
+        document.getElementById('rateModalDefaultPrice').value = 'Rp ' + new window.Intl.NumberFormat('id-ID').format(defaultPrice);
 
         // Get nights from the table row
         const row = document.querySelector('button[onclick*="openEditRateModal(' + id + '"]')?.closest('tr');
@@ -516,8 +516,8 @@
                 const ciParts = ciText.split('/');
                 const coParts = coText.split('/');
                 if (ciParts.length === 3 && coParts.length === 3) {
-                    const ci = new Date(ciParts[2], ciParts[1]-1, ciParts[0]);
-                    const co = new Date(coParts[2], coParts[1]-1, coParts[0]);
+                    const ci = new window.Date(ciParts[2], ciParts[1]-1, ciParts[0]);
+                    const co = new window.Date(coParts[2], coParts[1]-1, coParts[0]);
                     editRateNights = Math.max(1, Math.round((co - ci) / (1000 * 60 * 60 * 24)));
                 }
             }
@@ -527,7 +527,7 @@
 
         const customRateInput = document.getElementById('rateModalCustomRate');
         if (customRate && customRate !== null) {
-            customRateInput.value = new Intl.NumberFormat('id-ID').format(customRate);
+            customRateInput.value = new window.Intl.NumberFormat('id-ID').format(customRate);
         } else {
             customRateInput.value = '';
         }
@@ -551,13 +551,13 @@
         const val = document.getElementById('rateModalCustomRate').value.replace(/[^0-9]/g, '');
         const rate = parseInt(val) || editRateDefaultPrice;
         const total = rate * editRateNights;
-        document.getElementById('rateModalNewTotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+        document.getElementById('rateModalNewTotal').textContent = 'Rp ' + new window.Intl.NumberFormat('id-ID').format(total);
     }
 
     document.getElementById('rateModalCustomRate').addEventListener('input', function(e) {
         let value = this.value.replace(/[^0-9]/g, '');
         if (value) {
-            this.value = new Intl.NumberFormat('id-ID').format(value);
+            this.value = new window.Intl.NumberFormat('id-ID').format(value);
         }
         updateRatePreview();
     });
