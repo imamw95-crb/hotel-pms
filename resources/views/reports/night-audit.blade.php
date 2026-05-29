@@ -86,9 +86,10 @@
         <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-gray-800 pb-1">Revenue Summary</h2>
 
         <div class="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-4">
+            @php $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday; @endphp
             <div class="flex justify-between items-center">
                 <span class="text-lg font-bold text-green-800">TOTAL PENDAPATAN HARI INI</span>
-                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($revenueToday + $restoRevenueToday, 0, ',', '.') }}</span>
+                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</span>
             </div>
             <div class="flex justify-between items-center mt-2 text-sm">
                 <span class="text-gray-600">Pendapatan Kamar:</span>
@@ -97,6 +98,10 @@
             <div class="flex justify-between items-center text-sm">
                 <span class="text-gray-600">Pendapatan Resto/F&B:</span>
                 <span class="font-semibold text-orange-600">Rp {{ number_format($restoRevenueToday, 0, ',', '.') }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-600">Service Charge:</span>
+                <span class="font-semibold text-blue-600">Rp {{ number_format($serviceChargeRevenueToday, 0, ',', '.') }}</span>
             </div>
         </div>
 
@@ -206,6 +211,57 @@
     </div>
     @endif
 
+    {{-- Service Charge --}}
+    @if($serviceCharges->count() > 0)
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-gray-800 pb-1"><i class="fas fa-receipt text-blue-500 mr-2"></i>Service Charge</h2>
+
+        @if($serviceChargeByMethod->count() > 0)
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            @foreach($serviceChargeByMethod as $method => $total)
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">{{ ucwords(str_replace('_', ' ', $method)) }}</div>
+                <div class="text-lg font-bold text-blue-700">Rp {{ number_format($total, 0, ',', '.') }}</div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <table class="w-full text-xs mb-2">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-1 font-bold">No. Charge</th>
+                    <th class="text-left p-1 font-bold">Tamu</th>
+                    <th class="text-left p-1 font-bold">Kamar</th>
+                    <th class="text-left p-1 font-bold">Layanan</th>
+                    <th class="text-center p-1 font-bold">Qty</th>
+                    <th class="text-left p-1 font-bold">Metode</th>
+                    <th class="text-right p-1 font-bold">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($serviceCharges as $sc)
+                <tr class="border-b border-gray-100">
+                    <td class="p-1 font-medium">{{ $sc->charge_number }}</td>
+                    <td class="p-1">{{ $sc->guest->guest_name ?? ($sc->reservation->guest->guest_name ?? '-') }}</td>
+                    <td class="p-1">{{ $sc->reservation->room->room_number ?? '-' }}</td>
+                    <td class="p-1">{{ $sc->service_name }}</td>
+                    <td class="p-1 text-center">{{ $sc->quantity }}</td>
+                    <td class="p-1">{{ $sc->payment_method ? ucwords(str_replace('_', ' ', $sc->payment_method)) : '-' }}</td>
+                    <td class="p-1 text-right font-bold">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-blue-50 border-t-2 border-blue-300">
+                    <td colspan="6" class="p-2 text-right font-bold text-blue-800">TOTAL SERVICE CHARGE</td>
+                    <td class="p-2 text-right font-bold text-blue-700">Rp {{ number_format($serviceChargeRevenueToday, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
     <hr class="mb-6 border-t border-gray-300">
 
     <!-- Check-in / Check-out Summary -->
@@ -289,12 +345,12 @@
                     <th class="text-center p-2 font-bold text-xs">KAMAR</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
-                    <th class="text-center p-2 font-bold text-xs">SISA HARI</th>
+                    <th class="text-center p-2 font-bold text-xs">LAMA INAP</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($inHouseGuests as $res)
-                @php $daysLeft = \Carbon\Carbon::now()->diffInDays($res->check_out, false); @endphp
+                @php $totalNights = $res->check_in->diffInDays($res->check_out); @endphp
                 <tr class="border-b border-gray-100">
                     <td class="p-2 font-medium text-xs">{{ $res->reservation_number }}</td>
                     <td class="p-2 text-xs">{{ $res->guest->guest_name ?? '-' }}</td>
@@ -302,8 +358,8 @@
                     <td class="p-2 text-center text-xs">{{ $res->check_in->format('d/m/Y') }}</td>
                     <td class="p-2 text-center text-xs">{{ $res->check_out->format('d/m/Y') }}</td>
                     <td class="p-2 text-center">
-                        <span class="px-2 py-1 rounded text-xs font-bold {{ $daysLeft <= 1 ? 'bg-red-100 text-red-800' : ($daysLeft <= 3 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800') }}">
-                            {{ $daysLeft }} hari
+                        <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                            {{ $totalNights }} malam
                         </span>
                     </td>
                 </tr>

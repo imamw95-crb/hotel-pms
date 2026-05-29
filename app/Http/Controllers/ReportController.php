@@ -6,6 +6,7 @@ use App\Models\Reservation;
 use App\Models\Transaction;
 use App\Models\Room;
 use App\Models\RestoTransaction;
+use App\Models\ServiceCharge;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -49,6 +50,18 @@ class ReportController extends Controller
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
+        // Service Charge hari ini
+        $serviceChargeRevenueToday = ServiceCharge::whereDate('charge_date', $date)->sum('total_amount');
+        $serviceCharges = ServiceCharge::with(['guest', 'reservation.room', 'createdBy'])
+            ->whereDate('charge_date', $date)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $serviceChargeByMethod = ServiceCharge::whereDate('charge_date', $date)
+            ->whereNotNull('payment_method')
+            ->selectRaw('payment_method, SUM(total_amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
         // Pendapatan per metode pembayaran (summary)
         $revenueByMethod = Transaction::whereDate('created_at', $date)
             ->selectRaw('payment_method, SUM(amount) as total')
@@ -82,7 +95,8 @@ class ReportController extends Controller
         return view('reports.night-audit', compact(
             'date', 'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms',
             'checkinsToday', 'checkoutsToday', 'revenueToday', 'revenueByMethod', 'transactionsByMethod', 'inHouseGuests', 'newBookings',
-            'restoRevenueToday', 'restoTransactions', 'restoRevenueByMethod'
+            'restoRevenueToday', 'restoTransactions', 'restoRevenueByMethod',
+            'serviceChargeRevenueToday', 'serviceCharges', 'serviceChargeByMethod'
         ));
     }
 

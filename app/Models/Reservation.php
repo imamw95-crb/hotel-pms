@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Reservation extends Model
 {
     protected $fillable = [
-        'reservation_number', 'ota_reservation_number', 'ota_source', 'room_id', 'guest_id', 'check_in', 'check_out',
+        'reservation_number', 'ota_reservation_number', 'ota_source', 'ota_payment_status', 'ota_paid_amount',
+        'room_id', 'guest_id', 'check_in', 'check_out',
         'number_of_cards', 'status', 'total_amount', 'paid_amount', 'paid_date', 'payment_method', 'notes', 'created_by',
         'custom_room_rate',
     ];

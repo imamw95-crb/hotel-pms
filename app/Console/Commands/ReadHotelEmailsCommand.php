@@ -259,7 +259,15 @@ class ReadHotelEmailsCommand extends Command
                     ? "Room {$reservation->room->room_number}"
                     : 'Room unassigned';
 
-                $this->info("  ✅ {$action}: {$reservation->reservation_number} ({$roomInfo})");
+                $paymentInfo = '';
+                if ($reservation->ota_reservation_number) {
+                    $paidStr = 'Rp ' . number_format($reservation->paid_amount, 0, ',', '.');
+                    $totalStr = 'Rp ' . number_format($reservation->total_amount, 0, ',', '.');
+                    $statusStr = str_replace('_', ' ', $reservation->ota_payment_status ?? 'unpaid_ota');
+                    $paymentInfo = " | {$paidStr}/{$totalStr} ({$statusStr})";
+                }
+
+                $this->info("  ✅ {$action}: {$reservation->reservation_number} ({$roomInfo}){$paymentInfo}");
 
                 // ═══ STEP 9: SAVE UID + MARK AS READ (atomic) ═══
                 $imap->markAsSeen($message);

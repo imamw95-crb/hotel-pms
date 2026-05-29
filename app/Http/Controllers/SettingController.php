@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\HotelSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SettingController extends Controller
 {
@@ -36,12 +37,38 @@ class SettingController extends Controller
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
-            // Delete old logo
-            if ($setting->logo_path && Storage::disk('public')->exists($setting->logo_path)) {
-                Storage::disk('public')->delete($setting->logo_path);
+            $uploadedFile = $request->file('logo');
+            if ($uploadedFile && $uploadedFile->getPathname()) {
+                // Hapus logo lama
+                if ($setting->logo_path && Storage::disk('public')->exists($setting->logo_path)) {
+                    Storage::disk('public')->delete($setting->logo_path);
+                }
+
+                $path = null;
+                // Coba pakai store() dulu
+                try {
+                    $path = $uploadedFile->store('logo', 'public');
+                } catch (\Throwable $e) {
+                    logger()->warning('Logo store() failed: ' . $e->getMessage());
+                }
+
+                // Fallback: copy manual
+                if (!$path) {
+                    $ext = $uploadedFile->getClientOriginalExtension() ?: 'png';
+                    $filename = Str::random(40) . '.' . $ext;
+                    $destDir = storage_path('app/public/logo');
+                    if (!is_dir($destDir)) {
+                        mkdir($destDir, 0755, true);
+                    }
+                    if (copy($uploadedFile->getPathname(), $destDir . '/' . $filename)) {
+                        $path = 'logo/' . $filename;
+                    }
+                }
+
+                if ($path) {
+                    $setting->logo_path = $path;
+                }
             }
-            $path = $request->file('logo')->store('logo', 'public');
-            $setting->logo_path = $path;
         }
 
         $setting->hotel_name = $validated['hotel_name'];

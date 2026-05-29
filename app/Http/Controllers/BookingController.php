@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Guest;
-use App\Models\PaymentMethod;
 use App\Models\Reservation;
-use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -77,9 +75,6 @@ class BookingController extends Controller
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
-            'payment_type' => 'nullable|in:full,dp',
-            'dp_amount' => 'nullable|numeric|min:0',
             'ota_reservation_number' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
@@ -113,14 +108,6 @@ class BookingController extends Controller
             $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
         }
 
-        // Determine paid amount based on payment type
-        $paidAmount = 0;
-        if (($validated['payment_type'] ?? '') === 'dp' && !empty($validated['dp_amount'])) {
-            $paidAmount = min($validated['dp_amount'], $totalAmount);
-        } elseif (($validated['payment_type'] ?? '') === 'full') {
-            $paidAmount = $totalAmount;
-        }
-
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
             'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
@@ -130,23 +117,10 @@ class BookingController extends Controller
             'check_out' => $checkOutDate,
             'status' => 'pending',
             'total_amount' => $totalAmount,
-            'paid_amount' => $paidAmount,
-            'payment_method' => $validated['payment_method'] ?? null,
+            'paid_amount' => 0,
             'notes' => $validated['notes'],
             'created_by' => auth()->id(),
         ]);
-
-        // Create initial transaction if DP or full payment
-        if ($paidAmount > 0) {
-            Transaction::create([
-                'transaction_number' => 'TRX-' . strtoupper(uniqid()),
-                'reservation_id' => $reservation->id,
-                'type' => ($validated['payment_type'] ?? '') === 'dp' ? 'dp' : 'pelunasan',
-                'amount' => $paidAmount,
-                'payment_method' => $validated['payment_method'] ?? 'cash',
-                'created_by' => auth()->id(),
-            ]);
-        }
 
         if (request()->expectsJson()) {
             return response()->json([

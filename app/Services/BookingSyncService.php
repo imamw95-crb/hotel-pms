@@ -84,20 +84,45 @@ class BookingSyncService
                     return ['reservation' => $existing, 'action' => 'cancelled', 'success' => true];
                 }
 
-                // Build reservation data — ALL payment fields included
+                // Determine OTA payment status from AI data
+                $isOtaPayment = $this->isOtaPaymentMethod($mapped['payment_method'] ?? '');
+                $aiTotalPrice = $mapped['total_amount'] ?? 0;
+                $otaPaidAmount = 0;
+                $otaPaymentStatus = 'unpaid_ota';
+
+                if ($isOtaPayment) {
+                    // OTA collected payment — check if full or partial
+                    // If AI didn't provide price but we have a room, calculate from room rate
+                    if ($aiTotalPrice <= 0 && $roomId) {
+                        $room = Room::find($roomId);
+                        if ($room) {
+                            $checkIn  = Carbon::parse($mapped['check_in']);
+                            $checkOut = Carbon::parse($mapped['check_out']);
+                            $aiTotalPrice = $room->calculateTotalForRange($checkIn, $checkOut);
+                        }
+                    }
+                    $otaPaidAmount = $aiTotalPrice;
+                    $otaPaymentStatus = 'paid_ota';
+                }
+
+                // Build reservation data
+                // paid_amount = 0 — payment akan diinput via 1 form "Input Pembayaran"
+                // ota_payment_status & ota_paid_amount = referensi dari email AI
                 $reservationData = [
-                    'guest_id'        => $guest->id,
-                    'check_in'        => $mapped['check_in'],
-                    'check_out'       => $mapped['check_out'],
-                    'number_of_cards' => $mapped['number_of_cards'],
-                    'total_amount'    => $mapped['total_amount'] ?? 0,
-                    'payment_method'  => $mapped['payment_method'] ?? null,
-                    'paid_date'       => $mapped['paid_date'] ?? null,
-                    'paid_amount'     => $mapped['paid_amount'] ?? 0,
-                    'status'          => $mapped['status'],
-                    'notes'           => $mapped['notes'],
-                    'ota_source'      => $mapped['ota_source'],
-                    'created_by'      => $existing?->created_by, // preserve original creator
+                    'guest_id'             => $guest->id,
+                    'check_in'             => $mapped['check_in'],
+                    'check_out'            => $mapped['check_out'],
+                    'number_of_cards'      => $mapped['number_of_cards'],
+                    'total_amount'         => $aiTotalPrice,
+                    'payment_method'       => $mapped['payment_method'] ?? null,
+                    'paid_date'            => null,
+                    'paid_amount'          => 0,
+                    'ota_payment_status'   => $otaPaymentStatus,
+                    'ota_paid_amount'      => $otaPaidAmount,
+                    'status'               => $mapped['status'],
+                    'notes'                => $mapped['notes'],
+                    'ota_source'           => $mapped['ota_source'],
+                    'created_by'           => $existing?->created_by,
                 ];
 
                 if ($roomId) {
@@ -123,7 +148,20 @@ class BookingSyncService
 
                 // For modifications: update existing reservation
                 if ($action === 'updated') {
+                    // Fallback: calculate from room price if AI didn't provide total AND current total is 0
+                    $updateTotal = $aiTotalPrice;
+                    if ($updateTotal <= 0 && $roomId) {
+                        $room = Room::find($roomId);
+                        if ($room) {
+                            $checkIn  = Carbon::parse($mapped['check_in']);
+                            $checkOut = Carbon::parse($mapped['check_out']);
+                            $updateTotal = $room->calculateTotalForRange($checkIn, $checkOut);
+                            $reservationData['total_amount'] = $updateTotal;
+                        }
+                    }
+
                     $existing->update($reservationData);
+
                     Log::info('BookingSync: Reservation updated', [
                         'reservation_number'     => $existing->reservation_number,
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
@@ -131,7 +169,7 @@ class BookingSyncService
                         'payment_method'         => $reservationData['payment_method'],
                         'paid_amount'            => $reservationData['paid_amount'],
                     ]);
-                    return ['reservation' => $existing, 'action' => 'updated', 'success' => true];
+                    return ['reservation' => $existing->fresh(), 'action' => 'updated', 'success' => true];
                 }
 
                 // New reservation — use updateOrCreate with unique OTA number
@@ -140,32 +178,18 @@ class BookingSyncService
                     $reservationData
                 );
 
-                // Create transaction record for OTA payments
-                $paidAmount   = $mapped['paid_amount'] ?? 0;
-                $paymentMethod = $mapped['payment_method'] ?? '';
-                if ($paidAmount > 0 && !empty($paymentMethod)) {
-                    \App\Models\Transaction::create([
-                        'reservation_id' => $reservation->id,
-                        'type'           => 'ota_payment',
-                        'amount'         => $paidAmount,
-                        'payment_method' => $paymentMethod,
-                        'notes'          => "Auto-paid via {$paymentMethod} — OTA Email Autopilot",
-                        'created_by'     => 1,
-                    ]);
-                    Log::info('BookingSync: OTA payment transaction created', [
-                        'reservation_number' => $reservation->reservation_number,
-                        'amount'             => $paidAmount,
-                        'payment_method'     => $paymentMethod,
-                    ]);
-                }
+                // NOTE: Transaction TIDAK auto-create di sini.
+                // Payment diinput via 1 form "Input Pembayaran" di halaman detail reservasi.
+                // OTA status & nominal sudah tersimpan di reservation untuk referensi.
 
                 Log::info('BookingSync: New reservation created', [
                     'reservation_number'     => $reservation->reservation_number,
                     'ota_reservation_number' => $mapped['ota_reservation_number'],
-                    'total_amount'           => $reservationData['total_amount'],
-                    'payment_method'         => $paymentMethod,
-                    'paid_amount'            => $paidAmount,
-                    'paid_date'              => $reservationData['paid_date'],
+                    'total_amount'           => $aiTotalPrice,
+                    'payment_method'         => $mapped['payment_method'] ?? '',
+                    'ota_payment_status'     => $otaPaymentStatus,
+                    'ota_paid_amount'        => $otaPaidAmount,
+                    'note'                   => 'Payment akan diinput via form Tambah Pembayaran',
                 ]);
 
                 return ['reservation' => $reservation, 'action' => 'created', 'success' => true];
@@ -177,6 +201,16 @@ class BookingSyncService
             ]);
             return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Check if payment method is OTA-collected (money already received by OTA).
+     */
+    private function isOtaPaymentMethod(string $method): bool
+    {
+        return in_array($method, [
+            'tiket.com', 'traveloka.com', 'ota_payment',
+        ]);
     }
 
     /**

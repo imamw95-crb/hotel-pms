@@ -56,6 +56,11 @@ return [
                     'route'      => 'deposits.index',
                     'permission' => 'checkin',
                 ],
+                [
+                    'label'      => 'Service Charge',
+                    'route'      => 'service-charge.index',
+                    'permission' => 'checkin',
+                ],
             ],
         ],
 
@@ -217,6 +222,11 @@ return [
                 [
                     'label'      => 'Backup Database',
                     'route'      => 'admin.backups.index',
+                    'permission' => 'manage_users',
+                ],
+                [
+                    'label'      => 'API Keys',
+                    'route'      => 'admin.api-keys',
                     'permission' => 'manage_users',
                 ],
             ],

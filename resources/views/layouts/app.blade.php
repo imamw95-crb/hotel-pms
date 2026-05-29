@@ -411,6 +411,7 @@
     <script src="{{ asset('js/async-form.js') }}"></script>
     <script src="{{ asset('js/deposit.js') }}"></script>
     <script src="{{ asset('js/resto-form.js') }}"></script>
+    <script src="{{ asset('js/service-charge-form.js') }}"></script>
     <script src="{{ asset('js/rooms-form.js') }}"></script>
     <script>
         window._depositIndexUrl = '{{ route('deposits.index') }}';

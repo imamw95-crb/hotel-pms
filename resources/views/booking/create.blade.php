@@ -67,40 +67,8 @@
                 <p class="text-xs text-gray-500 mt-1">Kosongkan untuk gunakan harga weekday/weekend otomatis. Isi manual untuk harga tetap.</p>
             </div>
             <div>
-                <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
-                <select name="payment_method" id="paymentMethod" class="w-full border rounded px-3 py-2" onchange="toggleDpFields()">
-                    <option value="">-- Pilih Metode --</option>
-                    @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
-                    @foreach($paymentMethods as $pm)
-                        <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-
-        <!-- Row 4: Tipe Pembayaran & Nominal DP -->
-        <div class="grid grid-cols-3 gap-4 mb-4">
-            <div>
-                <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
-                <div class="flex space-x-4 mt-2">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
-                        <span>Lunas (Bayar Penuh)</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
-                        <span>DP (Down Payment)</span>
-                    </label>
-                </div>
-            </div>
-            <div>
                 <label class="block text-gray-700 font-bold mb-2">Total Tagihan</label>
                 <div class="w-full border rounded px-3 py-2 bg-gray-100 font-bold text-blue-700" id="totalTagihan">Rp 0</div>
-            </div>
-            <div id="dpAmountSection" class="hidden">
-                <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp) <span class="text-red-500">*</span></label>
-                <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
-                <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar" class="font-semibold text-orange-600">Rp 0</span></p>
             </div>
         </div>
 
@@ -123,6 +91,7 @@
 <script>
     window._preSelectedRoomId = '{{ $selectedRoom ? $selectedRoom->id : "" }}';
     window._preSelectedRoomNumber = '{{ $selectedRoom ? $selectedRoom->room_number : "" }}';
+
 </script>
 <script src="{{ asset('js/booking-create.js') }}"></script>
 @endsection

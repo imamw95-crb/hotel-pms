@@ -102,6 +102,9 @@ var RoomsDashboard = {
 
         var bulkMaint = document.querySelector('[data-bulk-maintenance]');
         if (bulkMaint) bulkMaint.addEventListener('click', function() { self.bulkMaintenance(); });
+
+        var bulkAvail = document.querySelector('[data-bulk-available]');
+        if (bulkAvail) bulkAvail.addEventListener('click', function() { self.bulkAvailable(); });
     },
 
     // ========== REALTIME REFRESH ==========
@@ -254,10 +257,12 @@ var RoomsDashboard = {
         var actions = [];
         if (status === 'available') {
             actions.push({ label: 'Booking', icon: 'fa-calendar-plus', fn: 'openBooking' });
+            actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
             actions.push({ label: 'Set Maintenance', icon: 'fa-tools', fn: 'setMaintenance' });
         }
         if (status === 'occupied' || status === 'due_out') {
             actions.push({ label: 'Check-out', icon: 'fa-sign-out-alt', fn: 'checkoutRoom' });
+            actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
         }
         if (status === 'maintenance' || status === 'cleaning') {
             actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
@@ -441,6 +446,42 @@ var RoomsDashboard = {
                 xhr.send();
             })(roomIds[i]);
         }
+    },
+
+    bulkAvailable: function() {
+        var count = this._selectedCount();
+        if (count === 0) return;
+        if (!window.confirm('Set ' + count + ' kamar ke Available?')) return;
+
+        var self = this;
+        var roomIds = [];
+        for (var k in this.state.selectedRooms) {
+            if (this.state.selectedRooms.hasOwnProperty(k)) roomIds.push(k);
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('PATCH', '/rooms/bulk-status', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
+        var token = document.querySelector('meta[name="csrf-token"]');
+        if (token) xhr.setRequestHeader('X-CSRF-TOKEN', token.getAttribute('content'));
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        Toast.success(data.message);
+                        self.state.selectedRooms = {};
+                        self.toggleBulkMode();
+                        self.refresh();
+                    } else {
+                        Toast.error(data.message || 'Gagal');
+                    }
+                } catch(e) { Toast.error('Response tidak valid'); }
+            }
+        };
+        xhr.send(JSON.stringify({ room_ids: roomIds, status: 'available' }));
     },
 
     bulkMaintenance: function() {

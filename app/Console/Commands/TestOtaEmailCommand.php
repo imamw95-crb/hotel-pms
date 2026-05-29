@@ -89,6 +89,9 @@ class TestOtaEmailCommand extends Command
                 'checkout_date' => '2026-06-17',
                 'room_type' => 'Deluxe',
                 'guest_count' => 2,
+                'total_price' => 1500000,
+                'payment_method' => 'tiket.com',
+                'payment_date' => '2026-06-14',
                 'status' => 'confirmed',
                 'ota_source' => $otaSource,
             ];

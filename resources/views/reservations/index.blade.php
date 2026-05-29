@@ -148,12 +148,20 @@
                             <a href="{{ route('reservations.show', $res) }}" class="font-semibold text-blue-600 text-sm hover:text-blue-800 hover:underline">
                                 {{ $res->reservation_number }}
                             </a>
+                            @if($res->ota_reservation_number)
+                                <span class="inline-flex items-center gap-0.5 bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" title="OTA: {{ $res->ota_reservation_number }}">
+                                    <i class="fas fa-globe text-[8px]"></i> OTA
+                                </span>
+                            @endif
                             @if($isDueOut)
                                 <span class="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase">
                                     <i class="fas fa-exclamation-triangle text-[8px]"></i> Due Out
                                 </span>
                             @endif
                         </div>
+                        @if($res->ota_reservation_number)
+                            <p class="text-[10px] text-purple-500 mt-0.5"><i class="fas fa-globe mr-0.5"></i>{{ $res->ota_reservation_number }}</p>
+                        @endif
                         @if($res->status === 'cancelled')
                             <p class="text-[10px] text-red-400 mt-0.5"><i class="fas fa-ban mr-0.5"></i>Dibatalkan</p>
                         @endif

@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DepositController;
 use App\Http\Controllers\RestoController;
+use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\HousekeepingController;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
 
+    // AI Auto-Reservation
+    Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');
+
     // Room Rack & Availability
     Route::get('/room-rack', [\App\Http\Controllers\RoomRackController::class, 'index'])->name('room-rack.index');
     Route::get('/room-rack/check-availability', [\App\Http\Controllers\RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');
@@ -150,6 +154,74 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
     });
 
+    // API Key Management (Owner only)
+    Route::middleware(['role:owner'])->group(function () {
+        Route::get('/admin/api-keys', function () {
+            $users = \App\Models\User::with(['tokens' => function ($q) {
+                $q->select('id', 'tokenable_id', 'name', 'created_at', 'last_used_at');
+            }])->whereHas('tokens')->get();
+
+            $keys = $users->map(function ($user) {
+                return $user->tokens->map(function ($token) use ($user) {
+                    return [
+                        'id'           => $token->id,
+                        'user_name'    => $user->name,
+                        'user_email'   => $user->email,
+                        'name'         => $token->name,
+                        'last_used_at' => $token->last_used_at,
+                        'created_at'   => $token->created_at,
+                    ];
+                });
+            })->flatten(1);
+
+            $apiKey = session('api_key');
+
+            $ownerAdminUsers = \App\Models\User::whereIn('role', ['owner', 'admin'])->get();
+
+            return view('admin.api-keys.index', compact('keys', 'apiKey', 'ownerAdminUsers'));
+        })->name('admin.api-keys');
+
+        Route::post('/admin/api-keys/generate', function (\Illuminate\Http\Request $request) {
+            $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'name'    => 'required|string|max:100',
+            ]);
+
+            $user = \App\Models\User::findOrFail($request->user_id);
+            $apiKey = \Illuminate\Support\Str::random(48);
+
+            $user->tokens()->where('name', $request->name)->delete();
+            $user->tokens()->create([
+                'name'      => $request->name,
+                'token'     => hash('sha256', $apiKey),
+                'abilities' => ['*'],
+            ]);
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'API Key berhasil dibuat.',
+                    'data'    => ['api_key' => $apiKey, 'name' => $request->name],
+                ]);
+            }
+
+            return redirect()->route('admin.api-keys')
+                ->with('success', "API Key berhasil dibuat:<br><code class='bg-green-200 px-2 py-0.5 rounded text-sm select-all'>{$apiKey}</code><br><small class='text-red-600'><i class='fas fa-exclamation-triangle mr-1'></i>SIMPAN KEY INI! Key tidak bisa ditampilkan lagi.</small>");
+        })->name('admin.api-keys.generate');
+
+        Route::delete('/admin/api-keys/{id}/revoke', function ($id) {
+            $token = \Laravel\Sanctum\PersonalAccessToken::find($id);
+            if (!$token) {
+                return redirect()->route('admin.api-keys')
+                    ->with('error', 'API Key tidak ditemukan.');
+            }
+            $token->delete();
+
+            return redirect()->route('admin.api-keys')
+                ->with('success', 'API Key berhasil dihapus.');
+        })->name('admin.api-keys.revoke');
+    });
+
     // Master Metode Pembayaran (Owner only)
     Route::middleware(['role:owner'])->group(function () {
         Route::resource('admin/payment-methods', PaymentMethodController::class, ['names' => 'admin.payment-methods']);
@@ -170,6 +242,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/resto/create', [RestoController::class, 'create'])->name('resto.create');
         Route::post('/resto', [RestoController::class, 'store'])->name('resto.store');
         Route::get('/resto/{restoTransaction}', [RestoController::class, 'show'])->name('resto.show');
+    });
+
+    // Service Charge
+    Route::middleware(['auth', 'permission:checkin'])->group(function () {
+        Route::get('/service-charge', [ServiceChargeController::class, 'index'])->name('service-charge.index');
+        Route::get('/service-charge/create', [ServiceChargeController::class, 'create'])->name('service-charge.create');
+        Route::post('/service-charge', [ServiceChargeController::class, 'store'])->name('service-charge.store');
+        Route::get('/service-charge/{serviceCharge}', [ServiceChargeController::class, 'show'])->name('service-charge.show');
     });
 
     // Housekeeping

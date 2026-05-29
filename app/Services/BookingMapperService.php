@@ -41,6 +41,14 @@ class BookingMapperService
         $aiPaymentDate  = $this->formatDate($aiData['payment_date'] ?? $aiData['checkin_date'] ?? null, '00:00');
         $isOtaPayment   = $this->isOtaPaymentMethod($aiPaymentMethod);
 
+        // Determine OTA payment status
+        $otaPaymentStatus = 'unpaid_ota';
+        $otaPaidAmount = 0;
+        if ($isOtaPayment && $aiTotalPrice > 0) {
+            $otaPaymentStatus = 'paid_ota';
+            $otaPaidAmount = $aiTotalPrice;
+        }
+
         $mapped = [
             'ota_reservation_number' => $aiData['reservation_id'] ?? null,
             'guest_name'             => $this->sanitizeString($aiData['guest_name'] ?? ''),
@@ -51,7 +59,9 @@ class BookingMapperService
             'total_amount'           => $aiTotalPrice,
             'payment_method'         => $aiPaymentMethod,
             'paid_date'              => $aiPaymentDate,
-            'paid_amount'            => $isOtaPayment ? $aiTotalPrice : 0,
+            'paid_amount'            => $otaPaidAmount,
+            'ota_payment_status'     => $otaPaymentStatus,
+            'ota_paid_amount'        => $otaPaidAmount,
             'status'                 => $this->mapStatus($aiData['status'] ?? 'confirmed'),
             'ota_source'             => $otaSource,
             'notes'                  => $this->buildNotes($aiData),

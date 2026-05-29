@@ -8,6 +8,8 @@ use App\Models\PaymentMethod;
 use App\Models\Transaction;
 use App\Models\MHSLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ReservationController extends Controller
@@ -71,7 +73,8 @@ class ReservationController extends Controller
     }
 
     /**
-     * Tambah pembayaran (DP / Pelunasan / Multi Payment)
+     * Input Pembayaran — 1 Form Universal
+     * Handle: OTA paid, OTA partial, cash, DP, pelunasan — semua dari 1 input
      */
     public function addPayment(Request $request, Reservation $reservation)
     {
@@ -83,42 +86,88 @@ class ReservationController extends Controller
             'payment_type' => 'required|in:dp,pelunasan,tambahan',
             'payment_method' => 'required|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
+            'ota_payment_status' => 'nullable|in:paid_ota,partial_ota,unpaid_ota',
+            'ota_paid_amount' => 'nullable|numeric|min:0',
         ]);
 
+        $hotelAmount = $validated['amount'];
+        $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
+        $otaPaidAmount = $validated['ota_paid_amount'] ?? 0;
+
+        // Hitung sisa bayar (total - sudah dibayar sebelumnya)
         $sisaBayar = $reservation->total_amount - $reservation->paid_amount;
 
-        if ($validated['amount'] > $sisaBayar) {
-            return back()->with('error', 'Nominal pembayaran melebihi sisa bayar (Rp ' . number_format($sisaBayar, 0, ',', '.') . ')');
+        // Validasi: total hotel payment + OTA payment tidak boleh melebihi sisa bayar
+        $totalInput = $hotelAmount + $otaPaidAmount;
+        if ($totalInput > $reservation->total_amount) {
+            return back()->with('error', 'Total pembayaran (OTA + Hotel) melebihi total tagihan (Rp ' . number_format($reservation->total_amount, 0, ',', '.') . ')');
         }
 
-        // Buat transaksi
-        Transaction::create([
-            'transaction_number' => 'TRX-' . strtoupper(uniqid()),
-            'reservation_id' => $reservation->id,
-            'type' => $validated['payment_type'],
-            'amount' => $validated['amount'],
-            'payment_method' => $validated['payment_method'],
-            'created_by' => auth()->id(),
-        ]);
+        DB::beginTransaction();
+        try {
+            // 1. Update OTA payment status di reservation
+            if ($otaPaymentStatus) {
+                $reservation->ota_payment_status = $otaPaymentStatus;
+                $reservation->ota_paid_amount = $otaPaidAmount;
+            }
 
-        // Update paid_amount di reservasi
-        $reservation->paid_amount += $validated['amount'];
-        $reservation->save();
+            // 2. Buat transaction untuk OTA payment (jika ada)
+            if ($otaPaidAmount > 0) {
+                $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
+                Transaction::create([
+                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'reservation_id' => $reservation->id,
+                    'type' => $otaTxnType,
+                    'amount' => $otaPaidAmount,
+                    'payment_method' => $validated['payment_method'],
+                    'notes' => 'OTA ' . $validated['payment_method'] . ' — ' . str_replace('_', ' ', $otaPaymentStatus),
+                    'created_by' => auth()->id(),
+                ]);
+            }
 
-        $typeLabel = $validated['payment_type'] === 'dp' ? 'DP' : ($validated['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Pembayaran tambahan');
+            // 3. Buat transaction untuk hotel payment (jika ada)
+            if ($hotelAmount > 0) {
+                Transaction::create([
+                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'reservation_id' => $reservation->id,
+                    'type' => $validated['payment_type'],
+                    'amount' => $hotelAmount,
+                    'payment_method' => $validated['payment_method'],
+                    'created_by' => auth()->id(),
+                ]);
+            }
 
-        // Check if request is AJAX
-        if (request()->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.",
-                'redirect_url' => route('reservations.show', $reservation),
-                'reservation' => $reservation
-            ]);
+            // 4. Update paid_amount di reservasi (OTA + Hotel)
+            $reservation->paid_amount += ($otaPaidAmount + $hotelAmount);
+
+            // 5. Jika sudah lunas, update paid_date
+            if ($reservation->paid_amount >= $reservation->total_amount) {
+                $reservation->paid_date = now();
+            }
+
+            // 6. Update payment method
+            $reservation->payment_method = $validated['payment_method'];
+
+            $reservation->save();
+            DB::commit();
+
+            $typeLabel = $validated['payment_type'] === 'dp' ? 'DP' : ($validated['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Pembayaran tambahan');
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.",
+                    'redirect_url' => route('reservations.show', $reservation),
+                    'reservation' => $reservation,
+                ]);
+            }
+
+            return redirect()->route('reservations.show', $reservation)
+                ->with('success', "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menyimpan pembayaran: ' . $e->getMessage());
         }
-
-        return redirect()->route('reservations.show', $reservation)
-            ->with('success', "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.");
     }
 
     public function cancel(Reservation $reservation)
@@ -312,6 +361,9 @@ class ReservationController extends Controller
         // Simpan room_type_name baru jika berbeda tipe
         $newRoomTypeName = $newRoom->room_type_name;
 
+        // Simpan total lama sebelum dihitung ulang
+        $oldTotalAmount = $reservation->total_amount;
+
         // Hitung ulang total_amount menggunakan harga weekday/weekend dinamis
         $newTotalAmount = $newRoom->calculateTotalForRange($reservation->check_in, $reservation->check_out);
 
@@ -340,7 +392,7 @@ class ReservationController extends Controller
                 'new_room_id' => $newRoom->id,
                 'new_room_number' => $newRoomNumber,
                 'reason' => $validated['reason'] ?? null,
-                'old_total_amount' => $oldPricePerNight * $nights,
+                'old_total_amount' => $oldTotalAmount,
                 'new_total_amount' => $newTotalAmount,
             ],
             'response_data' => [
@@ -362,6 +414,178 @@ class ReservationController extends Controller
 
         return redirect()->route('reservations.show', $reservation)
             ->with('success', "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.");
+    }
+
+    /**
+     * AI Auto-Reservation — Create reservation from natural language input.
+     * AI parses the input, finds available room, and creates the reservation.
+     *
+     * Flow: INPUT → AI PARSE → VALIDATE → CHECK ROOM → CREATE RESERVATION → DONE
+     */
+    public function aiCreate(Request $request, \App\Services\OpenRouterService $openRouter)
+    {
+        $validated = $request->validate([
+            'input' => 'required|string|min:5|max:1000',
+        ]);
+
+        $input = $validated['input'];
+
+        // Step 1: AI Parsing
+        $aiData = $openRouter->parseNaturalLanguage($input);
+
+        if (!$aiData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'AI gagal memproses input. Coba lagi.',
+            ], 422);
+        }
+
+        // Step 2: Validate required fields
+        $errors = [];
+        if (empty($aiData['guest_name'])) {
+            $errors[] = 'Nama tamu tidak terdeteksi';
+        }
+        if (empty($aiData['checkin_date'])) {
+            $errors[] = 'Tanggal check-in tidak terdeteksi';
+        }
+        if (empty($aiData['checkout_date'])) {
+            $errors[] = 'Tanggal check-out tidak terdeteksi';
+        }
+
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak lengkap: ' . implode(', ', $errors),
+                'ai_data' => $aiData,
+            ], 422);
+        }
+
+        // Step 3: Validate dates
+        try {
+            $checkIn  = \Carbon\Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
+            $checkOut = \Carbon\Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Format tanggal tidak valid',
+                'ai_data' => $aiData,
+            ], 422);
+        }
+
+        if ($checkIn->gte($checkOut)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal check-out harus setelah check-in',
+                'ai_data' => $aiData,
+            ], 422);
+        }
+
+        // Step 4: Find available room
+        $roomId = null;
+        $roomTypeName = $aiData['room_type'] ?? null;
+
+        if ($roomTypeName) {
+            // Try to find by specific room type
+            $availableRooms = \App\Models\Room::where('room_type_name', $roomTypeName)
+                ->where('status', '!=', 'maintenance')
+                ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
+                    $q->select('room_id')
+                        ->from('reservations')
+                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->where('check_in', '<', $checkOut)
+                        ->where('check_out', '>', $checkIn);
+                })
+                ->orderBy('room_number')
+                ->get();
+
+            if ($availableRooms->isNotEmpty()) {
+                $roomId = $availableRooms->first()->id;
+            }
+        }
+
+        // Fallback: any available room
+        if (!$roomId) {
+            $anyAvailable = \App\Models\Room::where('status', '!=', 'maintenance')
+                ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
+                    $q->select('room_id')
+                        ->from('reservations')
+                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->where('check_in', '<', $checkOut)
+                        ->where('check_out', '>', $checkIn);
+                })
+                ->orderBy('room_number')
+                ->first();
+
+            if ($anyAvailable) {
+                $roomId = $anyAvailable->id;
+                $roomTypeName = $anyAvailable->room_type_name;
+            }
+        }
+
+        // Step 5: Create reservation
+        try {
+            $reservation = DB::transaction(function () use ($aiData, $roomId, $checkIn, $checkOut, $roomTypeName) {
+                // Find or create guest
+                $guest = \App\Models\Guest::firstOrCreate(
+                    ['guest_name' => $aiData['guest_name']],
+                    [
+                        'phone'  => null,
+                        'email'  => null,
+                        'address' => null,
+                    ]
+                );
+
+                // Calculate total if not provided
+                $totalAmount = $aiData['total_price'] ?? 0;
+                if ($totalAmount <= 0 && $roomId) {
+                    $room = \App\Models\Room::find($roomId);
+                    if ($room) {
+                        $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
+                    }
+                }
+
+                $reservation = Reservation::create([
+                    'guest_id'             => $guest->id,
+                    'room_id'              => $roomId,
+                    'check_in'             => $checkIn,
+                    'check_out'            => $checkOut,
+                    'number_of_cards'      => $aiData['guest_count'] ?? 1,
+                    'total_amount'         => $totalAmount,
+                    'payment_method'       => $aiData['payment_method'] ?: 'cash',
+                    'paid_amount'          => 0,
+                    'status'               => 'pending',
+                    'notes'                => ($aiData['notes'] ? $aiData['notes'] . ' ' : '') . '(AI Auto-Reservation)',
+                    'ota_source'           => 'ai_auto',
+                    'created_by'           => auth()->id() ?? 1,
+                ]);
+
+                return $reservation;
+            });
+
+            $reservation->load(['guest', 'room']);
+
+            $roomInfo = $reservation->room
+                ? "Kamar {$reservation->room->room_number} ({$reservation->room->room_type_name})"
+                : 'Kamar belum ditentukan';
+
+            return response()->json([
+                'success' => true,
+                'message' => "✅ Reservasi berhasil dibuat: {$reservation->reservation_number} untuk {$aiData['guest_name']} — {$roomInfo}",
+                'reservation' => $reservation,
+                'ai_data' => $aiData,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('AI reservation failed: ' . $e->getMessage(), [
+                'input' => $input,
+                'ai_data' => $aiData,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat reservasi: ' . $e->getMessage(),
+                'ai_data' => $aiData,
+            ], 500);
+        }
     }
 
     /**

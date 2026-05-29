@@ -51,6 +51,45 @@
         </div>
     </div>
 
+    <!-- Info OTA (jika ada) -->
+    @if($reservation->ota_reservation_number)
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h3 class="font-bold text-lg mb-4 border-b pb-2"><i class="fas fa-globe text-purple-500 mr-2"></i>Info OTA</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-purple-50 p-4 rounded">
+                <span class="text-gray-500 text-sm">No. Reservasi OTA</span>
+                <p class="text-lg font-bold text-purple-700">{{ $reservation->ota_reservation_number }}</p>
+            </div>
+            <div class="bg-blue-50 p-4 rounded">
+                <span class="text-gray-500 text-sm">Status Bayar OTA</span>
+                <p class="text-lg font-bold">
+                    @if($reservation->ota_payment_status === 'paid_ota')
+                        <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Lunas via OTA</span>
+                    @elseif($reservation->ota_payment_status === 'partial_ota')
+                        <span class="text-yellow-600"><i class="fas fa-adjust mr-1"></i>DP via OTA</span>
+                    @elseif($reservation->ota_payment_status === 'unpaid_ota')
+                        <span class="text-red-600"><i class="fas fa-times-circle mr-1"></i>Belum Dibayar</span>
+                    @else
+                        <span class="text-gray-400">-</span>
+                    @endif
+                </p>
+            </div>
+            <div class="bg-green-50 p-4 rounded">
+                <span class="text-gray-500 text-sm">Nominal Dibayar OTA</span>
+                <p class="text-lg font-bold text-green-700">
+                    {{ $reservation->ota_paid_amount ? 'Rp ' . number_format($reservation->ota_paid_amount, 0, ',', '.') : '-' }}
+                </p>
+            </div>
+            <div class="bg-orange-50 p-4 rounded">
+                <span class="text-gray-500 text-sm">Sisa Tagihan Hotel</span>
+                <p class="text-lg font-bold text-orange-600">
+                    Rp {{ number_format($reservation->total_amount - ($reservation->ota_paid_amount ?? 0), 0, ',', '.') }}
+                </p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Info Pembayaran -->
     <div class="bg-white rounded-lg shadow p-6 mt-6">
         <h3 class="font-bold text-lg mb-4 border-b pb-2"><i class="fas fa-money-bill text-yellow-500 mr-2"></i>Info Pembayaran</h3>
@@ -121,6 +160,7 @@
                             @if($txn->type === 'dp') bg-blue-100 text-blue-800
                             @elseif($txn->type === 'pelunasan') bg-green-100 text-green-800
                             @elseif($txn->type === 'checkin_payment') bg-purple-100 text-purple-800
+                            @elseif($txn->type === 'refund') bg-red-100 text-red-800
                             @else bg-gray-100 text-gray-800 @endif">
                             {{ strtoupper(str_replace('_', ' ', $txn->type)) }}
                         </span>
@@ -138,48 +178,142 @@
         </table>
         @endif
 
-        <!-- Form Tambah Pembayaran (DP / Pelunasan) -->
-        @if($reservation->status !== 'cancelled' && $reservation->status !== 'checked_out' && $reservation->paid_amount < $reservation->total_amount)
+        <!-- Form Input Pembayaran (1 Input Transaksi Universal) -->
+        @if($reservation->status !== 'cancelled' && $reservation->status !== 'checked_out')
         <div class="border-t pt-4 mt-4">
             <h4 class="font-bold text-sm text-gray-600 mb-3 uppercase">
-                <i class="fas fa-plus-circle mr-1"></i>Tambah Pembayaran
+                <i class="fas fa-money-bill-wave mr-1"></i>Input Pembayaran
             </h4>
+
+            @php
+                $isOta = !empty($reservation->ota_reservation_number);
+                $sisaBayar = $reservation->total_amount - $reservation->paid_amount;
+                $otaPaid = $reservation->ota_paid_amount ?? 0;
+            @endphp
+
+            {{-- OTA Payment Status Info --}}
+            @if($isOta)
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-globe text-purple-500"></i>
+                        <span class="text-sm font-medium text-purple-700">OTA: {{ $reservation->ota_reservation_number }}</span>
+                    </div>
+                    <div class="text-sm">
+                        @if($reservation->ota_payment_status === 'paid_ota')
+                            <span class="text-green-600 font-bold"><i class="fas fa-check-circle mr-1"></i>Lunas via OTA</span>
+                        @elseif($reservation->ota_payment_status === 'partial_ota')
+                            <span class="text-yellow-600 font-bold"><i class="fas fa-adjust mr-1"></i>DP via OTA</span>
+                        @elseif($reservation->ota_payment_status === 'unpaid_ota')
+                            <span class="text-red-600 font-bold"><i class="fas fa-times-circle mr-1"></i>Belum Dibayar</span>
+                        @else
+                            <span class="text-gray-400">Status belum di-set</span>
+                        @endif
+                    </div>
+                </div>
+                @if($otaPaid > 0)
+                <div class="mt-1 text-xs text-purple-600">
+                    OTA sudah bayar: Rp {{ number_format($otaPaid, 0, ',', '.') }} — Sisa tagihan hotel: Rp {{ number_format($sisaBayar, 0, ',', '.') }}
+                </div>
+                @endif
+            </div>
+            @endif
+
             <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+
+                {{-- Baris 1: Status OTA (jika OTA) + Tipe Pembayaran --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    @if($isOta)
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Status Bayar OTA</label>
+                        <select name="ota_payment_status" id="otaPaymentStatus" class="w-full border rounded px-2 py-2 text-sm" onchange="updateOtaPaidAmount()">
+                            <option value="">-- Pilih Status --</option>
+                            <option value="paid_ota" {{ $reservation->ota_payment_status === 'paid_ota' ? 'selected' : '' }}>Sudah Dibayar OTA (Lunas)</option>
+                            <option value="partial_ota" {{ $reservation->ota_payment_status === 'partial_ota' ? 'selected' : '' }}>DP via OTA (Sebagian)</option>
+                            <option value="unpaid_ota" {{ $reservation->ota_payment_status === 'unpaid_ota' ? 'selected' : '' }}>Belum Dibayar (Bayar di Hotel)</option>
+                        </select>
+                    </div>
+                    @endif
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Tipe Pembayaran</label>
-                        <select name="payment_type" class="w-full border rounded px-2 py-2 text-sm" required>
+                        <select name="payment_type" id="paymentType" class="w-full border rounded px-2 py-2 text-sm" required>
                             <option value="dp">DP (Down Payment)</option>
-                            <option value="pelunasan">Pelunasan</option>
+                            <option value="pelunasan" {{ $sisaBayar <= 0 ? 'selected' : '' }}>Pelunasan</option>
                             <option value="tambahan">Tambahan</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1">Metode</label>
+                        <label class="block text-xs text-gray-500 mb-1">Metode Pembayaran</label>
                         <select name="payment_method" class="w-full border rounded px-2 py-2 text-sm" required>
                             @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
                             @foreach($paymentMethods as $pm)
-                                <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                                <option value="{{ $pm->slug }}" {{ $reservation->payment_method === $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
-                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="0">
+                </div>
+
+                {{-- Baris 2: Nominal OTA (jika OTA partial/paid) + Nominal Bayar Hotel --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    @if($isOta)
+                    <div id="otaPaidAmountWrap" style="{{ in_array($reservation->ota_payment_status, ['paid_ota', 'partial_ota']) ? '' : 'display:none;' }}">
+                        <label class="block text-xs text-gray-500 mb-1">Nominal Dibayar OTA (Rp)</label>
+                        <input type="number" name="ota_paid_amount" id="otaPaidAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="{{ $otaPaid > 0 ? $otaPaid : '' }}" oninput="calcSisaBayar()">
+                        <p class="text-[10px] text-gray-400 mt-0.5">Nominal yang sudah dibayarkan OTA</p>
                     </div>
-                    <div class="flex items-end space-x-2">
-                        <button type="button" class="bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300 w-full">Sisa: Rp {{ number_format($reservation->total_amount - $reservation->paid_amount, 0, ',', '.') }}</button>
+                    @endif
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Nominal Bayar Hotel (Rp) <span class="text-red-500">*</span></label>
+                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="0" required oninput="calcSisaBayar()">
+                        <p class="text-[10px] text-gray-400 mt-0.5">Nominal yang dibayar tamu di hotel</p>
+                    </div>
+                    <div class="flex items-end">
+                        <div class="w-full bg-gray-100 rounded px-3 py-2 text-sm">
+                            <span class="text-gray-500">Sisa Bayar:</span>
+                            <span id="sisaBayarDisplay" class="font-bold {{ $sisaBayar > 0 ? 'text-red-600' : 'text-green-600' }}">Rp {{ number_format($sisaBayar, 0, ',', '.') }}</span>
+                        </div>
                     </div>
                 </div>
+
                 <div class="mt-3">
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
-                        <i class="fas fa-money-bill-wave mr-1"></i> Simpan Pembayaran
+                        <i class="fas fa-save mr-1"></i> Simpan Pembayaran
                     </button>
                 </div>
             </form>
         </div>
         @endif
+
+        <script>
+            function updateOtaPaidAmount() {
+                var status = document.getElementById('otaPaymentStatus').value;
+                var wrap = document.getElementById('otaPaidAmountWrap');
+                var otaInput = document.getElementById('otaPaidAmount');
+                var totalAmount = {{ $reservation->total_amount }};
+                if (status === 'paid_ota') {
+                    wrap.style.display = 'block';
+                    otaInput.value = totalAmount;
+                } else if (status === 'partial_ota') {
+                    wrap.style.display = 'block';
+                    if (!otaInput.value || otaInput.value == '0') otaInput.value = '';
+                } else {
+                    wrap.style.display = 'none';
+                    otaInput.value = 0;
+                }
+                calcSisaBayar();
+            }
+            function calcSisaBayar() {
+                var totalAmount = {{ $reservation->total_amount }};
+                var alreadyPaid = {{ $reservation->paid_amount }};
+                var otaPaid = parseInt(document.getElementById('otaPaidAmount')?.value) || 0;
+                var hotelPay = parseInt(document.getElementById('paymentAmount')?.value) || 0;
+                var sisa = totalAmount - alreadyPaid - otaPaid - hotelPay;
+                var el = document.getElementById('sisaBayarDisplay');
+                el.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, sisa));
+                el.className = sisa > 0 ? 'font-bold text-red-600' : 'font-bold text-green-600';
+            }
+        </script>
     </div>
 
     <!-- Catatan -->

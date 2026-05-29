@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
         Commands\ReadHotelEmailsCommand::class,
         Commands\TestReadOneEmailCommand::class,
         Commands\TestOtaEmailCommand::class,
+        Commands\AiReservationCommand::class,
     ];
 
     /**
