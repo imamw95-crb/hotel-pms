@@ -82,6 +82,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/room-change', [ReservationController::class, 'changeRoom'])->middleware('permission:change_room')->name('reservations.room-change.store');
     Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->name('reservations.print-kwitansi');
     Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->name('reservations.print-invoice');
+    Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
+    Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
 
     // Room Rack & Availability
     Route::get('/room-rack', [\App\Http\Controllers\RoomRackController::class, 'index'])->name('room-rack.index');
@@ -184,4 +186,26 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'destroy'])->name('housekeeping.destroy');
         Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
     });
+
+    // ─── OTA Autopilot Test Routes (dev only) ───
+    if (app()->environment('local')) {
+        Route::prefix('dev/ota-test')->middleware(['auth', 'role:owner'])->group(function () {
+            Route::get('/', function () {
+                return view('dev.ota-test');
+            });
+            Route::post('/parse', function (\Illuminate\Http\Request $request) {
+                $service = app(\App\Services\OpenRouterService::class);
+                $result = $service->parseBookingEmail(
+                    $request->input('email_body', ''),
+                    $request->input('email_subject', ''),
+                    $request->input('ota_source', 'tiket.com')
+                );
+                return response()->json(['success' => !is_null($result), 'data' => $result]);
+            });
+            Route::get('/notifications', function () {
+                $notifications = cache('ota_notifications', []);
+                return response()->json(['notifications' => $notifications]);
+            });
+        });
+    }
 });

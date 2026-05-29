@@ -12,8 +12,8 @@ class Transaction extends Model
         'payment_method', 'notes', 'created_by'
     ];
 
-    // Tipe pembayaran: dp, pelunasan, checkin_payment, additional, checkout_payment, refund, tambahan
-    // Metode: cash, bank_transfer, credit_card, debit_card
+    // Tipe pembayaran: dp, pelunasan, checkin_payment, additional, checkout_payment, refund, tambahan, ota_payment
+    // Metode: cash, bank_transfer, credit_card, debit_card, tiket.com, traveloka.com, ota_payment, virtual_account, ewallet, qris
 
     protected $casts = [
         'amount' => 'decimal:2',

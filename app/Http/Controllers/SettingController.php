@@ -29,6 +29,7 @@ class SettingController extends Controller
             'address'    => 'nullable|string|max:500',
             'website'    => 'nullable|string|max:200',
             'logo'       => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'theme'      => 'nullable|in:light,dark,system',
         ]);
 
         $setting = HotelSetting::get();
@@ -48,6 +49,9 @@ class SettingController extends Controller
         $setting->email      = $validated['email'] ?? null;
         $setting->address    = $validated['address'] ?? null;
         $setting->website    = $validated['website'] ?? null;
+        if (isset($validated['theme'])) {
+            $setting->theme = $validated['theme'];
+        }
         $setting->save();
 
         // Check if request is AJAX

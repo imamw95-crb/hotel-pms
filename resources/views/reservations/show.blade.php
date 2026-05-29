@@ -169,7 +169,7 @@
                         <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="0">
                     </div>
                     <div class="flex items-end space-x-2">
-                        <button type="button" onclick="setMaxPayment()" class="bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300 w-full">Sisa: Rp {{ number_format($reservation->total_amount - $reservation->paid_amount, 0, ',', '.') }}</button>
+                        <button type="button" class="bg-gray-200 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-300 w-full">Sisa: Rp {{ number_format($reservation->total_amount - $reservation->paid_amount, 0, ',', '.') }}</button>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -231,29 +231,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    function setMaxPayment() {
-        const sisa = {{ $reservation->total_amount - $reservation->paid_amount }};
-        document.getElementById('paymentAmount').value = sisa;
-    }
-
-    document.getElementById('paymentForm')?.addEventListener('submit', function(e) {
-        const amount = parseInt(document.getElementById('paymentAmount').value) || 0;
-        const sisa = {{ $reservation->total_amount - $reservation->paid_amount }};
-        if (amount <= 0) {
-            alert('Nominal pembayaran harus lebih dari 0!');
-            e.preventDefault();
-            return;
-        }
-        if (amount > sisa) {
-            alert('Nominal pembayaran melebihi sisa bayar (Rp ' + sisa.toLocaleString('id-ID') + ')!');
-            e.preventDefault();
-            return;
-        }
-        if (!confirm('Simpan pembayaran sebesar Rp ' + amount.toLocaleString('id-ID') + '?')) {
-            e.preventDefault();
-        }
-    });
-</script>
 @endsection

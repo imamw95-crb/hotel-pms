@@ -4,25 +4,39 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Config;
 use Webklex\PHPIMAP\Message;
 
 class ImapService
 {
-    private ?ClientManager $clientManager = null;
+    private array $config;
     private $client = null;
 
     public function __construct()
     {
-        $this->clientManager = new ClientManager([
-            'host'          => config('services.imap.host', 'imap.hostinger.com'),
-            'port'          => config('services.imap.port', 993),
-            'encryption'    => config('services.imap.encryption', 'ssl'),
-            'validate_cert' => config('services.imap.validate_cert', true),
-            'username'      => config('services.imap.username'),
-            'password'      => config('services.imap.password'),
-            'protocol'      => config('services.imap.protocol', 'imap'),
-            'timeout'       => 30,
-        ]);
+        $this->config = [
+            'default' => 'default',
+            'accounts' => [
+                'default' => [
+                    'host'          => config('services.imap.host', 'imap.hostinger.com'),
+                    'port'          => (int) config('services.imap.port', 993),
+                    'encryption'    => config('services.imap.encryption', 'ssl'),
+                    'validate_cert' => config('services.imap.validate_cert', true),
+                    'username'      => config('services.imap.username'),
+                    'password'      => config('services.imap.password'),
+                    'protocol'      => config('services.imap.protocol', 'imap'),
+                    'timeout'       => 30,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get the underlying IMAP client instance.
+     */
+    public function getClient()
+    {
+        return $this->client;
     }
 
     /**
@@ -32,19 +46,32 @@ class ImapService
     {
         for ($i = 0; $i < $retries; $i++) {
             try {
-                $this->client = $this->clientManager->account('default');
+                $config = Config::make($this->config);
+                $cm = new ClientManager($config);
+                $this->client = $cm->account('default');
                 $this->client->connect();
-                Log::info('IMAP connected successfully');
+                Log::info('IMAP connected successfully', [
+                    'host' => $this->config['accounts']['default']['host'] ?? 'unknown',
+                    'port' => $this->config['accounts']['default']['port'] ?? 'unknown',
+                    'user' => $this->config['accounts']['default']['username'] ?? 'unknown',
+                ]);
                 return true;
             } catch (\Exception $e) {
-                Log::warning("IMAP connection attempt " . ($i + 1) . " failed: " . $e->getMessage());
+                Log::warning("IMAP connection attempt " . ($i + 1) . " failed: " . $e->getMessage(), [
+                    'host' => $this->config['accounts']['default']['host'] ?? 'unknown',
+                    'port' => $this->config['accounts']['default']['port'] ?? 'unknown',
+                    'class' => get_class($e),
+                ]);
                 if ($i < $retries - 1) {
                     sleep(2);
                 }
             }
         }
 
-        Log::error('IMAP connection failed after ' . $retries . ' attempts');
+        Log::error('IMAP connection failed after ' . $retries . ' attempts', [
+            'host' => $this->config['accounts']['default']['host'] ?? 'unknown',
+            'port' => $this->config['accounts']['default']['port'] ?? 'unknown',
+        ]);
         return false;
     }
 

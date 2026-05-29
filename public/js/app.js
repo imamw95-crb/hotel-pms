@@ -358,26 +358,65 @@ function initDeleteForms() {
     }
 }
 
-// ========== DARK MODE ==========
+// ========== THEME SYSTEM (Light / Dark / System) ==========
 var DarkMode = {
+    STORAGE_KEY: 'hotel_pms_theme',
+
     init: function() {
-        try {
-            var saved = localStorage.getItem('hotel_pms_dark');
-            if (saved === 'true') document.documentElement.classList.add('dark');
-        } catch(e) {}
-        this._updateToggle();
+        var saved = localStorage.getItem(this.STORAGE_KEY) || 'system';
+        this._apply(saved);
+        this._updateUI(saved);
     },
+
+    setTheme: function(theme) {
+        localStorage.setItem(this.STORAGE_KEY, theme);
+        this._apply(theme);
+        this._updateUI(theme);
+    },
+
     toggle: function() {
-        var isDark = document.documentElement.classList.toggle('dark');
-        try { localStorage.setItem('hotel_pms_dark', isDark); } catch(e) {}
-        this._updateToggle();
+        var current = localStorage.getItem(this.STORAGE_KEY) || 'system';
+        var next = current === 'dark' ? 'light' : (current === 'light' ? 'system' : 'dark');
+        this.setTheme(next);
     },
-    _updateToggle: function() {
+
+    _apply: function(theme) {
+        var html = document.documentElement;
+        if (theme === 'dark') {
+            html.classList.add('dark');
+        } else if (theme === 'light') {
+            html.classList.remove('dark');
+        } else {
+            // System
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) html.classList.add('dark');
+            else html.classList.remove('dark');
+        }
+    },
+
+    _updateUI: function(theme) {
+        // Update header toggle button
         var btn = document.getElementById('darkModeToggle');
         if (btn) {
-            btn.innerHTML = document.documentElement.classList.contains('dark')
-                ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            var icons = { light: 'fa-sun', dark: 'fa-moon', system: 'fa-desktop' };
+            var titles = { light: 'Tema: Terang', dark: 'Tema: Gelap', system: 'Tema: Sistem' };
+            btn.innerHTML = '<i class="fas ' + (icons[theme] || 'fa-desktop') + '"></i>';
+            btn.title = titles[theme] || 'Tema';
         }
+
+        // Update dropdown items
+        document.querySelectorAll('.theme-option').forEach(function(el) {
+            var isActive = el.getAttribute('data-theme') === theme;
+            if (isActive) {
+                el.classList.add('bg-blue-50', 'text-blue-700');
+                el.classList.remove('text-gray-700');
+                el.querySelector('.theme-check')?.classList.remove('hidden');
+            } else {
+                el.classList.remove('bg-blue-50', 'text-blue-700');
+                el.classList.add('text-gray-700');
+                el.querySelector('.theme-check')?.classList.add('hidden');
+            }
+        });
     }
 };
 
@@ -459,6 +498,15 @@ document.addEventListener('DOMContentLoaded', function() {
     initMenuModalTriggers();
     var overlay = document.getElementById('modalOverlay');
     if (overlay) overlay.addEventListener('click', function() { Modal.close(); });
+
+    // Close theme dropdown on outside click
+    document.addEventListener('click', function(e) {
+        var wrapper = document.getElementById('themeDropdownWrapper');
+        var dropdown = document.getElementById('themeDropdown');
+        if (wrapper && dropdown && !wrapper.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
 });
 
 // ========== EXPORTS ==========

@@ -28,6 +28,87 @@
         /* ── Dark mode smooth transition ── */
         body { transition: background-color 0.3s ease, color 0.3s ease; }
 
+        /* ── DARK MODE STYLES ── */
+        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-white { background-color: #1e293b !important; }
+        .dark .bg-gray-50 { background-color: #1e293b !important; }
+        .dark .bg-gray-50\/50 { background-color: rgba(30,41,59,0.5) !important; }
+        .dark .bg-slate-50 { background-color: #0f172a !important; }
+        .dark .text-gray-800 { color: #f1f5f9 !important; }
+        .dark .text-gray-700 { color: #cbd5e1 !important; }
+        .dark .text-gray-600 { color: #94a3b8 !important; }
+        .dark .text-gray-500 { color: #94a3b8 !important; }
+        .dark .text-gray-400 { color: #64748b !important; }
+        .dark .text-gray-300 { color: #475569 !important; }
+        .dark .text-slate-800 { color: #f1f5f9 !important; }
+        .dark .text-slate-700 { color: #cbd5e1 !important; }
+        .dark .text-slate-500 { color: #94a3b8 !important; }
+        .dark .text-slate-400 { color: #64748b !important; }
+        .dark .border-gray-100 { border-color: #334155 !important; }
+        .dark .border-gray-200 { border-color: #334155 !important; }
+        .dark .border-gray-300 { border-color: #475569 !important; }
+        .dark .border-slate-200 { border-color: #334155 !important; }
+        .dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+        .dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+        .dark .app-header { background-color: #1e293b !important; border-color: #334155 !important; }
+        .dark .hover\:bg-slate-100:hover { background-color: #334155 !important; }
+        .dark .hover\:text-slate-700:hover { color: #f1f5f9 !important; }
+        .dark .hover\:bg-gray-50:hover { background-color: #334155 !important; }
+        .dark .hover\:bg-gray-200:hover { background-color: #475569 !important; }
+        .dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+        .dark .hover\:bg-blue-100:hover { background-color: rgba(59,130,246,0.2) !important; }
+        .dark .hover\:bg-green-100:hover { background-color: rgba(34,197,94,0.2) !important; }
+        .dark .hover\:bg-red-100:hover { background-color: rgba(239,68,68,0.2) !important; }
+        .dark .hover\:bg-amber-100:hover { background-color: rgba(245,158,11,0.2) !important; }
+        .dark .hover\:text-red-500:hover { color: #f87171 !important; }
+        .dark .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.3) !important; }
+        .dark .shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.4) !important; }
+        .dark .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important; }
+        .dark .ring-gray-200 { --tw-ring-color: #475569 !important; }
+        .dark .focus\:ring-blue-500:focus { --tw-ring-color: #3b82f6 !important; }
+        .dark input, .dark select, .dark textarea { background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #475569 !important; }
+        .dark input::placeholder, .dark textarea::placeholder { color: #64748b !important; }
+        .dark .bg-blue-50 { background-color: rgba(59,130,246,0.1) !important; }
+        .dark .bg-green-50 { background-color: rgba(34,197,94,0.1) !important; }
+        .dark .bg-yellow-50 { background-color: rgba(234,179,8,0.1) !important; }
+        .dark .bg-red-50 { background-color: rgba(239,68,68,0.1) !important; }
+        .dark .bg-indigo-50 { background-color: rgba(99,102,241,0.1) !important; }
+        .dark .bg-amber-50 { background-color: rgba(245,158,11,0.1) !important; }
+        .dark .bg-purple-50 { background-color: rgba(168,85,247,0.1) !important; }
+        .dark .text-blue-600 { color: #60a5fa !important; }
+        .dark .text-blue-700 { color: #93c5fd !important; }
+        .dark .text-green-600 { color: #4ade80 !important; }
+        .dark .text-green-700 { color: #86efac !important; }
+        .dark .text-yellow-600 { color: #facc15 !important; }
+        .dark .text-yellow-700 { color: #fde047 !important; }
+        .dark .text-red-600 { color: #f87171 !important; }
+        .dark .text-red-700 { color: #fca5a5 !important; }
+        .dark .text-indigo-600 { color: #818cf8 !important; }
+        .dark .text-amber-600 { color: #fbbf24 !important; }
+        .dark .border-yellow-200 { border-color: rgba(234,179,8,0.3) !important; }
+        .dark .border-green-200 { border-color: rgba(34,197,94,0.3) !important; }
+        .dark .border-blue-200 { border-color: rgba(59,130,246,0.3) !important; }
+        .dark .border-red-200 { border-color: rgba(239,68,68,0.3) !important; }
+        .dark .alert-success { background: rgba(34,197,94,0.1) !important; border-color: #22c55e !important; color: #86efac !important; }
+        .dark .alert-error { background: rgba(239,68,68,0.1) !important; border-color: #ef4444 !important; color: #fca5a5 !important; }
+        .dark .bg-gradient-to-br { background-image: linear-gradient(to bottom right, #1e293b, #334155) !important; }
+        .dark .hover\:bg-blue-50\/40:hover { background-color: rgba(59,130,246,0.08) !important; }
+        .dark .bg-blue-600 { background-color: #2563eb !important; }
+        .dark .bg-blue-700 { background-color: #1d4ed8 !important; }
+        .dark .hover\:bg-blue-700:hover { background-color: #1d4ed8 !important; }
+        .dark #themeDropdown { background-color: #1e293b !important; border-color: #334155 !important; }
+        .dark #themeDropdown .text-gray-700 { color: #cbd5e1 !important; }
+        .dark #themeDropdown .hover\:bg-gray-50:hover { background-color: #334155 !important; }
+        .dark #themeDropdown .bg-yellow-50 { background-color: rgba(234,179,8,0.15) !important; }
+        .dark #themeDropdown .bg-indigo-50 { background-color: rgba(99,102,241,0.15) !important; }
+        .dark #themeDropdown .bg-gray-100 { background-color: #334155 !important; }
+        .dark .bg-gray-100 { background-color: #334155 !important; }
+        .dark .text-blue-500 { color: #60a5fa !important; }
+        .dark .text-yellow-500 { color: #facc15 !important; }
+        .dark .text-indigo-500 { color: #818cf8 !important; }
+        .dark .hover\:border-gray-300:hover { border-color: #64748b !important; }
+        .dark .peer-checked\:border-blue-500:checked + div { border-color: #3b82f6 !important; }
+
         /* ── APP CONTAINER ── */
         #app-layout {
             display: flex;
@@ -242,7 +323,31 @@
                     </nav>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button id="darkModeToggle" onclick="DarkMode.toggle()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition" title="Toggle Dark Mode">
+                    {{-- Theme Dropdown --}}
+                    <div class="relative" id="themeDropdownWrapper">
+                        <button onclick="document.getElementById('themeDropdown').classList.toggle('hidden')" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition" title="Pilih Tema">
+                            <i class="fas fa-palette"></i>
+                        </button>
+                        <div id="themeDropdown" class="hidden absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-[150]">
+                            <div class="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Tema</div>
+                            <button onclick="DarkMode.setTheme('light'); document.getElementById('themeDropdown').classList.add('hidden')" data-theme="light" class="theme-option w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                <span class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-500 flex items-center justify-center"><i class="fas fa-sun"></i></span>
+                                <span class="flex-1 text-left font-medium">Terang</span>
+                                <i class="fas fa-check text-blue-600 theme-check hidden"></i>
+                            </button>
+                            <button onclick="DarkMode.setTheme('dark'); document.getElementById('themeDropdown').classList.add('hidden')" data-theme="dark" class="theme-option w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                <span class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center"><i class="fas fa-moon"></i></span>
+                                <span class="flex-1 text-left font-medium">Gelap</span>
+                                <i class="fas fa-check text-blue-600 theme-check hidden"></i>
+                            </button>
+                            <button onclick="DarkMode.setTheme('system'); document.getElementById('themeDropdown').classList.add('hidden')" data-theme="system" class="theme-option w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                <span class="w-8 h-8 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center"><i class="fas fa-desktop"></i></span>
+                                <span class="flex-1 text-left font-medium">Sistem</span>
+                                <i class="fas fa-check text-blue-600 theme-check hidden"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button id="darkModeToggle" onclick="DarkMode.toggle()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition" title="Toggle Tema">
                         <i class="fas fa-moon"></i>
                     </button>
                     <button onclick="KeyboardShortcuts._showHelp()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition" title="Keyboard Shortcuts (?)">

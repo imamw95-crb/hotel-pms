@@ -113,6 +113,46 @@
             @enderror
         </div>
 
+        {{-- Tema Aplikasi --}}
+        <div class="p-6 border-b">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">
+                <i class="fas fa-palette text-blue-500 mr-1"></i> Tema Aplikasi
+            </label>
+            <p class="text-xs text-gray-400 mb-4">Pilih tampilan tema untuk seluruh halaman admin.</p>
+            <div class="grid grid-cols-3 gap-3">
+                <label class="cursor-pointer">
+                    <input type="radio" name="theme" value="light" class="peer hidden" {{ ($setting->theme ?? 'system') === 'light' ? 'checked' : '' }}>
+                    <div class="border-2 border-gray-200 peer-checked:border-blue-500 rounded-xl p-4 text-center hover:border-gray-300 transition">
+                        <div class="w-10 h-10 bg-yellow-50 text-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-sun text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Terang</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="theme" value="dark" class="peer hidden" {{ ($setting->theme ?? 'system') === 'dark' ? 'checked' : '' }}>
+                    <div class="border-2 border-gray-200 peer-checked:border-blue-500 rounded-xl p-4 text-center hover:border-gray-300 transition">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-500 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-moon text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Gelap</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="theme" value="system" class="peer hidden" {{ ($setting->theme ?? 'system') === 'system' ? 'checked' : '' }}>
+                    <div class="border-2 border-gray-200 peer-checked:border-blue-500 rounded-xl p-4 text-center hover:border-gray-300 transition">
+                        <div class="w-10 h-10 bg-gray-100 text-gray-500 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-desktop text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Sistem</span>
+                    </div>
+                </label>
+            </div>
+            @error('theme')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Submit --}}
         <div class="p-6 bg-gray-50 rounded-b-lg flex justify-end">
             <button type="submit"

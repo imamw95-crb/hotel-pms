@@ -15,6 +15,8 @@ class ProcessedEmail extends Model
         'ota_source',
         'reservation_id',
         'error_message',
+        'raw_body',
+        'retry_count',
         'processed_at',
     ];
 

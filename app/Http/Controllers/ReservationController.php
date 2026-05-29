@@ -387,4 +387,58 @@ class ReservationController extends Controller
             ->get();
         return view('reservations.print-invoice', compact('reservation', 'transactions'));
     }
+
+    /**
+     * Update total amount reservasi
+     */
+    public function updateTotal(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'total_amount' => 'required|numeric|min:0',
+        ]);
+
+        $oldAmount = $reservation->total_amount;
+        $reservation->total_amount = $validated['total_amount'];
+        $reservation->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Total reservasi berhasil diperbarui dari Rp ' . number_format($oldAmount, 0, ',', '.') . ' menjadi Rp ' . number_format($validated['total_amount'], 0, ',', '.'),
+            'reservation' => $reservation,
+        ]);
+    }
+    public function updateRoomRate(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status === 'checked_out' || $reservation->status === 'cancelled') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak bisa mengubah harga kamar untuk reservasi yang sudah checkout / dibatalkan.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'custom_room_rate' => 'nullable|numeric|min:0',
+        ]);
+
+        $nights = $reservation->nights;
+
+        if ($validated['custom_room_rate'] === null) {
+            $reservation->custom_room_rate = null;
+            $newTotal = ($reservation->room->price_per_night ?? 0) * $nights;
+            $message = 'Harga kamar dikembalikan ke default. Total: Rp ' . number_format($newTotal, 0, ',', '.');
+        } else {
+            $reservation->custom_room_rate = $validated['custom_room_rate'];
+            $newTotal = $validated['custom_room_rate'] * $nights;
+            $message = 'Harga kamar diperbarui menjadi Rp ' . number_format($validated['custom_room_rate'], 0, ',', '.') . '/malam. Total: Rp ' . number_format($newTotal, 0, ',', '.');
+        }
+
+        $reservation->total_amount = $newTotal;
+        $reservation->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'reservation' => $reservation,
+        ]);
+    }
 }

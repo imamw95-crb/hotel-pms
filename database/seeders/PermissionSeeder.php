@@ -87,7 +87,7 @@ class PermissionSeeder extends Seeder
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
-            'create_booking', 'view_bookings',
+            'create_booking', 'view_bookings', 'create_booking_group',
             'view_reservations', 'add_payment',
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_room_dashboard', 'change_room',

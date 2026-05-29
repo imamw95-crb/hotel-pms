@@ -9,7 +9,7 @@ class HotelSetting extends Model
     protected $table = 'hotel_settings';
 
     protected $fillable = [
-        'hotel_name', 'phone', 'email', 'address', 'logo_path', 'website',
+        'hotel_name', 'phone', 'email', 'address', 'logo_path', 'website', 'theme',
     ];
 
     /**
