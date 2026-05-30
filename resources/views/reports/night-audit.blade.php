@@ -367,7 +367,7 @@
             </thead>
             <tbody>
                 @foreach($inHouseGuests as $res)
-                @php $totalNights = $res->check_in->diffInDays($res->check_out); @endphp
+                @php $totalNights = $res->nights; @endphp
                 <tr class="border-b border-gray-100">
                     <td class="p-2 font-medium text-xs">{{ $res->reservation_number }}</td>
                     <td class="p-2 text-xs">{{ $res->guest->guest_name ?? '-' }}</td>

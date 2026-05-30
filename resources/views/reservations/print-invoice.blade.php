@@ -97,7 +97,7 @@
                 <tr><td>Tipe Kamar</td><td>: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
                 <tr><td>Check-in</td><td>: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
                 <tr><td>Check-out</td><td>: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
-                <tr><td>Durasi</td><td>: {{ $reservation->check_in->diffInDays($reservation->check_out) }} malam</td></tr>
+                <tr><td>Durasi</td><td>: {{ $reservation->nights }} malam</td></tr>
             </table>
         </div>
     </div>
@@ -117,8 +117,8 @@
             <tr>
                 <td>Kamar {{ $reservation->room->room_number ?? '-' }} - {{ $reservation->room->room_type_name ?? 'Standard' }}</td>
                 <td>{{ $reservation->room->room_number ?? '-' }}</td>
-                <td>{{ $reservation->check_in->diffInDays($reservation->check_out) }} malam</td>
-                <td>Rp {{ number_format($reservation->total_amount / max(1, $reservation->check_in->diffInDays($reservation->check_out)), 0, ',', '.') }}</td>
+                <td>{{ $reservation->nights }} malam</td>
+                <td>Rp {{ number_format($reservation->total_amount / max(1, $reservation->nights), 0, ',', '.') }}</td>
                 <td class="text-right">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
             </tr>
         </tbody>

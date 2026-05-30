@@ -441,7 +441,7 @@ class NightAuditController extends Controller
                 'room_number' => $r->room->room_number ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
-                'total_nights' => $r->check_in->diffInDays($r->check_out),
+                'total_nights' => $r->nights,
                 'include_breakfast' => $r->include_breakfast,
             ]);
 

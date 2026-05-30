@@ -63,12 +63,15 @@ class Reservation extends Model
 
     public function getNightsAttribute()
     {
-        // Standard hotel: check-in jam 12:00 siang, check-out jam 12:00 siang
-        // Jumlah malam = selisih hari antara check_in dan check_out
+        // Standard hotel: check-in jam 14:00, check-out jam 12:00
+        // Lama inap ditampilkan per malam, minimal 1 malam jika menginap
+        // Contoh: CI 30/05 14:00 CO 31/05 12:00 = 1 malam
+        //         CI 30/05 14:00 CO 01/06 12:00 = 1 malam (diffInDays=1)
+        //         CI 30/05 14:00 CO 02/06 12:00 = 2 malam (diffInDays=2)
         if (!$this->check_in || !$this->check_out) {
             return 0;
         }
-        return $this->check_in->startOfDay()->diffInDays($this->check_out->startOfDay());
+        return max(1, (int) $this->check_in->diffInDays($this->check_out));
     }
 
     public function getStatusLabelAttribute()

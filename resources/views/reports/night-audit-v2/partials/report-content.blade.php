@@ -346,7 +346,7 @@
                         <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                         <td class="p-2 text-center text-xs">
                             @if(!empty($res['include_breakfast']))
-                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
@@ -385,7 +385,7 @@
                         <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                         <td class="p-2 text-center text-xs">
                             @if(!empty($res['include_breakfast']))
-                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
                             @else
                                 <span class="text-gray-400">—</span>
                             @endif
@@ -436,7 +436,7 @@
                     </td>
                     <td class="p-2 text-center text-xs">
                         @if(!empty($res['include_breakfast']))
-                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
                         @else
                             <span class="text-gray-400">—</span>
                         @endif
@@ -489,7 +489,7 @@
                     </td>
                     <td class="p-2 text-center text-xs">
                         @if(!empty($res['include_breakfast']))
-                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
                         @else
                             <span class="text-gray-400">—</span>
                         @endif
@@ -528,27 +528,163 @@
 
 <style>
 @media print {
-    .no-print, aside, nav, header, .sidebar-item, .bg-blue-800, .bg-white.shadow-sm,
-    form, button, .no-print\:block { display: none !important; }
-    body { background: white !important; margin: 0 !important; padding: 10px !important; font-size: 11px !important; }
-    .flex.h-screen, .flex-1, .overflow-y-auto, .container.mx-auto {
-        display: block !important; width: 100% !important; max-width: 100% !important;
-        margin: 0 !important; padding: 0 !important; overflow: visible !important;
+    /* ── Force B&W / grayscale ── */
+    * {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #000 !important;
+        border-color: #999 !important;
+        text-shadow: none !important;
+        box-shadow: none !important;
+        -webkit-print-color-adjust: economy;
+        print-color-adjust: economy;
     }
-    .shadow { box-shadow: none !important; }
-    .rounded-lg { border: 1px solid #ccc !important; border-radius: 0 !important; }
-    table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
-    th, td { padding: 3px 5px !important; border: 1px solid #999 !important; }
-    th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    h1 { font-size: 16px !important; }
-    h2 { font-size: 12px !important; }
-    .text-4xl { font-size: 22px !important; }
-    .text-3xl { font-size: 16px !important; }
-    .text-lg { font-size: 11px !important; }
-    .text-sm { font-size: 9px !important; }
-    .text-xs { font-size: 8px !important; }
-    hr { border-color: #333 !important; }
+
+    /* ── Hide non-print elements ── */
+    .no-print, aside, nav, header, .sidebar-item, .bg-blue-800,
+    form, button, .no-print\:block, i.fas, i.far, i.fab { display: none !important; }
+
+    /* ── Page reset ── */
+    @page { margin: 15mm 10mm; }
+    body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 10pt !important;
+        line-height: 1.4 !important;
+        color: #000 !important;
+    }
+
+    /* ── Layout reset ── */
+    .flex.h-screen, .flex-1, .overflow-y-auto, .container.mx-auto {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    /* ── Print container ── */
+    #printArea {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+    }
+
+    /* ── Grid & card overrides ── */
+    .grid { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; }
+    .grid-cols-4 > * { flex: 1 1 22% !important; min-width: 100px !important; }
+    .grid-cols-3 > * { flex: 1 1 30% !important; min-width: 120px !important; }
+    .grid-cols-2 { display: flex !important; flex-wrap: wrap !important; gap: 12px !important; }
+    .grid-cols-2 > * { flex: 1 1 45% !important; min-width: 200px !important; }
+    .gap-4 { gap: 8px !important; }
+    .gap-6 { gap: 12px !important; }
+    .gap-3 { gap: 6px !important; }
+    .mb-6 { margin-bottom: 12px !important; }
+    .mb-4 { margin-bottom: 8px !important; }
+    .mb-3 { margin-bottom: 6px !important; }
+    .p-4 { padding: 8px !important; }
+    .p-6 { padding: 10px !important; }
+    .p-3 { padding: 6px !important; }
+    .p-2 { padding: 4px 6px !important; }
+
+    /* ── Cards → B&W borders with light gray bg hint ── */
+    .rounded-lg { border-radius: 3px !important; border: 1px solid #bbb !important; }
     .border-2 { border-width: 1px !important; }
-    #printArea { padding: 0 !important; margin: 0 !important; }
+
+    /* ── Summary cards (room status, cash flow) ── */
+    .border-2.border-blue-400,
+    .border-2.border-red-400,
+    .border-2.border-green-400,
+    .border-2.border-orange-400,
+    .border.border-red-200,
+    .border.border-orange-200,
+    .border.border-blue-200 { border-color: #999 !important; }
+
+    /* ── Section heading underlines ── */
+    .border-b-2 { border-bottom-width: 1px !important; }
+    .border-b-2.border-green-600,
+    .border-b-2.border-blue-600,
+    .border-b-2.border-purple-600,
+    .border-b-2.border-red-800,
+    .border-b-2.border-gray-800,
+    .border-b-2.border-yellow-700 { border-color: #666 !important; }
+
+    /* ── Text colors → black ── */
+    .text-blue-700, .text-red-700, .text-green-700, .text-orange-700,
+    .text-purple-700, .text-yellow-700, .text-green-800, .text-red-800,
+    .text-blue-800, .text-orange-600, .text-blue-600, .text-green-600,
+    .text-red-600, .text-gray-500, .text-gray-600, .text-gray-700,
+    .text-gray-400, .text-indigo-800 { color: #000 !important; }
+
+    /* ── Tables ── */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 8.5pt !important;
+        margin-bottom: 6px !important;
+    }
+    th, td {
+        padding: 3px 5px !important;
+        border: 1px solid #ccc !important;
+        text-align: left !important;
+        vertical-align: middle !important;
+    }
+    th { background: #f5f5f5 !important; font-weight: 700 !important; }
+    tfoot th, tfoot td { background: #f0f0f0 !important; }
+
+    /* ── Typography ── */
+    h1 { font-size: 16pt !important; margin: 4px 0 !important; }
+    h2 { font-size: 11pt !important; margin: 4px 0 !important; }
+    h3 { font-size: 10pt !important; margin: 3px 0 !important; }
+    .text-4xl { font-size: 18pt !important; }
+    .text-3xl { font-size: 14pt !important; }
+    .text-2xl { font-size: 16pt !important; }
+    .text-xl { font-size: 12pt !important; }
+    .text-lg { font-size: 10pt !important; }
+    .text-sm { font-size: 8.5pt !important; }
+    .text-xs { font-size: 7.5pt !important; }
+    .uppercase { text-transform: uppercase !important; }
+    .font-bold { font-weight: 700 !important; }
+    .italic { font-style: italic !important; }
+
+    /* ── Separators ── */
+    hr { border: none !important; border-top: 1px solid #666 !important; margin: 10px 0 !important; }
+    .border-t-2 { border-top-width: 1px !important; }
+
+    /* ── Status badges (B&W) ── */
+    .px-2\.py-1.rounded.text-xs.font-bold,
+    .px-1\.py-0\.5.rounded.text-xs.font-bold {
+        display: inline-block !important;
+        padding: 1px 4px !important;
+        border-radius: 2px !important;
+        border: 1px solid #999 !important;
+        background: #f5f5f5 !important;
+    }
+
+    /* ── Occupancy bar ── */
+    .bg-gray-200 { background: #eee !important; }
+    .bg-blue-600 { background: #666 !important; }
+
+    /* ── Page break rules ── */
+    .mb-6 { page-break-inside: avoid; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    thead { display: table-header-group; }
+
+    /* ── Sign-off signature lines ── */
+    .border-b.border-gray-400 {
+        border-bottom: 1px solid #666 !important;
+        margin-bottom: 60px !important;
+        min-height: 40px !important;
+    }
+
+    /* ── Print-only element ── */
+    .print-only { display: inline !important; }
 }
+
+/* Hide print-only on screen */
+.print-only { display: none; }
 </style>
