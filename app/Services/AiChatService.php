@@ -2,41 +2,86 @@
 
 namespace App\Services;
 
+use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RestoTransaction;
 use App\Models\ServiceCharge;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AiChatService
 {
+    private ?OpenRouterService $openRouter = null;
+
+    /**
+     * Get or create OpenRouterService instance.
+     */
+    private function openRouter(): OpenRouterService
+    {
+        if (!$this->openRouter) {
+            $this->openRouter = app(OpenRouterService::class);
+        }
+        return $this->openRouter;
+    }
+
     /**
      * Process a chat message and return AI response.
+     * Jika terdeteksi booking, akan langsung dibuatkan reservasi.
      */
     public function chat(string $message, ?string $currentRoute = null): array
     {
         $today = Carbon::now()->startOfDay();
+
+        // ─── Coba deteksi booking dari pesan user ───
+        $bookingData = $this->openRouter()->parseNaturalLanguage($message);
+
+        if ($bookingData && !empty($bookingData['guest_name'])) {
+            $complete = !empty($bookingData['checkin_date']) && !empty($bookingData['checkout_date']);
+
+            if ($complete) {
+                // Data lengkap — langsung buat booking
+                return $this->createBooking($bookingData);
+            }
+
+            // Data tidak lengkap — AI akan tanya sisanya, beri konteks
+            $missing = [];
+            if (empty($bookingData['checkin_date'])) $missing[] = 'tanggal check-in';
+            if (empty($bookingData['checkout_date'])) $missing[] = 'tanggal check-out';
+            $missingText = implode(' dan ', $missing);
+
+            $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}" .
+                ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '') .
+                ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '') .
+                ". Butuh info: {$missingText}.";
+        }
+
+        // ─── Chat normal via AI ───
         $systemContext = $this->buildSystemContext($today);
+        $partialContext = isset($partialInfo) ? "\n\nPartial booking info: {$partialInfo}" : '';
 
         $prompt = <<<PROMPT
 {$systemContext}
 
 Current page: {$currentRoute}
 
-User message: {$message}
+User message: {$message}{$partialContext}
 
 Instructions:
 - Answer in Bahasa Indonesia, friendly but professional.
 - Use real data from the context above.
 - If user asks about availability, give specific room numbers and types.
-- If user wants to book, confirm details before proceeding — ask for missing info (guest name, dates, room type).
+- If user wants to book, collect all info: guest name, check-in date, check-out date (or number of nights), room type.
+  Ask for missing info one at a time. When all info is complete, say "Baik, saya akan buatkan reservasi sekarang" and confirm the details.
+- If you already have partial booking info (see above), only ask for what's still missing.
+- After the booking is created (handled by system), just confirm the result.
 - If user asks something outside hotel operations, politely redirect.
 - Keep answers concise, maximum 3-4 paragraphs.
 - Do NOT mention internal functions or technical details.
-- Do NOT mention that you are looking at database data — just answer naturally.
 PROMPT;
 
         try {
@@ -85,6 +130,146 @@ PROMPT;
             return [
                 'success' => false,
                 'message' => 'Maaf, terjadi kesalahan sistem. Coba lagi nanti.',
+            ];
+        }
+    }
+
+    /**
+     * Create a booking from parsed natural language data.
+     */
+    private function createBooking(array $data): array
+    {
+        $today = Carbon::now()->startOfDay();
+
+        try {
+            // Validate dates
+            $checkIn  = Carbon::parse($data['checkin_date'])->setTime(14, 0);
+            $checkOut = Carbon::parse($data['checkout_date'])->setTime(12, 0);
+        } catch (\Exception $e) {
+            return [
+                'success' => true,
+                'message' => 'Maaf, format tanggal tidak valid. Coba lagi dengan format yang benar (contoh: 30 Mei 2026).',
+            ];
+        }
+
+        if ($checkIn->gte($checkOut)) {
+            return [
+                'success' => true,
+                'message' => 'Maaf, tanggal check-out harus setelah check-in. Silakan periksa kembali tanggalnya.',
+            ];
+        }
+
+        if ($checkIn->lt($today)) {
+            return [
+                'success' => true,
+                'message' => 'Maaf, tanggal check-in tidak boleh di masa lalu. Silakan pilih tanggal hari ini atau setelahnya.',
+            ];
+        }
+
+        // Find available room
+        $roomId = null;
+        $roomTypeName = $data['room_type'] ?? null;
+
+        $availableQuery = Room::where('status', '!=', 'maintenance')
+            ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
+                $q->select('room_id')
+                    ->from('reservations')
+                    ->whereIn('status', ['pending', 'checked_in'])
+                    ->where('check_in', '<', $checkOut)
+                    ->where('check_out', '>', $checkIn);
+            });
+
+        if ($roomTypeName) {
+            $availableRooms = (clone $availableQuery)
+                ->where('room_type_name', $roomTypeName)
+                ->orderBy('room_number')
+                ->get();
+
+            if ($availableRooms->isNotEmpty()) {
+                $roomId = $availableRooms->first()->id;
+            }
+        }
+
+        // Fallback: any available room
+        if (!$roomId) {
+            $anyAvailable = (clone $availableQuery)
+                ->orderBy('room_number')
+                ->first();
+
+            if (!$anyAvailable) {
+                return [
+                    'success' => true,
+                    'message' => 'Maaf, tidak ada kamar tersedia untuk tanggal tersebut. Silakan coba tanggal lain.',
+                ];
+            }
+
+            $roomId = $anyAvailable->id;
+            $roomTypeName = $anyAvailable->room_type_name;
+        }
+
+        $room = Room::find($roomId);
+
+        // Create reservation in transaction
+        try {
+            $reservation = DB::transaction(function () use ($data, $roomId, $checkIn, $checkOut, $room) {
+                // Find or create guest
+                $guest = Guest::firstOrCreate(
+                    ['guest_name' => $data['guest_name']],
+                    ['phone' => null, 'email' => null, 'address' => null]
+                );
+
+                // Calculate total
+                $totalAmount = (float) ($data['total_price'] ?? 0);
+                if ($totalAmount <= 0 && $room) {
+                    $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
+                }
+
+                $reservation = Reservation::create([
+                    'guest_id'        => $guest->id,
+                    'room_id'         => $roomId,
+                    'check_in'        => $checkIn,
+                    'check_out'       => $checkOut,
+                    'number_of_cards' => $data['guest_count'] ?? 1,
+                    'total_amount'    => $totalAmount,
+                    'payment_method'  => $data['payment_method'] ?: 'cash',
+                    'paid_amount'     => 0,
+                    'status'          => 'pending',
+                    'notes'           => ($data['notes'] ? $data['notes'] . ' ' : '') . '(via AI Chat)',
+                    'ota_source'      => 'ai_chat',
+                    'created_by'      => auth()->id() ?? 1,
+                ]);
+
+                $reservation->load(['guest', 'room']);
+                return $reservation;
+            });
+
+            $roomInfo = $reservation->room
+                ? "Kamar {$reservation->room->room_number} ({$reservation->room->room_type_name})"
+                : 'Kamar belum ditentukan';
+
+            $checkInFormatted = $reservation->check_in->format('d M Y');
+            $checkOutFormatted = $reservation->check_out->format('d M Y');
+            $totalFormatted = 'Rp ' . number_format((float) $reservation->total_amount, 0, ',', '.');
+
+            return [
+                'success' => true,
+                'message' => "✅ **Reservasi berhasil dibuat!**\n\n" .
+                    "📋 No. Reservasi: `{$reservation->reservation_number}`\n" .
+                    "👤 Tamu: {$reservation->guest->guest_name}\n" .
+                    "🛏️ {$roomInfo}\n" .
+                    "📅 Check-in: {$checkInFormatted} (14:00)\n" .
+                    "📅 Check-out: {$checkOutFormatted} (12:00)\n" .
+                    "💰 Total: {$totalFormatted}\n\n" .
+                    "Status: **Pending** — silakan lanjutkan ke proses check-in saat tamu datang.",
+            ];
+        } catch (\Exception $e) {
+            Log::error('AI Chat booking failed: ' . $e->getMessage(), [
+                'data' => $data,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Maaf, gagal membuat reservasi karena kesalahan sistem. Silakan coba lagi atau buat manual.',
             ];
         }
     }
