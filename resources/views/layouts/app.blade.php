@@ -20,7 +20,10 @@
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.23/dist/turbo.min.js" defer></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.23/+esm"></script>
+    <script nomodule>
+        // Fallback: Turbo tidak support browser ini (halaman tetap jalan normal)
+    </script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
