@@ -285,6 +285,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/ai/chat', [App\Http\Controllers\AiChatController::class, 'chat'])
         ->name('api.ai.chat');
 
+    // ─── Panduan Penggunaan ────────────────────────────────────
+    Route::get('/help', function () {
+        return view('help.index');
+    })->name('help.index');
+
     // ─── OTA Autopilot Test Routes (dev only) ───
     if (app()->environment('local')) {
         Route::prefix('dev/ota-test')->middleware(['auth', 'role:owner'])->group(function () {

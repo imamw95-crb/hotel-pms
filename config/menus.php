@@ -277,5 +277,12 @@ return [
             'permission' => 'manage_users',
         ],
 
+        // ─── Tutorial ─────────────────────────────────────────────────
+        [
+            'label'      => 'Tutorial',
+            'icon'       => 'book',
+            'route'      => 'help.index',
+        ],
+
     ],
 ];
