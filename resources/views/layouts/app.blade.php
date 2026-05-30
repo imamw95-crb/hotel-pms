@@ -318,7 +318,7 @@
                     <button class="text-slate-500 hover:text-slate-700 text-lg p-1 rounded-lg hover:bg-slate-100 transition" id="sidebarToggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <nav class="text-sm text-slate-500">
+                    <nav class="text-sm text-slate-500 flex-1 min-w-0">
                         <span class="font-semibold text-slate-800">@yield('header', 'Dashboard')</span>
                     </nav>
                 </div>

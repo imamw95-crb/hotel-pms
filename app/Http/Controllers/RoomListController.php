@@ -43,4 +43,53 @@ class RoomListController extends Controller
 
         return view('room-list.index', compact('currentlyStaying', 'checkedOut', 'upcoming', 'stats'));
     }
+
+    /**
+     * Print report: hari ini check-in, check-out (due out), dan akan datang.
+     */
+    public function print(Request $request)
+    {
+        $today = Carbon::today();
+        $tomorrow = $today->copy()->addDay();
+
+        // ── Check-in Hari Ini ──
+        $checkInToday = Reservation::with(['guest', 'room'])
+            ->where('status', 'checked_in')
+            ->whereDate('check_in', $today)
+            ->orWhere(function ($q) use ($today) {
+                $q->where('status', 'pending')
+                  ->whereDate('check_in', $today);
+            })
+            ->get()
+            ->sortBy('check_in');
+
+        // ── Due Out Hari Ini (check_out = hari ini, status checked_in) ──
+        $dueOutToday = Reservation::with(['guest', 'room'])
+            ->where('status', 'checked_in')
+            ->whereDate('check_out', $today)
+            ->orderBy('check_out', 'asc')
+            ->get();
+
+        // ── Akan Datang (check_in > hari ini) ──
+        $upcoming = Reservation::with(['guest', 'room'])
+            ->where('status', 'pending')
+            ->where('check_in', '>', $today->copy()->endOfDay())
+            ->orderBy('check_in', 'asc')
+            ->get();
+
+        // ── Sedang Menginap (tamu in-house yang bukan due out hari ini) ──
+        $currentlyStaying = Reservation::with(['guest', 'room'])
+            ->where('status', 'checked_in')
+            ->where('check_in', '<=', $today->copy()->endOfDay())
+            ->where('check_out', '>', $today->copy()->startOfDay())
+            ->whereDate('check_out', '>', $today)
+            ->orderBy('room_id', 'asc')
+            ->get();
+
+        $hotel = \App\Models\HotelSetting::get();
+
+        return view('room-list.print', compact(
+            'checkInToday', 'dueOutToday', 'upcoming', 'currentlyStaying', 'today', 'hotel'
+        ));
+    }
 }

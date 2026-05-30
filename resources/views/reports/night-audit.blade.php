@@ -278,6 +278,7 @@
                         <th class="text-left p-2 font-bold text-xs">NO. RES</th>
                         <th class="text-left p-2 font-bold text-xs">TAMU</th>
                         <th class="text-center p-2 font-bold text-xs">KAMAR</th>
+                        <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                         <th class="text-right p-2 font-bold text-xs">CHECK-OUT</th>
                     </tr>
                 </thead>
@@ -287,6 +288,13 @@
                         <td class="p-2 font-medium text-xs">{{ $res->reservation_number }}</td>
                         <td class="p-2 text-xs">{{ $res->guest->guest_name ?? '-' }}</td>
                         <td class="p-2 text-center font-bold text-xs">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2 text-center text-xs">
+                            @if($res->include_breakfast)
+                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td class="p-2 text-right text-xs">{{ $res->check_out->format('d/m/Y') }}</td>
                     </tr>
                     @endforeach
@@ -309,6 +317,7 @@
                         <th class="text-left p-2 font-bold text-xs">NO. RES</th>
                         <th class="text-left p-2 font-bold text-xs">TAMU</th>
                         <th class="text-center p-2 font-bold text-xs">KAMAR</th>
+                        <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                         <th class="text-right p-2 font-bold text-xs">CHECK-IN</th>
                     </tr>
                 </thead>
@@ -318,6 +327,13 @@
                         <td class="p-2 font-medium text-xs">{{ $res->reservation_number }}</td>
                         <td class="p-2 text-xs">{{ $res->guest->guest_name ?? '-' }}</td>
                         <td class="p-2 text-center font-bold text-xs">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2 text-center text-xs">
+                            @if($res->include_breakfast)
+                                <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td class="p-2 text-right text-xs">{{ $res->check_in->format('d/m/Y') }}</td>
                     </tr>
                     @endforeach
@@ -346,6 +362,7 @@
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
                     <th class="text-center p-2 font-bold text-xs">LAMA INAP</th>
+                    <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                 </tr>
             </thead>
             <tbody>
@@ -361,6 +378,13 @@
                         <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">
                             {{ $totalNights }} malam
                         </span>
+                    </td>
+                    <td class="p-2 text-center text-xs">
+                        @if($res->include_breakfast)
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
@@ -388,6 +412,7 @@
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
+                    <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                 </tr>
             </thead>
             <tbody>
@@ -406,6 +431,13 @@
                             @else bg-gray-100 text-gray-800 @endif">
                             {{ strtoupper($res->status) }}
                         </span>
+                    </td>
+                    <td class="p-2 text-center text-xs">
+                        @if($res->include_breakfast)
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i></span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
                     </td>
                 </tr>
                 @endforeach

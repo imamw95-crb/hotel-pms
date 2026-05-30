@@ -212,7 +212,7 @@ function refreshPreview(date) {
     if (!container) return;
     container.innerHTML = '<div class="bg-white rounded-lg shadow p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-3xl mb-3"></i><p>Memuat data terbaru...</p></div>';
 
-    var xhr = new XMLHttpRequest();
+    var xhr = new window.XMLHttpRequest();
     xhr.open('GET', '{{ route("reports.night-audit-v2.preview") }}?date=' + date, true);
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     xhr.setRequestHeader('Accept', 'application/json');

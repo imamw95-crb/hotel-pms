@@ -239,19 +239,21 @@ class ReportController extends Controller
 
             // Check-ins
             fputcsv($file, ['CHECK-IN HARI INI']);
-            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out']);
+            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Sarapan', 'Check-in', 'Check-out']);
             $checkins = Reservation::whereDate('check_in', $date)->where('status', 'checked_in')->with(['guest', 'room'])->get();
             foreach ($checkins as $r) {
-                fputcsv($file, [$r->reservation_number, $r->guest->guest_name ?? '-', $r->room->room_number ?? '-', $r->check_in->format('d/m/Y H:i'), $r->check_out->format('d/m/Y H:i')]);
+                $sarapan = $r->include_breakfast ? 'Ya' : 'Tidak';
+                fputcsv($file, [$r->reservation_number, $r->guest->guest_name ?? '-', $r->room->room_number ?? '-', $sarapan, $r->check_in->format('d/m/Y H:i'), $r->check_out->format('d/m/Y H:i')]);
             }
             fputcsv($file, []);
 
             // Check-outs
             fputcsv($file, ['CHECK-OUT HARI INI']);
-            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out']);
+            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Sarapan', 'Check-in', 'Check-out']);
             $checkouts = Reservation::whereDate('check_out', $date)->where('status', 'checked_out')->with(['guest', 'room'])->get();
             foreach ($checkouts as $r) {
-                fputcsv($file, [$r->reservation_number, $r->guest->guest_name ?? '-', $r->room->room_number ?? '-', $r->check_in->format('d/m/Y H:i'), $r->check_out->format('d/m/Y H:i')]);
+                $sarapan = $r->include_breakfast ? 'Ya' : 'Tidak';
+                fputcsv($file, [$r->reservation_number, $r->guest->guest_name ?? '-', $r->room->room_number ?? '-', $sarapan, $r->check_in->format('d/m/Y H:i'), $r->check_out->format('d/m/Y H:i')]);
             }
             fputcsv($file, []);
 
@@ -310,8 +312,9 @@ class ReportController extends Controller
             fputcsv($file, ['GUEST LIST REPORT']);
             fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
             fputcsv($file, []);
-            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'No. Identitas', 'Kamar', 'Check-in', 'Check-out', 'Status', 'Total Amount', 'Paid Amount']);
+            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'No. Identitas', 'Kamar', 'Check-in', 'Check-out', 'Sarapan', 'Status', 'Total Amount', 'Paid Amount']);
             foreach ($guests as $g) {
+                $sarapan = $g->include_breakfast ? 'Ya' : 'Tidak';
                 fputcsv($file, [
                     $g->reservation_number,
                     $g->guest->guest_name ?? '-',
@@ -319,6 +322,7 @@ class ReportController extends Controller
                     $g->room->room_number ?? '-',
                     $g->check_in->format('d/m/Y H:i'),
                     $g->check_out->format('d/m/Y H:i'),
+                    $sarapan,
                     $g->status,
                     $g->total_amount,
                     $g->paid_amount,
@@ -446,14 +450,16 @@ class ReportController extends Controller
             fputcsv($file, ['RESERVATIONS REPORT']);
             fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
             fputcsv($file, []);
-            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out', 'Status', 'Total', 'Paid', 'Dibuat Oleh']);
+            fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out', 'Sarapan', 'Status', 'Total', 'Paid', 'Dibuat Oleh']);
             foreach ($reservations as $r) {
+                $sarapan = $r->include_breakfast ? 'Ya' : 'Tidak';
                 fputcsv($file, [
                     $r->reservation_number,
                     $r->guest->guest_name ?? '-',
                     $r->room->room_number ?? '-',
                     $r->check_in->format('d/m/Y H:i'),
                     $r->check_out->format('d/m/Y H:i'),
+                    $sarapan,
                     $r->status,
                     $r->total_amount,
                     $r->paid_amount,

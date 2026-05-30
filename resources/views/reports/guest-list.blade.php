@@ -68,6 +68,7 @@
                     <th class="text-left p-3 font-semibold">Check-in</th>
                     <th class="text-left p-3 font-semibold">Check-out</th>
                     <th class="text-left p-3 font-semibold">Total</th>
+                    <th class="text-center p-3 font-semibold">Sarapan</th>
                     <th class="text-left p-3 font-semibold">Status</th>
                 </tr>
             </thead>
@@ -82,6 +83,15 @@
                     <td class="p-3">{{ $res->check_in->format('d/m/Y') }}</td>
                     <td class="p-3">{{ $res->check_out->format('d/m/Y') }}</td>
                     <td class="p-3 font-medium">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
+                    <td class="p-3 text-center">
+                        @if($res->include_breakfast)
+                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <i class="fas fa-coffee"></i> Ya
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">—</span>
+                        @endif
+                    </td>
                     <td class="p-3">
                         <span class="px-2 py-1 rounded text-xs font-bold
                             @if($res->status === 'pending') bg-indigo-100 text-indigo-800
@@ -95,7 +105,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="p-8 text-center text-gray-500">
+                    <td colspan="10" class="p-8 text-center text-gray-500">
                         <i class="fas fa-inbox text-4xl mb-2"></i>
                         <p>Tidak ada data tamu ditemukan</p>
                     </td>

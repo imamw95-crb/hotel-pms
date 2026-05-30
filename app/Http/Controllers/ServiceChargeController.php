@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ServiceCharge;
 use App\Models\Guest;
 use App\Models\Reservation;
-use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 

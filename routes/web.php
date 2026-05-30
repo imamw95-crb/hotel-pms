@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
     // Reservasi
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
+    Route::post('/reservations/{reservation}/toggle-breakfast', [ReservationController::class, 'toggleBreakfast'])->name('reservations.toggle-breakfast');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->middleware('permission:checkin')->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->middleware('permission:checkout')->name('reservations.checkout');
@@ -98,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Room List — all roles, no permission restriction
     Route::get('/room-list', [\App\Http\Controllers\RoomListController::class, 'index'])->name('room-list.index');
+    Route::get('/room-list/print', [\App\Http\Controllers\RoomListController::class, 'print'])->name('room-list.print');
 
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);

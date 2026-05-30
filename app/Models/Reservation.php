@@ -12,7 +12,7 @@ class Reservation extends Model
         'reservation_number', 'ota_reservation_number', 'ota_source', 'ota_payment_status', 'ota_paid_amount',
         'room_id', 'guest_id', 'check_in', 'check_out',
         'number_of_cards', 'status', 'total_amount', 'paid_amount', 'paid_date', 'payment_method', 'notes', 'created_by',
-        'custom_room_rate',
+        'custom_room_rate', 'include_breakfast',
     ];
 
     protected $casts = [
@@ -22,6 +22,7 @@ class Reservation extends Model
         'total_amount' => 'decimal:2',
         'custom_room_rate' => 'decimal:2',
         'paid_amount' => 'decimal:2',
+        'include_breakfast' => 'boolean',
     ];
 
     protected static function boot()

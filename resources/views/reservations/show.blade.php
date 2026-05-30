@@ -47,6 +47,21 @@
                 <div><span class="text-gray-500 text-sm">Tipe Kamar</span><p class="font-medium">{{ $reservation->room->room_type_name ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Check-in</span><p class="font-medium">{{ $reservation->check_in->format('d/m/Y H:i') }}</p></div>
                 <div><span class="text-gray-500 text-sm">Check-out</span><p class="font-medium">{{ $reservation->check_out->format('d/m/Y H:i') }}</p></div>
+                <div><span class="text-gray-500 text-sm">Sarapan</span><p class="font-medium">
+                    <button type="button"
+                        onclick="toggleBreakfast({{ $reservation->id }}, this)"
+                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm
+                            @if($reservation->include_breakfast) bg-amber-100 text-amber-700 border-amber-300
+                            @else bg-gray-50 text-gray-400 border-gray-200 hover:text-amber-600 hover:border-amber-300 @endif"
+                        title="Klik untuk toggle sarapan">
+                        <i class="fas fa-coffee"></i>
+                        @if($reservation->include_breakfast)
+                            <span>Termasuk</span>
+                        @else
+                            <span>Tidak termasuk</span>
+                        @endif
+                    </button>
+                </p></div>
             </div>
         </div>
     </div>
@@ -312,6 +327,39 @@
                 var el = document.getElementById('sisaBayarDisplay');
                 el.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.max(0, sisa));
                 el.className = sisa > 0 ? 'font-bold text-red-600' : 'font-bold text-green-600';
+            }
+
+            // ─── Toggle Sarapan ───────────────────────────────────
+            function toggleBreakfast(reservationId, btn) {
+                fetch('{{ url("reservations") }}/' + reservationId + '/toggle-breakfast', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({}),
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.include_breakfast) {
+                            btn.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm bg-amber-100 text-amber-700 border-amber-300';
+                            btn.innerHTML = '<i class="fas fa-coffee"></i> <span>Termasuk</span>';
+                        } else {
+                            btn.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm bg-gray-50 text-gray-400 border-gray-200 hover:text-amber-600 hover:border-amber-300';
+                            btn.innerHTML = '<i class="fas fa-coffee"></i> <span>Tidak termasuk</span>';
+                        }
+                        if (typeof Toast !== 'undefined') {
+                            Toast.success(data.message);
+                        }
+                    }
+                })
+                .catch(function() {
+                    if (typeof Toast !== 'undefined') {
+                        Toast.error('Gagal mengubah status sarapan');
+                    }
+                });
             }
         </script>
     </div>

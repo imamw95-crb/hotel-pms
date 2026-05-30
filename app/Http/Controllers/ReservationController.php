@@ -213,6 +213,26 @@ class ReservationController extends Controller
         return redirect()->route('reservations.show', $reservation)->with('success', "Check-in berhasil untuk kamar {$reservation->room->room_number}.");
     }
 
+    /**
+     * Toggle include_breakfast (AJAX)
+     */
+    public function toggleBreakfast(Reservation $reservation)
+    {
+        $reservation->update(['include_breakfast' => !$reservation->include_breakfast]);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'include_breakfast' => $reservation->include_breakfast,
+                'message' => $reservation->include_breakfast
+                    ? 'Sarapan telah diaktifkan'
+                    : 'Sarapan telah dinonaktifkan',
+            ]);
+        }
+
+        return back()->with('success', 'Status sarapan berhasil diubah.');
+    }
+
     public function checkout(Reservation $reservation)
     {
         if ($reservation->status !== 'checked_in') {

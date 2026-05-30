@@ -46,6 +46,7 @@
                 <th class="px-4 py-2 text-left">Kamar</th>
                 <th class="px-4 py-2 text-left">Check-in</th>
                 <th class="px-4 py-2 text-left">Check-out</th>
+                <th class="px-4 py-2 text-center">Sarapan</th>
                 <th class="px-4 py-2 text-left">Status</th>
                 <th class="px-4 py-2 text-left">Dibuat Oleh</th>
             </tr>
@@ -58,6 +59,15 @@
                     <td class="px-4 py-2">{{ $reservation->room?->room_number ?? '-' }}</td>
                     <td class="px-4 py-2">{{ $reservation->check_in->format('d/m/Y H:i') }}</td>
                     <td class="px-4 py-2">{{ $reservation->check_out->format('d/m/Y H:i') }}</td>
+                    <td class="px-4 py-2 text-center">
+                        @if($reservation->include_breakfast)
+                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <i class="fas fa-coffee"></i>
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">—</span>
+                        @endif
+                    </td>
                     <td class="px-4 py-2">
                         @if($reservation->status === 'pending')
                             <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-xs font-bold">PENDING</span>
@@ -73,7 +83,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-4 py-2 text-center text-gray-500">Tidak ada data reservasi</td>
+                    <td colspan="8" class="px-4 py-2 text-center text-gray-500">Tidak ada data reservasi</td>
                 </tr>
             @endforelse
         </tbody>

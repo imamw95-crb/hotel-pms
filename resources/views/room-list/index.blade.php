@@ -5,6 +5,17 @@
 
 @section('content')
 
+<!-- ── Action Bar ──────────────────────────────────────────────── -->
+<div class="flex items-center justify-between mb-6">
+    <div></div>
+    <div class="flex items-center gap-2">
+        <a href="{{ route('room-list.print') }}" target="_blank"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+            <i class="fas fa-print"></i> Print Report
+        </a>
+    </div>
+</div>
+
 <!-- ── Summary Stats ────────────────────────────────────────────── -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
     <!-- Sedang Menginap -->
@@ -75,6 +86,7 @@
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-in</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-out</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Malam</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sarapan</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                     <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -107,6 +119,15 @@
                     <td class="px-5 py-3.5 text-sm text-gray-600">
                         {{ $res->nights }} malam
                     </td>
+                    <td class="px-5 py-3.5 text-center">
+                        @if($res->include_breakfast)
+                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <i class="fas fa-coffee"></i> Ya
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">—</span>
+                        @endif
+                    </td>
                     <td class="px-5 py-3.5 text-sm font-semibold text-gray-800">
                         Rp {{ number_format($res->total_amount, 0, ',', '.') }}
                     </td>
@@ -128,7 +149,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-5 py-10 text-center">
+                    <td colspan="9" class="px-5 py-10 text-center">
                         <div class="flex flex-col items-center">
                             <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-bed text-gray-300 text-xl"></i>
@@ -171,6 +192,7 @@
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-in</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-out</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Malam</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sarapan</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                     <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -203,6 +225,15 @@
                     <td class="px-5 py-3.5 text-sm text-gray-600">
                         {{ $res->nights }} malam
                     </td>
+                    <td class="px-5 py-3.5 text-center">
+                        @if($res->include_breakfast)
+                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <i class="fas fa-coffee"></i> Ya
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">—</span>
+                        @endif
+                    </td>
                     <td class="px-5 py-3.5 text-sm font-semibold text-gray-800">
                         Rp {{ number_format($res->total_amount, 0, ',', '.') }}
                     </td>
@@ -230,7 +261,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-5 py-10 text-center">
+                    <td colspan="9" class="px-5 py-10 text-center">
                         <div class="flex flex-col items-center">
                             <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-calendar-times text-gray-300 text-xl"></i>
@@ -273,6 +304,7 @@
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-in</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Check-out</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Malam</th>
+                    <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sarapan</th>
                     <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                     <th class="text-center px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
@@ -305,6 +337,15 @@
                     <td class="px-5 py-3.5 text-sm text-gray-600">
                         {{ $res->nights }} malam
                     </td>
+                    <td class="px-5 py-3.5 text-center">
+                        @if($res->include_breakfast)
+                            <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                <i class="fas fa-coffee"></i> Ya
+                            </span>
+                        @else
+                            <span class="text-xs text-gray-400">—</span>
+                        @endif
+                    </td>
                     <td class="px-5 py-3.5 text-sm font-semibold text-gray-800">
                         Rp {{ number_format($res->total_amount, 0, ',', '.') }}
                     </td>
@@ -323,7 +364,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-5 py-10 text-center">
+                    <td colspan="9" class="px-5 py-10 text-center">
                         <div class="flex flex-col items-center">
                             <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                                 <i class="fas fa-clipboard-check text-gray-300 text-xl"></i>

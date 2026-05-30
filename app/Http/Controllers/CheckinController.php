@@ -66,6 +66,7 @@ class CheckinController extends Controller
             'check_out' => 'required|date|after:check_in',
             'number_of_cards' => 'integer|min:1|max:5',
             'payment_amount' => 'nullable|numeric|min:0',
+            'include_breakfast' => 'nullable|boolean',
         ]);
 
         $room = Room::findOrFail($request->room_id);
@@ -111,6 +112,7 @@ class CheckinController extends Controller
             'check_in' => $checkInDate,
             'check_out' => $checkOutDate,
             'number_of_cards' => $request->number_of_cards ?? 1,
+            'include_breakfast' => $request->boolean('include_breakfast'),
             'status' => 'checked_in',
             'total_amount' => $totalAmount,
             'paid_amount' => $request->payment_amount ?? 0,

@@ -1,300 +1,188 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
     <title>Laporan Housekeeping - {{ $dateFrom }} s/d {{ $dateTo }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        @page { size: A4 landscape; margin: 10mm 12mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', Arial, sans-serif;
-            font-size: 11px;
-            color: #1f2937;
-            background: #fff;
-            padding: 20px;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #1f2937;
-        }
-        .header h1 {
-            font-size: 18px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .header h2 {
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-        .header p {
-            font-size: 10px;
-            color: #6b7280;
-            margin-top: 2px;
-        }
-        .print-info {
-            font-size: 10px;
-            color: #9ca3af;
-            margin-top: 6px;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            flex: 1;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 10px;
-            text-align: center;
-        }
-        .stat-card .label {
-            font-size: 9px;
-            text-transform: uppercase;
-            color: #6b7280;
-            font-weight: 600;
-        }
-        .stat-card .value {
-            font-size: 22px;
-            font-weight: 700;
-            margin-top: 2px;
-        }
-        .stat-total .value { color: #1f2937; }
-        .stat-pending .value { color: #d97706; }
-        .stat-progress .value { color: #2563eb; }
-        .stat-completed .value { color: #059669; }
-        .stat-cancelled .value { color: #9ca3af; }
-        .stat-urgent .value { color: #dc2626; }
-
-        /* Filter info */
-        .filter-info {
-            font-size: 10px;
-            color: #6b7280;
-            margin-bottom: 12px;
-            padding: 6px 10px;
-            background: #f9fafb;
-            border-radius: 4px;
-        }
-
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 16px;
-        }
-        thead th {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            padding: 6px 8px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            text-align: left;
-        }
-        tbody td {
-            border: 1px solid #e5e7eb;
-            padding: 5px 8px;
-            font-size: 10px;
-            vertical-align: top;
-        }
-        tbody tr:nth-child(even) { background: #fafafa; }
-
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: 600;
-            border: 1px solid;
-        }
-        .badge-pending { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-        .badge-in_progress { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-        .badge-completed { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .badge-cancelled { background: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
-        .badge-urgent { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-        .badge-high { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
-        .badge-normal { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-        .badge-low { background: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
-
-        /* Section title */
-        .section-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-bottom: 1px solid #1f2937;
-            padding-bottom: 4px;
-            margin-bottom: 10px;
-            margin-top: 20px;
-        }
-
-        /* Sign-off */
-        .sign-off {
-            margin-top: 30px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .sign-box {
-            text-align: center;
-            width: 30%;
-        }
-        .sign-line {
-            border-bottom: 1px solid #9ca3af;
-            height: 40px;
-            margin-bottom: 4px;
-        }
-        .sign-label {
-            font-size: 10px;
-            font-weight: 600;
-        }
-        .sign-role {
-            font-size: 9px;
-            color: #9ca3af;
-        }
-
-        /* Print button */
-        .no-print {
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        .btn-print {
-            background: #059669;
-            color: #fff;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .btn-print:hover { background: #047857; }
-        .btn-back {
-            background: #6b7280;
-            color: #fff;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        .btn-back:hover { background: #4b5563; }
-
-        /* Print styles */
+        body { font-family: Arial, sans-serif; font-size: 10px; color: #000; background: #fff; }
+        .no-print { display: block; }
         @media print {
-            body { padding: 10px; }
             .no-print { display: none !important; }
-            .header { border-bottom-color: #000; }
-            thead th { background: #e5e7eb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            tbody tr:nth-child(even) { background: #f9fafb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .stat-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: #fff; }
         }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        th, td { padding: 4px 6px; text-align: left; border: 1px solid #ccc; font-size: 9px; }
+        th { background: #1e293b; color: #fff; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 8px; }
+        td { vertical-align: middle; }
+
+        .section-title {
+            font-size: 12px; font-weight: bold; padding: 6px 10px;
+            border-left: 4px solid #6366f1; margin: 10px 0 6px 0;
+        }
+
+        .badge {
+            display: inline-block; padding: 1px 6px; border-radius: 3px;
+            font-size: 7px; font-weight: bold; text-transform: uppercase;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .badge-in_progress { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .badge-completed { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+        .badge-cancelled { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+        .badge-urgent { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .badge-high { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
+        .badge-normal { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .badge-low { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+
+        .hotel-header {
+            text-align: center; border-bottom: 2px solid #000;
+            padding-bottom: 8px; margin-bottom: 10px;
+        }
+        .hotel-name { font-size: 18px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+        .hotel-info { font-size: 9px; color: #555; margin-top: 2px; }
+        .report-title { font-size: 14px; font-weight: bold; text-align: center; margin: 8px 0; letter-spacing: 1px; text-transform: uppercase; }
+        .report-date { text-align: center; font-size: 10px; color: #666; margin-bottom: 10px; }
+
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            gap: 6px; margin-bottom: 12px;
+        }
+        .summary-card {
+            border: 1px solid #ddd; border-radius: 4px; padding: 6px 8px; text-align: center;
+        }
+        .summary-card .num { font-size: 18px; font-weight: bold; }
+        .summary-card .label { font-size: 7px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-card.total { border-left: 3px solid #1e293b; }
+        .summary-card.pending { border-left: 3px solid #d97706; }
+        .summary-card.progress { border-left: 3px solid #2563eb; }
+        .summary-card.completed { border-left: 3px solid #059669; }
+        .summary-card.cancelled { border-left: 3px solid #9ca3af; }
+        .summary-card.urgent { border-left: 3px solid #dc2626; }
+
+        .filter-info {
+            font-size: 8px; color: #666; padding: 4px 8px;
+            background: #f9fafb; border: 1px solid #e5e7eb;
+            border-radius: 3px; margin-bottom: 10px;
+        }
+
+        .footer {
+            text-align: center; font-size: 8px; color: #999;
+            border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px;
+        }
+
+        .sign-off {
+            margin-top: 20px; display: flex; justify-content: space-around;
+        }
+        .sign-box { text-align: center; width: 25%; }
+        .sign-line { border-bottom: 1px solid #999; height: 35px; margin-bottom: 3px; }
+        .sign-label { font-size: 9px; font-weight: 600; }
+        .sign-role { font-size: 8px; color: #999; }
     </style>
 </head>
 <body>
 
-    <!-- Print Button -->
-    <div class="no-print">
-        <button class="btn-print" onclick="window.print()">
-            🖨️ Cetak Laporan
-        </button>
-        <button class="btn-back" onclick="window.history.back()">
-            ← Kembali
-        </button>
+    {{-- Action Buttons (screen only) --}}
+    <div class="no-print" style="padding: 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <a href="{{ route('housekeeping.index') }}" class="text-gray-500 hover:text-gray-700 font-medium text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Kembali
+        </a>
+        <div>
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg text-sm flex items-center gap-2">
+                <i class="fas fa-print"></i> Print / Cetak
+            </button>
+        </div>
     </div>
 
-    <!-- Header -->
-    <div class="header">
+    {{-- Hotel Header --}}
+    <div class="hotel-header">
         @if($hotel->logo_path)
-            <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:40px;margin-bottom:6px;">
+            <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:45px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto;">
         @endif
-        <h2>{{ $hotel->hotel_name ?? 'Hotel PMS' }}</h2>
-        @if($hotel->address)<p>{{ $hotel->address }}</p>@endif
-        @if($hotel->phone)<p>Telp: {{ $hotel->phone }}</p>@endif
-        <h1 style="margin-top:12px;">Laporan Housekeeping</h1>
-        <p>Periode: {{ \Carbon\Carbon::parse($dateFrom)->format('d F Y') }} &mdash; {{ \Carbon\Carbon::parse($dateTo)->format('d F Y') }}</p>
-        <p class="print-info">Dicetak: {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
+        <div class="hotel-name">{{ $hotel->hotel_name ?? 'Hotel PMS' }}</div>
+        @if($hotel->address)<div class="hotel-info">{{ $hotel->address }}</div>@endif
+        <div class="hotel-info">
+            @if($hotel->phone)Telp: {{ $hotel->phone }}@endif
+            @if($hotel->phone && $hotel->email) | @endif
+            @if($hotel->email){{ $hotel->email }}@endif
+        </div>
     </div>
 
-    <!-- Stats Summary -->
-    <div class="stats-grid">
-        <div class="stat-card stat-total">
+    {{-- Report Title --}}
+    <div class="report-title">Laporan Housekeeping</div>
+    <div class="report-date">
+        Periode: {{ \Carbon\Carbon::parse($dateFrom)->format('d F Y') }} — {{ \Carbon\Carbon::parse($dateTo)->format('d F Y') }}
+    </div>
+
+    {{-- Summary Cards --}}
+    <div class="summary-grid">
+        <div class="summary-card total">
+            <div class="num">{{ $stats['total'] }}</div>
             <div class="label">Total Tugas</div>
-            <div class="value">{{ $stats['total'] }}</div>
         </div>
-        <div class="stat-card stat-pending">
+        <div class="summary-card pending">
+            <div class="num">{{ $stats['pending'] }}</div>
             <div class="label">Menunggu</div>
-            <div class="value">{{ $stats['pending'] }}</div>
         </div>
-        <div class="stat-card stat-progress">
+        <div class="summary-card progress">
+            <div class="num">{{ $stats['in_progress'] }}</div>
             <div class="label">Dikerjakan</div>
-            <div class="value">{{ $stats['in_progress'] }}</div>
         </div>
-        <div class="stat-card stat-completed">
+        <div class="summary-card completed">
+            <div class="num">{{ $stats['completed'] }}</div>
             <div class="label">Selesai</div>
-            <div class="value">{{ $stats['completed'] }}</div>
         </div>
-        <div class="stat-card stat-cancelled">
+        <div class="summary-card cancelled">
+            <div class="num">{{ $stats['cancelled'] }}</div>
             <div class="label">Dibatalkan</div>
-            <div class="value">{{ $stats['cancelled'] }}</div>
         </div>
-        <div class="stat-card stat-urgent">
+        <div class="summary-card urgent">
+            <div class="num">{{ $stats['urgent'] }}</div>
             <div class="label">Urgent</div>
-            <div class="value">{{ $stats['urgent'] }}</div>
         </div>
     </div>
 
-    <!-- Filter Info -->
+    {{-- Filter Info --}}
     <div class="filter-info">
         <strong>Filter:</strong>
-        Status: {{ $statusFilter === 'all' ? 'Semua' : \App\Models\HousekeepingTask::STATUSES[$statusFilter] ?? $statusFilter }}
-        | Tipe: {{ $typeFilter === 'all' ? 'Semua' : \App\Models\HousekeepingTask::TASK_TYPES[$typeFilter] ?? $typeFilter }}
-        | Prioritas: {{ $priorityFilter === 'all' ? 'Semua' : \App\Models\HousekeepingTask::PRIORITIES[$priorityFilter] ?? $priorityFilter }}
+        Status: {{ $statusFilter === 'all' ? 'Semua' : (\App\Models\HousekeepingTask::STATUSES[$statusFilter] ?? $statusFilter) }}
+        | Tipe: {{ $typeFilter === 'all' ? 'Semua' : (\App\Models\HousekeepingTask::TASK_TYPES[$typeFilter] ?? $typeFilter) }}
+        | Prioritas: {{ $priorityFilter === 'all' ? 'Semua' : (\App\Models\HousekeepingTask::PRIORITIES[$priorityFilter] ?? $priorityFilter) }}
         @if($roomFilter !== 'all')
             | Kamar: {{ \App\Models\Room::find($roomFilter)?->room_number ?? '-' }}
         @endif
     </div>
 
-    <!-- Task Table -->
-    <div class="section-title">Daftar Tugas Housekeeping</div>
-
-    @if($tasks->count() > 0)
+    {{-- Task Table --}}
+    <div class="section-title"><i class="fas fa-tasks"></i> Daftar Tugas Housekeeping</div>
     <table>
         <thead>
             <tr>
-                <th style="width:6%;">No</th>
-                <th style="width:8%;">Kamar</th>
-                <th style="width:16%;">Tipe Tugas</th>
-                <th style="width:10%;">Prioritas</th>
-                <th style="width:12%;">Status</th>
-                <th style="width:14%;">Ditugaskan Ke</th>
-                <th style="width:18%;">Deskripsi</th>
+                <th style="width:3%;">No</th>
+                <th style="width:7%;">Kamar</th>
+                <th style="width:13%;">Tipe Tugas</th>
+                <th style="width:8%;">Prioritas</th>
+                <th style="width:9%;">Status</th>
+                <th style="width:11%;">Ditugaskan Ke</th>
+                <th>Deskripsi</th>
                 <th style="width:8%;">Dibuat</th>
                 <th style="width:8%;">Selesai</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($tasks as $i => $task)
+            @forelse($tasks as $i => $task)
             <tr>
-                <td>{{ $i + 1 }}</td>
+                <td style="text-align:center;">{{ $i + 1 }}</td>
                 <td>
                     <strong>{{ $task->room->room_number ?? '-' }}</strong>
-                    <br><span style="color:#9ca3af;font-size:9px;">{{ $task->room->room_type_name ?? '' }}</span>
+                    @if($task->room->room_type_name)
+                        <br><span style="font-size:7px;color:#666;">{{ $task->room->room_type_name }}</span>
+                    @endif
                 </td>
-                <td>
-                    {{ $task->task_type_label }}
-                </td>
+                <td>{{ $task->task_type_label }}</td>
                 <td>
                     @php
                         $pBadge = match($task->priority) {
@@ -323,25 +211,25 @@
                     @if($task->assignedTo)
                         {{ $task->assignedTo->name }}
                     @else
-                        <em style="color:#9ca3af;">Belum ditugaskan</em>
+                        <em style="color:#999;">-</em>
                     @endif
                 </td>
-                <td style="max-width:160px;">{{ $task->description ?: '-' }}</td>
+                <td>{{ $task->description ?: '-' }}</td>
                 <td>{{ $task->created_at->format('d/m H:i') }}</td>
-                <td>
-                    @if($task->completed_at)
-                        {{ $task->completed_at->format('d/m H:i') }}
-                    @else
-                        -
-                    @endif
+                <td>{{ $task->completed_at ? $task->completed_at->format('d/m H:i') : '-' }}</td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="9" style="text-align:center;padding:15px;color:#999;">
+                    Tidak ada data tugas housekeeping untuk periode & filter yang dipilih.
                 </td>
             </tr>
-            @endforeach
+            @endforelse
         </tbody>
     </table>
 
-    <!-- Summary by Type -->
-    <div class="section-title">Ringkasan per Tipe Tugas</div>
+    {{-- Summary by Type --}}
+    <div class="section-title"><i class="fas fa-chart-pie"></i> Ringkasan per Tipe Tugas</div>
     <table>
         <thead>
             <tr>
@@ -354,10 +242,8 @@
             </tr>
         </thead>
         <tbody>
-            @foreach(\App\Models\HousekeepingTask::TASK_TYPES as $typeKey => $typeLabel)
-                @php
-                    $typeTasks = $tasks->where('task_type', $typeKey);
-                @endphp
+            @forelse(\App\Models\HousekeepingTask::TASK_TYPES as $typeKey => $typeLabel)
+                @php $typeTasks = $tasks->where('task_type', $typeKey); @endphp
                 @if($typeTasks->count() > 0)
                 <tr>
                     <td><strong>{{ $typeLabel }}</strong></td>
@@ -368,17 +254,13 @@
                     <td style="text-align:center;">{{ $typeTasks->where('status', 'cancelled')->count() }}</td>
                 </tr>
                 @endif
-            @endforeach
+            @empty
+                <tr><td colspan="6" style="text-align:center;color:#999;">Tidak ada data</td></tr>
+            @endforelse
         </tbody>
     </table>
 
-    @else
-    <p style="text-align:center;color:#9ca3af;padding:30px;font-style:italic;">
-        Tidak ada data tugas housekeeping untuk periode dan filter yang dipilih.
-    </p>
-    @endif
-
-    <!-- Sign-off -->
+    {{-- Sign-off --}}
     <div class="sign-off">
         <div class="sign-box">
             <div class="sign-line"></div>
@@ -395,6 +277,11 @@
             <div class="sign-label">Disetujui Oleh</div>
             <div class="sign-role">Manager</div>
         </div>
+    </div>
+
+    {{-- Footer --}}
+    <div class="footer">
+        Dicetak pada {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }} — {{ $hotel->hotel_name ?? 'Hotel PMS' }}
     </div>
 
 </body>

@@ -1,7 +1,26 @@
 @extends('layouts.app')
 
 @section('title', 'Reservasi')
-@section('header', 'Data Reservasi')
+@section('header')
+    <div class="flex items-center gap-2 w-full flex-wrap">
+        <span class="whitespace-nowrap">Data Reservasi</span>
+        <div class="flex items-center gap-1.5 ml-auto">
+            <button type="button" onclick="Modal.open('{{ route('booking.create') }}')"
+                class="bg-blue-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition flex items-center gap-1 whitespace-nowrap">
+                <i class="fas fa-plus"></i> <span class="hidden sm:inline">Booking</span> Single
+            </button>
+            <button type="button" onclick="Modal.open('{{ route('booking.group.create') }}')"
+                class="bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1 whitespace-nowrap">
+                <i class="fas fa-users"></i> <span class="hidden sm:inline">Booking</span> Group
+            </button>
+            <button type="button" onclick="AiChat.toggle()"
+                class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium hover:from-blue-600 hover:to-indigo-700 transition flex items-center gap-1 shadow-sm whitespace-nowrap"
+                title="AI Assistant">
+                <i class="fas fa-robot"></i> <span class="hidden sm:inline">AI</span>
+            </button>
+        </div>
+    </div>
+@endsection
 
 @section('content')
 
@@ -131,6 +150,7 @@
                     <th class="text-left px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Kamar</th>
                     <th class="text-left px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Check-in</th>
                     <th class="text-left px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Check-out</th>
+                    <th class="text-center px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Sarapan</th>
                     <th class="text-right px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Total</th>
                     <th class="text-center px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                     <th class="text-center px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -181,6 +201,20 @@
                     <td class="px-4 py-3 text-sm text-gray-600">
                         {{ $res->check_out ? \Carbon\Carbon::parse($res->check_out)->format('d/m/Y') : '-' }}
                         <div class="text-xs text-gray-400 mt-0.5">{{ $res->check_out ? \Carbon\Carbon::parse($res->check_out)->format('H:i') : '' }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button type="button"
+                            onclick="toggleBreakfast({{ $res->id }}, this)"
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm
+                                @if($res->include_breakfast) bg-amber-100 text-amber-700 border-amber-300
+                                @else bg-gray-50 text-gray-400 border-gray-200 hover:text-amber-600 hover:border-amber-300 @endif"
+                            title="Klik untuk toggle sarapan">
+                            @if($res->include_breakfast)
+                                <i class="fas fa-coffee"></i>
+                            @else
+                                <i class="fas fa-coffee text-[8px] opacity-40"></i>
+                            @endif
+                        </button>
                     </td>
                     <td class="px-4 py-3 text-sm font-semibold text-gray-800 text-right">
                         Rp {{ number_format($res->total_amount, 0, ',', '.') }}
@@ -627,5 +661,38 @@
     document.getElementById('editTotalModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditTotalModal();
     });
+
+    // ─── Toggle Sarapan ──────────────────────────────────────────
+    function toggleBreakfast(reservationId, btn) {
+        fetch('{{ url("reservations") }}/' + reservationId + '/toggle-breakfast', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                if (data.include_breakfast) {
+                    btn.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm bg-amber-100 text-amber-700 border-amber-300';
+                    btn.innerHTML = '<i class="fas fa-coffee"></i>';
+                } else {
+                    btn.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm bg-gray-50 text-gray-400 border-gray-200 hover:text-amber-600 hover:border-amber-300';
+                    btn.innerHTML = '<i class="fas fa-coffee text-[8px] opacity-40"></i>';
+                }
+                if (typeof Toast !== 'undefined') {
+                    Toast.success(data.message);
+                }
+            }
+        })
+        .catch(function() {
+            if (typeof Toast !== 'undefined') {
+                Toast.error('Gagal mengubah status sarapan');
+            }
+        });
+    }
 </script>
 @endsection

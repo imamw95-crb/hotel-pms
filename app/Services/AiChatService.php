@@ -8,7 +8,6 @@ use App\Models\Room;
 use App\Models\RestoTransaction;
 use App\Models\ServiceCharge;
 use App\Models\Transaction;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;

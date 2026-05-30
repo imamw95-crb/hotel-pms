@@ -129,8 +129,17 @@ return [
         [
             'label'      => 'Housekeeping',
             'icon'       => 'broom',
-            'route'      => 'housekeeping.index',
             'permission' => 'view_housekeeping',
+            'children'   => [
+                [
+                    'label' => 'Housekeeping',
+                    'route' => 'housekeeping.index',
+                ],
+                [
+                    'label' => 'Print Room List',
+                    'route' => 'room-list.print',
+                ],
+            ],
         ],
 
         // ─── Guest Management ────────────────────────────────────────

@@ -222,23 +222,26 @@ class NightAuditController extends Controller
             }
 
             fputcsv($file, ['CHECK-IN HARI INI']);
-            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-out']);
+            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Sarapan', 'Check-out']);
             foreach ($data['checkinsToday'] ?? [] as $i => $r) {
-                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_out'] ?? '-']);
+                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $sarapan, $r['check_out'] ?? '-']);
             }
             fputcsv($file, []);
 
             fputcsv($file, ['CHECK-OUT HARI INI']);
-            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in']);
+            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Sarapan', 'Check-in']);
             foreach ($data['checkoutsToday'] ?? [] as $i => $r) {
-                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-']);
+                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $sarapan, $r['check_in'] ?? '-']);
             }
             fputcsv($file, []);
 
             fputcsv($file, ['IN-HOUSE GUESTS']);
-            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Malam']);
+            fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Malam', 'Sarapan']);
             foreach ($data['inHouseGuests'] ?? [] as $i => $r) {
-                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_nights'] ?? '-']);
+                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_nights'] ?? '-', $sarapan]);
             }
             fputcsv($file, []);
 
@@ -270,6 +273,7 @@ class NightAuditController extends Controller
                 'room_number' => $r->room->room_number ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
+                'include_breakfast' => $r->include_breakfast,
             ]);
 
         // Check-outs today
@@ -283,6 +287,7 @@ class NightAuditController extends Controller
                 'room_number' => $r->room->room_number ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
+                'include_breakfast' => $r->include_breakfast,
             ]);
 
         // Revenue
@@ -372,6 +377,7 @@ class NightAuditController extends Controller
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'total_nights' => $r->check_in->diffInDays($r->check_out),
+                'include_breakfast' => $r->include_breakfast,
             ]);
 
         // New bookings
@@ -385,6 +391,7 @@ class NightAuditController extends Controller
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'status' => $r->status,
+                'include_breakfast' => $r->include_breakfast,
             ]);
 
         return compact(

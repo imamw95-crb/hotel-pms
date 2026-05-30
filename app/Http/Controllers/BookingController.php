@@ -77,6 +77,7 @@ class BookingController extends Controller
             'price_per_night' => 'nullable|numeric|min:0',
             'ota_reservation_number' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
+            'include_breakfast' => 'nullable|boolean',
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
@@ -119,6 +120,7 @@ class BookingController extends Controller
             'total_amount' => $totalAmount,
             'paid_amount' => 0,
             'notes' => $validated['notes'],
+            'include_breakfast' => $request->boolean('include_breakfast'),
             'created_by' => auth()->id(),
         ]);
 

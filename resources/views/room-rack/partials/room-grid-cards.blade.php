@@ -38,6 +38,9 @@
             @if($guestName)
                 <p class="text-xs mt-1 truncate text-blue-700 font-medium" title="{{ $guestName }}"><i class="fas fa-user mr-1"></i>{{ $guestName }}</p>
             @endif
+            @if($activeReservation && $activeReservation->include_breakfast)
+                <p class="text-xs mt-0.5 text-amber-700 font-medium"><i class="fas fa-coffee mr-0.5"></i>Sarapan</p>
+            @endif
             @if($activeReservation && !$isDueOut)
                 <p class="text-xs mt-1 text-gray-600">
                     <i class="fas fa-calendar mr-1"></i>{{ $activeReservation->check_in->format('d/m') }} - {{ $activeReservation->check_out->format('d/m') }}

@@ -269,7 +269,7 @@ var RoomsDashboard = {
         }
 
         var menu = document.createElement('div');
-        menu.className = 'fixed inset-0 z-[150] flex items-center justify-center';
+        menu.className = 'fixed inset-0 z-[300] flex items-center justify-center';
         var html = '<div class="absolute inset-0 bg-black/30" onclick="this.parentElement.remove()"></div>' +
             '<div class="bg-white rounded-xl shadow-2xl p-4 w-64 relative z-10">' +
             '<h3 class="font-bold text-lg mb-3">Kamar ' + roomNumber + '</h3>' +
