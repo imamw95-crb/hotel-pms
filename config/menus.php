@@ -168,6 +168,12 @@ return [
                     'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
                 [
+                    'label'      => 'Night Audit v2',
+                    'route'      => 'reports.night-audit-v2.index',
+                    'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
+                ],
+                [
                     'label'      => 'Guest List Report',
                     'route'      => 'reports.guest-list',
                     'permission' => 'view_reports',
