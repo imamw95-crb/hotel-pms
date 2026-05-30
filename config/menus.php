@@ -209,6 +209,12 @@ return [
                     'permission' => 'view_reports',
                     'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
+                [
+                    'label'      => 'Group Report',
+                    'route'      => 'reports.group',
+                    'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
+                ],
             ],
         ],
 

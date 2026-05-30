@@ -471,4 +471,117 @@ class ReportController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Group Booking Report — daftar booking grup beserta total revenue per grup
+     */
+    public function groupReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        // Ambil semua grup booking yang memiliki booking_group_id
+        $groups = Reservation::whereNotNull('booking_group_id')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->with(['guest', 'room', 'transactions'])
+            ->get()
+            ->groupBy('booking_group_id')
+            ->map(function ($reservations, $groupId) {
+                $first = $reservations->first();
+                $roomNumbers = $reservations->pluck('room.room_number')->implode(', ');
+                $totalAmount = $reservations->sum('total_amount');
+                $paidAmount = $reservations->sum('paid_amount');
+                $remainingPayment = $totalAmount - $paidAmount;
+                $totalTransactions = $reservations->flatMap->transactions->sum('amount');
+
+                return (object) [
+                    'booking_group_id' => $groupId,
+                    'guest_name'       => $first->guest->guest_name ?? '-',
+                    'check_in'         => $first->check_in,
+                    'check_out'        => $first->check_out,
+                    'rooms'            => $reservations,
+                    'room_numbers'     => $roomNumbers,
+                    'total_rooms'      => $reservations->count(),
+                    'total_amount'     => $totalAmount,
+                    'paid_amount'      => $paidAmount,
+                    'remaining_payment' => $remainingPayment,
+                    'total_transactions' => $totalTransactions,
+                    'created_at'       => $first->created_at,
+                    'created_by'       => $first->createdBy->name ?? '-',
+                ];
+            })->sortByDesc('created_at');
+
+        $grandTotalAmount = $groups->sum('total_amount');
+        $grandTotalPaid = $groups->sum('paid_amount');
+        $grandTotalRemaining = $groups->sum('remaining_payment');
+        $totalGroups = $groups->count();
+
+        return view('reports.group', compact(
+            'groups', 'startDate', 'endDate',
+            'grandTotalAmount', 'grandTotalPaid', 'grandTotalRemaining', 'totalGroups'
+        ));
+    }
+
+    /**
+     * Export Group Report to CSV
+     */
+    public function exportGroupReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $filename = 'group-report-' . $startDate . '-to-' . $endDate . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $groups = Reservation::whereNotNull('booking_group_id')
+            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->with(['guest', 'room', 'transactions'])
+            ->get()
+            ->groupBy('booking_group_id')
+            ->map(function ($reservations) {
+                $first = $reservations->first();
+                $roomNumbers = $reservations->pluck('room.room_number')->implode(', ');
+                $totalAmount = $reservations->sum('total_amount');
+                $paidAmount = $reservations->sum('paid_amount');
+
+                return (object) [
+                    'guest_name'   => $first->guest->guest_name ?? '-',
+                    'check_in'     => $first->check_in,
+                    'check_out'    => $first->check_out,
+                    'room_numbers' => $roomNumbers,
+                    'total_rooms'  => $reservations->count(),
+                    'total_amount' => $totalAmount,
+                    'paid_amount'  => $paidAmount,
+                ];
+            })->sortByDesc('check_in');
+
+        $callback = function () use ($groups, $startDate, $endDate) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fputcsv($file, ['GROUP BOOKING REPORT']);
+            fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
+            fputcsv($file, []);
+            fputcsv($file, ['Nama Tamu', 'Kamar', 'Jumlah Kamar', 'Check-in', 'Check-out', 'Total', 'Terbayar', 'Sisa']);
+            foreach ($groups as $g) {
+                fputcsv($file, [
+                    $g->guest_name,
+                    $g->room_numbers,
+                    $g->total_rooms,
+                    $g->check_in->format('d/m/Y'),
+                    $g->check_out->format('d/m/Y'),
+                    $g->total_amount,
+                    $g->paid_amount,
+                    $g->total_amount - $g->paid_amount,
+                ]);
+            }
+            fputcsv($file, []);
+            fputcsv($file, ['TOTAL', '', $groups->sum('total_rooms'), '', '', $groups->sum('total_amount'), $groups->sum('paid_amount'), $groups->sum('total_amount') - $groups->sum('paid_amount')]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BookingGroupController extends Controller
 {
@@ -62,8 +63,9 @@ class BookingGroupController extends Controller
         $days = $checkIn->diffInDays($checkOut);
         $paymentType = $validated['payment_type'] ?? 'full';
         $dpAmount = $validated['dp_amount'] ?? 0;
+        $bookingGroupId = (string) Str::uuid();
 
-        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice, $roomPrices, $paymentType, $dpAmount) {
+        DB::transaction(function () use ($rooms, $guest, $days, $validated, $checkIn, $checkOut, $customPrice, $roomPrices, $paymentType, $dpAmount, $bookingGroupId) {
             $totalAllRooms = 0;
             $reservations = [];
 
@@ -78,6 +80,7 @@ class BookingGroupController extends Controller
                 $totalAllRooms += $totalAmount;
 
                 $reservation = Reservation::create([
+                    'booking_group_id' => $bookingGroupId,
                     'reservation_number' => 'RES-' . strtoupper(uniqid()),
                     'room_id' => $room->id,
                     'guest_id' => $guest->id,

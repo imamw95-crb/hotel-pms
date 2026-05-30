@@ -178,13 +178,53 @@ window.AiChat = {
 
     bubbleHTML(role, text) {
         const isUser = role === 'user';
+        const content = isUser ? this.escapeHtml(text) : this.renderMarkdown(text);
         return '<div class="flex ' + (isUser ? 'justify-end' : 'justify-start') + '">' +
             '<div class="max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ' +
             (isUser
                 ? 'bg-blue-600 text-white rounded-br-md'
                 : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-bl-md shadow-sm border border-slate-100 dark:border-slate-600'
             ) + '">' +
-            '<p class="whitespace-pre-wrap">' + this.escapeHtml(text) + '</p></div></div>';
+            (isUser
+                ? '<p class="whitespace-pre-wrap">' + content + '</p>'
+                : '<div class="text-sm leading-relaxed ai-markdown">' + content + '</div>'
+            ) + '</div></div>';
+    },
+
+    renderMarkdown(text) {
+        if (!text) return '';
+        let html = this.escapeHtml(text);
+        // Code block ```...```
+        html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg overflow-x-auto text-xs my-1.5 border border-slate-200 dark:border-slate-600"><code>$2</code></pre>');
+        // Inline code `...`
+        html = html.replace(/`([^`]+)`/g, '<code class="bg-slate-100 dark:bg-slate-600 px-1 py-0.5 rounded text-xs font-mono">$1</code>');
+        // Bold **text**
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-blue-600 dark:text-blue-400">$1</strong>');
+        // Strikethrough ~~text~~
+        html = html.replace(/~~([^~]+)~~/g, '<s class="line-through text-slate-400">$1</s>');
+        // Emoji bullets: ✅ at start of line -> green
+        html = html.replace(/^(✅|❌|⚠️|ℹ️|📋|🛏️|👤|💰|🏨|🔍)(.+)$/gm, '<div class="flex items-start gap-1.5 my-0.5"><span>$1</span><span>$2</span></div>');
+        // Unordered list items
+        html = html.replace(/^[-*] (.+)$/gm, '<li class="ml-4 list-disc">$1</li>');
+        // Ordered list items
+        html = html.replace(/^\d+\.\s(.+)$/gm, '<li class="ml-4 list-decimal">$1</li>');
+        // Wrap consecutive <li> in <ul>
+        html = html.replace(/((?:<li[^>]*>.*?<\/li>\n?)+)/g, '<ul class="my-1 pl-1 space-y-0.5">$1</ul>');
+        // Headers
+        html = html.replace(/^### (.+)$/gm, '<div class="text-sm font-bold mt-2 mb-0.5 text-slate-800 dark:text-slate-100">$1</div>');
+        html = html.replace(/^## (.+)$/gm, '<div class="text-base font-bold mt-2.5 mb-0.5 text-slate-800 dark:text-slate-100">$1</div>');
+        html = html.replace(/^# (.+)$/gm, '<div class="text-lg font-bold mt-3 mb-0.5 text-slate-800 dark:text-slate-100">$1</div>');
+        // Horizontal rule
+        html = html.replace(/^---+$/gm, '<hr class="my-2 border-t border-slate-200 dark:border-slate-600">');
+        // Double newline = paragraph break
+        html = html.replace(/\n\n/g, '</p><p class="mt-1.5">');
+        // Single newline = <br>
+        html = html.replace(/\n/g, '<br>');
+        // Wrap in paragraph if plain text
+        if (!html.startsWith('<')) {
+            html = '<p class="leading-relaxed">' + html + '</p>';
+        }
+        return html;
     },
 
     loadingHTML() {

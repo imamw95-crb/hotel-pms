@@ -116,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/occupancy', [ReportController::class, 'occupancy'])->name('reports.occupancy');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');
+        Route::get('/reports/group', [ReportController::class, 'groupReport'])->name('reports.group');
 
         // Night Audit v2 — Preview, Draft, Lock, History
         Route::get('/reports/night-audit-v2', [NightAuditController::class, 'index'])->name('reports.night-audit-v2.index');
@@ -132,6 +133,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/occupancy/export', [ReportController::class, 'exportOccupancy'])->name('reports.occupancy.export');
         Route::get('/reports/revenue/export', [ReportController::class, 'exportRevenue'])->name('reports.revenue.export');
         Route::get('/reports/reservations/export', [ReportController::class, 'exportReservations'])->name('reports.reservations.export');
+        Route::get('/reports/group/export', [ReportController::class, 'exportGroupReport'])->name('reports.group.export');
     });
 
     // Admin: Permission Management (Owner only)
