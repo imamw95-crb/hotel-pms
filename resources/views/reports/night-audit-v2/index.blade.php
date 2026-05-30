@@ -192,10 +192,19 @@ function switchTab(tab) {
 }
 
 function printLocked(id) {
-    var w = window.open('{{ url("reports/night-audit-v2") }}/' + id, '_blank');
-    w.onload = function() {
-        setTimeout(function() { w.print(); }, 500);
+    var iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-9999px';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '1px';
+    iframe.style.height = '1px';
+    iframe.onload = function() {
+        setTimeout(function() {
+            iframe.contentWindow.print();
+        }, 800);
     };
+    iframe.src = '{{ url("reports/night-audit-v2") }}/' + id;
+    document.body.appendChild(iframe);
 }
 
 function refreshPreview(date) {
