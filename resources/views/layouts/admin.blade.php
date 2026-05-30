@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.23/dist/turbo.min.js" defer></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         [x-cloak] { display: none !important; }
@@ -88,14 +89,23 @@
         @media (max-width: 480px) {
             .page-content { padding: 0.75rem; }
         }
+
+        /* ── TURBO PAGE TRANSITION ── */
+        .page-content {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .turbo-before-render .page-content {
+            opacity: 0;
+            transform: translateY(8px);
+        }
     </style>
 </head>
 <body class="bg-slate-50">
 
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()" data-turbo-permanent></div>
 
     <div id="app-layout">
-        <aside class="app-sidebar" id="appSidebar">
+        <aside class="app-sidebar" id="appSidebar" data-turbo-permanent>
             <div class="sidebar-brand">
                 <div class="sidebar-brand-icon">
                     <i class="fas fa-hotel text-white text-xl"></i>
@@ -111,7 +121,7 @@
         <div class="sidebar-spacer"></div>
 
         <div class="main-wrapper">
-            <header class="app-header">
+            <header class="app-header" data-turbo-permanent>
                 <div class="flex items-center gap-3">
                     <button class="text-slate-500 hover:text-slate-700 text-lg p-1 rounded-lg hover:bg-slate-100 transition" id="sidebarToggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
@@ -162,6 +172,27 @@
     </script>
     <script src="{{ asset('js/app.js') }}"></script>
     <script src="{{ asset('js/async-form.js') }}"></script>
+
+    <!-- Turbo Drive Events -->
+    <script>
+        document.addEventListener('turbo:before-render', () => {
+            document.body.classList.add('turbo-before-render');
+        });
+
+        document.addEventListener('turbo:render', () => {
+            document.body.classList.remove('turbo-before-render');
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        });
+
+        document.addEventListener('turbo:load', () => {
+            document.querySelectorAll('.menu-item.has-submenu.active').forEach(function(el) {
+                el.classList.add('open');
+            });
+            if (typeof initAsyncForms === 'function') {
+                initAsyncForms();
+            }
+        });
+    </script>
 </body>
 </html>
     @yield('scripts')
