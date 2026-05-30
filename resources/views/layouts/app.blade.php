@@ -288,12 +288,12 @@
         }
 
         /* ── TURBO PAGE TRANSITION ── */
-        .page-content {
-            transition: opacity 0.15s ease, transform 0.15s ease;
+        @keyframes turbo-fade-in {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        .turbo-before-render .page-content {
-            opacity: 0;
-            transform: translateY(6px);
+        .turbo-fade-in .page-content {
+            animation: turbo-fade-in 0.2s ease-out;
         }
     </style>
 </head>
@@ -451,24 +451,23 @@
     <!-- Turbo Drive Events -->
     <script>
         document.addEventListener('turbo:before-render', () => {
-            document.body.classList.add('turbo-before-render');
-        });
-
-        document.addEventListener('turbo:render', () => {
-            document.body.classList.remove('turbo-before-render');
             window.scrollTo({ top: 0, behavior: 'instant' });
         });
 
+        document.addEventListener('turbo:render', () => {
+            document.body.classList.add('turbo-fade-in');
+            setTimeout(function() {
+                document.body.classList.remove('turbo-fade-in');
+            }, 300);
+        });
+
         document.addEventListener('turbo:load', () => {
-            // Sidebar: re-init submenu active state
             document.querySelectorAll('.menu-item.has-submenu.active').forEach(function(el) {
                 el.classList.add('open');
             });
-            // Re-init async forms
             if (typeof initAsyncForms === 'function') {
                 initAsyncForms();
             }
-            // Re-init modal click handlers (deposit, booking)
             document.querySelectorAll('[onclick*="Modal.open"]').forEach(function(el) {
                 if (el.dataset.turbo !== 'false') {
                     el.setAttribute('data-turbo', 'false');
