@@ -277,6 +277,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
     });
 
+    // ─── AI Chat Assistant ───
+    Route::post('/api/ai/chat', [App\Http\Controllers\AiChatController::class, 'chat'])
+        ->name('api.ai.chat');
+
     // ─── OTA Autopilot Test Routes (dev only) ───
     if (app()->environment('local')) {
         Route::prefix('dev/ota-test')->middleware(['auth', 'role:owner'])->group(function () {

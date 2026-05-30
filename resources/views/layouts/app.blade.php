@@ -430,6 +430,9 @@
         </div>
     </div>
 
+    {{-- AI Chat Widget --}}
+    @include('components.ai-chat-widget')
+
     @yield('scripts')
 </body>
 </html>
