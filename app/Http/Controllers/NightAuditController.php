@@ -149,6 +149,10 @@ class NightAuditController extends Controller
      */
     public function deleteDraft(Request $request)
     {
+        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) {
+            abort(403, 'Unauthorized — hanya Owner dan Admin yang bisa Unlock & Buat Baru.');
+        }
+
         $date = $request->get('date');
         NightAuditLog::where('audit_date', $date)->delete();
 

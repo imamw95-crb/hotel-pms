@@ -35,7 +35,7 @@
             <strong>LOCKED</strong> — Night Audit tanggal <strong>{{ \Carbon\Carbon::parse($date)->format('d F Y') }}</strong> sudah di-finalize oleh {{ $snapshot->lockedBy?->name ?? 'System' }} pada {{ $snapshot->locked_at?->format('d/m/Y H:i') ?? '-' }}.
             <br><span class="text-sm">Data report sudah tidak berubah (snapshot).</span>
         </div>
-        @if(auth()->user()->isOwner())
+        @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
         <form method="POST" action="{{ route('reports.night-audit-v2.delete-draft') }}" onsubmit="return confirm('Hapus lock? Data yang sudah di-lock akan dihapus dan bisa dibuat ulang. Lanjutkan?')">
             @csrf
             <input type="hidden" name="date" value="{{ $date }}">
