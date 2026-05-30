@@ -155,6 +155,15 @@ return [
             'roles'      => ['owner', 'admin', 'frontoffice'],
         ],
 
+        // ─── Night Audit v2 ─────────────────────────────────────────
+        [
+            'label'      => 'Night Audit v2',
+            'icon'       => 'moon',
+            'route'      => 'reports.night-audit-v2.index',
+            'permission' => 'view_reports',
+            'roles'      => ['owner', 'admin', 'frontoffice'],
+        ],
+
         // ─── Reports ─────────────────────────────────────────────────
         [
             'label'  => 'Reports',
@@ -164,12 +173,6 @@ return [
                 [
                     'label'      => 'Night Audit',
                     'route'      => 'reports.night-audit',
-                    'permission' => 'view_reports',
-                    'roles'      => ['owner', 'admin', 'frontoffice'],
-                ],
-                [
-                    'label'      => 'Night Audit v2',
-                    'route'      => 'reports.night-audit-v2.index',
                     'permission' => 'view_reports',
                     'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
