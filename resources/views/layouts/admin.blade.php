@@ -92,11 +92,11 @@
 
         /* ── TURBO PAGE TRANSITION ── */
         .page-content {
-            transition: opacity 0.25s ease, transform 0.25s ease;
+            transition: opacity 0.15s ease, transform 0.15s ease;
         }
         .turbo-before-render .page-content {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(6px);
         }
     </style>
 </head>
@@ -105,7 +105,7 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()" data-turbo-permanent></div>
 
     <div id="app-layout">
-        <aside class="app-sidebar" id="appSidebar" data-turbo-permanent>
+        <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-brand-icon">
                     <i class="fas fa-hotel text-white text-xl"></i>
@@ -191,6 +191,11 @@
             if (typeof initAsyncForms === 'function') {
                 initAsyncForms();
             }
+            document.querySelectorAll('[onclick*="Modal.open"]').forEach(function(el) {
+                if (el.dataset.turbo !== 'false') {
+                    el.setAttribute('data-turbo', 'false');
+                }
+            });
         });
     </script>
 </body>
