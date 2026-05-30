@@ -156,6 +156,9 @@
                             <a href="{{ route('reports.night-audit-v2.show', $log->id) }}" class="text-blue-600 hover:underline text-xs" target="_blank">
                                 <i class="fas fa-eye"></i> Lihat
                             </a>
+                            <button onclick="printLocked({{ $log->id }})" class="text-green-600 hover:underline text-xs ml-2" title="Print">
+                                <i class="fas fa-print"></i> Print
+                            </button>
                             <a href="{{ route('reports.night-audit-v2.export', $log->id) }}" class="text-orange-600 hover:underline text-xs ml-2">
                                 <i class="fas fa-download"></i> CSV
                             </a>
@@ -186,6 +189,13 @@ function switchTab(tab) {
     }
     document.getElementById('tab-report').classList.toggle('hidden', tab !== 'report');
     document.getElementById('tab-history').classList.toggle('hidden', tab !== 'history');
+}
+
+function printLocked(id) {
+    var w = window.open('{{ url("reports/night-audit-v2") }}/' + id, '_blank');
+    w.onload = function() {
+        setTimeout(function() { w.print(); }, 500);
+    };
 }
 
 function refreshPreview(date) {
