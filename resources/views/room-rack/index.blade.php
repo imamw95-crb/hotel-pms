@@ -173,21 +173,16 @@ function loadRack() {
     if (!container) return;
     container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Memuat...</p></div>';
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/room-rack?start_date=' + startDate + '&days=' + days, true);
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-                var data = JSON.parse(xhr.responseText);
-                if (data.success && data.view) {
-                    container.innerHTML = data.view;
-                }
-            } catch(e) { container.innerHTML = '<div class="p-8 text-center text-red-500">Error loading</div>'; }
+    fetch('/room-rack?start_date=' + startDate + '&days=' + days, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success && data.view) {
+            container.innerHTML = data.view;
         }
-    };
-    xhr.send();
+    })
+    .catch(function() { container.innerHTML = '<div class="p-8 text-center text-red-500">Error loading</div>'; });
 }
 
 // Tab switching
