@@ -456,7 +456,7 @@
 
 @section('scripts')
 <script>
-    let editTotalReservationId = null;
+    var editTotalReservationId = null;
 
     function openEditTotalModal(id, reservationNumber, totalAmount) {
         editTotalReservationId = id;
@@ -535,9 +535,9 @@
 
 
     // ===== Edit Room Rate Modal =====
-    let editRateReservationId = null;
-    let editRateNights = 1;
-    let editRateDefaultPrice = 0;
+    var editRateReservationId = null;
+    var editRateNights = 1;
+    var editRateDefaultPrice = 0;
 
     function openEditRateModal(id, reservationNumber, defaultPrice, customRate) {
         editRateReservationId = id;
@@ -654,10 +654,13 @@
         if (e.target === this) closeEditRateModal();
     });
 
-    // Close modal on Escape key or click outside
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeEditTotalModal();
-    });
+    // Close modal on Escape key (guard untuk Turbo agar tidak menumpuk listener)
+    if (!window._reservationsKeydownInit) {
+        window._reservationsKeydownInit = true;
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeEditTotalModal();
+        });
+    }
     document.getElementById('editTotalModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditTotalModal();
     });

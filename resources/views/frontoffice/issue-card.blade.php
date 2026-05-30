@@ -222,9 +222,14 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() { testMHSConnection(); });
+    // Panggil testMHSConnection langsung (Turbo tidak trigger DOMContentLoaded lagi)
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        testMHSConnection();
+    } else {
+        document.addEventListener('DOMContentLoaded', function() { testMHSConnection(); });
+    }
 
-    let selectedReservationStatus = '';
+    var selectedReservationStatus = '';
 
     function selectReservation(el) {
         const d = el.dataset;

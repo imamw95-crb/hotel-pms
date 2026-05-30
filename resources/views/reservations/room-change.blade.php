@@ -168,9 +168,10 @@
     $checkOutDate = $reservation->check_out->format('Y-m-d');
 @endphp
 <script>
-    const currentTotal = {{ $reservation->total_amount }};
-    const ci = '{{ $checkInDate }}';
-    const co = '{{ $checkOutDate }}';
+    // Gunakan var agar kompatibel dengan Turbo Drive (script di-re-evaluasi via eval)
+    var currentTotal = {{ $reservation->total_amount }};
+    var ci = '{{ $checkInDate }}';
+    var co = '{{ $checkOutDate }}';
 
     function calcRangeTotal(wd, we, start, end) {
         if (!start || !end || !wd) return 0;
