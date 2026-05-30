@@ -126,6 +126,64 @@
         @endif
     </div>
 
+    {{-- Pengeluaran (Expenses) --}}
+    @if(!empty($expensesList) && count($expensesList) > 0)
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-red-800 pb-1 text-red-700">
+            <i class="fas fa-money-bill-wave text-red-500 mr-2"></i>Pengeluaran (Expenses)
+        </h2>
+
+        <div class="bg-red-50 border-2 border-red-400 rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-red-800">TOTAL PENGELUARAN HARI INI</span>
+                <span class="text-3xl font-bold text-red-700">Rp {{ number_format($expensesToday ?? 0, 0, ',', '.') }}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 italic">* Pengeluaran tidak mengurangi total pendapatan (ditampilkan sebagai informasi terpisah)</p>
+        </div>
+
+        @if(!empty($expensesByMethod) && count($expensesByMethod) > 0)
+        <h3 class="text-sm font-bold text-gray-600 mb-2 uppercase">Detail per Metode Pembayaran</h3>
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            @foreach($expensesByMethod as $method => $total)
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">{{ ucwords(str_replace('_', ' ', $method)) }}</div>
+                <div class="text-lg font-bold text-red-700">Rp {{ number_format($total, 0, ',', '.') }}</div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <table class="w-full text-xs mb-2">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-1 font-bold">No. Expense</th>
+                    <th class="text-left p-1 font-bold">Deskripsi</th>
+                    <th class="text-left p-1 font-bold">Keterangan</th>
+                    <th class="text-center p-1 font-bold">Metode</th>
+                    <th class="text-right p-1 font-bold">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($expensesList as $e)
+                <tr class="border-b border-gray-100">
+                    <td class="p-1 font-medium">{{ $e['expense_number'] ?? '-' }}</td>
+                    <td class="p-1">{{ $e['description'] ?? '-' }}</td>
+                    <td class="p-1 text-gray-400 italic">{{ $e['notes'] ?? '-' }}</td>
+                    <td class="p-1 text-center capitalize">{{ str_replace('_', ' ', $e['payment_method'] ?? '-') }}</td>
+                    <td class="p-1 text-right font-bold text-red-600">Rp {{ number_format($e['amount'] ?? 0, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-red-50 border-t-2 border-red-300">
+                    <td colspan="4" class="p-2 text-right font-bold text-red-800">TOTAL PENGELUARAN</td>
+                    <td class="p-2 text-right font-bold text-red-700">Rp {{ number_format($expensesToday ?? 0, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
     {{-- Pendapatan Resto/F&B --}}
     @if(!empty($restoTransactions) && count($restoTransactions) > 0)
     <div class="mb-6">
@@ -234,6 +292,31 @@
         </table>
     </div>
     @endif
+
+    {{-- Ringkasan Kas (Cash Flow) --}}
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-yellow-700 pb-1 text-yellow-700">
+            <i class="fas fa-calculator text-yellow-600 mr-2"></i>Ringkasan Kas (Cash Flow)
+        </h2>
+
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-green-50 border-2 border-green-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">Total Pemasukan Tunai</div>
+                <div class="text-2xl font-bold text-green-700">Rp {{ number_format($cashRevenue ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Pembayaran tunai (Reservasi, Resto, SC)</div>
+            </div>
+            <div class="bg-red-50 border-2 border-red-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">Total Pengeluaran Tunai</div>
+                <div class="text-2xl font-bold text-red-700">Rp {{ number_format($cashExpenses ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Pengeluaran tunai (Operasional)</div>
+            </div>
+            <div class="bg-blue-50 border-2 border-blue-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">Sisa Kas (Cash Balance)</div>
+                <div class="text-2xl font-bold text-blue-700">Rp {{ number_format($cashFlowBalance ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Pemasukan - Pengeluaran Tunai</div>
+            </div>
+        </div>
+    </div>
 
     <hr class="mb-6 border-t border-gray-300">
 

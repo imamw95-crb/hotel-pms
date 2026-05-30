@@ -173,6 +173,15 @@ return [
             'roles'      => ['owner', 'admin', 'frontoffice'],
         ],
 
+        // ─── Pengeluaran ────────────────────────────────────────────
+        [
+            'label'      => 'Pengeluaran',
+            'icon'       => 'money-bill-wave',
+            'route'      => 'expenses.index',
+            'permission' => 'view_reports',
+            'roles'      => ['owner', 'admin', 'frontoffice'],
+        ],
+
         // ─── Reports ─────────────────────────────────────────────────
         [
             'label'  => 'Reports',

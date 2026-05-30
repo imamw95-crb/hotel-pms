@@ -8,6 +8,7 @@ use App\Models\Room;
 use App\Models\Transaction;
 use App\Models\RestoTransaction;
 use App\Models\ServiceCharge;
+use App\Models\Expense;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -225,6 +226,34 @@ class NightAuditController extends Controller
                 fputcsv($file, []);
             }
 
+            // ── Expenses ──
+            $expensesList = $data['expensesList'] ?? [];
+            $expensesByMethod = $data['expensesByMethod'] ?? [];
+            if (count($expensesList) > 0) {
+                fputcsv($file, ['PENGELUARAN (EXPENSES)']);
+                fputcsv($file, ['Total Pengeluaran', $data['expensesToday'] ?? 0]);
+                fputcsv($file, []);
+
+                foreach ($expensesByMethod as $method => $total) {
+                    fputcsv($file, [strtoupper(str_replace('_', ' ', $method))]);
+                    fputcsv($file, ['No.', 'No. Expense', 'Deskripsi', 'Keterangan', 'Nominal']);
+                    $i = 1;
+                    foreach ($expensesList as $e) {
+                        if (($e['payment_method'] ?? '') === $method) {
+                            fputcsv($file, [$i++, $e['expense_number'] ?? '-', $e['description'] ?? '-', $e['notes'] ?? '-', $e['amount'] ?? 0]);
+                        }
+                    }
+                    fputcsv($file, []);
+                }
+            }
+
+            // ── Cash Flow ──
+            fputcsv($file, ['RINGKASAN KAS (CASH FLOW)']);
+            fputcsv($file, ['Total Pemasukan Tunai', $data['cashRevenue'] ?? 0]);
+            fputcsv($file, ['Total Pengeluaran Tunai', $data['cashExpenses'] ?? 0]);
+            fputcsv($file, ['Sisa Kas (Cash Balance)', $data['cashFlowBalance'] ?? 0]);
+            fputcsv($file, []);
+
             fputcsv($file, ['CHECK-IN HARI INI']);
             fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Sarapan', 'Check-out']);
             foreach ($data['checkinsToday'] ?? [] as $i => $r) {
@@ -363,6 +392,38 @@ class NightAuditController extends Controller
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
+        // ─── Expenses (Pengeluaran) ─────────────────────────────────
+        $expensesToday = Expense::whereDate('expense_date', $date)->sum('amount');
+
+        $expensesList = Expense::with('createdBy')
+            ->whereDate('expense_date', $date)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($e) => [
+                'expense_number' => $e->expense_number,
+                'description'    => $e->description,
+                'amount'         => $e->amount,
+                'payment_method' => $e->payment_method,
+                'notes'          => $e->notes,
+                'created_by'     => $e->createdBy?->name ?? '-',
+            ]);
+
+        $expensesByMethod = Expense::whereDate('expense_date', $date)
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        // ─── Cash Flow (Ringkasan Kas) ──────────────────────────────
+        $cashRevenue = Transaction::whereDate('created_at', $date)
+            ->where('payment_method', 'cash')
+            ->sum('amount');
+
+        $cashExpenses = Expense::whereDate('expense_date', $date)
+            ->where('payment_method', 'cash')
+            ->sum('amount');
+
+        $cashFlowBalance = $cashRevenue - $cashExpenses;
+
         // In-house guests
         $inHouseGuests = Reservation::where(function ($q) use ($date) {
                 $q->where('status', 'checked_in')
@@ -404,6 +465,8 @@ class NightAuditController extends Controller
             'revenueByMethod', 'transactionsByMethod',
             'restoTransactions', 'restoRevenueByMethod',
             'serviceCharges', 'serviceChargeByMethod',
+            'expensesToday', 'expensesList', 'expensesByMethod',
+            'cashRevenue', 'cashExpenses', 'cashFlowBalance',
             'checkinsToday', 'checkoutsToday', 'inHouseGuests', 'newBookings'
         );
     }

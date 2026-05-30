@@ -82,6 +82,20 @@
                     <button onclick="KeyboardShortcuts._showHelp()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition" title="Keyboard Shortcuts (?)">
                         <i class="fas fa-keyboard"></i>
                     </button>
+
+                    {{-- Night Audit v2 Notification --}}
+                    @if($nightAuditPending)
+                        <a href="{{ route('reports.night-audit-v2.index') }}"
+                           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+                                  bg-amber-100 text-amber-700 hover:bg-amber-200 transition
+                                  dark:bg-amber-900/40 dark:text-amber-300 dark:hover:bg-amber-900/60"
+                           title="Night Audit v2 hari ini belum di-lock">
+                            <i class="fas fa-moon"></i>
+                            <span>Night Audit</span>
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        </a>
+                    @endif
+
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
                             {{ substr(auth()->user()->name ?? 'U', 0, 1) }}

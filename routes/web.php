@@ -22,6 +22,7 @@ use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\HousekeepingController;
 use App\Http\Controllers\NightAuditController;
+use App\Http\Controllers\ExpenseController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -126,6 +127,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reports/night-audit-v2/delete-draft', [NightAuditController::class, 'deleteDraft'])->name('reports.night-audit-v2.delete-draft');
         Route::get('/reports/night-audit-v2/{id}', [NightAuditController::class, 'show'])->name('reports.night-audit-v2.show');
         Route::get('/reports/night-audit-v2/{id}/export', [NightAuditController::class, 'export'])->name('reports.night-audit-v2.export');
+
+        // Pengeluaran (Expenses)
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
 
         // Export routes
         Route::get('/reports/night-audit/export', [ReportController::class, 'exportNightAudit'])->name('reports.night-audit.export');
