@@ -33,7 +33,7 @@ class AiChatService
      * Process a chat message and return AI response.
      * Jika terdeteksi booking, akan langsung dibuatkan reservasi.
      */
-    public function chat(string $message, ?string $currentRoute = null): array
+    public function chat(string $message, ?string $currentRoute = null, array $history = []): array
     {
         $today = Carbon::now()->startOfDay();
 
@@ -41,43 +41,65 @@ class AiChatService
         $bookingData = $this->openRouter()->parseNaturalLanguage($message);
 
         if ($bookingData && !empty($bookingData['guest_name'])) {
-            $complete = !empty($bookingData['checkin_date']) && !empty($bookingData['checkout_date']);
+            $hasCheckin  = !empty($bookingData['checkin_date']);
+            $hasCheckout = !empty($bookingData['checkout_date']);
+            $hasRoomType = !empty($bookingData['room_type']);
+            $complete    = $hasCheckin && $hasCheckout && $hasRoomType;
 
             if ($complete) {
-                // Data lengkap — langsung buat booking
+                // Data lengkap (nama + tanggal + tipe kamar) — langsung buat booking
                 return $this->createBooking($bookingData);
             }
 
             // Data tidak lengkap — AI akan tanya sisanya, beri konteks
             $missing = [];
-            if (empty($bookingData['checkin_date'])) $missing[] = 'tanggal check-in';
-            if (empty($bookingData['checkout_date'])) $missing[] = 'tanggal check-out';
-            $missingText = implode(' dan ', $missing);
+            if (!$hasRoomType)    $missing[] = 'tipe kamar';
+            if (!$hasCheckin)     $missing[] = 'tanggal check-in';
+            if (!$hasCheckout)    $missing[] = 'tanggal check-out';
+            $missingText = implode(', ', $missing);
 
             $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}" .
                 ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '') .
                 ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '') .
-                ". Butuh info: {$missingText}.";
+                ". Butuh info: {$missingText}. Jangan buat reservasi sampai semua info lengkap.";
         }
 
         // ─── Chat normal via AI ───
         $systemContext = $this->buildSystemContext($today);
         $partialContext = isset($partialInfo) ? "\n\nPartial booking info: {$partialInfo}" : '';
 
+        // Build conversation history
+        $historyText = '';
+        if (!empty($history)) {
+            $historyLines = [];
+            foreach ($history as $h) {
+                $role = $h['role'] === 'user' ? 'User' : 'Asisten';
+                $historyLines[] = "{$role}: {$h['text']}";
+            }
+            $historyText = "\n\n=== PERCAKAPAN SEBELUMNYA ===\n" . implode("\n", array_slice($historyLines, 0, -1));
+        }
+
         $prompt = <<<PROMPT
 {$systemContext}
+{$historyText}
 
 Current page: {$currentRoute}
 
-User message: {$message}{$partialContext}
+Pesan user sekarang: {$message}{$partialContext}
 
 Instructions:
 - Answer in Bahasa Indonesia, friendly but professional.
 - Use real data from the context above.
 - If user asks about availability, give specific room numbers and types.
-- If user wants to book, collect all info: guest name, check-in date, check-out date (or number of nights), room type.
-  Ask for missing info one at a time. When all info is complete, say "Baik, saya akan buatkan reservasi sekarang" and confirm the details.
-- If you already have partial booking info (see above), only ask for what's still missing.
+
+- When user wants to BOOK A ROOM, follow this process:
+  1. First ask: guest name, check-in date, check-out date (or number of nights)
+  2. Then MUST ask about ROOM TYPE — list available room types from "All Rooms" data above.
+     Show the tipe kamar names and prices (e.g. "Deluxe Rp 650.000", "Superior Rp 450.000", etc.)
+  3. Do NOT proceed until the user picks a room type.
+  4. After user picks a room type, confirm all details before saying "Baik, saya akan buatkan reservasi sekarang".
+
+- If you already have partial booking info (see "Partial booking info" above), only ask for what's still missing. Always prioritize asking for ROOM TYPE if not specified.
 - After the booking is created (handled by system), just confirm the result.
 - If user asks something outside hotel operations, politely redirect.
 - Keep answers concise, maximum 3-4 paragraphs.

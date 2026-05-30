@@ -15,11 +15,15 @@ class AiChatController extends Controller
         $validated = $request->validate([
             'message'      => 'required|string|max:2000',
             'current_page' => 'nullable|string|max:255',
+            'history'      => 'nullable|array',
+            'history.*.role' => 'string|in:user,assistant',
+            'history.*.text' => 'string|max:2000',
         ]);
 
         $result = $aiChat->chat(
             $validated['message'],
-            $validated['current_page'] ?? null
+            $validated['current_page'] ?? null,
+            $validated['history'] ?? []
         );
 
         return response()->json($result);

@@ -133,6 +133,7 @@ window.AiChat = {
                 body: JSON.stringify({
                     message: msg,
                     current_page: window.location.pathname,
+                    history: this.messages.slice(-6).map(m => ({ role: m.role, text: m.text })),
                 }),
             });
             const data = await res.json();
