@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Room List Report - {{ $today->format('d/m/Y') }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/app.css')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @page { size: A4 landscape; margin: 10mm 12mm; }

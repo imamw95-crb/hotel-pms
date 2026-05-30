@@ -159,10 +159,12 @@
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+function bindRackEvents() {
     document.getElementById('rackStartDate')?.addEventListener('change', loadRack);
     document.getElementById('rackDays')?.addEventListener('change', loadRack);
-});
+}
+document.addEventListener('DOMContentLoaded', bindRackEvents);
+document.addEventListener('turbo:load', bindRackEvents);
 
 function loadRack() {
     var startDate = document.getElementById('rackStartDate').value;

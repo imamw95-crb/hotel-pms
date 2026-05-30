@@ -109,8 +109,9 @@ var RoomsDashboard = {
 
     // ========== REALTIME REFRESH ==========
     startRealtimeRefresh: function() {
+        if (this._refreshTimerId) return; // prevent duplicate intervals
         var self = this;
-        setInterval(function() { self.refresh(true); }, this.config.refreshInterval);
+        this._refreshTimerId = setInterval(function() { self.refresh(true); }, this.config.refreshInterval);
         // Also refresh immediately when page regains focus (e.g. after checkout in another tab/page)
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) self.refresh(true);
@@ -356,13 +357,13 @@ var RoomsDashboard = {
         var panel = document.getElementById('bulkActionPanel');
         if (panel) panel.classList.toggle('hidden', !this.state.bulkMode);
 
-        var checkboxes = document.querySelectorAll('.bulk-room-checkbox');
-        for (var i = 0; i < checkboxes.length; i++) {
-            var parent = checkboxes[i].closest('div');
-            if (parent) parent.classList.toggle('hidden', !this.state.bulkMode);
-        }
+        // Re-render cards with/without checkboxes
+        this.refresh(true);
 
-        if (this.state.bulkMode) Toast.info('Mode bulk aktif — pilih kamar');
+        if (this.state.bulkMode) {
+            this._updateBulkCount();
+            Toast.info('Mode bulk aktif — pilih kamar');
+        }
     },
 
     toggleRoomSelection: function(roomId) {
@@ -544,10 +545,15 @@ var RoomsDashboard = {
     }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('roomsGrid')) {
+// Handle both initial page load and Turbo Drive navigation
+function initRoomsDashboard() {
+    var grid = document.getElementById('roomsGrid');
+    if (grid && !grid.dataset.dashboardInitialized) {
+        grid.dataset.dashboardInitialized = '1';
         RoomsDashboard.init();
     }
-});
+}
+document.addEventListener('DOMContentLoaded', initRoomsDashboard);
+document.addEventListener('turbo:load', initRoomsDashboard);
 
 window.RoomsDashboard = RoomsDashboard;

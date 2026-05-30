@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Struk Resto - {{ $transaction->transaction_number }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/app.css')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @page { size: A5 landscape; margin: 8mm 10mm; }
