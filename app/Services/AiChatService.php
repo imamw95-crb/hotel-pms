@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\RestoTransaction;
+use App\Models\ServiceCharge;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -136,6 +139,9 @@ PROMPT;
             ->map(fn($r) => "{$r->room_number} ({$r->room_type_name}) - {$r->status}" . ($r->price_per_night > 0 ? " - Rp " . number_format($r->price_per_night, 0, ',', '.') : ''))
             ->implode("\n");
 
+        // ─── REVENUE DATA ────────────────────────────────────────
+        $revenueData = $this->buildRevenueContext($today);
+
         return <<<CONTEXT
 You are an AI assistant for Hotel PMS (Property Management System). You help hotel staff with daily operations.
 
@@ -154,8 +160,60 @@ Due Out: {$dueOutText}
 
 Active Guests: {$activeGuestsText}
 
+{$revenueData}
+
 All Rooms:
 {$roomsList}
 CONTEXT;
+    }
+
+    /**
+     * Build revenue summary context for today.
+     */
+    private function buildRevenueContext(Carbon $today): string
+    {
+        // Room revenue — transactions created today linked to reservations
+        $roomRevenue = (float) Transaction::whereDate('created_at', $today)
+            ->whereHas('reservation')
+            ->sum('amount');
+
+        // Resto revenue today
+        $restoRevenue = (float) RestoTransaction::whereDate('created_at', $today)
+            ->sum('total_amount');
+
+        // Service charge revenue today
+        $serviceRevenue = (float) ServiceCharge::whereDate('created_at', $today)
+            ->sum('total_amount');
+
+        $totalRevenue = $roomRevenue + $restoRevenue + $serviceRevenue;
+
+        // Counts
+        $transactionCount = Transaction::whereDate('created_at', $today)
+            ->whereHas('reservation')
+            ->count();
+
+        $restoCount = RestoTransaction::whereDate('created_at', $today)->count();
+        $serviceCount = ServiceCharge::whereDate('created_at', $today)->count();
+
+        // Payment method breakdown (transactions)
+        $paymentMethods = Transaction::whereDate('created_at', $today)
+            ->whereHas('reservation')
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->get()
+            ->map(fn($t) => "{$t->payment_method}: Rp " . number_format((float) $t->total, 0, ',', '.'))
+            ->implode(', ');
+
+        $fmt = fn($v) => 'Rp ' . number_format($v, 0, ',', '.');
+
+        return <<<REVENUE
+=== PENDAPATAN HARI INI ===
+Total Pendapatan: {$fmt($totalRevenue)}
+  - Room Revenue (Reservasi): {$fmt($roomRevenue)} ({$transactionCount} transaksi)
+  - Resto Revenue: {$fmt($restoRevenue)} ({$restoCount} transaksi)
+  - Service Charge: {$fmt($serviceRevenue)} ({$serviceCount} transaksi)
+
+Metode Pembayaran: {$paymentMethods}
+REVENUE;
     }
 }

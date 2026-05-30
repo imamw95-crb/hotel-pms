@@ -201,10 +201,12 @@ window.AiChat = {
             '<div class="w-14 h-14 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-3">' +
             '<i class="fas fa-robot text-2xl text-blue-500"></i></div>' +
             '<h3 class="font-semibold text-slate-700 dark:text-slate-300 mb-1">Halo! Ada yang bisa dibantu?</h3>' +
-            '<p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tanya tentang booking, ketersediaan kamar,<br>atau data tamu di sistem.</p>' +
+            '<p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tanya tentang booking, ketersediaan kamar,<br>data tamu, atau pendapatan hotel.</p>' +
             '<div class="space-y-2">' +
             '<button onclick="AiChat.sendQuick(\'Kamar apa saja yang tersedia hari ini?\')" class="w-full text-left text-xs px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition text-slate-600 dark:text-slate-400">' +
             '<span class="mr-1.5">🔍</span> Kamar apa saja yang tersedia hari ini?</button>' +
+            '<button onclick="AiChat.sendQuick(\'Berapa pendapatan hotel hari ini?\')" class="w-full text-left text-xs px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition text-slate-600 dark:text-slate-400">' +
+            '<span class="mr-1.5">💰</span> Berapa pendapatan hotel hari ini?</button>' +
             '<button onclick="AiChat.sendQuick(\'Berapa jumlah tamu yang check-in hari ini?\')" class="w-full text-left text-xs px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition text-slate-600 dark:text-slate-400">' +
             '<span class="mr-1.5">📋</span> Berapa tamu check-in hari ini?</button>' +
             '<button onclick="AiChat.sendQuick(\'Booking 2 malam untuk Budi, 2 orang\')" class="w-full text-left text-xs px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 transition text-slate-600 dark:text-slate-400">' +
