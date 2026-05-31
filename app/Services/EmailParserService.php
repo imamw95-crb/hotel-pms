@@ -65,7 +65,7 @@ class EmailParserService
         }
 
         // Chat/notification keywords (skip before booking check)
-        $chatKeywords = ['unread chat', 'unreplied chat', 'chat notification', 'new chat', 'chat message', 'guest message', 'reminder', 'pemeliharaan', 'maintenance', 'weekly report', 'otp', 'otp token', 'peringatan'];
+        $chatKeywords = ['unread chat', 'unreplied chat', 'chat notification', 'new chat', 'chat message', 'guest message', 'reminder', 'pemeliharaan', 'maintenance', 'weekly report', 'otp', 'otp token', 'peringatan', 'payment completed', 'payment received', 'payment confirmed', 'payment successful', 'pembayaran berhasil', 'pembayaran diterima'];
         foreach ($chatKeywords as $keyword) {
             if (Str::contains($text, $keyword)) {
                 return 'unknown';
