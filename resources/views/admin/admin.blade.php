@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Dashboard') - Hotel PMS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="/hotel-pms/public/assets/fontawesome/css/all.min.css">
-    <script src="/hotel-pms/public/assets/chartjs/chart.js"></script>
+    <link rel="stylesheet" href="{{ asset('assets/fontawesome/css/all.min.css') }}">
+    <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
     <style>
         [x-cloak] { display: none !important; }
         .sidebar-item.active {

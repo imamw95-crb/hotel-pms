@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Room List Report - {{ $today->format('d/m/Y') }}</title>
     @vite('resources/css/app.css')
-    <link href="/hotel-pms/public/assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <style>
         @page { size: A4 landscape; margin: 10mm 12mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Dashboard') - Hotel PMS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="/hotel-pms/public/assets/fontawesome/css/all.min.css" rel="stylesheet">
-    <script src="/hotel-pms/public/assets/chartjs/chart.js"></script>
-    <script type="module" src="/hotel-pms/public/assets/turbo/turbo.esm.js"></script>
+    <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
+    <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
+    <script type="module" src="{{ asset('assets/turbo/turbo.esm.js') }}"></script>
     <script nomodule>
         // Fallback: Turbo tidak support browser ini (halaman tetap jalan normal)
     </script>
