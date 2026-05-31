@@ -291,6 +291,24 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/ai/chat', [App\Http\Controllers\AiChatController::class, 'chat'])
         ->name('api.ai.chat');
 
+    // ─── OTA Email Monitoring Log ──────────────────────────────
+    Route::middleware(['permission:view_reports'])->group(function () {
+        Route::get('/ota-email-logs', [App\Http\Controllers\OtaEmailLogController::class, 'index'])
+            ->name('ota-email-logs.index');
+        Route::get('/ota-email-logs/{id}', [App\Http\Controllers\OtaEmailLogController::class, 'show'])
+            ->name('ota-email-logs.show');
+        Route::post('/ota-email-logs/{id}/retry', [App\Http\Controllers\OtaEmailLogController::class, 'retry'])
+            ->name('ota-email-logs.retry');
+        Route::post('/ota-email-logs/refresh-stats', [App\Http\Controllers\OtaEmailLogController::class, 'refreshStats'])
+            ->name('ota-email-logs.refresh-stats');
+    });
+
+    // ─── API: OTA Email Stats (for dashboard widgets) ──────────
+    Route::get('/api/ota-email-logs/stats', [App\Http\Controllers\OtaEmailLogController::class, 'apiStats'])
+        ->name('api.ota-email-logs.stats');
+    Route::get('/api/ota-email-logs/recent', [App\Http\Controllers\OtaEmailLogController::class, 'apiRecent'])
+        ->name('api.ota-email-logs.recent');
+
     // ─── Panduan Penggunaan ────────────────────────────────────
     Route::get('/help', function () {
         return view('help.index');

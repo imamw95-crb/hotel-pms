@@ -93,6 +93,9 @@
                     <a href="{{ route('reports.reservations') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.reservations') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-book w-5 mr-2"></i> Reservasi
                     </a>
+                    <a href="{{ route('ota-email-logs.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('ota-email-logs.*') ? 'active' : 'hover:bg-blue-700' }}">
+                        <i class="fas fa-envelope-open-text w-5 mr-2"></i> Log Email OTA
+                    </a>
                 @endif
             </nav>
         </aside>

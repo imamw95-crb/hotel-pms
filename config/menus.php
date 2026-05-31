@@ -224,6 +224,12 @@ return [
                     'permission' => 'view_reports',
                     'roles'      => ['owner', 'admin', 'frontoffice'],
                 ],
+                [
+                    'label'      => 'Log Email OTA',
+                    'route'      => 'ota-email-logs.index',
+                    'permission' => 'view_reports',
+                    'roles'      => ['owner', 'admin', 'frontoffice'],
+                ],
             ],
         ],
 
