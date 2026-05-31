@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Reservation extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'booking_group_id',
         'reservation_number', 'ota_reservation_number', 'ota_source', 'ota_payment_status', 'ota_paid_amount',
@@ -71,7 +73,7 @@ class Reservation extends Model
         if (!$this->check_in || !$this->check_out) {
             return 0;
         }
-        return max(1, (int) $this->check_in->diffInDays($this->check_out));
+        return max(1, (int) $this->check_in->startOfDay()->diffInDays($this->check_out->startOfDay()));
     }
 
     public function getStatusLabelAttribute()

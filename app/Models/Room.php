@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Carbon\Carbon;
 
 class Room extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'room_number', 'room_type_id', 'room_type_name', 'price_per_night',
         'price_weekday', 'price_weekend',

@@ -47,7 +47,7 @@ class HousekeepingController extends Controller
         $tasksQuery->whereDate('created_at', '>=', $dateFrom)
             ->whereDate('created_at', '<=', $dateTo);
 
-        $tasks = $tasksQuery->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low') ASC")
+        $tasks = $tasksQuery->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 ELSE 5 END ASC")
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -366,7 +366,7 @@ class HousekeepingController extends Controller
         $tasksQuery->whereDate('created_at', '>=', $dateFrom)
             ->whereDate('created_at', '<=', $dateTo);
 
-        $tasks = $tasksQuery->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low') ASC")
+        $tasks = $tasksQuery->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 ELSE 5 END ASC")
             ->orderBy('created_at', 'desc')
             ->get();
 

@@ -285,7 +285,6 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/housekeeping/{housekeepingTask}/assign', [HousekeepingController::class, 'assign'])->name('housekeeping.assign');
         Route::post('/housekeeping/bulk-create', [HousekeepingController::class, 'bulkCreate'])->name('housekeeping.bulk-create');
         Route::delete('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'destroy'])->name('housekeeping.destroy');
-        Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
     });
 
     // ─── AI Chat Assistant ───
