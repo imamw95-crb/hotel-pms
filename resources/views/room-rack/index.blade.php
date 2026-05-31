@@ -50,6 +50,7 @@
         <div id="roomsDashboard" 
              data-rooms-api="{{ route('rooms.api') }}" 
              data-booking-url="{{ route('booking.create') }}"
+             data-ota-booking-url="{{ route('booking.ota-create') }}"
              data-date-from="{{ $dateFrom }}"
              data-date-to="{{ $dateTo }}"
              data-status-filter="{{ $statusFilter }}"
@@ -90,6 +91,7 @@
                     <input type="date" data-filter-date-to value="{{ $dateTo }}" class="border rounded px-2 py-1 text-sm flex-shrink-0 w-[130px]">
                     <button onclick="RoomsDashboard.refresh()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition flex-shrink-0" title="Refresh"><i class="fas fa-sync-alt"></i></button>
                     <button data-bulk-toggle class="bg-purple-500 text-white px-3 py-1 rounded text-sm hover:bg-purple-600 transition flex-shrink-0" title="Bulk"><i class="fas fa-check-square"></i></button>
+                    <button onclick="RoomsDashboard.openOtaBooking()" class="bg-teal-600 text-white px-3 py-1 rounded text-sm hover:bg-teal-700 transition flex-shrink-0"><i class="fas fa-globe"></i> OTA</button>
                     <button onclick="Modal.open('{{ route('booking.group.create') }}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition flex-shrink-0"><i class="fas fa-users"></i> Group</button>
                 </div>
             </div>

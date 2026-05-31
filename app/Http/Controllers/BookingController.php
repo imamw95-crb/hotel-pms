@@ -64,6 +64,30 @@ class BookingController extends Controller
         ]);
     }
 
+    /**
+     * Show OTA booking modal form.
+     */
+    public function otaCreate(Request $request)
+    {
+        $selectedRoom = null;
+        if ($request->has('room_id')) {
+            $selectedRoom = Room::find($request->input('room_id'));
+        }
+
+        $checkIn = $request->input('check_in', Carbon::today()->format('Y-m-d'));
+        $checkOut = $request->input('check_out', Carbon::tomorrow()->format('Y-m-d'));
+
+        $otaSources = [
+            'traveloka.com' => 'Traveloka',
+            'tiket.com'     => 'Tiket.com',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'view' => view('booking.modal-ota', compact('selectedRoom', 'checkIn', 'checkOut', 'otaSources'))->render()
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -76,6 +100,9 @@ class BookingController extends Controller
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
             'ota_reservation_number' => 'nullable|string|max:100',
+            'ota_source' => 'nullable|string|in:traveloka.com,tiket.com',
+            'ota_payment_status' => 'nullable|string|in:paid_ota,partial_ota,unpaid_ota',
+            'ota_paid_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'include_breakfast' => 'nullable|boolean',
         ]);
@@ -112,6 +139,9 @@ class BookingController extends Controller
         $reservation = Reservation::create([
             'reservation_number' => 'RES-' . strtoupper(uniqid()),
             'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
+            'ota_source' => $validated['ota_source'] ?? null,
+            'ota_payment_status' => $validated['ota_payment_status'] ?? null,
+            'ota_paid_amount' => $validated['ota_paid_amount'] ?? 0,
             'room_id' => $room->id,
             'guest_id' => $guest->id,
             'check_in' => $checkInDate,

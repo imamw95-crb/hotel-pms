@@ -457,6 +457,7 @@ class NightAuditController extends Controller
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'status' => $r->status,
                 'include_breakfast' => $r->include_breakfast,
+                'ota_source' => $r->ota_source,
             ]);
 
         return compact(

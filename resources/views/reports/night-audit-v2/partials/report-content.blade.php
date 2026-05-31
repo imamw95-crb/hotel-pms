@@ -466,6 +466,7 @@
                     <th class="text-center p-2 font-bold text-xs">KAMAR</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-center p-2 font-bold text-xs">SUMBER</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
                     <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                 </tr>
@@ -478,6 +479,13 @@
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">
+                        @if(!empty($res['ota_source']))
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800">{{ $res['ota_source'] }}</span>
+                        @else
+                            <span class="text-gray-400 text-xs">Langsung</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
                             @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800

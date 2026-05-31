@@ -40,10 +40,14 @@ class ReservationController extends Controller
             $query->where('status', $status);
         }
 
-        // Filter sumber (website / local)
+        // Filter sumber (website / ota / local)
         $sumber = $request->get('sumber');
         if ($sumber === 'website') {
             $query->where('ota_source', 'website');
+        } elseif ($sumber === 'ota') {
+            $query->whereNotNull('ota_source')
+                  ->where('ota_source', '!=', '')
+                  ->where('ota_source', '!=', 'website');
         } elseif ($sumber === 'local') {
             $query->where(function ($q) {
                 $q->whereNull('ota_source')->orWhere('ota_source', '');
@@ -69,6 +73,9 @@ class ReservationController extends Controller
             'checked_out' => Reservation::where('status', 'checked_out')->count(),
             'cancelled'   => Reservation::where('status', 'cancelled')->count(),
             'website'     => Reservation::where('ota_source', 'website')->count(),
+            'ota'         => Reservation::whereNotNull('ota_source')
+                                ->where('ota_source', '!=', '')
+                                ->where('ota_source', '!=', 'website')->count(),
         ];
 
         return view('reservations.index', compact('reservations', 'search', 'status', 'sumber', 'dateFrom', 'dateTo', 'stats'));

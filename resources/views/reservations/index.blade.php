@@ -62,6 +62,17 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div class="flex items-center justify-between">
             <div>
+                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">OTA</p>
+                <p class="text-xl font-bold text-purple-600 mt-0.5">{{ $stats['ota'] ?? 0 }}</p>
+            </div>
+            <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                <i class="fas fa-link text-purple-500"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+            <div>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Checked In</p>
                 <p class="text-xl font-bold text-green-600 mt-0.5">{{ $stats['checked_in'] ?? 0 }}</p>
             </div>
@@ -129,6 +140,7 @@
                 <select name="sumber" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Semua Sumber</option>
                     <option value="website" {{ ($sumber ?? '') === 'website' ? 'selected' : '' }}>🌐 Website</option>
+                    <option value="ota" {{ ($sumber ?? '') === 'ota' ? 'selected' : '' }}>🔗 OTA</option>
                     <option value="local" {{ ($sumber ?? '') === 'local' ? 'selected' : '' }}>🏨 Local</option>
                 </select>
             </div>

@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Booking
     Route::get('/booking/create', [BookingController::class, 'create'])->middleware('permission:create_booking')->name('booking.create');
+    Route::get('/booking/ota-create', [BookingController::class, 'otaCreate'])->middleware('permission:create_booking')->name('booking.ota-create');
     Route::get('/booking/check-availability', [BookingController::class, 'checkAvailability'])->middleware('permission:create_booking')->name('booking.check-availability');
     Route::post('/booking', [BookingController::class, 'store'])->middleware('permission:create_booking')->name('booking.store');
     Route::get('/booking-group', [BookingGroupController::class, 'create'])->middleware('permission:create_booking_group')->name('booking.group.create');

@@ -10,6 +10,7 @@ var RoomsDashboard = {
     config: {
         apiUrl: '',
         bookingUrl: '',
+        otaBookingUrl: '',
         refreshInterval: 5000
     },
 
@@ -25,10 +26,12 @@ var RoomsDashboard = {
     init: function() {
         var apiEl = document.querySelector('[data-rooms-api]');
         var bookingEl = document.querySelector('[data-booking-url]');
+        var otaBookingEl = document.querySelector('[data-ota-booking-url]');
         var dateFromEl = document.querySelector('[data-date-from]');
         var dateToEl = document.querySelector('[data-date-to]');
         this.config.apiUrl = apiEl ? apiEl.getAttribute('data-rooms-api') : '';
         this.config.bookingUrl = bookingEl ? bookingEl.getAttribute('data-booking-url') : '';
+        this.config.otaBookingUrl = otaBookingEl ? otaBookingEl.getAttribute('data-ota-booking-url') : '';
         this.state.dateFrom = dateFromEl ? dateFromEl.getAttribute('data-date-from') : '';
         this.state.dateTo = dateToEl ? dateToEl.getAttribute('data-date-to') : '';
 
@@ -254,10 +257,24 @@ var RoomsDashboard = {
         Modal.open(url);
     },
 
+    openOtaBooking: function(roomId) {
+        var url = this.config.otaBookingUrl;
+        if (!url) url = '/hotel-pms/public/booking/ota-create';
+        if (roomId) {
+            var today = new Date();
+            var tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            var fmt = function(d) { return d.toISOString().split('T')[0]; };
+            url += '?room_id=' + roomId + '&check_in=' + fmt(today) + '&check_out=' + fmt(tomorrow);
+        }
+        Modal.open(url);
+    },
+
     quickAction: function(roomId, roomNumber, status) {
         var actions = [];
         if (status === 'available') {
             actions.push({ label: 'Booking', icon: 'fa-calendar-plus', fn: 'openBooking' });
+            actions.push({ label: 'Booking OTA', icon: 'fa-globe', fn: 'openOtaBooking' });
             actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
             actions.push({ label: 'Set Maintenance', icon: 'fa-tools', fn: 'setMaintenance' });
         }

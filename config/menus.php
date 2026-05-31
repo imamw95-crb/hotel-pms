@@ -94,6 +94,12 @@ return [
                     'modal'      => true,
                 ],
                 [
+                    'label'      => 'Booking OTA',
+                    'route'      => 'booking.ota-create',
+                    'permission' => 'create_booking',
+                    'modal'      => true,
+                ],
+                [
                     'label'      => 'Booking Group',
                     'route'      => 'booking.group.create',
                     'permission' => 'create_booking_group',
