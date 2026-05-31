@@ -23,8 +23,8 @@ return new class extends Migration
         // Insert default setting
         DB::table('hotel_settings')->insert([
             'hotel_name' => 'Hotel PMS',
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 

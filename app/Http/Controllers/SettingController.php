@@ -15,6 +15,7 @@ class SettingController extends Controller
     public function index()
     {
         $setting = HotelSetting::get();
+
         return view('admin.settings', compact('setting'));
     }
 
@@ -25,12 +26,12 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'hotel_name' => 'required|string|max:100',
-            'phone'      => 'nullable|string|max:30',
-            'email'      => 'nullable|email|max:100',
-            'address'    => 'nullable|string|max:500',
-            'website'    => 'nullable|string|max:200',
-            'logo'       => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
-            'theme'      => 'nullable|in:light,dark,system',
+            'phone' => 'nullable|string|max:30',
+            'email' => 'nullable|email|max:100',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|string|max:200',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'theme' => 'nullable|in:light,dark,system',
         ]);
 
         $setting = HotelSetting::get();
@@ -38,30 +39,33 @@ class SettingController extends Controller
         // Handle logo upload
         if ($request->hasFile('logo')) {
             $uploadedFile = $request->file('logo');
-            if ($uploadedFile && $uploadedFile->getPathname()) {
+
+            if ($uploadedFile && $uploadedFile->isValid()) {
                 // Hapus logo lama
                 if ($setting->logo_path && Storage::disk('public')->exists($setting->logo_path)) {
                     Storage::disk('public')->delete($setting->logo_path);
                 }
 
-                $path = null;
-                // Coba pakai store() dulu
+                // Simpan logo — fallback manual jika putFileAs gagal
                 try {
-                    $path = $uploadedFile->store('logo', 'public');
+                    $path = Storage::disk('public')->putFile('logo', $uploadedFile);
                 } catch (\Throwable $e) {
-                    logger()->warning('Logo store() failed: ' . $e->getMessage());
+                    logger()->warning('Logo putFile failed: '.$e->getMessage());
+                    $path = null;
                 }
 
-                // Fallback: copy manual
-                if (!$path) {
+                if (! $path) {
+                    // Manual copy via getContent()
                     $ext = $uploadedFile->getClientOriginalExtension() ?: 'png';
-                    $filename = Str::random(40) . '.' . $ext;
+                    $filename = Str::random(40).'.'.$ext;
                     $destDir = storage_path('app/public/logo');
-                    if (!is_dir($destDir)) {
+
+                    if (! is_dir($destDir)) {
                         mkdir($destDir, 0755, true);
                     }
-                    if (copy($uploadedFile->getPathname(), $destDir . '/' . $filename)) {
-                        $path = 'logo/' . $filename;
+
+                    if (file_put_contents($destDir.'/'.$filename, $uploadedFile->get()) !== false) {
+                        $path = 'logo/'.$filename;
                     }
                 }
 
@@ -72,10 +76,10 @@ class SettingController extends Controller
         }
 
         $setting->hotel_name = $validated['hotel_name'];
-        $setting->phone      = $validated['phone'] ?? null;
-        $setting->email      = $validated['email'] ?? null;
-        $setting->address    = $validated['address'] ?? null;
-        $setting->website    = $validated['website'] ?? null;
+        $setting->phone = $validated['phone'] ?? null;
+        $setting->email = $validated['email'] ?? null;
+        $setting->address = $validated['address'] ?? null;
+        $setting->website = $validated['website'] ?? null;
         if (isset($validated['theme'])) {
             $setting->theme = $validated['theme'];
         }
@@ -86,7 +90,7 @@ class SettingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Setting hotel berhasil diperbarui.',
-                'redirect_url' => route('admin.settings')
+                'redirect_url' => route('admin.settings'),
             ]);
         }
 

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServiceCharge;
 use App\Models\Guest;
 use App\Models\Reservation;
+use App\Models\ServiceCharge;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class ServiceChargeController extends Controller
 {
@@ -30,10 +29,10 @@ class ServiceChargeController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('charge_number', 'like', "%{$search}%")
-                  ->orWhere('service_name', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('service_name', 'like', "%{$search}%")
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -60,9 +59,10 @@ class ServiceChargeController extends Controller
         // AJAX via modal: return JSON with rendered modal view (no layout)
         if ($request->expectsJson()) {
             $view = view('service-charge.modal-create', compact('guests', 'reservations'))->render();
+
             return response()->json([
                 'success' => true,
-                'view'    => $view,
+                'view' => $view,
             ]);
         }
 
@@ -76,38 +76,38 @@ class ServiceChargeController extends Controller
     {
         $validated = $request->validate([
             'reservation_id' => 'nullable|exists:reservations,id',
-            'guest_id'       => 'nullable|exists:guests,id',
-            'service_name'   => 'required|string|max:200',
-            'description'    => 'nullable|string|max:500',
-            'amount'         => 'required|numeric|min:0',
-            'quantity'       => 'required|integer|min:1',
-            'charge_date'    => 'required|date',
+            'guest_id' => 'nullable|exists:guests,id',
+            'service_name' => 'required|string|max:200',
+            'description' => 'nullable|string|max:500',
+            'amount' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:1',
+            'charge_date' => 'required|date',
             'payment_method' => 'nullable|string|max:50',
-            'notes'          => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $totalAmount = $validated['amount'] * $validated['quantity'];
 
         $charge = ServiceCharge::create([
             'reservation_id' => $validated['reservation_id'] ?? null,
-            'guest_id'       => $validated['guest_id'] ?? null,
-            'service_name'   => $validated['service_name'],
-            'description'    => $validated['description'] ?? null,
-            'amount'         => $validated['amount'],
-            'quantity'       => $validated['quantity'],
-            'total_amount'   => $totalAmount,
-            'charge_date'    => $validated['charge_date'],
+            'guest_id' => $validated['guest_id'] ?? null,
+            'service_name' => $validated['service_name'],
+            'description' => $validated['description'] ?? null,
+            'amount' => $validated['amount'],
+            'quantity' => $validated['quantity'],
+            'total_amount' => $totalAmount,
+            'charge_date' => $validated['charge_date'],
             'payment_method' => $validated['payment_method'] ?? null,
-            'notes'          => $validated['notes'] ?? null,
-            'created_by'     => auth()->id(),
+            'notes' => $validated['notes'] ?? null,
+            'created_by' => auth()->id(),
         ]);
 
         if ($request->expectsJson()) {
             return response()->json([
-                'success'      => true,
-                'message'      => 'Service charge berhasil disimpan.',
+                'success' => true,
+                'message' => 'Service charge berhasil disimpan.',
                 'redirect_url' => route('service-charge.show', $charge),
-                'charge'       => $charge,
+                'charge' => $charge,
             ]);
         }
 
@@ -121,6 +121,7 @@ class ServiceChargeController extends Controller
     public function show(ServiceCharge $serviceCharge)
     {
         $serviceCharge->load(['guest', 'reservation.room', 'createdBy']);
+
         return view('service-charge.show', ['charge' => $serviceCharge]);
     }
 }

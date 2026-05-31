@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Guest;
 use App\Models\Reservation;
-use App\Models\Room;
 use App\Models\RestoTransaction;
+use App\Models\Room;
 use App\Models\ServiceCharge;
 use App\Models\Transaction;
 use Carbon\Carbon;
@@ -22,9 +22,10 @@ class AiChatService
      */
     private function openRouter(): OpenRouterService
     {
-        if (!$this->openRouter) {
+        if (! $this->openRouter) {
             $this->openRouter = app(OpenRouterService::class);
         }
+
         return $this->openRouter;
     }
 
@@ -39,11 +40,11 @@ class AiChatService
         // ─── Coba deteksi booking dari pesan user ───
         $bookingData = $this->openRouter()->parseNaturalLanguage($message);
 
-        if ($bookingData && !empty($bookingData['guest_name'])) {
-            $hasCheckin  = !empty($bookingData['checkin_date']);
-            $hasCheckout = !empty($bookingData['checkout_date']);
-            $hasRoomType = !empty($bookingData['room_type']);
-            $complete    = $hasCheckin && $hasCheckout && $hasRoomType;
+        if ($bookingData && ! empty($bookingData['guest_name'])) {
+            $hasCheckin = ! empty($bookingData['checkin_date']);
+            $hasCheckout = ! empty($bookingData['checkout_date']);
+            $hasRoomType = ! empty($bookingData['room_type']);
+            $complete = $hasCheckin && $hasCheckout && $hasRoomType;
 
             if ($complete) {
                 // Data lengkap (nama + tanggal + tipe kamar) — langsung buat booking
@@ -52,14 +53,20 @@ class AiChatService
 
             // Data tidak lengkap — AI akan tanya sisanya, beri konteks
             $missing = [];
-            if (!$hasRoomType)    $missing[] = 'tipe kamar';
-            if (!$hasCheckin)     $missing[] = 'tanggal check-in';
-            if (!$hasCheckout)    $missing[] = 'tanggal check-out';
+            if (! $hasRoomType) {
+                $missing[] = 'tipe kamar';
+            }
+            if (! $hasCheckin) {
+                $missing[] = 'tanggal check-in';
+            }
+            if (! $hasCheckout) {
+                $missing[] = 'tanggal check-out';
+            }
             $missingText = implode(', ', $missing);
 
-            $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}" .
-                ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '') .
-                ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '') .
+            $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}".
+                ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '').
+                ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '').
                 ". Butuh info: {$missingText}. Jangan buat reservasi sampai semua info lengkap.";
         }
 
@@ -69,13 +76,13 @@ class AiChatService
 
         // Build conversation history
         $historyText = '';
-        if (!empty($history)) {
+        if (! empty($history)) {
             $historyLines = [];
             foreach ($history as $h) {
                 $role = $h['role'] === 'user' ? 'User' : 'Asisten';
                 $historyLines[] = "{$role}: {$h['text']}";
             }
-            $historyText = "\n\n=== PERCAKAPAN SEBELUMNYA ===\n" . implode("\n", array_slice($historyLines, 0, -1));
+            $historyText = "\n\n=== PERCAKAPAN SEBELUMNYA ===\n".implode("\n", array_slice($historyLines, 0, -1));
         }
 
         $prompt = <<<PROMPT
@@ -108,26 +115,27 @@ PROMPT;
 
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.openrouter.api_key'),
-                'Content-Type'  => 'application/json',
-                'HTTP-Referer'  => config('app.url'),
-                'X-Title'       => config('app.name', 'Hotel PMS'),
+                'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name', 'Hotel PMS'),
             ])
-            ->timeout(config('services.openrouter.timeout', 120))
-            ->post(config('services.openrouter.base_url', 'https://openrouter.ai/api/v1') . '/chat/completions', [
-                'model'    => config('services.openrouter.model', 'qwen/qwen3-8b'),
-                'messages' => [
-                    ['role' => 'system', 'content' => $prompt],
-                ],
-                'temperature' => 0.3,
-                'max_tokens'  => 1024,
-            ]);
+                ->timeout(config('services.openrouter.timeout', 120))
+                ->post(config('services.openrouter.base_url', 'https://openrouter.ai/api/v1').'/chat/completions', [
+                    'model' => config('services.openrouter.model', 'qwen/qwen3-8b'),
+                    'messages' => [
+                        ['role' => 'system', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.3,
+                    'max_tokens' => 1024,
+                ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('AI Chat API error', [
                     'status' => $response->status(),
-                    'body'   => $response->body(),
+                    'body' => $response->body(),
                 ]);
+
                 return [
                     'success' => false,
                     'message' => 'Maaf, terjadi kesalahan koneksi ke AI. Coba lagi nanti.',
@@ -136,7 +144,7 @@ PROMPT;
 
             $content = $response->json('choices.0.message.content');
 
-            if (!$content) {
+            if (! $content) {
                 return [
                     'success' => false,
                     'message' => 'Maaf, AI tidak memberikan respons. Coba lagi.',
@@ -148,7 +156,8 @@ PROMPT;
                 'message' => trim($content),
             ];
         } catch (\Exception $e) {
-            Log::error('AI Chat exception: ' . $e->getMessage());
+            Log::error('AI Chat exception: '.$e->getMessage());
+
             return [
                 'success' => false,
                 'message' => 'Maaf, terjadi kesalahan sistem. Coba lagi nanti.',
@@ -165,7 +174,7 @@ PROMPT;
 
         try {
             // Validate dates
-            $checkIn  = Carbon::parse($data['checkin_date'])->setTime(14, 0);
+            $checkIn = Carbon::parse($data['checkin_date'])->setTime(14, 0);
             $checkOut = Carbon::parse($data['checkout_date'])->setTime(12, 0);
         } catch (\Exception $e) {
             return [
@@ -213,12 +222,12 @@ PROMPT;
         }
 
         // Fallback: any available room
-        if (!$roomId) {
+        if (! $roomId) {
             $anyAvailable = (clone $availableQuery)
                 ->orderBy('room_number')
                 ->first();
 
-            if (!$anyAvailable) {
+            if (! $anyAvailable) {
                 return [
                     'success' => true,
                     'message' => 'Maaf, tidak ada kamar tersedia untuk tanggal tersebut. Silakan coba tanggal lain.',
@@ -247,21 +256,22 @@ PROMPT;
                 }
 
                 $reservation = Reservation::create([
-                    'guest_id'        => $guest->id,
-                    'room_id'         => $roomId,
-                    'check_in'        => $checkIn,
-                    'check_out'       => $checkOut,
+                    'guest_id' => $guest->id,
+                    'room_id' => $roomId,
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
                     'number_of_cards' => $data['guest_count'] ?? 1,
-                    'total_amount'    => $totalAmount,
-                    'payment_method'  => $data['payment_method'] ?: 'cash',
-                    'paid_amount'     => 0,
-                    'status'          => 'pending',
-                    'notes'           => ($data['notes'] ? $data['notes'] . ' ' : '') . '(via AI Chat)',
-                    'ota_source'      => 'ai_chat',
-                    'created_by'      => auth()->id() ?? 1,
+                    'total_amount' => $totalAmount,
+                    'payment_method' => $data['payment_method'] ?: 'cash',
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                    'notes' => ($data['notes'] ? $data['notes'].' ' : '').'(via AI Chat)',
+                    'ota_source' => 'ai_chat',
+                    'created_by' => auth()->id() ?? 1,
                 ]);
 
                 $reservation->load(['guest', 'room']);
+
                 return $reservation;
             });
 
@@ -271,21 +281,21 @@ PROMPT;
 
             $checkInFormatted = $reservation->check_in->format('d M Y');
             $checkOutFormatted = $reservation->check_out->format('d M Y');
-            $totalFormatted = 'Rp ' . number_format((float) $reservation->total_amount, 0, ',', '.');
+            $totalFormatted = 'Rp '.number_format((float) $reservation->total_amount, 0, ',', '.');
 
             return [
                 'success' => true,
-                'message' => "✅ **Reservasi berhasil dibuat!**\n\n" .
-                    "📋 No. Reservasi: `{$reservation->reservation_number}`\n" .
-                    "👤 Tamu: {$reservation->guest->guest_name}\n" .
-                    "🛏️ {$roomInfo}\n" .
-                    "📅 Check-in: {$checkInFormatted} (14:00)\n" .
-                    "📅 Check-out: {$checkOutFormatted} (12:00)\n" .
-                    "💰 Total: {$totalFormatted}\n\n" .
-                    "Status: **Pending** — silakan lanjutkan ke proses check-in saat tamu datang.",
+                'message' => "✅ **Reservasi berhasil dibuat!**\n\n".
+                    "📋 No. Reservasi: `{$reservation->reservation_number}`\n".
+                    "👤 Tamu: {$reservation->guest->guest_name}\n".
+                    "🛏️ {$roomInfo}\n".
+                    "📅 Check-in: {$checkInFormatted} (14:00)\n".
+                    "📅 Check-out: {$checkOutFormatted} (12:00)\n".
+                    "💰 Total: {$totalFormatted}\n\n".
+                    'Status: **Pending** — silakan lanjutkan ke proses check-in saat tamu datang.',
             ];
         } catch (\Exception $e) {
-            Log::error('AI Chat booking failed: ' . $e->getMessage(), [
+            Log::error('AI Chat booking failed: '.$e->getMessage(), [
                 'data' => $data,
             ]);
 
@@ -303,9 +313,9 @@ PROMPT;
     {
         // Room stats
         $totalRooms = Room::count();
-        $occupied  = Room::where('status', 'occupied')->count();
+        $occupied = Room::where('status', 'occupied')->count();
         $available = Room::where('status', 'available')->count();
-        $cleaning  = Room::where('status', 'cleaning')->count();
+        $cleaning = Room::where('status', 'cleaning')->count();
         $maintenance = Room::where('status', 'maintenance')->count();
 
         // Today's reservations
@@ -322,7 +332,7 @@ PROMPT;
             ->where('status', 'checked_in')
             ->with('room', 'guest')
             ->get()
-            ->map(fn($r) => $r->room && $r->guest ? "Kamar {$r->room->room_number} - {$r->guest->guest_name}" : null)
+            ->map(fn ($r) => $r->room && $r->guest ? "Kamar {$r->room->room_number} - {$r->guest->guest_name}" : null)
             ->filter()
             ->implode(', ');
 
@@ -332,7 +342,7 @@ PROMPT;
         $activeGuestsList = Reservation::where('status', 'checked_in')
             ->with('room', 'guest')
             ->get()
-            ->map(fn($r) => $r->guest && $r->room ? "{$r->guest->guest_name} (Kamar {$r->room->room_number})" : null)
+            ->map(fn ($r) => $r->guest && $r->room ? "{$r->guest->guest_name} (Kamar {$r->room->room_number})" : null)
             ->filter()
             ->implode('; ');
 
@@ -343,7 +353,7 @@ PROMPT;
 
         // All rooms list
         $roomsList = Room::orderBy('room_number')->get()
-            ->map(fn($r) => "{$r->room_number} ({$r->room_type_name}) - {$r->status}" . ($r->price_per_night > 0 ? " - Rp " . number_format($r->price_per_night, 0, ',', '.') : ''))
+            ->map(fn ($r) => "{$r->room_number} ({$r->room_type_name}) - {$r->status}".($r->price_per_night > 0 ? ' - Rp '.number_format($r->price_per_night, 0, ',', '.') : ''))
             ->implode("\n");
 
         // ─── REVENUE DATA ────────────────────────────────────────
@@ -408,10 +418,10 @@ CONTEXT;
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->get()
-            ->map(fn($t) => "{$t->payment_method}: Rp " . number_format((float) $t->total, 0, ',', '.'))
+            ->map(fn ($t) => "{$t->payment_method}: Rp ".number_format((float) $t->total, 0, ',', '.'))
             ->implode(', ');
 
-        $fmt = fn($v) => 'Rp ' . number_format($v, 0, ',', '.');
+        $fmt = fn ($v) => 'Rp '.number_format($v, 0, ',', '.');
 
         return <<<REVENUE
 === PENDAPATAN HARI INI ===

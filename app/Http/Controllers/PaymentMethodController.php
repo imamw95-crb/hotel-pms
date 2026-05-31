@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PaymentMethodController extends Controller
 {
@@ -13,6 +14,7 @@ class PaymentMethodController extends Controller
     public function index()
     {
         $paymentMethods = PaymentMethod::orderBy('name')->get();
+
         return view('admin.payment-methods.index', compact('paymentMethods'));
     }
 
@@ -35,7 +37,7 @@ class PaymentMethodController extends Controller
 
         $paymentMethod = PaymentMethod::create([
             'name' => $validated['name'],
-            'slug' => \Illuminate\Support\Str::slug($validated['name']),
+            'slug' => Str::slug($validated['name']),
             'is_active' => true,
         ]);
 
@@ -45,7 +47,7 @@ class PaymentMethodController extends Controller
                 'success' => true,
                 'message' => 'Metode pembayaran berhasil ditambahkan.',
                 'redirect_url' => route('admin.payment-methods.index'),
-                'paymentMethod' => $paymentMethod
+                'paymentMethod' => $paymentMethod,
             ]);
         }
 
@@ -67,13 +69,13 @@ class PaymentMethodController extends Controller
     public function update(Request $request, PaymentMethod $paymentMethod)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:payment_methods,name,' . $paymentMethod->id,
+            'name' => 'required|string|max:100|unique:payment_methods,name,'.$paymentMethod->id,
             'is_active' => 'boolean',
         ]);
 
         $paymentMethod->update([
             'name' => $validated['name'],
-            'slug' => \Illuminate\Support\Str::slug($validated['name']),
+            'slug' => Str::slug($validated['name']),
             'is_active' => $request->has('is_active'),
         ]);
 
@@ -83,7 +85,7 @@ class PaymentMethodController extends Controller
                 'success' => true,
                 'message' => 'Metode pembayaran berhasil diperbarui.',
                 'redirect_url' => route('admin.payment-methods.index'),
-                'paymentMethod' => $paymentMethod
+                'paymentMethod' => $paymentMethod,
             ]);
         }
 
@@ -97,13 +99,13 @@ class PaymentMethodController extends Controller
     public function destroy(PaymentMethod $paymentMethod)
     {
         $paymentMethod->delete();
-        
+
         // Check if request is AJAX
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Metode pembayaran berhasil dihapus.',
-                'redirect_url' => route('admin.payment-methods.index')
+                'redirect_url' => route('admin.payment-methods.index'),
             ]);
         }
 

@@ -56,7 +56,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Create User', 'slug' => 'create_user', 'group' => 'user', 'description' => 'Dapat membuat pengguna'],
             ['name' => 'Edit User', 'slug' => 'edit_user', 'group' => 'user', 'description' => 'Dapat mengubah pengguna'],
             ['name' => 'Delete User', 'slug' => 'delete_user', 'group' => 'user', 'description' => 'Dapat menghapus pengguna'],
-            
+
             // Guest Permissions
             ['name' => 'Manage Guests', 'slug' => 'manage_guests', 'group' => 'guest', 'description' => 'Dapat mengelola data tamu'],
 

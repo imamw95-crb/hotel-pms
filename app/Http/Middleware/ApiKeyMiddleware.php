@@ -18,7 +18,7 @@ class ApiKeyMiddleware
     {
         $apiKey = $request->header('X-API-Key') ?? $request->query('api_key');
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             return response()->json([
                 'success' => false,
                 'message' => 'API Key tidak disertakan. Kirim via header X-API-Key atau query parameter ?api_key=',
@@ -28,10 +28,10 @@ class ApiKeyMiddleware
         // Cari user yang punya token dengan nama 'api-key' dan token cocok
         $user = User::whereHas('tokens', function ($q) use ($apiKey) {
             $q->where('name', 'api-key')
-              ->where('token', hash('sha256', $apiKey));
+                ->where('token', hash('sha256', $apiKey));
         })->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'API Key tidak valid.',

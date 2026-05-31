@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Expense extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'expense_number', 'description', 'amount',
         'payment_method', 'expense_date', 'notes', 'created_by',
@@ -24,7 +25,7 @@ class Expense extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->expense_number)) {
-                $model->expense_number = 'EXP-' . strtoupper(uniqid());
+                $model->expense_number = 'EXP-'.strtoupper(uniqid());
             }
         });
     }

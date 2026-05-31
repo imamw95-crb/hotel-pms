@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Guest extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'guest_name', 'id_number', 'phone', 'email', 'address', 'notes'
+        'guest_name', 'id_number', 'phone', 'email', 'address', 'notes',
     ];
 
     public function reservations(): HasMany

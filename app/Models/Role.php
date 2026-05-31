@@ -42,10 +42,11 @@ class Role extends Model
     {
         $slugs = is_array($permissionSlugs) ? $permissionSlugs : [$permissionSlugs];
         foreach ($slugs as $slug) {
-            if (!$this->hasPermission($slug)) {
+            if (! $this->hasPermission($slug)) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -60,6 +61,7 @@ class Role extends Model
                 return true;
             }
         }
+
         return false;
     }
 }

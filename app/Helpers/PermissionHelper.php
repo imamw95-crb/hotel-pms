@@ -3,12 +3,13 @@
 /**
  * Check apakah user login memiliki permission
  */
-if (!function_exists('hasPermission')) {
+if (! function_exists('hasPermission')) {
     function hasPermission($permission)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
+
         return auth()->user()->hasPermission($permission);
     }
 }
@@ -16,12 +17,13 @@ if (!function_exists('hasPermission')) {
 /**
  * Check apakah user login memiliki semua permissions
  */
-if (!function_exists('hasAllPermissions')) {
+if (! function_exists('hasAllPermissions')) {
     function hasAllPermissions($permissions)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
+
         return auth()->user()->hasAllPermissions($permissions);
     }
 }
@@ -29,12 +31,13 @@ if (!function_exists('hasAllPermissions')) {
 /**
  * Check apakah user login memiliki salah satu permission
  */
-if (!function_exists('hasAnyPermission')) {
+if (! function_exists('hasAnyPermission')) {
     function hasAnyPermission($permissions)
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
+
         return auth()->user()->hasAnyPermission($permissions);
     }
 }
@@ -42,10 +45,10 @@ if (!function_exists('hasAnyPermission')) {
 /**
  * Get available menu items for current user
  */
-if (!function_exists('getMenuItems')) {
+if (! function_exists('getMenuItems')) {
     function getMenuItems($role = null)
     {
-        if (!auth()->check() && !$role) {
+        if (! auth()->check() && ! $role) {
             return [];
         }
 
@@ -53,10 +56,11 @@ if (!function_exists('getMenuItems')) {
         $menus = config('menus.items', []);
 
         return array_filter($menus, function ($menu) use ($userRole) {
-            if (!isset($menu['roles'])) {
+            if (! isset($menu['roles'])) {
                 return true;
             }
             $allowedRoles = is_array($menu['roles']) ? $menu['roles'] : [$menu['roles']];
+
             return in_array($userRole, $allowedRoles);
         });
     }
@@ -65,10 +69,10 @@ if (!function_exists('getMenuItems')) {
 /**
  * Get menu items with permission checks and role filtering
  */
-if (!function_exists('getMenuItemsWithPermissions')) {
+if (! function_exists('getMenuItemsWithPermissions')) {
     function getMenuItemsWithPermissions()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return [];
         }
 
@@ -79,7 +83,7 @@ if (!function_exists('getMenuItemsWithPermissions')) {
         return array_values(array_filter($menus, function ($menu) use ($userRole) {
             if (isset($menu['roles'])) {
                 $allowedRoles = is_array($menu['roles']) ? $menu['roles'] : [$menu['roles']];
-                if (!in_array($userRole, $allowedRoles)) {
+                if (! in_array($userRole, $allowedRoles)) {
                     return false;
                 }
             }
@@ -88,11 +92,14 @@ if (!function_exists('getMenuItemsWithPermissions')) {
                 $menu['children'] = array_values(array_filter($menu['children'], function ($child) use ($userRole) {
                     if (isset($child['roles'])) {
                         $allowedRoles = is_array($child['roles']) ? $child['roles'] : [$child['roles']];
+
                         return in_array($userRole, $allowedRoles);
                     }
+
                     return true;
                 }));
             }
+
             return true;
         }));
     }
@@ -101,14 +108,14 @@ if (!function_exists('getMenuItemsWithPermissions')) {
 /**
  * Convert number to Indonesian words (terbilang).
  */
-if (!function_exists('terbilang')) {
+if (! function_exists('terbilang')) {
     function terbilang($number)
     {
         $number = abs((int) $number);
         $words = [
             '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan',
             'Sepuluh', 'Sebelas', 'Dua Belas', 'Tiga Belas', 'Empat Belas', 'Lima Belas',
-            'Enam Belas', 'Tujuh Belas', 'Delapan Belas', 'Sembilan Belas'
+            'Enam Belas', 'Tujuh Belas', 'Delapan Belas', 'Sembilan Belas',
         ];
 
         if ($number < 20) {
@@ -122,59 +129,64 @@ if (!function_exists('terbilang')) {
             if ($tens === 1) {
                 $result = 'Sepuluh';
             } else {
-                $result = $words[$tens] . ' Puluh';
+                $result = $words[$tens].' Puluh';
             }
             if ($remainder > 0) {
-                $result .= ' ' . $words[$remainder];
+                $result .= ' '.$words[$remainder];
             }
+
             return $result;
         }
 
         if ($number < 200) {
-            return 'Seratus ' . terbilang($number - 100);
+            return 'Seratus '.terbilang($number - 100);
         }
 
         if ($number < 1000) {
             $hundreds = (int) ($number / 100);
             $remainder = $number % 100;
-            $result = $words[$hundreds] . ' Ratus';
+            $result = $words[$hundreds].' Ratus';
             if ($remainder > 0) {
-                $result .= ' ' . terbilang($remainder);
+                $result .= ' '.terbilang($remainder);
             }
+
             return $result;
         }
 
         if ($number < 2000) {
-            return 'Seribu ' . terbilang($number - 1000);
+            return 'Seribu '.terbilang($number - 1000);
         }
 
         if ($number < 1000000) {
             $thousands = (int) ($number / 1000);
             $remainder = $number % 1000;
-            $result = terbilang($thousands) . ' Ribu';
+            $result = terbilang($thousands).' Ribu';
             if ($remainder > 0) {
-                $result .= ' ' . terbilang($remainder);
+                $result .= ' '.terbilang($remainder);
             }
+
             return $result;
         }
 
         if ($number < 1000000000) {
             $millions = (int) ($number / 1000000);
             $remainder = $number % 1000000;
-            $result = terbilang($millions) . ' Juta';
+            $result = terbilang($millions).' Juta';
             if ($remainder > 0) {
-                $result .= ' ' . terbilang($remainder);
+                $result .= ' '.terbilang($remainder);
             }
+
             return $result;
         }
 
         if ($number < 1000000000000) {
             $billions = (int) ($number / 1000000000);
             $remainder = $number % 1000000000;
-            $result = terbilang($billions) . ' Miliar';
+            $result = terbilang($billions).' Miliar';
             if ($remainder > 0) {
-                $result .= ' ' . terbilang($remainder);
+                $result .= ' '.terbilang($remainder);
             }
+
             return $result;
         }
 

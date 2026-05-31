@@ -10,6 +10,7 @@ class RoomTypeController extends Controller
     public function index()
     {
         $roomTypes = RoomType::orderBy('sequence')->get();
+
         return view('admin.room-types.index', compact('roomTypes'));
     }
 
@@ -34,7 +35,7 @@ class RoomTypeController extends Controller
                 'success' => true,
                 'message' => 'Tipe kamar berhasil ditambahkan',
                 'redirect_url' => route('room-types.index'),
-                'roomType' => $roomType
+                'roomType' => $roomType,
             ]);
         }
 
@@ -49,7 +50,7 @@ class RoomTypeController extends Controller
     public function update(Request $request, RoomType $roomType)
     {
         $validated = $request->validate([
-            'code' => 'required|string|unique:room_types,code,' . $roomType->id,
+            'code' => 'required|string|unique:room_types,code,'.$roomType->id,
             'name' => 'required|string|max:100',
             'sequence' => 'nullable|integer',
         ]);
@@ -62,7 +63,7 @@ class RoomTypeController extends Controller
                 'success' => true,
                 'message' => 'Tipe kamar berhasil diupdate',
                 'redirect_url' => route('room-types.index'),
-                'roomType' => $roomType
+                'roomType' => $roomType,
             ]);
         }
 
@@ -72,16 +73,16 @@ class RoomTypeController extends Controller
     public function destroy(RoomType $roomType)
     {
         $roomType->delete();
-        
+
         // Check if request is AJAX
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Tipe kamar berhasil dihapus',
-                'redirect_url' => route('room-types.index')
+                'redirect_url' => route('room-types.index'),
             ]);
         }
-        
+
         return redirect()->route('room-types.index')->with('success', 'Tipe kamar berhasil dihapus');
     }
 }

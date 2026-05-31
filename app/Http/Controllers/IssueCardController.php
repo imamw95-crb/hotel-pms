@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Guest;
-use App\Models\Reservation;
 use App\Models\MHSLog;
+use App\Models\Reservation;
+use App\Models\Room;
 use App\Services\MHSBridgeService;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class IssueCardController extends Controller
 {
@@ -67,8 +67,8 @@ class IssueCardController extends Controller
             $checkOut
         );
 
-        if (!($mhsResult['success'] ?? false)) {
-            return back()->with('error', 'Gagal issue card: ' . ($mhsResult['response_message'] ?? 'Unknown error'))
+        if (! ($mhsResult['success'] ?? false)) {
+            return back()->with('error', 'Gagal issue card: '.($mhsResult['response_message'] ?? 'Unknown error'))
                 ->withInput();
         }
 
@@ -92,7 +92,7 @@ class IssueCardController extends Controller
 
         // Buat reservasi
         $reservation = Reservation::create([
-            'reservation_number' => 'RES-' . strtoupper(uniqid()),
+            'reservation_number' => 'RES-'.strtoupper(uniqid()),
             'room_id' => $room->id,
             'guest_id' => $guest->id,
             'check_in' => $checkInDate,
@@ -114,7 +114,7 @@ class IssueCardController extends Controller
                 'success' => true,
                 'message' => "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}",
                 'redirect_url' => route('checkin.success', $reservation->id),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -134,7 +134,7 @@ class IssueCardController extends Controller
         $room = $reservation->room;
         $guest = $reservation->guest;
 
-        if (!$room || !$guest) {
+        if (! $room || ! $guest) {
             return back()->with('error', 'Data kamar atau tamu tidak ditemukan.');
         }
 
@@ -148,8 +148,8 @@ class IssueCardController extends Controller
             $checkOut
         );
 
-        if (!($mhsResult['success'] ?? false)) {
-            return back()->with('error', 'Gagal re-issue card: ' . ($mhsResult['response_message'] ?? 'Unknown error'));
+        if (! ($mhsResult['success'] ?? false)) {
+            return back()->with('error', 'Gagal re-issue card: '.($mhsResult['response_message'] ?? 'Unknown error'));
         }
 
         $reservation->update([
@@ -161,7 +161,7 @@ class IssueCardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Re-issue card berhasil untuk kamar {$room->room_number}!",
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -175,20 +175,22 @@ class IssueCardController extends Controller
     {
         $room = $reservation->room;
 
-        if (!$room) {
+        if (! $room) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Data kamar tidak ditemukan.']);
             }
+
             return back()->with('error', 'Data kamar tidak ditemukan.');
         }
 
         $mhsResult = $this->mhs->checkout($room->room_number, $reservation->id);
 
-        if (!($mhsResult['success'] ?? false)) {
+        if (! ($mhsResult['success'] ?? false)) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Gagal checkout: ' . ($mhsResult['response_message'] ?? 'Unknown error')]);
+                return response()->json(['success' => false, 'message' => 'Gagal checkout: '.($mhsResult['response_message'] ?? 'Unknown error')]);
             }
-            return back()->with('error', 'Gagal checkout: ' . ($mhsResult['response_message'] ?? 'Unknown error'));
+
+            return back()->with('error', 'Gagal checkout: '.($mhsResult['response_message'] ?? 'Unknown error'));
         }
 
         // Set check-out ke jam 12:00 siang hari ini (standard hotel time)
@@ -203,6 +205,7 @@ class IssueCardController extends Controller
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => "Checkout berhasil untuk kamar {$room->room_number}!"]);
         }
+
         return back()->with('success', "Checkout berhasil untuk kamar {$room->room_number}!");
     }
 

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Reservation extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'booking_group_id',
         'reservation_number', 'ota_reservation_number', 'ota_source', 'ota_payment_status', 'ota_paid_amount',
@@ -19,9 +20,9 @@ class Reservation extends Model
     ];
 
     protected $casts = [
-        'check_in'    => 'datetime',
-        'check_out'   => 'datetime',
-        'paid_date'   => 'datetime',
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
+        'paid_date' => 'datetime',
         'total_amount' => 'decimal:2',
         'custom_room_rate' => 'decimal:2',
         'paid_amount' => 'decimal:2',
@@ -33,7 +34,7 @@ class Reservation extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->reservation_number)) {
-                $model->reservation_number = 'RES-' . strtoupper(uniqid());
+                $model->reservation_number = 'RES-'.strtoupper(uniqid());
             }
         });
     }
@@ -70,9 +71,10 @@ class Reservation extends Model
         // Contoh: CI 30/05 14:00 CO 31/05 12:00 = 1 malam
         //         CI 30/05 14:00 CO 01/06 12:00 = 1 malam (diffInDays=1)
         //         CI 30/05 14:00 CO 02/06 12:00 = 2 malam (diffInDays=2)
-        if (!$this->check_in || !$this->check_out) {
+        if (! $this->check_in || ! $this->check_out) {
             return 0;
         }
+
         return max(1, (int) $this->check_in->startOfDay()->diffInDays($this->check_out->startOfDay()));
     }
 

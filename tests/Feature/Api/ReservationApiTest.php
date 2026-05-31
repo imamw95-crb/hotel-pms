@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\User;
-use App\Models\Room;
 use App\Models\Guest;
 use App\Models\Reservation;
+use App\Models\Room;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -13,6 +13,7 @@ use Tests\TestCase;
 class ReservationApiTest extends TestCase
 {
     private string $apiKey;
+
     private array $headers;
 
     protected function setUp(): void

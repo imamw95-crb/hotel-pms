@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
-use App\Models\Guest;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,7 +19,7 @@ class ReservationFactory extends Factory
         $checkOut = (clone $checkIn)->addDay()->setHour(12)->setMinute(0);
 
         return [
-            'reservation_number' => 'RES-' . strtoupper(fake()->unique()->bothify('??????')),
+            'reservation_number' => 'RES-'.strtoupper(fake()->unique()->bothify('??????')),
             'room_id' => Room::factory(),
             'guest_id' => Guest::factory(),
             'check_in' => $checkIn,

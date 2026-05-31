@@ -63,6 +63,7 @@ class ProcessedEmail extends Model
         if ($to) {
             $q->whereDate('created_at', '<=', $to);
         }
+
         return $q;
     }
 
@@ -77,6 +78,7 @@ class ProcessedEmail extends Model
                     ->orWhere('sender', 'like', "%{$term}%");
             });
         }
+
         return $q;
     }
 
@@ -105,10 +107,10 @@ class ProcessedEmail extends Model
     {
         return match ($this->status) {
             'processed' => 'Berhasil',
-            'failed'    => 'Gagal',
+            'failed' => 'Gagal',
             'duplicate' => 'Duplikat',
-            'skipped'   => 'Dilewati',
-            default     => ucfirst($this->status),
+            'skipped' => 'Dilewati',
+            default => ucfirst($this->status),
         };
     }
 
@@ -119,10 +121,10 @@ class ProcessedEmail extends Model
     {
         return match ($this->status) {
             'processed' => 'bg-emerald-100 text-emerald-700',
-            'failed'    => 'bg-red-100 text-red-700',
+            'failed' => 'bg-red-100 text-red-700',
             'duplicate' => 'bg-gray-100 text-gray-600',
-            'skipped'   => 'bg-yellow-100 text-yellow-700',
-            default     => 'bg-gray-100 text-gray-600',
+            'skipped' => 'bg-yellow-100 text-yellow-700',
+            default => 'bg-gray-100 text-gray-600',
         };
     }
 
@@ -132,11 +134,11 @@ class ProcessedEmail extends Model
     public function getEmailTypeLabelAttribute(): string
     {
         return match ($this->email_type) {
-            'booking'      => 'Booking Baru',
+            'booking' => 'Booking Baru',
             'cancellation' => 'Pembatalan',
             'modification' => 'Modifikasi',
-            'unknown'      => 'Tidak Diketahui',
-            default        => ucfirst($this->email_type),
+            'unknown' => 'Tidak Diketahui',
+            default => ucfirst($this->email_type),
         };
     }
 
@@ -153,25 +155,25 @@ class ProcessedEmail extends Model
             $today = now()->startOfDay();
 
             return [
-                'total'       => static::count(),
-                'today'       => static::where('created_at', '>=', $today)->count(),
-                'processed'   => static::where('status', 'processed')->count(),
-                'failed'      => static::where('status', 'failed')->count(),
-                'duplicate'   => static::where('status', 'duplicate')->count(),
-                'skipped'     => static::where('status', 'skipped')->count(),
+                'total' => static::count(),
+                'today' => static::where('created_at', '>=', $today)->count(),
+                'processed' => static::where('status', 'processed')->count(),
+                'failed' => static::where('status', 'failed')->count(),
+                'duplicate' => static::where('status', 'duplicate')->count(),
+                'skipped' => static::where('status', 'skipped')->count(),
                 'failed_today' => static::where('status', 'failed')
                     ->where('created_at', '>=', $today)->count(),
-                'by_source'   => static::selectRaw('ota_source, COUNT(*) as total')
+                'by_source' => static::selectRaw('ota_source, COUNT(*) as total')
                     ->whereNotNull('ota_source')
                     ->groupBy('ota_source')
                     ->pluck('total', 'ota_source')
                     ->toArray(),
-                'by_type'     => static::selectRaw('email_type, COUNT(*) as total')
+                'by_type' => static::selectRaw('email_type, COUNT(*) as total')
                     ->whereNotNull('email_type')
                     ->groupBy('email_type')
                     ->pluck('total', 'email_type')
                     ->toArray(),
-                'latest'      => static::latest()->limit(10)->get(),
+                'latest' => static::latest()->limit(10)->get(),
             ];
         });
     }

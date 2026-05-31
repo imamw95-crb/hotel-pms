@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Reservation;
+use App\Models\Room;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -121,7 +121,7 @@ class DashboardController extends Controller
         $trulyOccupiedRooms = Room::where('status', 'occupied')
             ->whereDoesntHave('reservations', function ($q) {
                 $q->whereDate('check_out', Carbon::today())
-                  ->where('status', 'checked_in');
+                    ->where('status', 'checked_in');
             })
             ->count();
 

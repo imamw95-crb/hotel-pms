@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Room;
 use App\Models\HousekeepingTask;
+use App\Models\Room;
+use App\Models\User;
 use Tests\TestCase;
 
 class HousekeepingTest extends TestCase

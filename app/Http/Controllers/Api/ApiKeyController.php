@@ -22,14 +22,14 @@ class ApiKeyController extends Controller
         $keys = $users->map(function ($user) {
             return $user->tokens->map(function ($token) use ($user) {
                 return [
-                    'id'           => $token->id,
-                    'user_id'      => $user->id,
-                    'user_name'    => $user->name,
-                    'user_email'   => $user->email,
-                    'name'         => $token->name,
+                    'id' => $token->id,
+                    'user_id' => $user->id,
+                    'user_name' => $user->name,
+                    'user_email' => $user->email,
+                    'name' => $token->name,
                     'last_used_at' => $token->last_used_at,
-                    'created_at'   => $token->created_at,
-                    'masked_key'   => '••••••••••••••••••••••••••••••••',
+                    'created_at' => $token->created_at,
+                    'masked_key' => '••••••••••••••••••••••••••••••••',
                 ];
             });
         })->flatten(1);
@@ -48,7 +48,7 @@ class ApiKeyController extends Controller
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
-            'name'    => 'required|string|max:100',
+            'name' => 'required|string|max:100',
         ]);
 
         $user = User::findOrFail($validated['user_id']);
@@ -69,8 +69,8 @@ class ApiKeyController extends Controller
             'message' => 'API Key berhasil dibuat.',
             'data' => [
                 'api_key' => $apiKey, // Hanya ditampilkan sekali
-                'name'    => $validated['name'],
-                'user'    => $user->name,
+                'name' => $validated['name'],
+                'user' => $user->name,
             ],
         ], 201);
     }
@@ -84,7 +84,7 @@ class ApiKeyController extends Controller
         $user = auth()->user();
         $token = $user->tokens()->where('id', $id)->first();
 
-        if (!$token) {
+        if (! $token) {
             return response()->json([
                 'success' => false,
                 'message' => 'API Key tidak ditemukan.',

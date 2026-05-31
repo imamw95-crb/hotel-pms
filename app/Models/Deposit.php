@@ -22,7 +22,7 @@ class Deposit extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->receipt_number)) {
-                $model->receipt_number = 'DEP-' . strtoupper(uniqid());
+                $model->receipt_number = 'DEP-'.strtoupper(uniqid());
             }
             // Auto-calculate total
             if (empty($model->total_amount)) {

@@ -6,6 +6,7 @@ use App\Models\ProcessedEmail;
 use App\Services\BookingSyncService;
 use App\Services\EmailParserService;
 use App\Services\OpenRouterService;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -47,9 +48,9 @@ class ProcessBookingEmailJob implements ShouldQueue
         BookingSyncService $sync
     ): void {
         Log::info('Processing OTA email', [
-            'uid'        => $this->emailUid,
-            'sender'     => $this->sender,
-            'subject'    => $this->subject,
+            'uid' => $this->emailUid,
+            'sender' => $this->sender,
+            'subject' => $this->subject,
             'email_type' => $this->emailType,
             'ota_source' => $this->otaSource,
         ]);
@@ -57,42 +58,45 @@ class ProcessBookingEmailJob implements ShouldQueue
         // Step 1: AI Parsing
         $aiData = $openRouter->parseBookingEmail($this->body, $this->subject, $this->otaSource);
 
-        if (!$aiData) {
+        if (! $aiData) {
             Log::error('AI parsing failed for email', ['uid' => $this->emailUid]);
             $this->markFailed('AI parsing returned null');
+
             return;
         }
 
         // Step 2: Validate AI output
-        if (!$this->validateAiOutput($aiData)) {
+        if (! $this->validateAiOutput($aiData)) {
             Log::error('AI output validation failed', [
-                'uid'     => $this->emailUid,
+                'uid' => $this->emailUid,
                 'ai_data' => $aiData,
             ]);
             $this->markFailed('AI output validation failed: missing required fields');
+
             return;
         }
 
         // Step 3: Sync to booking system
         $result = $sync->sync($aiData);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             Log::error('Booking sync failed', [
-                'uid'         => $this->emailUid,
+                'uid' => $this->emailUid,
                 'reservation' => $aiData['reservation_id'] ?? 'unknown',
             ]);
             $this->markFailed('Booking sync failed');
+
             return;
         }
 
         // Step 4: Mark as processed
         ProcessedEmail::markProcessed([
-            'email_uid'      => $this->emailUid,
-            'sender'         => $this->sender,
-            'subject'        => $this->subject,
-            'status'         => 'processed',
-            'email_type'     => $this->emailType,
-            'ota_source'     => $this->otaSource,
+            'email_uid' => $this->emailUid,
+            'sender' => $this->sender,
+            'subject' => $this->subject,
+            'status' => 'processed',
+            'email_type' => $this->emailType,
+            'ota_source' => $this->otaSource,
             'reservation_id' => $aiData['reservation_id'] ?? null,
         ]);
 
@@ -100,8 +104,8 @@ class ProcessBookingEmailJob implements ShouldQueue
         $this->triggerNotification($result, $aiData);
 
         Log::info('OTA email processed successfully', [
-            'uid'         => $this->emailUid,
-            'action'      => $result['action'],
+            'uid' => $this->emailUid,
+            'action' => $result['action'],
             'reservation' => $aiData['reservation_id'] ?? null,
         ]);
     }
@@ -119,24 +123,24 @@ class ProcessBookingEmailJob implements ShouldQueue
             return false;
         }
 
-        if (!empty($data['checkin_date'])) {
+        if (! empty($data['checkin_date'])) {
             try {
-                \Carbon\Carbon::parse($data['checkin_date']);
+                Carbon::parse($data['checkin_date']);
             } catch (\Exception $e) {
                 return false;
             }
         }
 
-        if (!empty($data['checkout_date'])) {
+        if (! empty($data['checkout_date'])) {
             try {
-                \Carbon\Carbon::parse($data['checkout_date']);
+                Carbon::parse($data['checkout_date']);
             } catch (\Exception $e) {
                 return false;
             }
         }
 
         $validStatuses = ['confirmed', 'cancelled', 'modified'];
-        if (!empty($data['status']) && !in_array(strtolower($data['status']), $validStatuses)) {
+        if (! empty($data['status']) && ! in_array(strtolower($data['status']), $validStatuses)) {
             return false;
         }
 
@@ -149,12 +153,12 @@ class ProcessBookingEmailJob implements ShouldQueue
     private function markFailed(string $error): void
     {
         ProcessedEmail::markProcessed([
-            'email_uid'     => $this->emailUid,
-            'sender'        => $this->sender,
-            'subject'       => $this->subject,
-            'status'        => 'failed',
-            'email_type'    => $this->emailType,
-            'ota_source'    => $this->otaSource,
+            'email_uid' => $this->emailUid,
+            'sender' => $this->sender,
+            'subject' => $this->subject,
+            'status' => 'failed',
+            'email_type' => $this->emailType,
+            'ota_source' => $this->otaSource,
             'error_message' => $error,
         ]);
     }
@@ -165,7 +169,7 @@ class ProcessBookingEmailJob implements ShouldQueue
      */
     private function triggerNotification(array $result, array $aiData): void
     {
-        if (!$result['reservation']) {
+        if (! $result['reservation']) {
             return;
         }
 
@@ -173,16 +177,16 @@ class ProcessBookingEmailJob implements ShouldQueue
         $action = $result['action'];
 
         // Store notification in cache for Front Office dashboard pickup
-        $notificationKey = 'ota_notification_' . $reservation->id;
+        $notificationKey = 'ota_notification_'.$reservation->id;
         $notificationData = [
-            'type'         => 'ota_booking',
-            'action'       => $action,
+            'type' => 'ota_booking',
+            'action' => $action,
             'reservation_id' => $reservation->id,
             'ota_reservation_number' => $aiData['reservation_id'] ?? null,
-            'guest_name'   => $aiData['guest_name'] ?? '',
-            'ota_source'   => $this->otaSource,
-            'message'      => $this->buildNotificationMessage($action, $aiData),
-            'created_at'   => now()->toDateTimeString(),
+            'guest_name' => $aiData['guest_name'] ?? '',
+            'ota_source' => $this->otaSource,
+            'message' => $this->buildNotificationMessage($action, $aiData),
+            'created_at' => now()->toDateTimeString(),
         ];
 
         // Store in cache for 24 hours — Front Office dashboard can pick this up
@@ -197,7 +201,7 @@ class ProcessBookingEmailJob implements ShouldQueue
 
         Log::info('OTA notification triggered for Front Office', [
             'reservation_id' => $reservation->id,
-            'action'         => $action,
+            'action' => $action,
         ]);
     }
 
@@ -208,10 +212,10 @@ class ProcessBookingEmailJob implements ShouldQueue
         $checkin = $aiData['checkin_date'] ?? 'N/A';
 
         return match ($action) {
-            'created'   => "🆕 New OTA booking from {$this->otaSource}: {$guestName} (Ref: {$otaRef}, Check-in: {$checkin})",
-            'updated'   => "✏️ OTA booking modified from {$this->otaSource}: {$guestName} (Ref: {$otaRef})",
+            'created' => "🆕 New OTA booking from {$this->otaSource}: {$guestName} (Ref: {$otaRef}, Check-in: {$checkin})",
+            'updated' => "✏️ OTA booking modified from {$this->otaSource}: {$guestName} (Ref: {$otaRef})",
             'cancelled' => "❌ OTA booking cancelled from {$this->otaSource}: {$guestName} (Ref: {$otaRef})",
-            default     => "OTA booking update from {$this->otaSource}: {$guestName}",
+            default => "OTA booking update from {$this->otaSource}: {$guestName}",
         };
     }
 
@@ -221,19 +225,19 @@ class ProcessBookingEmailJob implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('ProcessBookingEmailJob failed permanently', [
-            'uid'     => $this->emailUid,
-            'sender'  => $this->sender,
-            'error'   => $exception->getMessage(),
+            'uid' => $this->emailUid,
+            'sender' => $this->sender,
+            'error' => $exception->getMessage(),
         ]);
 
         ProcessedEmail::markProcessed([
-            'email_uid'     => $this->emailUid,
-            'sender'        => $this->sender,
-            'subject'       => $this->subject,
-            'status'        => 'failed',
-            'email_type'    => $this->emailType,
-            'ota_source'    => $this->otaSource,
-            'error_message' => 'Job failed: ' . $exception->getMessage(),
+            'email_uid' => $this->emailUid,
+            'sender' => $this->sender,
+            'subject' => $this->subject,
+            'status' => 'failed',
+            'email_type' => $this->emailType,
+            'ota_source' => $this->otaSource,
+            'error_message' => 'Job failed: '.$exception->getMessage(),
         ]);
     }
 }

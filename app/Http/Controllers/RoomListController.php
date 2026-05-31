@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HotelSetting;
 use App\Models\Reservation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -36,9 +37,9 @@ class RoomListController extends Controller
 
         // Summary counts
         $stats = [
-            'staying'   => $currentlyStaying->count(),
+            'staying' => $currentlyStaying->count(),
             'checked_out' => $checkedOut->count(),
-            'upcoming'  => $upcoming->count(),
+            'upcoming' => $upcoming->count(),
         ];
 
         return view('room-list.index', compact('currentlyStaying', 'checkedOut', 'upcoming', 'stats'));
@@ -58,7 +59,7 @@ class RoomListController extends Controller
             ->whereDate('check_in', $today)
             ->orWhere(function ($q) use ($today) {
                 $q->where('status', 'pending')
-                  ->whereDate('check_in', $today);
+                    ->whereDate('check_in', $today);
             })
             ->get()
             ->sortBy('check_in');
@@ -86,7 +87,7 @@ class RoomListController extends Controller
             ->orderBy('room_id', 'asc')
             ->get();
 
-        $hotel = \App\Models\HotelSetting::get();
+        $hotel = HotelSetting::get();
 
         return view('room-list.print', compact(
             'checkInToday', 'dueOutToday', 'upcoming', 'currentlyStaying', 'today', 'hotel'

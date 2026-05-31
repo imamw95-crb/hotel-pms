@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -97,10 +97,11 @@ class User extends Authenticatable
     {
         $slugs = is_array($permissionSlugs) ? $permissionSlugs : [$permissionSlugs];
         foreach ($slugs as $slug) {
-            if (!$this->hasPermission($slug)) {
+            if (! $this->hasPermission($slug)) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -115,6 +116,7 @@ class User extends Authenticatable
                 return true;
             }
         }
+
         return false;
     }
 }

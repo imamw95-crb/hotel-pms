@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Room;
 use Tests\TestCase;
 
 class PermissionTest extends TestCase

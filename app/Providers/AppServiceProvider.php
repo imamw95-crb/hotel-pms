@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use App\Models\NightAuditLog;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
                 ->where('status', 'locked')
                 ->exists();
 
-            $view->with('nightAuditPending', !$locked);
+            $view->with('nightAuditPending', ! $locked);
         });
     }
 }

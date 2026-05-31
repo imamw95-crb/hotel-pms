@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guest;
+use App\Models\MHSLog;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
-use App\Models\PaymentMethod;
 use App\Models\Transaction;
-use App\Models\MHSLog;
+use App\Services\OpenRouterService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
@@ -23,14 +25,14 @@ class ReservationController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('reservation_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%")
-                        ->orWhere('id_number', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('room', function ($q) use ($search) {
-                      $q->where('room_number', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('id_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('room_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -46,8 +48,8 @@ class ReservationController extends Controller
             $query->where('ota_source', 'website');
         } elseif ($sumber === 'ota') {
             $query->whereNotNull('ota_source')
-                  ->where('ota_source', '!=', '')
-                  ->where('ota_source', '!=', 'website');
+                ->where('ota_source', '!=', '')
+                ->where('ota_source', '!=', 'website');
         } elseif ($sumber === 'local') {
             $query->where(function ($q) {
                 $q->whereNull('ota_source')->orWhere('ota_source', '');
@@ -68,14 +70,14 @@ class ReservationController extends Controller
 
         // Statistik ringkasan
         $stats = [
-            'pending'     => Reservation::where('status', 'pending')->count(),
-            'checked_in'  => Reservation::where('status', 'checked_in')->count(),
+            'pending' => Reservation::where('status', 'pending')->count(),
+            'checked_in' => Reservation::where('status', 'checked_in')->count(),
             'checked_out' => Reservation::where('status', 'checked_out')->count(),
-            'cancelled'   => Reservation::where('status', 'cancelled')->count(),
-            'website'     => Reservation::where('ota_source', 'website')->count(),
-            'ota'         => Reservation::whereNotNull('ota_source')
-                                ->where('ota_source', '!=', '')
-                                ->where('ota_source', '!=', 'website')->count(),
+            'cancelled' => Reservation::where('status', 'cancelled')->count(),
+            'website' => Reservation::where('ota_source', 'website')->count(),
+            'ota' => Reservation::whereNotNull('ota_source')
+                ->where('ota_source', '!=', '')
+                ->where('ota_source', '!=', 'website')->count(),
         ];
 
         return view('reservations.index', compact('reservations', 'search', 'status', 'sumber', 'dateFrom', 'dateTo', 'stats'));
@@ -87,6 +89,7 @@ class ReservationController extends Controller
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
+
         return view('reservations.show', compact('reservation', 'transactions'));
     }
 
@@ -102,7 +105,7 @@ class ReservationController extends Controller
 
         $validated = $request->validate([
             'payment_type' => 'required|in:dp,pelunasan,tambahan',
-            'payment_method' => 'required|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
             'ota_payment_status' => 'nullable|in:paid_ota,partial_ota,unpaid_ota',
             'ota_paid_amount' => 'nullable|numeric|min:0',
@@ -118,7 +121,7 @@ class ReservationController extends Controller
         // Validasi: total hotel payment + OTA payment tidak boleh melebihi sisa bayar
         $totalInput = $hotelAmount + $otaPaidAmount;
         if ($totalInput > $reservation->total_amount) {
-            return back()->with('error', 'Total pembayaran (OTA + Hotel) melebihi total tagihan (Rp ' . number_format($reservation->total_amount, 0, ',', '.') . ')');
+            return back()->with('error', 'Total pembayaran (OTA + Hotel) melebihi total tagihan (Rp '.number_format($reservation->total_amount, 0, ',', '.').')');
         }
 
         DB::beginTransaction();
@@ -133,12 +136,12 @@ class ReservationController extends Controller
             if ($otaPaidAmount > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
                 Transaction::create([
-                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $otaTxnType,
                     'amount' => $otaPaidAmount,
                     'payment_method' => $validated['payment_method'],
-                    'notes' => 'OTA ' . $validated['payment_method'] . ' — ' . str_replace('_', ' ', $otaPaymentStatus),
+                    'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
                     'created_by' => auth()->id(),
                 ]);
             }
@@ -146,7 +149,7 @@ class ReservationController extends Controller
             // 3. Buat transaction untuk hotel payment (jika ada)
             if ($hotelAmount > 0) {
                 Transaction::create([
-                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $validated['payment_type'],
                     'amount' => $hotelAmount,
@@ -174,17 +177,18 @@ class ReservationController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.",
+                    'message' => "{$typeLabel} sebesar Rp ".number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.',
                     'redirect_url' => route('reservations.show', $reservation),
                     'reservation' => $reservation,
                 ]);
             }
 
             return redirect()->route('reservations.show', $reservation)
-                ->with('success', "{$typeLabel} sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.");
+                ->with('success', "{$typeLabel} sebesar Rp ".number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan pembayaran: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menyimpan pembayaran: '.$e->getMessage());
         }
     }
 
@@ -202,7 +206,7 @@ class ReservationController extends Controller
                 'success' => true,
                 'message' => "Reservasi {$reservation->reservation_number} berhasil dibatalkan.",
                 'redirect_url' => route('reservations.index'),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -224,7 +228,7 @@ class ReservationController extends Controller
                 'success' => true,
                 'message' => "Check-in berhasil untuk kamar {$reservation->room->room_number}.",
                 'redirect_url' => route('reservations.show', $reservation),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -236,7 +240,7 @@ class ReservationController extends Controller
      */
     public function toggleBreakfast(Reservation $reservation)
     {
-        $reservation->update(['include_breakfast' => !$reservation->include_breakfast]);
+        $reservation->update(['include_breakfast' => ! $reservation->include_breakfast]);
 
         if (request()->expectsJson()) {
             return response()->json([
@@ -272,7 +276,7 @@ class ReservationController extends Controller
                 'success' => true,
                 'message' => "Check-out berhasil untuk kamar {$reservation->room->room_number}. Status kamar: Available.",
                 'redirect_url' => route('checkout.index'),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -318,10 +322,11 @@ class ReservationController extends Controller
             ->where('status', 'checked_in')
             ->first();
 
-        if (!$reservation) {
+        if (! $reservation) {
             if (request()->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'Tidak ada reservasi aktif untuk kamar ini.'], 404);
             }
+
             return back()->with('error', 'Tidak ada reservasi aktif untuk kamar ini.');
         }
 
@@ -351,10 +356,10 @@ class ReservationController extends Controller
                 $query->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut, $reservation) {
                     $q->where(function ($sq) use ($checkIn, $checkOut) {
                         $sq->where('check_in', '<', $checkOut)
-                           ->where('check_out', '>', $checkIn);
+                            ->where('check_out', '>', $checkIn);
                     })
-                    ->whereIn('status', ['pending', 'checked_in'])
-                    ->where('id', '!=', $reservation->id);
+                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->where('id', '!=', $reservation->id);
                 });
             })
             ->orderBy('room_number')
@@ -384,7 +389,7 @@ class ReservationController extends Controller
         $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
 
         $isAvailable = $newRoom->isAvailable($checkIn, $checkOut, $reservation->id);
-        if (!$isAvailable) {
+        if (! $isAvailable) {
             return back()->with('error', "Kamar {$newRoom->room_number} tidak tersedia untuk periode tanggal tersebut.");
         }
 
@@ -410,7 +415,7 @@ class ReservationController extends Controller
         $reservation->room_type_name = $newRoomTypeName;
         $reservation->total_amount = $newTotalAmount;
         if ($validated['reason']) {
-            $reservation->notes = ($reservation->notes ? $reservation->notes . "\n" : '') . '[' . now()->format('d/m/Y H:i') . '] Pindah kamar dari ' . $oldRoomNumber . ' ke ' . $newRoomNumber . ': ' . $validated['reason'];
+            $reservation->notes = ($reservation->notes ? $reservation->notes."\n" : '').'['.now()->format('d/m/Y H:i').'] Pindah kamar dari '.$oldRoomNumber.' ke '.$newRoomNumber.': '.$validated['reason'];
         }
         $reservation->save();
 
@@ -446,7 +451,7 @@ class ReservationController extends Controller
                 'success' => true,
                 'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
                 'redirect_url' => route('reservations.show', $reservation),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -460,7 +465,7 @@ class ReservationController extends Controller
      *
      * Flow: INPUT → AI PARSE → VALIDATE → CHECK ROOM → CREATE RESERVATION → DONE
      */
-    public function aiCreate(Request $request, \App\Services\OpenRouterService $openRouter)
+    public function aiCreate(Request $request, OpenRouterService $openRouter)
     {
         $validated = $request->validate([
             'input' => 'required|string|min:5|max:1000',
@@ -471,7 +476,7 @@ class ReservationController extends Controller
         // Step 1: AI Parsing
         $aiData = $openRouter->parseNaturalLanguage($input);
 
-        if (!$aiData) {
+        if (! $aiData) {
             return response()->json([
                 'success' => false,
                 'message' => 'AI gagal memproses input. Coba lagi.',
@@ -490,18 +495,18 @@ class ReservationController extends Controller
             $errors[] = 'Tanggal check-out tidak terdeteksi';
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data tidak lengkap: ' . implode(', ', $errors),
+                'message' => 'Data tidak lengkap: '.implode(', ', $errors),
                 'ai_data' => $aiData,
             ], 422);
         }
 
         // Step 3: Validate dates
         try {
-            $checkIn  = \Carbon\Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
-            $checkOut = \Carbon\Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
+            $checkIn = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
+            $checkOut = Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -524,7 +529,7 @@ class ReservationController extends Controller
 
         if ($roomTypeName) {
             // Try to find by specific room type
-            $availableRooms = \App\Models\Room::where('room_type_name', $roomTypeName)
+            $availableRooms = Room::where('room_type_name', $roomTypeName)
                 ->where('status', '!=', 'maintenance')
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
@@ -542,8 +547,8 @@ class ReservationController extends Controller
         }
 
         // Fallback: any available room
-        if (!$roomId) {
-            $anyAvailable = \App\Models\Room::where('status', '!=', 'maintenance')
+        if (! $roomId) {
+            $anyAvailable = Room::where('status', '!=', 'maintenance')
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
@@ -562,13 +567,13 @@ class ReservationController extends Controller
 
         // Step 5: Create reservation
         try {
-            $reservation = DB::transaction(function () use ($aiData, $roomId, $checkIn, $checkOut, $roomTypeName) {
+            $reservation = DB::transaction(function () use ($aiData, $roomId, $checkIn, $checkOut) {
                 // Find or create guest
-                $guest = \App\Models\Guest::firstOrCreate(
+                $guest = Guest::firstOrCreate(
                     ['guest_name' => $aiData['guest_name']],
                     [
-                        'phone'  => null,
-                        'email'  => null,
+                        'phone' => null,
+                        'email' => null,
                         'address' => null,
                     ]
                 );
@@ -576,25 +581,25 @@ class ReservationController extends Controller
                 // Calculate total if not provided
                 $totalAmount = $aiData['total_price'] ?? 0;
                 if ($totalAmount <= 0 && $roomId) {
-                    $room = \App\Models\Room::find($roomId);
+                    $room = Room::find($roomId);
                     if ($room) {
                         $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
                     }
                 }
 
                 $reservation = Reservation::create([
-                    'guest_id'             => $guest->id,
-                    'room_id'              => $roomId,
-                    'check_in'             => $checkIn,
-                    'check_out'            => $checkOut,
-                    'number_of_cards'      => $aiData['guest_count'] ?? 1,
-                    'total_amount'         => $totalAmount,
-                    'payment_method'       => $aiData['payment_method'] ?: 'cash',
-                    'paid_amount'          => 0,
-                    'status'               => 'pending',
-                    'notes'                => ($aiData['notes'] ? $aiData['notes'] . ' ' : '') . '(AI Auto-Reservation)',
-                    'ota_source'           => 'ai_auto',
-                    'created_by'           => auth()->id() ?? 1,
+                    'guest_id' => $guest->id,
+                    'room_id' => $roomId,
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
+                    'number_of_cards' => $aiData['guest_count'] ?? 1,
+                    'total_amount' => $totalAmount,
+                    'payment_method' => $aiData['payment_method'] ?: 'cash',
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                    'notes' => ($aiData['notes'] ? $aiData['notes'].' ' : '').'(AI Auto-Reservation)',
+                    'ota_source' => 'ai_auto',
+                    'created_by' => auth()->id() ?? 1,
                 ]);
 
                 return $reservation;
@@ -613,14 +618,14 @@ class ReservationController extends Controller
                 'ai_data' => $aiData,
             ]);
         } catch (\Exception $e) {
-            Log::error('AI reservation failed: ' . $e->getMessage(), [
+            Log::error('AI reservation failed: '.$e->getMessage(), [
                 'input' => $input,
                 'ai_data' => $aiData,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuat reservasi: ' . $e->getMessage(),
+                'message' => 'Gagal membuat reservasi: '.$e->getMessage(),
                 'ai_data' => $aiData,
             ], 500);
         }
@@ -635,6 +640,7 @@ class ReservationController extends Controller
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
+
         return view('reservations.print-kwitansi', compact('reservation', 'transactions'));
     }
 
@@ -647,6 +653,7 @@ class ReservationController extends Controller
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
+
         return view('reservations.print-invoice', compact('reservation', 'transactions'));
     }
 
@@ -665,10 +672,11 @@ class ReservationController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Total reservasi berhasil diperbarui dari Rp ' . number_format($oldAmount, 0, ',', '.') . ' menjadi Rp ' . number_format($validated['total_amount'], 0, ',', '.'),
+            'message' => 'Total reservasi berhasil diperbarui dari Rp '.number_format($oldAmount, 0, ',', '.').' menjadi Rp '.number_format($validated['total_amount'], 0, ',', '.'),
             'reservation' => $reservation,
         ]);
     }
+
     public function updateRoomRate(Request $request, Reservation $reservation)
     {
         if ($reservation->status === 'checked_out' || $reservation->status === 'cancelled') {
@@ -687,11 +695,11 @@ class ReservationController extends Controller
         if ($validated['custom_room_rate'] === null) {
             $reservation->custom_room_rate = null;
             $newTotal = ($reservation->room->price_per_night ?? 0) * $nights;
-            $message = 'Harga kamar dikembalikan ke default. Total: Rp ' . number_format($newTotal, 0, ',', '.');
+            $message = 'Harga kamar dikembalikan ke default. Total: Rp '.number_format($newTotal, 0, ',', '.');
         } else {
             $reservation->custom_room_rate = $validated['custom_room_rate'];
             $newTotal = $validated['custom_room_rate'] * $nights;
-            $message = 'Harga kamar diperbarui menjadi Rp ' . number_format($validated['custom_room_rate'], 0, ',', '.') . '/malam. Total: Rp ' . number_format($newTotal, 0, ',', '.');
+            $message = 'Harga kamar diperbarui menjadi Rp '.number_format($validated['custom_room_rate'], 0, ',', '.').'/malam. Total: Rp '.number_format($newTotal, 0, ',', '.');
         }
 
         $reservation->total_amount = $newTotal;

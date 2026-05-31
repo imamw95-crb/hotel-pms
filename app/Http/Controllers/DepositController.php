@@ -34,10 +34,10 @@ class DepositController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%")
-                        ->orWhere('id_number', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('id_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -46,6 +46,7 @@ class DepositController extends Controller
         // AJAX: return table partial only
         if ($request->expectsJson()) {
             $table = view('deposits.partials.table', compact('deposits', 'dateFrom', 'dateTo', 'search'))->render();
+
             return response()->json([
                 'success' => true,
                 'table' => $table,
@@ -76,6 +77,7 @@ class DepositController extends Controller
         // AJAX: return modal view
         if ($request->expectsJson()) {
             $view = view('deposits.modal-create', compact('guests', 'reservations', 'selectedReservation', 'paymentMethods'))->render();
+
             return response()->json([
                 'success' => true,
                 'view' => $view,
@@ -92,34 +94,35 @@ class DepositController extends Controller
     {
         $paymentSlugs = PaymentMethod::where('is_active', true)->pluck('slug')->implode(',');
         $validated = $request->validate([
-            'guest_id'        => 'required|exists:guests,id',
-            'reservation_id'  => 'nullable|exists:reservations,id',
+            'guest_id' => 'required|exists:guests,id',
+            'reservation_id' => 'nullable|exists:reservations,id',
             'number_of_cards' => 'required|integer|min:1|max:10',
             'nominal_per_card' => 'required|numeric|min:0',
-            'payment_method'  => 'required|in:' . $paymentSlugs,
-            'notes'           => 'nullable|string|max:500',
+            'payment_method' => 'required|in:'.$paymentSlugs,
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $deposit = Deposit::create([
-            'guest_id'         => $validated['guest_id'],
-            'reservation_id'   => $validated['reservation_id'] ?? null,
-            'number_of_cards'  => $validated['number_of_cards'],
+            'guest_id' => $validated['guest_id'],
+            'reservation_id' => $validated['reservation_id'] ?? null,
+            'number_of_cards' => $validated['number_of_cards'],
             'nominal_per_card' => $validated['nominal_per_card'],
-            'total_amount'     => $validated['number_of_cards'] * $validated['nominal_per_card'],
-            'payment_method'   => $validated['payment_method'],
-            'notes'            => $validated['notes'] ?? null,
-            'created_by'       => auth()->id(),
+            'total_amount' => $validated['number_of_cards'] * $validated['nominal_per_card'],
+            'payment_method' => $validated['payment_method'],
+            'notes' => $validated['notes'] ?? null,
+            'created_by' => auth()->id(),
         ]);
 
         // Check if request is AJAX — return the show view for modal display
         if (request()->expectsJson()) {
             $deposit->load(['guest', 'reservation.room', 'createdBy']);
             $view = view('deposits.modal-show', compact('deposit'))->render();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Deposit berhasil disimpan.',
                 'view' => $view,
-                'deposit' => $deposit
+                'deposit' => $deposit,
             ]);
         }
 
@@ -137,6 +140,7 @@ class DepositController extends Controller
         // AJAX: return modal view
         if (request()->expectsJson()) {
             $view = view('deposits.modal-show', compact('deposit'))->render();
+
             return response()->json([
                 'success' => true,
                 'view' => $view,
@@ -155,9 +159,10 @@ class DepositController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Deposit ini sudah dikembalikan sebelumnya.'
+                    'message' => 'Deposit ini sudah dikembalikan sebelumnya.',
                 ]);
             }
+
             return back()->with('error', 'Deposit ini sudah dikembalikan sebelumnya.');
         }
 
@@ -167,7 +172,7 @@ class DepositController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Deposit {$deposit->receipt_number} berhasil ditandai sebagai dikembalikan.",
-                'redirect_url' => route('deposits.index')
+                'redirect_url' => route('deposits.index'),
             ]);
         }
 

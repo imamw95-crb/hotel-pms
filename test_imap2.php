@@ -1,5 +1,8 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+
+use Webklex\PHPIMAP\ClientManager;
+
+require_once __DIR__.'/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
@@ -11,7 +14,7 @@ $pass = $_ENV['IMAP_PASSWORD'] ?? '';
 echo "Host: $host\n";
 echo "Port: $port\n";
 echo "User: $user\n";
-echo "Pass: " . (empty($pass) ? 'EMPTY' : 'SET') . "\n\n";
+echo 'Pass: '.(empty($pass) ? 'EMPTY' : 'SET')."\n\n";
 
 // Test SSL connection
 echo "Testing SSL socket...\n";
@@ -46,19 +49,19 @@ try {
         'default' => 'default',
         'accounts' => [
             'default' => [
-                'host'          => $host,
-                'port'          => $port,
-                'encryption'    => 'ssl',
+                'host' => $host,
+                'port' => $port,
+                'encryption' => 'ssl',
                 'validate_cert' => false,
-                'username'      => $user,
-                'password'      => $pass,
-                'protocol'      => 'imap',
-                'timeout'       => 30,
+                'username' => $user,
+                'password' => $pass,
+                'protocol' => 'imap',
+                'timeout' => 30,
             ],
         ],
     ];
 
-    $cm = new \Webklex\PHPIMAP\ClientManager($config);
+    $cm = new ClientManager($config);
     $client = $cm->account('default');
     $client->connect();
     echo "OK: IMAP connected!\n";
@@ -68,9 +71,9 @@ try {
     echo "Unread: $unseen / Total: $total\n";
     if ($unseen > 0) {
         $msg = $folder->query()->unseen()->limit(1)->get()->first();
-        echo "Latest: UID=" . $msg->getUid() . " From=" . ($msg->getFrom()[0]->mail ?? '?') . " Subject=" . ($msg->getSubject() ?? '?') . "\n";
+        echo 'Latest: UID='.$msg->getUid().' From='.($msg->getFrom()[0]->mail ?? '?').' Subject='.($msg->getSubject() ?? '?')."\n";
     }
     $client->disconnect();
-} catch (\Throwable $e) {
-    echo "FAIL: " . $e->getMessage() . "\n";
+} catch (Throwable $e) {
+    echo 'FAIL: '.$e->getMessage()."\n";
 }

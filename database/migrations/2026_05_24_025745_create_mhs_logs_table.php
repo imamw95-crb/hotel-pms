@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/xxxx_xx_xx_000006_create_mhs_logs_table.php
 
 use Illuminate\Database\Migrations\Migration;

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Transaction;
 use App\Models\Reservation;
+use App\Models\Transaction;
 use Illuminate\Database\Seeder;
 
 class TransactionSeeder extends Seeder
@@ -15,7 +15,7 @@ class TransactionSeeder extends Seeder
 
         foreach ($reservations as $reservation) {
             Transaction::create([
-                'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                 'reservation_id' => $reservation->id,
                 'type' => 'checkin_payment',
                 'amount' => 500000,

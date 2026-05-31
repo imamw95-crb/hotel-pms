@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
 use App\Models\NightAuditLog;
 use App\Models\Reservation;
-use App\Models\Room;
-use App\Models\Transaction;
 use App\Models\RestoTransaction;
+use App\Models\Room;
 use App\Models\ServiceCharge;
-use App\Models\Expense;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -59,6 +59,7 @@ class NightAuditController extends Controller
 
         if ($request->expectsJson()) {
             $html = view('reports.night-audit-v2.partials.report-content', $data)->render();
+
             return response()->json([
                 'success' => true,
                 'html' => $html,
@@ -150,7 +151,7 @@ class NightAuditController extends Controller
      */
     public function deleteDraft(Request $request)
     {
-        if (!auth()->user()->isOwner() && !auth()->user()->isAdmin()) {
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized — hanya Owner dan Admin yang bisa Unlock & Buat Baru.');
         }
 
@@ -167,7 +168,7 @@ class NightAuditController extends Controller
     public function show($id)
     {
         $auditLog = NightAuditLog::with(['lockedBy', 'createdBy'])->findOrFail($id);
-        if (!$auditLog->isLocked()) {
+        if (! $auditLog->isLocked()) {
             return redirect()->route('reports.night-audit-v2.index')
                 ->with('error', 'Report ini belum di-lock.');
         }
@@ -186,16 +187,16 @@ class NightAuditController extends Controller
         $auditLog = NightAuditLog::findOrFail($id);
         $data = $auditLog->snapshot_data ?? [];
         $date = $auditLog->audit_date->format('Y-m-d');
-        $filename = 'night-audit-locked-' . $date . '.csv';
+        $filename = 'night-audit-locked-'.$date.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($data, $date) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['NIGHT AUDIT REPORT (LOCKED)']);
             fputcsv($file, ['Tanggal', $date]);
             fputcsv($file, []);
@@ -257,7 +258,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['CHECK-IN HARI INI']);
             fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Sarapan', 'Check-out']);
             foreach ($data['checkinsToday'] ?? [] as $i => $r) {
-                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
                 fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $sarapan, $r['check_out'] ?? '-']);
             }
             fputcsv($file, []);
@@ -265,7 +266,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['CHECK-OUT HARI INI']);
             fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Sarapan', 'Check-in']);
             foreach ($data['checkoutsToday'] ?? [] as $i => $r) {
-                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
                 fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $sarapan, $r['check_in'] ?? '-']);
             }
             fputcsv($file, []);
@@ -273,7 +274,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['IN-HOUSE GUESTS']);
             fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Malam', 'Sarapan']);
             foreach ($data['inHouseGuests'] ?? [] as $i => $r) {
-                $sarapan = !empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
                 fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_nights'] ?? '-', $sarapan]);
             }
             fputcsv($file, []);
@@ -300,7 +301,7 @@ class NightAuditController extends Controller
             ->where('status', 'checked_in')
             ->with(['guest', 'room'])
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -314,7 +315,7 @@ class NightAuditController extends Controller
             ->where('status', 'checked_out')
             ->with(['guest', 'room'])
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -337,7 +338,7 @@ class NightAuditController extends Controller
             ->get();
 
         $transactionsByMethod = $transactions->groupBy('payment_method')->map(function ($txns) {
-            return $txns->map(fn($t) => [
+            return $txns->map(fn ($t) => [
                 'transaction_number' => $t->transaction_number,
                 'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
                 'room_number' => $t->reservation?->room?->room_number ?? '-',
@@ -356,7 +357,7 @@ class NightAuditController extends Controller
             ->whereDate('created_at', $date)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($t) => [
+            ->map(fn ($t) => [
                 'transaction_number' => $t->transaction_number,
                 'created_at' => $t->created_at->format('H:i'),
                 'guest_name' => $t->guest->guest_name ?? 'Walk-in',
@@ -376,7 +377,7 @@ class NightAuditController extends Controller
             ->whereDate('charge_date', $date)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($s) => [
+            ->map(fn ($s) => [
                 'charge_number' => $s->charge_number,
                 'guest_name' => $s->guest->guest_name ?? ($s->reservation->guest->guest_name ?? '-'),
                 'room_number' => $s->reservation->room->room_number ?? '-',
@@ -399,13 +400,13 @@ class NightAuditController extends Controller
             ->whereDate('expense_date', $date)
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($e) => [
+            ->map(fn ($e) => [
                 'expense_number' => $e->expense_number,
-                'description'    => $e->description,
-                'amount'         => $e->amount,
+                'description' => $e->description,
+                'amount' => $e->amount,
                 'payment_method' => $e->payment_method,
-                'notes'          => $e->notes,
-                'created_by'     => $e->createdBy?->name ?? '-',
+                'notes' => $e->notes,
+                'created_by' => $e->createdBy?->name ?? '-',
             ]);
 
         $expensesByMethod = Expense::whereDate('expense_date', $date)
@@ -426,30 +427,30 @@ class NightAuditController extends Controller
 
         // In-house guests
         $inHouseGuests = Reservation::where(function ($q) use ($date) {
-                $q->where('status', 'checked_in')
-                  ->orWhere(function ($sub) use ($date) {
-                      $sub->where('status', 'checked_out')
-                          ->whereDate('check_out', $date);
-                  });
-            })
+            $q->where('status', 'checked_in')
+                ->orWhere(function ($sub) use ($date) {
+                    $sub->where('status', 'checked_out')
+                        ->whereDate('check_out', $date);
+                });
+        })
             ->with(['guest', 'room'])
             ->orderBy('check_out', 'asc')
             ->get()
-            ->map(fn($r) => [
-                'reservation_number' => $r->reservation_number,
-                'guest_name' => $r->guest->guest_name ?? '-',
-                'room_number' => $r->room->room_number ?? '-',
-                'check_in' => $r->check_in->format('d/m/Y'),
-                'check_out' => $r->check_out->format('d/m/Y'),
-                'total_nights' => $r->nights,
-                'include_breakfast' => $r->include_breakfast,
-            ]);
+            ->map(fn ($r) => [
+            'reservation_number' => $r->reservation_number,
+            'guest_name' => $r->guest->guest_name ?? '-',
+            'room_number' => $r->room->room_number ?? '-',
+            'check_in' => $r->check_in->format('d/m/Y'),
+            'check_out' => $r->check_out->format('d/m/Y'),
+            'total_nights' => $r->nights,
+            'include_breakfast' => $r->include_breakfast,
+        ]);
 
         // New bookings
         $newBookings = Reservation::whereDate('created_at', $date)
             ->with(['guest', 'room'])
             ->get()
-            ->map(fn($r) => [
+            ->map(fn ($r) => [
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',

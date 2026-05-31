@@ -3,7 +3,6 @@
 namespace Tests\Unit;
 
 use App\Models\Room;
-use App\Models\RoomType;
 use Carbon\Carbon;
 use Tests\TestCase;
 

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RestoTransaction;
 use App\Models\Guest;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
+use App\Models\RestoTransaction;
 use Illuminate\Http\Request;
 
 class RestoController extends Controller
@@ -30,10 +30,10 @@ class RestoController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('transaction_number', 'like', "%{$search}%")
-                  ->orWhere('table_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('table_number', 'like', "%{$search}%")
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -66,17 +66,17 @@ class RestoController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'guest_id'       => 'nullable|exists:guests,id',
+            'guest_id' => 'nullable|exists:guests,id',
             'reservation_id' => 'nullable|exists:reservations,id',
-            'table_number'   => 'nullable|string|max:20',
-            'items'          => 'required|array|min:1',
-            'items.*.name'   => 'required|string|max:200',
-            'items.*.qty'    => 'required|integer|min:1',
-            'items.*.price'  => 'required|numeric|min:0',
-            'tax'            => 'nullable|numeric|min:0',
-            'discount'       => 'nullable|numeric|min:0',
-            'payment_method' => 'required|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
-            'notes'          => 'nullable|string|max:500',
+            'table_number' => 'nullable|string|max:20',
+            'items' => 'required|array|min:1',
+            'items.*.name' => 'required|string|max:200',
+            'items.*.qty' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'notes' => 'nullable|string|max:500',
         ]);
 
         // Calculate subtotal & total per item
@@ -85,9 +85,9 @@ class RestoController extends Controller
         foreach ($validated['items'] as $item) {
             $itemSubtotal = $item['qty'] * $item['price'];
             $items[] = [
-                'name'     => $item['name'],
-                'qty'      => $item['qty'],
-                'price'    => $item['price'],
+                'name' => $item['name'],
+                'qty' => $item['qty'],
+                'price' => $item['price'],
                 'subtotal' => $itemSubtotal,
             ];
             $subtotal += $itemSubtotal;
@@ -98,17 +98,17 @@ class RestoController extends Controller
         $totalAmount = $subtotal + $tax - $discount;
 
         $transaction = RestoTransaction::create([
-            'guest_id'       => $validated['guest_id'] ?? null,
+            'guest_id' => $validated['guest_id'] ?? null,
             'reservation_id' => $validated['reservation_id'] ?? null,
-            'table_number'   => $validated['table_number'] ?? null,
-            'items'          => $items,
-            'subtotal'       => $subtotal,
-            'tax'            => $tax,
-            'discount'       => $discount,
-            'total_amount'   => $totalAmount,
+            'table_number' => $validated['table_number'] ?? null,
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'discount' => $discount,
+            'total_amount' => $totalAmount,
             'payment_method' => $validated['payment_method'],
-            'notes'          => $validated['notes'] ?? null,
-            'created_by'     => auth()->id(),
+            'notes' => $validated['notes'] ?? null,
+            'created_by' => auth()->id(),
         ]);
 
         // Check if request is AJAX
@@ -117,7 +117,7 @@ class RestoController extends Controller
                 'success' => true,
                 'message' => 'Transaksi resto berhasil disimpan.',
                 'redirect_url' => route('resto.show', $transaction),
-                'transaction' => $transaction
+                'transaction' => $transaction,
             ]);
         }
 
@@ -131,6 +131,7 @@ class RestoController extends Controller
     public function show(RestoTransaction $restoTransaction)
     {
         $restoTransaction->load(['guest', 'reservation.room', 'createdBy']);
+
         return view('resto.show', ['transaction' => $restoTransaction]);
     }
 }

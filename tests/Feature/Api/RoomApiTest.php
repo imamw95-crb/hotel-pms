@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\User;
-use App\Models\Room;
 use App\Models\Reservation;
+use App\Models\Room;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -52,7 +52,7 @@ class RoomApiTest extends TestCase
         $checkIn = Carbon::tomorrow()->format('Y-m-d');
         $checkOut = Carbon::tomorrow()->addDays(2)->format('Y-m-d');
 
-        $response = $this->getJson('/api/rooms/available?' . http_build_query([
+        $response = $this->getJson('/api/rooms/available?'.http_build_query([
             'check_in' => $checkIn,
             'check_out' => $checkOut,
         ]), $this->headers);
@@ -80,7 +80,7 @@ class RoomApiTest extends TestCase
             'status' => 'checked_in',
         ]);
 
-        $response = $this->getJson('/api/rooms/available?' . http_build_query([
+        $response = $this->getJson('/api/rooms/available?'.http_build_query([
             'check_in' => $checkIn->format('Y-m-d'),
             'check_out' => $checkOut->format('Y-m-d'),
         ]), $this->headers);

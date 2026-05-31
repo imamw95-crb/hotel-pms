@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\User;
-use App\Models\Permission;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Permission;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -16,6 +16,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::orderBy('created_at', 'desc')->paginate(15);
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -25,6 +26,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = ['owner', 'admin', 'frontoffice', 'housekeeping'];
+
         return view('admin.users.create', compact('roles'));
     }
 
@@ -50,7 +52,7 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'User berhasil dibuat!',
                 'redirect_url' => route('admin.users.index'),
-                'user' => $user
+                'user' => $user,
             ]);
         }
 
@@ -72,6 +74,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $roles = ['owner', 'admin', 'frontoffice', 'housekeeping'];
+
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -82,7 +85,7 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'role' => 'required|in:owner,admin,frontoffice,housekeeping',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
@@ -101,7 +104,7 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'User berhasil diupdate!',
                 'redirect_url' => route('admin.users.index'),
-                'user' => $user
+                'user' => $user,
             ]);
         }
 
@@ -120,13 +123,13 @@ class UserController extends Controller
         }
 
         $user->delete();
-        
+
         // Check if request is AJAX
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil dihapus!',
-                'redirect_url' => route('admin.users.index')
+                'redirect_url' => route('admin.users.index'),
             ]);
         }
 

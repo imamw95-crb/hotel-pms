@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class RoomType extends Model
 {
     use HasFactory;
+
     protected $fillable = ['code', 'name', 'sequence', 'description'];
 
     public function rooms(): HasMany

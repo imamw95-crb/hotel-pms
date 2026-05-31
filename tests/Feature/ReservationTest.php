@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Room;
-use App\Models\Guest;
 use App\Models\Reservation;
-use Carbon\Carbon;
+use App\Models\Room;
+use App\Models\User;
 use Tests\TestCase;
 
 class ReservationTest extends TestCase
@@ -47,7 +45,7 @@ class ReservationTest extends TestCase
         Reservation::factory()->count(5)->create();
 
         $response = $this->actingAs($this->user)
-            ->get('/reservations?search=' . $target->reservation_number);
+            ->get('/reservations?search='.$target->reservation_number);
 
         $response->assertStatus(200);
         $response->assertSee($target->reservation_number);

@@ -54,7 +54,7 @@ class EmailParserService
      */
     public function detectEmailType(string $subject, string $body): string
     {
-        $text = strtolower($subject . ' ' . $body);
+        $text = strtolower($subject.' '.$body);
 
         // Cancellation keywords
         $cancelKeywords = ['cancel', 'cancelled', 'cancellation', 'void', 'refunded'];
@@ -91,9 +91,9 @@ class EmailParserService
         $domain = strtolower(substr(strrchr($senderEmail, '@'), 1));
 
         return match ($domain) {
-            'tiket.com'     => 'tiket.com',
+            'tiket.com' => 'tiket.com',
             'traveloka.com' => 'traveloka.com',
-            default         => $domain,
+            default => $domain,
         };
     }
 
@@ -111,16 +111,16 @@ class EmailParserService
     public function markDuplicate(string $uid, string $sender, string $subject, ?string $rawBody = null): void
     {
         ProcessedEmail::markProcessed([
-            'email_uid'   => $uid,
-            'sender'      => $sender,
-            'subject'     => Str::limit($subject, 500),
-            'status'      => 'duplicate',
-            'email_type'  => 'unknown',
-            'ota_source'  => $this->getOtaSource($sender),
-            'raw_body'    => $rawBody ? Str::limit($rawBody, 5000) : null,
+            'email_uid' => $uid,
+            'sender' => $sender,
+            'subject' => Str::limit($subject, 500),
+            'status' => 'duplicate',
+            'email_type' => 'unknown',
+            'ota_source' => $this->getOtaSource($sender),
+            'raw_body' => $rawBody ? Str::limit($rawBody, 5000) : null,
         ]);
 
-        Log::info("Duplicate email skipped", ['uid' => $uid, 'sender' => $sender]);
+        Log::info('Duplicate email skipped', ['uid' => $uid, 'sender' => $sender]);
     }
 
     /**
@@ -129,14 +129,14 @@ class EmailParserService
     public function markSkipped(string $uid, string $sender, string $subject, string $reason, ?string $rawBody = null): void
     {
         ProcessedEmail::markProcessed([
-            'email_uid'     => $uid,
-            'sender'        => $sender,
-            'subject'       => Str::limit($subject, 500),
-            'status'        => 'skipped',
-            'email_type'    => 'unknown',
-            'ota_source'    => $this->getOtaSource($sender),
+            'email_uid' => $uid,
+            'sender' => $sender,
+            'subject' => Str::limit($subject, 500),
+            'status' => 'skipped',
+            'email_type' => 'unknown',
+            'ota_source' => $this->getOtaSource($sender),
             'error_message' => $reason,
-            'raw_body'      => $rawBody ? Str::limit($rawBody, 5000) : null,
+            'raw_body' => $rawBody ? Str::limit($rawBody, 5000) : null,
         ]);
     }
 
@@ -146,21 +146,21 @@ class EmailParserService
     public function markProcessed(string $uid, string $sender, string $subject, string $emailType, string $otaSource, ?string $reservationId = null, ?string $rawBody = null): void
     {
         ProcessedEmail::markProcessed([
-            'email_uid'      => $uid,
-            'sender'         => $sender,
-            'subject'        => Str::limit($subject, 500),
-            'status'         => 'processed',
-            'email_type'     => $emailType,
-            'ota_source'     => $otaSource,
+            'email_uid' => $uid,
+            'sender' => $sender,
+            'subject' => Str::limit($subject, 500),
+            'status' => 'processed',
+            'email_type' => $emailType,
+            'ota_source' => $otaSource,
             'reservation_id' => $reservationId,
-            'raw_body'       => $rawBody ? Str::limit($rawBody, 5000) : null,
+            'raw_body' => $rawBody ? Str::limit($rawBody, 5000) : null,
         ]);
 
-        Log::info("Email processed successfully", [
-            'uid'            => $uid,
-            'sender'         => $sender,
-            'email_type'     => $emailType,
-            'ota_source'     => $otaSource,
+        Log::info('Email processed successfully', [
+            'uid' => $uid,
+            'sender' => $sender,
+            'email_type' => $emailType,
+            'ota_source' => $otaSource,
             'reservation_id' => $reservationId,
         ]);
     }
@@ -171,14 +171,14 @@ class EmailParserService
     public function markFailed(string $uid, string $sender, string $subject, string $otaSource, string $error, ?string $rawBody = null): void
     {
         ProcessedEmail::markProcessed([
-            'email_uid'     => $uid,
-            'sender'        => $sender,
-            'subject'       => Str::limit($subject, 500),
-            'status'        => 'failed',
-            'email_type'    => 'unknown',
-            'ota_source'    => $otaSource,
+            'email_uid' => $uid,
+            'sender' => $sender,
+            'subject' => Str::limit($subject, 500),
+            'status' => 'failed',
+            'email_type' => 'unknown',
+            'ota_source' => $otaSource,
             'error_message' => Str::limit($error, 500),
-            'raw_body'      => $rawBody ? Str::limit($rawBody, 5000) : null,
+            'raw_body' => $rawBody ? Str::limit($rawBody, 5000) : null,
         ]);
     }
 }

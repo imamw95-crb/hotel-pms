@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class BookingMapperService
@@ -33,13 +34,13 @@ class BookingMapperService
      * - paid_amount (from AI total_price if OTA-paid)
      * - status, ota_source, notes
      */
-    public function mapToReservation(array $aiData, int $defaultRoomId = null): array
+    public function mapToReservation(array $aiData, ?int $defaultRoomId = null): array
     {
-        $otaSource      = $aiData['ota_source'] ?? '';
+        $otaSource = $aiData['ota_source'] ?? '';
         $aiPaymentMethod = $this->sanitizePaymentMethod($aiData['payment_method'] ?? '', $otaSource);
-        $aiTotalPrice   = $this->parseAmount($aiData['total_price'] ?? 0);
-        $aiPaymentDate  = $this->formatDate($aiData['payment_date'] ?? $aiData['checkin_date'] ?? null, '00:00');
-        $isOtaPayment   = $this->isOtaPaymentMethod($aiPaymentMethod);
+        $aiTotalPrice = $this->parseAmount($aiData['total_price'] ?? 0);
+        $aiPaymentDate = $this->formatDate($aiData['payment_date'] ?? $aiData['checkin_date'] ?? null, '00:00');
+        $isOtaPayment = $this->isOtaPaymentMethod($aiPaymentMethod);
 
         // Determine OTA payment status
         $otaPaymentStatus = 'unpaid_ota';
@@ -51,20 +52,20 @@ class BookingMapperService
 
         $mapped = [
             'ota_reservation_number' => $aiData['reservation_id'] ?? null,
-            'guest_name'             => $this->sanitizeString($aiData['guest_name'] ?? ''),
-            'check_in'               => $this->formatDate($aiData['checkin_date'] ?? null, '14:00'),
-            'check_out'              => $this->formatDate($aiData['checkout_date'] ?? null, '12:00'),
-            'room_type_name'         => $aiData['room_type'] ?? null,
-            'number_of_cards'        => (int) ($aiData['guest_count'] ?? 1),
-            'total_amount'           => $aiTotalPrice,
-            'payment_method'         => $aiPaymentMethod,
-            'paid_date'              => $aiPaymentDate,
-            'paid_amount'            => $otaPaidAmount,
-            'ota_payment_status'     => $otaPaymentStatus,
-            'ota_paid_amount'        => $otaPaidAmount,
-            'status'                 => $this->mapStatus($aiData['status'] ?? 'confirmed'),
-            'ota_source'             => $otaSource,
-            'notes'                  => $this->buildNotes($aiData),
+            'guest_name' => $this->sanitizeString($aiData['guest_name'] ?? ''),
+            'check_in' => $this->formatDate($aiData['checkin_date'] ?? null, '14:00'),
+            'check_out' => $this->formatDate($aiData['checkout_date'] ?? null, '12:00'),
+            'room_type_name' => $aiData['room_type'] ?? null,
+            'number_of_cards' => (int) ($aiData['guest_count'] ?? 1),
+            'total_amount' => $aiTotalPrice,
+            'payment_method' => $aiPaymentMethod,
+            'paid_date' => $aiPaymentDate,
+            'paid_amount' => $otaPaidAmount,
+            'ota_payment_status' => $otaPaymentStatus,
+            'ota_paid_amount' => $otaPaidAmount,
+            'status' => $this->mapStatus($aiData['status'] ?? 'confirmed'),
+            'ota_source' => $otaSource,
+            'notes' => $this->buildNotes($aiData),
         ];
 
         if ($defaultRoomId) {
@@ -73,14 +74,14 @@ class BookingMapperService
 
         Log::info('AI data mapped to reservation format', [
             'ota_reservation_number' => $mapped['ota_reservation_number'],
-            'guest_name'             => $mapped['guest_name'],
-            'check_in'               => $mapped['check_in'],
-            'check_out'              => $mapped['check_out'],
-            'total_amount'           => $mapped['total_amount'],
-            'payment_method'         => $mapped['payment_method'],
-            'paid_date'              => $mapped['paid_date'],
-            'paid_amount'            => $mapped['paid_amount'],
-            'status'                 => $mapped['status'],
+            'guest_name' => $mapped['guest_name'],
+            'check_in' => $mapped['check_in'],
+            'check_out' => $mapped['check_out'],
+            'total_amount' => $mapped['total_amount'],
+            'payment_method' => $mapped['payment_method'],
+            'paid_date' => $mapped['paid_date'],
+            'paid_amount' => $mapped['paid_amount'],
+            'status' => $mapped['status'],
         ]);
 
         return $mapped;
@@ -104,20 +105,20 @@ class BookingMapperService
         }
 
         return match (true) {
-            str_contains($method, 'tiket')     => 'tiket.com',
+            str_contains($method, 'tiket') => 'tiket.com',
             str_contains($method, 'traveloka') => 'traveloka.com',
-            str_contains($method, 'transfer')  => 'bank_transfer',
-            str_contains($method, 'credit')    => 'credit_card',
-            str_contains($method, 'debit')     => 'debit_card',
-            str_contains($method, 'virtual')   => 'virtual_account',
+            str_contains($method, 'transfer') => 'bank_transfer',
+            str_contains($method, 'credit') => 'credit_card',
+            str_contains($method, 'debit') => 'debit_card',
+            str_contains($method, 'virtual') => 'virtual_account',
             str_contains($method, 'ewallet')
                 || str_contains($method, 'ovo')
                 || str_contains($method, 'gopay')
-                || str_contains($method, 'dana')  => 'ewallet',
-            str_contains($method, 'qris')      => 'qris',
-            str_contains($method, 'cash')      => 'cash',
-            !empty($otaSource)                 => $otaSource,
-            default                            => 'ota_payment',
+                || str_contains($method, 'dana') => 'ewallet',
+            str_contains($method, 'qris') => 'qris',
+            str_contains($method, 'cash') => 'cash',
+            ! empty($otaSource) => $otaSource,
+            default => 'ota_payment',
         };
     }
 
@@ -153,6 +154,7 @@ class BookingMapperService
                     $cleaned = str_replace(',', '', $cleaned);
                 }
             }
+
             return (float) $cleaned;
         }
 
@@ -165,10 +167,10 @@ class BookingMapperService
     private function mapStatus(string $aiStatus): string
     {
         return match (strtolower($aiStatus)) {
-            'confirmed'  => 'pending',
-            'cancelled'  => 'cancelled',
-            'modified'   => 'pending',
-            default      => 'pending',
+            'confirmed' => 'pending',
+            'cancelled' => 'cancelled',
+            'modified' => 'pending',
+            default => 'pending',
         };
     }
 
@@ -177,16 +179,18 @@ class BookingMapperService
      */
     private function formatDate(?string $date, string $time = '12:00'): ?string
     {
-        if (!$date) {
+        if (! $date) {
             return null;
         }
 
         try {
-            $parsed = \Carbon\Carbon::parse($date);
+            $parsed = Carbon::parse($date);
             $parsed->setTime((int) substr($time, 0, 2), (int) substr($time, 3, 2), 0);
+
             return $parsed->toDateTimeString();
         } catch (\Exception $e) {
             Log::warning("Failed to parse date: {$date}");
+
             return null;
         }
     }
@@ -206,31 +210,31 @@ class BookingMapperService
     {
         $parts = [];
 
-        if (!empty($aiData['ota_source'])) {
+        if (! empty($aiData['ota_source'])) {
             $parts[] = "OTA Source: {$aiData['ota_source']}";
         }
 
-        if (!empty($aiData['reservation_id'])) {
+        if (! empty($aiData['reservation_id'])) {
             $parts[] = "OTA Reservation #: {$aiData['reservation_id']}";
         }
 
-        if (!empty($aiData['room_type'])) {
+        if (! empty($aiData['room_type'])) {
             $parts[] = "Room Type: {$aiData['room_type']}";
         }
 
-        if (!empty($aiData['total_price'])) {
-            $parts[] = "Total: " . number_format($this->parseAmount($aiData['total_price']), 0, ',', '.');
+        if (! empty($aiData['total_price'])) {
+            $parts[] = 'Total: '.number_format($this->parseAmount($aiData['total_price']), 0, ',', '.');
         }
 
-        if (!empty($aiData['payment_method'])) {
+        if (! empty($aiData['payment_method'])) {
             $parts[] = "Payment: {$aiData['payment_method']}";
         }
 
-        if (!empty($aiData['payment_date'])) {
+        if (! empty($aiData['payment_date'])) {
             $parts[] = "Paid: {$aiData['payment_date']}";
         }
 
-        $parts[] = "Auto-imported via OTA Email Autopilot";
+        $parts[] = 'Auto-imported via OTA Email Autopilot';
 
         return implode(' | ', $parts);
     }

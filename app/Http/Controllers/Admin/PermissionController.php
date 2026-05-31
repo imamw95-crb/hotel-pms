@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
 class PermissionController extends Controller
@@ -77,7 +77,7 @@ class PermissionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Permissions untuk role '{$role}' berhasil diupdate!",
-                'redirect_url' => route('admin.permissions.dashboard')
+                'redirect_url' => route('admin.permissions.dashboard'),
             ]);
         }
 
@@ -115,7 +115,7 @@ class PermissionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Permissions untuk user '{$user->name}' berhasil diupdate!",
-                'redirect_url' => route('admin.permissions.user-permissions')
+                'redirect_url' => route('admin.permissions.user-permissions'),
             ]);
         }
 
@@ -128,6 +128,7 @@ class PermissionController extends Controller
     public function index()
     {
         $permissions = Permission::orderBy('group')->orderBy('name')->paginate(15);
+
         return view('admin.permissions.index', compact('permissions'));
     }
 
@@ -137,6 +138,7 @@ class PermissionController extends Controller
     public function userPermissions()
     {
         $users = User::with(['permissions'])->paginate(15);
+
         return view('admin.permissions.user-permissions', compact('users'));
     }
 }

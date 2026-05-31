@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Room;
+use App\Models\User;
 use Tests\TestCase;
 
 class RoomDashboardTest extends TestCase

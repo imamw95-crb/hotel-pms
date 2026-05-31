@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\User;
 use App\Models\Room;
-use App\Models\Reservation;
-use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 

@@ -20,8 +20,8 @@ class BookingSyncService
      * Sync booking data to the existing reservation system.
      * Uses updateOrCreate based on ota_reservation_number.
      *
-     * @param array $aiData Raw AI-parsed data
-     * @param int|null $roomId Pre-checked available room ID (from availability check)
+     * @param  array  $aiData  Raw AI-parsed data
+     * @param  int|null  $roomId  Pre-checked available room ID (from availability check)
      * @return array{reservation: Reservation|null, action: string, success: bool, error?: string}
      */
     public function sync(array $aiData, ?int $roomId = null): array
@@ -29,11 +29,13 @@ class BookingSyncService
         // Validate required fields
         if (empty($aiData['reservation_id'])) {
             Log::error('BookingSync: Missing reservation_id from AI data');
+
             return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Missing reservation_id'];
         }
 
         if (empty($aiData['guest_name'])) {
             Log::error('BookingSync: Missing guest_name from AI data');
+
             return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Missing guest_name'];
         }
 
@@ -41,14 +43,15 @@ class BookingSyncService
             Log::error('BookingSync: Missing check-in or check-out date', [
                 'reservation_id' => $aiData['reservation_id'],
             ]);
+
             return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Missing dates'];
         }
 
         $mapped = $this->mapper->mapToReservation($aiData);
 
         // Use provided room ID (already availability-checked) or find one
-        if (!$roomId) {
-            $checkIn  = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
+        if (! $roomId) {
+            $checkIn = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
             $checkOut = Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
             $roomId = $this->findAvailableRoom($mapped['room_type_name'] ?? null, $checkIn, $checkOut);
         }
@@ -59,8 +62,8 @@ class BookingSyncService
                 $guest = Guest::firstOrCreate(
                     ['guest_name' => $mapped['guest_name']],
                     [
-                        'phone'  => null,
-                        'email'  => null,
+                        'phone' => null,
+                        'email' => null,
                         'address' => null,
                     ]
                 );
@@ -81,6 +84,7 @@ class BookingSyncService
                         'reservation_number' => $existing->reservation_number,
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
                     ]);
+
                     return ['reservation' => $existing, 'action' => 'cancelled', 'success' => true];
                 }
 
@@ -96,7 +100,7 @@ class BookingSyncService
                     if ($aiTotalPrice <= 0 && $roomId) {
                         $room = Room::find($roomId);
                         if ($room) {
-                            $checkIn  = Carbon::parse($mapped['check_in']);
+                            $checkIn = Carbon::parse($mapped['check_in']);
                             $checkOut = Carbon::parse($mapped['check_out']);
                             $aiTotalPrice = $room->calculateTotalForRange($checkIn, $checkOut);
                         }
@@ -109,20 +113,20 @@ class BookingSyncService
                 // paid_amount = 0 — payment akan diinput via 1 form "Input Pembayaran"
                 // ota_payment_status & ota_paid_amount = referensi dari email AI
                 $reservationData = [
-                    'guest_id'             => $guest->id,
-                    'check_in'             => $mapped['check_in'],
-                    'check_out'            => $mapped['check_out'],
-                    'number_of_cards'      => $mapped['number_of_cards'],
-                    'total_amount'         => $aiTotalPrice,
-                    'payment_method'       => $mapped['payment_method'] ?? null,
-                    'paid_date'            => null,
-                    'paid_amount'          => 0,
-                    'ota_payment_status'   => $otaPaymentStatus,
-                    'ota_paid_amount'      => $otaPaidAmount,
-                    'status'               => $mapped['status'],
-                    'notes'                => $mapped['notes'],
-                    'ota_source'           => $mapped['ota_source'],
-                    'created_by'           => $existing?->created_by,
+                    'guest_id' => $guest->id,
+                    'check_in' => $mapped['check_in'],
+                    'check_out' => $mapped['check_out'],
+                    'number_of_cards' => $mapped['number_of_cards'],
+                    'total_amount' => $aiTotalPrice,
+                    'payment_method' => $mapped['payment_method'] ?? null,
+                    'paid_date' => null,
+                    'paid_amount' => 0,
+                    'ota_payment_status' => $otaPaymentStatus,
+                    'ota_paid_amount' => $otaPaidAmount,
+                    'status' => $mapped['status'],
+                    'notes' => $mapped['notes'],
+                    'ota_source' => $mapped['ota_source'],
+                    'created_by' => $existing?->created_by,
                 ];
 
                 if ($roomId) {
@@ -130,7 +134,7 @@ class BookingSyncService
                 }
 
                 // For new reservation: set system defaults
-                if (!$existing) {
+                if (! $existing) {
                     $reservationData['created_by'] = 1; // system user
                     $reservationData['ota_reservation_number'] = $mapped['ota_reservation_number'];
 
@@ -139,7 +143,7 @@ class BookingSyncService
                     if ($aiTotal <= 0 && $roomId) {
                         $room = Room::find($roomId);
                         if ($room) {
-                            $checkIn  = Carbon::parse($mapped['check_in']);
+                            $checkIn = Carbon::parse($mapped['check_in']);
                             $checkOut = Carbon::parse($mapped['check_out']);
                             $reservationData['total_amount'] = $room->calculateTotalForRange($checkIn, $checkOut);
                         }
@@ -153,7 +157,7 @@ class BookingSyncService
                     if ($updateTotal <= 0 && $roomId) {
                         $room = Room::find($roomId);
                         if ($room) {
-                            $checkIn  = Carbon::parse($mapped['check_in']);
+                            $checkIn = Carbon::parse($mapped['check_in']);
                             $checkOut = Carbon::parse($mapped['check_out']);
                             $updateTotal = $room->calculateTotalForRange($checkIn, $checkOut);
                             $reservationData['total_amount'] = $updateTotal;
@@ -163,12 +167,13 @@ class BookingSyncService
                     $existing->update($reservationData);
 
                     Log::info('BookingSync: Reservation updated', [
-                        'reservation_number'     => $existing->reservation_number,
+                        'reservation_number' => $existing->reservation_number,
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
-                        'total_amount'           => $reservationData['total_amount'],
-                        'payment_method'         => $reservationData['payment_method'],
-                        'paid_amount'            => $reservationData['paid_amount'],
+                        'total_amount' => $reservationData['total_amount'],
+                        'payment_method' => $reservationData['payment_method'],
+                        'paid_amount' => $reservationData['paid_amount'],
                     ]);
+
                     return ['reservation' => $existing->fresh(), 'action' => 'updated', 'success' => true];
                 }
 
@@ -183,22 +188,23 @@ class BookingSyncService
                 // OTA status & nominal sudah tersimpan di reservation untuk referensi.
 
                 Log::info('BookingSync: New reservation created', [
-                    'reservation_number'     => $reservation->reservation_number,
+                    'reservation_number' => $reservation->reservation_number,
                     'ota_reservation_number' => $mapped['ota_reservation_number'],
-                    'total_amount'           => $aiTotalPrice,
-                    'payment_method'         => $mapped['payment_method'] ?? '',
-                    'ota_payment_status'     => $otaPaymentStatus,
-                    'ota_paid_amount'        => $otaPaidAmount,
-                    'note'                   => 'Payment akan diinput via form Tambah Pembayaran',
+                    'total_amount' => $aiTotalPrice,
+                    'payment_method' => $mapped['payment_method'] ?? '',
+                    'ota_payment_status' => $otaPaymentStatus,
+                    'ota_paid_amount' => $otaPaidAmount,
+                    'note' => 'Payment akan diinput via form Tambah Pembayaran',
                 ]);
 
                 return ['reservation' => $reservation, 'action' => 'created', 'success' => true];
             });
         } catch (\Exception $e) {
             Log::error('BookingSync: Transaction failed', [
-                'error'          => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'reservation_id' => $aiData['reservation_id'],
             ]);
+
             return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -226,10 +232,11 @@ class BookingSyncService
         if ($availableRooms->isNotEmpty()) {
             $room = $availableRooms->first();
             Log::info('BookingSync: Found available room by type', [
-                'room_id'    => $room->id,
+                'room_id' => $room->id,
                 'room_number' => $room->room_number,
-                'room_type'  => $roomTypeName,
+                'room_type' => $roomTypeName,
             ]);
+
             return $room->id;
         }
 
@@ -239,15 +246,16 @@ class BookingSyncService
         if ($anyAvailable->isNotEmpty()) {
             $room = $anyAvailable->first();
             Log::info('BookingSync: No exact type match, using available room', [
-                'room_id'       => $room->id,
-                'room_number'   => $room->room_number,
+                'room_id' => $room->id,
+                'room_number' => $room->room_number,
                 'requested_type' => $roomTypeName,
             ]);
+
             return $room->id;
         }
 
         Log::warning('BookingSync: No available rooms for date range', [
-            'check_in'  => $checkIn->toDateTimeString(),
+            'check_in' => $checkIn->toDateTimeString(),
             'check_out' => $checkOut->toDateTimeString(),
             'room_type' => $roomTypeName,
         ]);

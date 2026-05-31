@@ -1,29 +1,38 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RoomDashboardController;
-use App\Http\Controllers\CheckinController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\BookingGroupController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\RoomTypeController;
-use App\Http\Controllers\GuestController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ReservationController;
-use App\Http\Controllers\IssueCardController;
+use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\DatabaseBackupController;
-use App\Http\Controllers\SettingController;
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\BookingGroupController;
+use App\Http\Controllers\CheckinController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
-use App\Http\Controllers\RestoController;
-use App\Http\Controllers\ServiceChargeController;
-use App\Http\Controllers\PaymentMethodController;
-use App\Http\Controllers\HousekeepingController;
-use App\Http\Controllers\NightAuditController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\GuestController;
+use App\Http\Controllers\HousekeepingController;
+use App\Http\Controllers\IssueCardController;
+use App\Http\Controllers\NightAuditController;
+use App\Http\Controllers\OtaEmailLogController;
+use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\RestoController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomDashboardController;
+use App\Http\Controllers\RoomListController;
+use App\Http\Controllers\RoomRackController;
+use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\ServiceChargeController;
+use App\Http\Controllers\SettingController;
+use App\Models\User;
+use App\Services\OpenRouterService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Laravel\Sanctum\PersonalAccessToken;
 
 // Auth routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -43,13 +52,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/owner/dashboard', [DashboardController::class, 'index'])->middleware('role:owner')->name('owner.dashboard');
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->middleware('role:admin')->name('admin.dashboard');
     Route::get('/frontoffice/dashboard', [DashboardController::class, 'index'])->middleware('role:frontoffice')->name('frontoffice.dashboard');
-    
+
     // Room Dashboard
     Route::get('/rooms-dashboard', [RoomDashboardController::class, 'index'])->middleware('permission:view_room_dashboard')->name('rooms.dashboard');
     Route::get('/api/rooms-status', [RoomDashboardController::class, 'apiRoomsStatus'])->middleware('permission:view_room_dashboard')->name('rooms.api');
     Route::patch('/rooms/{room}/status', [RoomDashboardController::class, 'updateStatus'])->middleware('permission:manage_rooms')->name('rooms.update-status');
     Route::patch('/rooms/bulk-status', [RoomDashboardController::class, 'bulkUpdateStatus'])->middleware('permission:manage_rooms')->name('rooms.bulk-status');
-    
+
     // Booking
     Route::get('/booking/create', [BookingController::class, 'create'])->middleware('permission:create_booking')->name('booking.create');
     Route::get('/booking/ota-create', [BookingController::class, 'otaCreate'])->middleware('permission:create_booking')->name('booking.ota-create');
@@ -57,13 +66,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/booking', [BookingController::class, 'store'])->middleware('permission:create_booking')->name('booking.store');
     Route::get('/booking-group', [BookingGroupController::class, 'create'])->middleware('permission:create_booking_group')->name('booking.group.create');
     Route::post('/booking-group', [BookingGroupController::class, 'store'])->middleware('permission:create_booking_group')->name('booking.group.store');
-    
+
     // Checkin
     Route::get('/checkin', [CheckinController::class, 'index'])->middleware('permission:checkin')->name('checkin.index');
     Route::post('/checkin', [CheckinController::class, 'process'])->middleware('permission:checkin')->name('checkin.process');
     Route::get('/checkin/success/{id}', [CheckinController::class, 'success'])->middleware('permission:checkin')->name('checkin.success');
-    
-    
+
     // Issue Card
     Route::get('/issue-card', [IssueCardController::class, 'index'])->middleware('permission:issue_card')->name('issue-card.index');
     Route::post('/issue-card/issue', [IssueCardController::class, 'issue'])->middleware('permission:issue_card')->name('issue-card.issue');
@@ -94,23 +102,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');
 
     // Room Rack & Availability
-    Route::get('/room-rack', [\App\Http\Controllers\RoomRackController::class, 'index'])->name('room-rack.index');
-    Route::get('/room-rack/check-availability', [\App\Http\Controllers\RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');
-    Route::get('/room-rack/occupancy', [\App\Http\Controllers\RoomRackController::class, 'occupancyCalendar'])->name('room-rack.occupancy');
-    Route::get('/room-rack/forecast', [\App\Http\Controllers\RoomRackController::class, 'forecast'])->name('room-rack.forecast');
+    Route::get('/room-rack', [RoomRackController::class, 'index'])->name('room-rack.index');
+    Route::get('/room-rack/check-availability', [RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');
+    Route::get('/room-rack/occupancy', [RoomRackController::class, 'occupancyCalendar'])->name('room-rack.occupancy');
+    Route::get('/room-rack/forecast', [RoomRackController::class, 'forecast'])->name('room-rack.forecast');
 
     // Room List — all roles, no permission restriction
-    Route::get('/room-list', [\App\Http\Controllers\RoomListController::class, 'index'])->name('room-list.index');
-    Route::get('/room-list/print', [\App\Http\Controllers\RoomListController::class, 'print'])->name('room-list.print');
+    Route::get('/room-list', [RoomListController::class, 'index'])->name('room-list.index');
+    Route::get('/room-list/print', [RoomListController::class, 'print'])->name('room-list.print');
 
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);
     Route::resource('room-types', RoomTypeController::class);
-    
+
     // Guests
     Route::resource('guests', GuestController::class)->middleware('permission:manage_guests');
     Route::get('/guests/export/csv', [GuestController::class, 'export'])->middleware('permission:manage_guests')->name('guests.export');
-    
+
     // Reports (all roles)
     Route::middleware(['permission:view_reports'])->group(function () {
         Route::get('/reports/night-audit', [ReportController::class, 'nightAudit'])->name('reports.night-audit');
@@ -178,43 +186,43 @@ Route::middleware(['auth'])->group(function () {
     // API Key Management (Owner only)
     Route::middleware(['role:owner'])->group(function () {
         Route::get('/admin/api-keys', function () {
-            $users = \App\Models\User::with(['tokens' => function ($q) {
+            $users = User::with(['tokens' => function ($q) {
                 $q->select('id', 'tokenable_id', 'name', 'created_at', 'last_used_at');
             }])->whereHas('tokens')->get();
 
             $keys = $users->map(function ($user) {
                 return $user->tokens->map(function ($token) use ($user) {
                     return [
-                        'id'           => $token->id,
-                        'user_name'    => $user->name,
-                        'user_email'   => $user->email,
-                        'name'         => $token->name,
+                        'id' => $token->id,
+                        'user_name' => $user->name,
+                        'user_email' => $user->email,
+                        'name' => $token->name,
                         'last_used_at' => $token->last_used_at,
-                        'created_at'   => $token->created_at,
+                        'created_at' => $token->created_at,
                     ];
                 });
             })->flatten(1);
 
             $apiKey = session('api_key');
 
-            $ownerAdminUsers = \App\Models\User::whereIn('role', ['owner', 'admin'])->get();
+            $ownerAdminUsers = User::whereIn('role', ['owner', 'admin'])->get();
 
             return view('admin.api-keys.index', compact('keys', 'apiKey', 'ownerAdminUsers'));
         })->name('admin.api-keys');
 
-        Route::post('/admin/api-keys/generate', function (\Illuminate\Http\Request $request) {
+        Route::post('/admin/api-keys/generate', function (Request $request) {
             $request->validate([
                 'user_id' => 'required|exists:users,id',
-                'name'    => 'required|string|max:100',
+                'name' => 'required|string|max:100',
             ]);
 
-            $user = \App\Models\User::findOrFail($request->user_id);
-            $apiKey = \Illuminate\Support\Str::random(48);
+            $user = User::findOrFail($request->user_id);
+            $apiKey = Str::random(48);
 
             $user->tokens()->where('name', $request->name)->delete();
             $user->tokens()->create([
-                'name'      => $request->name,
-                'token'     => hash('sha256', $apiKey),
+                'name' => $request->name,
+                'token' => hash('sha256', $apiKey),
                 'abilities' => ['*'],
             ]);
 
@@ -222,7 +230,7 @@ Route::middleware(['auth'])->group(function () {
                 return response()->json([
                     'success' => true,
                     'message' => 'API Key berhasil dibuat.',
-                    'data'    => ['api_key' => $apiKey, 'name' => $request->name],
+                    'data' => ['api_key' => $apiKey, 'name' => $request->name],
                 ]);
             }
 
@@ -231,8 +239,8 @@ Route::middleware(['auth'])->group(function () {
         })->name('admin.api-keys.generate');
 
         Route::delete('/admin/api-keys/{id}/revoke', function ($id) {
-            $token = \Laravel\Sanctum\PersonalAccessToken::find($id);
-            if (!$token) {
+            $token = PersonalAccessToken::find($id);
+            if (! $token) {
                 return redirect()->route('admin.api-keys')
                     ->with('error', 'API Key tidak ditemukan.');
             }
@@ -288,25 +296,25 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ─── AI Chat Assistant ───
-    Route::post('/api/ai/chat', [App\Http\Controllers\AiChatController::class, 'chat'])
+    Route::post('/api/ai/chat', [AiChatController::class, 'chat'])
         ->name('api.ai.chat');
 
     // ─── OTA Email Monitoring Log ──────────────────────────────
     Route::middleware(['permission:view_reports'])->group(function () {
-        Route::get('/ota-email-logs', [App\Http\Controllers\OtaEmailLogController::class, 'index'])
+        Route::get('/ota-email-logs', [OtaEmailLogController::class, 'index'])
             ->name('ota-email-logs.index');
-        Route::get('/ota-email-logs/{id}', [App\Http\Controllers\OtaEmailLogController::class, 'show'])
+        Route::get('/ota-email-logs/{id}', [OtaEmailLogController::class, 'show'])
             ->name('ota-email-logs.show');
-        Route::post('/ota-email-logs/{id}/retry', [App\Http\Controllers\OtaEmailLogController::class, 'retry'])
+        Route::post('/ota-email-logs/{id}/retry', [OtaEmailLogController::class, 'retry'])
             ->name('ota-email-logs.retry');
-        Route::post('/ota-email-logs/refresh-stats', [App\Http\Controllers\OtaEmailLogController::class, 'refreshStats'])
+        Route::post('/ota-email-logs/refresh-stats', [OtaEmailLogController::class, 'refreshStats'])
             ->name('ota-email-logs.refresh-stats');
     });
 
     // ─── API: OTA Email Stats (for dashboard widgets) ──────────
-    Route::get('/api/ota-email-logs/stats', [App\Http\Controllers\OtaEmailLogController::class, 'apiStats'])
+    Route::get('/api/ota-email-logs/stats', [OtaEmailLogController::class, 'apiStats'])
         ->name('api.ota-email-logs.stats');
-    Route::get('/api/ota-email-logs/recent', [App\Http\Controllers\OtaEmailLogController::class, 'apiRecent'])
+    Route::get('/api/ota-email-logs/recent', [OtaEmailLogController::class, 'apiRecent'])
         ->name('api.ota-email-logs.recent');
 
     // ─── Panduan Penggunaan ────────────────────────────────────
@@ -320,17 +328,19 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', function () {
                 return view('dev.ota-test');
             });
-            Route::post('/parse', function (\Illuminate\Http\Request $request) {
-                $service = app(\App\Services\OpenRouterService::class);
+            Route::post('/parse', function (Request $request) {
+                $service = app(OpenRouterService::class);
                 $result = $service->parseBookingEmail(
                     $request->input('email_body', ''),
                     $request->input('email_subject', ''),
                     $request->input('ota_source', 'tiket.com')
                 );
-                return response()->json(['success' => !is_null($result), 'data' => $result]);
+
+                return response()->json(['success' => ! is_null($result), 'data' => $result]);
             });
             Route::get('/notifications', function () {
                 $notifications = cache('ota_notifications', []);
+
                 return response()->json(['notifications' => $notifications]);
             });
         });

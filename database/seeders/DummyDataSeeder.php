@@ -2,15 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\RoomType;
-use App\Models\Room;
 use App\Models\Guest;
 use App\Models\Reservation;
+use App\Models\Room;
+use App\Models\RoomType;
 use App\Models\Transaction;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class DummyDataSeeder extends Seeder
 {
@@ -117,7 +117,7 @@ class DummyDataSeeder extends Seeder
                 $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
 
                 $reservation = Reservation::create([
-                    'reservation_number' => 'RES-' . strtoupper(uniqid()),
+                    'reservation_number' => 'RES-'.strtoupper(uniqid()),
                     'room_id' => $room->id,
                     'guest_id' => $guest->id,
                     'check_in' => $checkIn,
@@ -134,7 +134,7 @@ class DummyDataSeeder extends Seeder
                 $paid = $reservation->paid_amount;
                 if ($paid > 0) {
                     Transaction::create([
-                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                         'reservation_id' => $reservation->id,
                         'type' => 'checkin_payment',
                         'amount' => $paid,
@@ -147,7 +147,7 @@ class DummyDataSeeder extends Seeder
                 // Jika status checked_out, mungkin ada transaksi checkout payment
                 if ($reservation->status == 'checked_out' && $reservation->remaining_payment > 0) {
                     Transaction::create([
-                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                         'reservation_id' => $reservation->id,
                         'type' => 'checkout_payment',
                         'amount' => $reservation->remaining_payment,
@@ -170,7 +170,7 @@ class DummyDataSeeder extends Seeder
                 $paid = rand(0, $reservation->total_amount);
                 if ($paid > 0) {
                     Transaction::create([
-                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                         'reservation_id' => $reservation->id,
                         'type' => 'checkin_payment',
                         'amount' => $paid,

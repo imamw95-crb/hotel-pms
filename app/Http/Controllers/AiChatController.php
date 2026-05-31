@@ -13,9 +13,9 @@ class AiChatController extends Controller
     public function chat(Request $request, AiChatService $aiChat)
     {
         $validated = $request->validate([
-            'message'      => 'required|string|max:2000',
+            'message' => 'required|string|max:2000',
             'current_page' => 'nullable|string|max:255',
-            'history'      => 'nullable|array',
+            'history' => 'nullable|array',
             'history.*.role' => 'string|in:user,assistant',
             'history.*.text' => 'string|max:2000',
         ]);

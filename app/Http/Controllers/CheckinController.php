@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Guest;
 use App\Models\Reservation;
+use App\Models\Room;
 use App\Models\Transaction;
 use App\Services\MHSBridgeService;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class CheckinController extends Controller
 {
@@ -31,13 +31,13 @@ class CheckinController extends Controller
         $pendingReservations = Reservation::with(['guest', 'room'])
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($sub) use ($search) {
-                    $sub->where('reservation_number', 'like', '%' . $search . '%')
+                    $sub->where('reservation_number', 'like', '%'.$search.'%')
                         ->orWhereHas('guest', function ($guestQuery) use ($search) {
-                            $guestQuery->where('guest_name', 'like', '%' . $search . '%')
-                                ->orWhere('id_number', 'like', '%' . $search . '%');
+                            $guestQuery->where('guest_name', 'like', '%'.$search.'%')
+                                ->orWhere('id_number', 'like', '%'.$search.'%');
                         })
                         ->orWhereHas('room', function ($roomQuery) use ($search) {
-                            $roomQuery->where('room_number', 'like', '%' . $search . '%');
+                            $roomQuery->where('room_number', 'like', '%'.$search.'%');
                         });
                 });
             })
@@ -51,6 +51,7 @@ class CheckinController extends Controller
             })
             ->orderBy('check_in')
             ->get();
+
         return view('frontoffice.checkin', compact('rooms', 'pendingReservations', 'dateFrom', 'dateTo'));
     }
 
@@ -70,29 +71,29 @@ class CheckinController extends Controller
         ]);
 
         $room = Room::findOrFail($request->room_id);
-        
-        if (!$room->isAvailable($request->check_in, $request->check_out)) {
+
+        if (! $room->isAvailable($request->check_in, $request->check_out)) {
             return back()->with('error', 'Kamar sudah dipesan untuk tanggal tersebut.');
         }
-        
+
         // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
         $checkInDate = Carbon::parse($request->check_in)->setTime(12, 0, 0);
         $checkOutDate = Carbon::parse($request->check_out)->setTime(12, 0, 0);
 
         $checkIn = $checkInDate->format('YmdHi');
         $checkOut = $checkOutDate->format('YmdHi');
-        
+
         $mhsResult = $this->mhs->checkin(
             $room->room_number,
             $request->guest_name,
             $checkIn,
             $checkOut
         );
-        
-        if (!$mhsResult['success']) {
-            return back()->with('error', 'Gagal issue card: ' . ($mhsResult['response_message'] ?? 'Unknown error'));
+
+        if (! $mhsResult['success']) {
+            return back()->with('error', 'Gagal issue card: '.($mhsResult['response_message'] ?? 'Unknown error'));
         }
-        
+
         $guest = Guest::updateOrCreate(
             ['id_number' => $request->id_number ?? null],
             [
@@ -101,12 +102,12 @@ class CheckinController extends Controller
                 'email' => $request->email ?? null,
             ]
         );
-        
+
         $days = $checkInDate->diffInDays($checkOutDate);
         $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
-        
+
         $reservation = Reservation::create([
-            'reservation_number' => 'RES-' . strtoupper(uniqid()),
+            'reservation_number' => 'RES-'.strtoupper(uniqid()),
             'room_id' => $room->id,
             'guest_id' => $guest->id,
             'check_in' => $checkInDate,
@@ -118,10 +119,10 @@ class CheckinController extends Controller
             'paid_amount' => $request->payment_amount ?? 0,
             'created_by' => auth()->id(),
         ]);
-        
+
         if ($request->payment_amount > 0) {
             Transaction::create([
-                'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                 'reservation_id' => $reservation->id,
                 'type' => 'checkin_payment',
                 'amount' => $request->payment_amount,
@@ -129,7 +130,7 @@ class CheckinController extends Controller
                 'created_by' => auth()->id(),
             ]);
         }
-        
+
         $room->update(['status' => 'occupied']);
 
         // Check if request is AJAX
@@ -138,7 +139,7 @@ class CheckinController extends Controller
                 'success' => true,
                 'message' => 'Check-in berhasil! Kartu sudah di-issue.',
                 'redirect_url' => route('checkin.success', $reservation->id),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
 
@@ -149,6 +150,7 @@ class CheckinController extends Controller
     public function success($id)
     {
         $reservation = Reservation::with(['room', 'guest'])->findOrFail($id);
+
         return view('frontoffice.checkin-success', compact('reservation'));
     }
 }

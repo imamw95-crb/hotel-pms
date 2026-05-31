@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HotelSetting;
 use App\Models\HousekeepingTask;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -53,11 +54,11 @@ class HousekeepingController extends Controller
 
         // Stats
         $stats = [
-            'pending'     => HousekeepingTask::where('status', 'pending')->count(),
+            'pending' => HousekeepingTask::where('status', 'pending')->count(),
             'in_progress' => HousekeepingTask::where('status', 'in_progress')->count(),
-            'completed'   => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
-            'total'       => HousekeepingTask::count(),
-            'urgent'      => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
+            'completed' => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
+            'total' => HousekeepingTask::count(),
+            'urgent' => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
         ];
 
         // Rooms for filter dropdown
@@ -75,23 +76,23 @@ class HousekeepingController extends Controller
         $checkedOutRoomIds = Reservation::whereIn('status', ['checked_out'])
             ->where(function ($q) use ($today, $yesterday) {
                 $q->whereDate('check_out', $today)
-                  ->orWhereDate('check_out', $yesterday);
+                    ->orWhereDate('check_out', $yesterday);
             })
             ->pluck('room_id')
             ->unique()
             ->toArray();
 
         $dirtyRoomsQuery = Room::where(function ($q) use ($checkedOutRoomIds) {
-                // Kamar yang baru di-checkout
-                if (!empty($checkedOutRoomIds)) {
-                    $q->whereIn('id', $checkedOutRoomIds);
-                }
-                // Kamar dengan status cleaning/available
-                $q->orWhereIn('status', ['cleaning', 'available']);
-            })
+            // Kamar yang baru di-checkout
+            if (! empty($checkedOutRoomIds)) {
+                $q->whereIn('id', $checkedOutRoomIds);
+            }
+            // Kamar dengan status cleaning/available
+            $q->orWhereIn('status', ['cleaning', 'available']);
+        })
             ->whereDoesntHave('housekeepingTasks', function ($q) {
                 $q->whereIn('status', ['pending', 'in_progress'])
-                  ->where('task_type', 'cleaning');
+                    ->where('task_type', 'cleaning');
             })
             ->orderBy('room_number')
             ->get();
@@ -111,9 +112,9 @@ class HousekeepingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'room_id'     => 'required|exists:rooms,id',
-            'task_type'   => 'required|in:cleaning,deep_clean,maintenance,inspection,turndown',
-            'priority'    => 'required|in:low,normal,high,urgent',
+            'room_id' => 'required|exists:rooms,id',
+            'task_type' => 'required|in:cleaning,deep_clean,maintenance,inspection,turndown',
+            'priority' => 'required|in:low,normal,high,urgent',
             'description' => 'nullable|string|max:1000',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
@@ -135,7 +136,7 @@ class HousekeepingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tugas housekeeping berhasil dibuat',
-                'task'    => $task->load(['room', 'assignedTo', 'createdBy']),
+                'task' => $task->load(['room', 'assignedTo', 'createdBy']),
             ]);
         }
 
@@ -151,7 +152,7 @@ class HousekeepingController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:pending,in_progress,completed,cancelled',
-            'notes'  => 'nullable|string|max:1000',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $task->status = $validated['status'];
@@ -185,7 +186,7 @@ class HousekeepingController extends Controller
             $task->notes = $validated['notes'] ?? $task->notes;
         }
 
-        if (!empty($validated['notes'])) {
+        if (! empty($validated['notes'])) {
             $task->notes = $validated['notes'];
         }
 
@@ -195,7 +196,7 @@ class HousekeepingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Status tugas berhasil diperbarui',
-                'task'    => $task->fresh()->load(['room', 'assignedTo', 'completedBy']),
+                'task' => $task->fresh()->load(['room', 'assignedTo', 'completedBy']),
             ]);
         }
 
@@ -217,7 +218,7 @@ class HousekeepingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Tugas berhasil ditugaskan',
-                'task'    => $task->fresh()->load(['room', 'assignedTo']),
+                'task' => $task->fresh()->load(['room', 'assignedTo']),
             ]);
         }
 
@@ -230,10 +231,10 @@ class HousekeepingController extends Controller
     public function bulkCreate(Request $request)
     {
         $validated = $request->validate([
-            'room_ids'   => 'required|array|min:1',
+            'room_ids' => 'required|array|min:1',
             'room_ids.*' => 'exists:rooms,id',
-            'task_type'  => 'required|in:cleaning,deep_clean,maintenance,inspection,turndown',
-            'priority'   => 'required|in:low,normal,high,urgent',
+            'task_type' => 'required|in:cleaning,deep_clean,maintenance,inspection,turndown',
+            'priority' => 'required|in:low,normal,high,urgent',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
@@ -245,14 +246,14 @@ class HousekeepingController extends Controller
                 ->whereIn('status', ['pending', 'in_progress'])
                 ->exists();
 
-            if (!$existing) {
+            if (! $existing) {
                 HousekeepingTask::create([
-                    'room_id'     => $roomId,
-                    'task_type'   => $validated['task_type'],
-                    'priority'    => $validated['priority'],
+                    'room_id' => $roomId,
+                    'task_type' => $validated['task_type'],
+                    'priority' => $validated['priority'],
                     'assigned_to' => $validated['assigned_to'],
-                    'created_by'  => Auth::id(),
-                    'status'      => 'pending',
+                    'created_by' => Auth::id(),
+                    'status' => 'pending',
                 ]);
                 $created++;
             }
@@ -281,7 +282,7 @@ class HousekeepingController extends Controller
 
         return response()->json([
             'success' => true,
-            'tasks'   => $tasks,
+            'tasks' => $tasks,
         ]);
     }
 
@@ -292,12 +293,12 @@ class HousekeepingController extends Controller
     {
         return response()->json([
             'success' => true,
-            'stats'   => [
-                'pending'     => HousekeepingTask::where('status', 'pending')->count(),
+            'stats' => [
+                'pending' => HousekeepingTask::where('status', 'pending')->count(),
                 'in_progress' => HousekeepingTask::where('status', 'in_progress')->count(),
-                'completed'   => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
-                'total'       => HousekeepingTask::count(),
-                'urgent'      => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
+                'completed' => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
+                'total' => HousekeepingTask::count(),
+                'urgent' => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
             ],
         ]);
     }
@@ -312,7 +313,7 @@ class HousekeepingController extends Controller
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'task'    => $task,
+                'task' => $task,
             ]);
         }
 
@@ -375,15 +376,15 @@ class HousekeepingController extends Controller
 
         // Stats
         $stats = [
-            'total'       => $tasks->count(),
-            'pending'     => $tasks->where('status', 'pending')->count(),
+            'total' => $tasks->count(),
+            'pending' => $tasks->where('status', 'pending')->count(),
             'in_progress' => $tasks->where('status', 'in_progress')->count(),
-            'completed'   => $tasks->where('status', 'completed')->count(),
-            'cancelled'   => $tasks->where('status', 'cancelled')->count(),
-            'urgent'      => $tasks->where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
+            'completed' => $tasks->where('status', 'completed')->count(),
+            'cancelled' => $tasks->where('status', 'cancelled')->count(),
+            'urgent' => $tasks->where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
         ];
 
-        $hotel = \App\Models\HotelSetting::get();
+        $hotel = HotelSetting::get();
 
         return view('housekeeping.print', compact(
             'tasks', 'groupedTasks', 'stats', 'hotel',

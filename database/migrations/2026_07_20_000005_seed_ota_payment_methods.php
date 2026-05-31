@@ -18,7 +18,7 @@ return new class extends Migration
 
         foreach ($methods as $method) {
             $exists = DB::table('payment_methods')->where('slug', $method['slug'])->exists();
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('payment_methods')->insert(array_merge($method, [
                     'created_at' => now(),
                     'updated_at' => now(),

@@ -16,10 +16,10 @@ class ServiceCharge extends Model
     ];
 
     protected $casts = [
-        'amount'       => 'decimal:2',
+        'amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'charge_date'  => 'date',
-        'quantity'     => 'integer',
+        'charge_date' => 'date',
+        'quantity' => 'integer',
     ];
 
     protected static function boot()
@@ -27,7 +27,7 @@ class ServiceCharge extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->charge_number)) {
-                $model->charge_number = 'SC-' . strtoupper(uniqid());
+                $model->charge_number = 'SC-'.strtoupper(uniqid());
             }
         });
     }

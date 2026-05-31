@@ -1,5 +1,9 @@
 <?php
-require_once __DIR__ . '/vendor/autoload.php';
+
+use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Config;
+
+require_once __DIR__.'/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
@@ -14,15 +18,15 @@ echo "=== Test: Direct Config creation ===\n\n";
 echo "--- Method 1: Direct Config ---\n";
 try {
     $accountConfig = [
-        'host'          => $host,
-        'port'          => $port,
-        'protocol'      => 'imap',
-        'encryption'    => 'ssl',
+        'host' => $host,
+        'port' => $port,
+        'protocol' => 'imap',
+        'encryption' => 'ssl',
         'validate_cert' => false,
-        'username'      => $user,
-        'password'      => $pass,
+        'username' => $user,
+        'password' => $pass,
         'authentication' => null,
-        'rfc'           => 'RFC822',
+        'rfc' => 'RFC822',
         'proxy' => [
             'socket' => null,
             'request_fulluri' => false,
@@ -34,14 +38,14 @@ try {
         'ssl_options' => [],
     ];
 
-    $config = new \Webklex\PHPIMAP\Config([
+    $config = new Config([
         'default' => 'default',
         'accounts' => [
             'default' => $accountConfig,
         ],
     ]);
 
-    $cm = new \Webklex\PHPIMAP\ClientManager($config);
+    $cm = new ClientManager($config);
     $client = $cm->account('default');
     $client->connect();
     echo "OK: Connected!\n";
@@ -50,41 +54,41 @@ try {
     echo "Unread: $unseen\n";
     if ($unseen > 0) {
         $msg = $folder->query()->unseen()->limit(1)->get()->first();
-        echo "Latest: UID=" . $msg->getUid() . " From=" . ($msg->getFrom()[0]->mail ?? '?') . " Subject=" . ($msg->getSubject() ?? '?') . "\n";
+        echo 'Latest: UID='.$msg->getUid().' From='.($msg->getFrom()[0]->mail ?? '?').' Subject='.($msg->getSubject() ?? '?')."\n";
     }
     $client->disconnect();
-} catch (\Throwable $e) {
-    echo "FAIL: " . $e->getMessage() . "\n";
+} catch (Throwable $e) {
+    echo 'FAIL: '.$e->getMessage()."\n";
 }
 
 // Method 2: Config::make with full account config
 echo "\n--- Method 2: Config::make ---\n";
 try {
-    $config2 = \Webklex\PHPIMAP\Config::make([
+    $config2 = Config::make([
         'default' => 'default',
         'accounts' => [
             'default' => [
-                'host'          => $host,
-                'port'          => $port,
-                'protocol'      => 'imap',
-                'encryption'    => 'ssl',
+                'host' => $host,
+                'port' => $port,
+                'protocol' => 'imap',
+                'encryption' => 'ssl',
                 'validate_cert' => false,
-                'username'      => $user,
-                'password'      => $pass,
+                'username' => $user,
+                'password' => $pass,
                 'authentication' => null,
-                'timeout'       => 30,
+                'timeout' => 30,
             ],
         ],
     ]);
 
-    echo "Config default: " . $config2->get('default') . "\n";
-    echo "Config accounts.default: " . print_r($config2->get('accounts.default'), true) . "\n";
+    echo 'Config default: '.$config2->get('default')."\n";
+    echo 'Config accounts.default: '.print_r($config2->get('accounts.default'), true)."\n";
 
-    $cm2 = new \Webklex\PHPIMAP\ClientManager($config2);
+    $cm2 = new ClientManager($config2);
     $client2 = $cm2->account('default');
     $client2->connect();
     echo "OK: Connected!\n";
     $client2->disconnect();
-} catch (\Throwable $e) {
-    echo "FAIL: " . $e->getMessage() . "\n";
+} catch (Throwable $e) {
+    echo 'FAIL: '.$e->getMessage()."\n";
 }

@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Services\BookingMapperService;
 use App\Services\BookingSyncService;
 use App\Services\EmailParserService;
 use App\Services\ImapService;
 use App\Services\OpenRouterService;
-use App\Services\BookingMapperService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -33,13 +33,14 @@ class TestReadOneEmailCommand extends Command
 
         // ─── Connect ──────────────────────────────────────────────
         $this->info('⏳ Connecting to IMAP...');
-        $this->info('   Host: ' . config('services.imap.host'));
-        $this->info('   Port: ' . config('services.imap.port'));
-        $this->info('   User: ' . config('services.imap.username'));
-        $this->info('   Pass: ' . (empty(config('services.imap.password')) ? '(empty)' : '(set)'));
-        if (!$imap->connect()) {
+        $this->info('   Host: '.config('services.imap.host'));
+        $this->info('   Port: '.config('services.imap.port'));
+        $this->info('   User: '.config('services.imap.username'));
+        $this->info('   Pass: '.(empty(config('services.imap.password')) ? '(empty)' : '(set)'));
+        if (! $imap->connect()) {
             $this->error('❌ Failed to connect to IMAP server');
             $this->error('Check IMAP credentials in .env');
+
             return self::FAILURE;
         }
         $this->info('✅ Connected to IMAP');
@@ -70,6 +71,7 @@ class TestReadOneEmailCommand extends Command
             if ($messages->isEmpty()) {
                 $this->warn('ℹ️ No unread emails found in inbox');
                 $imap->disconnect();
+
                 return self::SUCCESS;
             }
 
@@ -97,10 +99,11 @@ class TestReadOneEmailCommand extends Command
 
             // ─── Validate sender ─────────────────────────────────────
             $this->info('─── Sender Validation ───');
-            if (!$parser->isWhitelistedSender($sender)) {
+            if (! $parser->isWhitelistedSender($sender)) {
                 $this->error("❌ NOT whitelisted: {$sender}");
                 $this->info('   This email would be skipped in production');
                 $imap->disconnect();
+
                 return self::FAILURE;
             }
             $this->info("✅ Whitelisted: {$sender}");
@@ -114,7 +117,7 @@ class TestReadOneEmailCommand extends Command
 
             $this->info('─── Email Content ───');
             $this->info("Type detected: {$emailType}");
-            $this->info("Body length: " . strlen($body) . " chars");
+            $this->info('Body length: '.strlen($body).' chars');
             $this->newLine();
 
             // Show first 500 chars of body
@@ -129,15 +132,16 @@ class TestReadOneEmailCommand extends Command
             $this->newLine();
 
             // ─── AI Processing ───────────────────────────────────────
-            if ($process && !$dryRun) {
+            if ($process && ! $dryRun) {
                 $this->info('─── AI Processing ───');
                 $this->info('⏳ Sending to OpenRouter AI...');
 
                 $aiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
 
-                if (!$aiData) {
+                if (! $aiData) {
                     $this->error('❌ AI parsing failed');
                     $imap->disconnect();
+
                     return self::FAILURE;
                 }
 
@@ -145,7 +149,7 @@ class TestReadOneEmailCommand extends Command
                 $this->newLine();
                 $this->table(
                     ['Field', 'Value'],
-                    collect($aiData)->map(fn($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray()
+                    collect($aiData)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray()
                 );
                 $this->newLine();
 
@@ -154,7 +158,7 @@ class TestReadOneEmailCommand extends Command
                 $mapped = $mapper->mapToReservation($aiData);
                 $this->table(
                     ['Field', 'Value'],
-                    collect($mapped)->map(fn($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray()
+                    collect($mapped)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray()
                 );
                 $this->newLine();
 
@@ -165,9 +169,10 @@ class TestReadOneEmailCommand extends Command
 
                     $result = $sync->sync($aiData);
 
-                    if (!$result['success']) {
+                    if (! $result['success']) {
                         $this->error('❌ Sync failed');
                         $imap->disconnect();
+
                         return self::FAILURE;
                     }
 
@@ -213,12 +218,14 @@ class TestReadOneEmailCommand extends Command
             }
 
             $imap->disconnect();
+
             return self::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('❌ Error: ' . $e->getMessage());
-            Log::error('TestReadOneEmail error: ' . $e->getMessage());
+            $this->error('❌ Error: '.$e->getMessage());
+            Log::error('TestReadOneEmail error: '.$e->getMessage());
             $imap->disconnect();
+
             return self::FAILURE;
         }
     }
@@ -237,9 +244,10 @@ class TestReadOneEmailCommand extends Command
                 }
             }
         } catch (\Exception $e) {
-            $this->warn('Warning extracting body: ' . $e->getMessage());
+            $this->warn('Warning extracting body: '.$e->getMessage());
         }
         $body = preg_replace('/\s+/', ' ', $body);
+
         return trim($body);
     }
 }

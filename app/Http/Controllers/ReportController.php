@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
-use App\Models\Transaction;
-use App\Models\Room;
 use App\Models\RestoTransaction;
+use App\Models\Room;
 use App\Models\ServiceCharge;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -78,12 +78,12 @@ class ReportController extends Controller
 
         // In-house: checked_in ATAU checked_out hari ini (check-out jam 12:00 siang, masih in-house sampai siang)
         $inHouseGuests = Reservation::where(function ($q) use ($date) {
-                $q->where('status', 'checked_in')
-                    ->orWhere(function ($sub) use ($date) {
-                        $sub->where('status', 'checked_out')
-                            ->whereDate('check_out', $date);
-                    });
-            })
+            $q->where('status', 'checked_in')
+                ->orWhere(function ($sub) use ($date) {
+                    $sub->where('status', 'checked_out')
+                        ->whereDate('check_out', $date);
+                });
+        })
             ->with(['guest', 'room'])
             ->orderBy('check_out', 'asc')
             ->get();
@@ -120,13 +120,13 @@ class ReportController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('reservation_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%")
-                        ->orWhere('id_number', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('room', function ($q) use ($search) {
-                      $q->where('room_number', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('id_number', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('room_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -141,18 +141,18 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        
+
         $dates = [];
         $occupancyData = [];
         $current = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
-        
+
         $totalRooms = Room::count();
-        
+
         while ($current <= $end) {
             $date = $current->format('Y-m-d');
             $dates[] = $current->format('d M');
-            
+
             // Occupancy: kamar terisi jika check_in <= hari ini DAN check_out >= hari ini
             // Check-out jam 12:00 siang = kamar masih terisi sampai siang hari itu
             // Jadi tamu yang check-out hari ini MASIH terhitung occupied
@@ -160,12 +160,12 @@ class ReportController extends Controller
                 ->whereDate('check_out', '>=', $date)
                 ->whereIn('status', ['checked_in', 'checked_out'])
                 ->count();
-            
+
             $occupancyData[] = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
-            
+
             $current->addDay();
         }
-        
+
         return view('reports.occupancy', compact('startDate', 'endDate', 'dates', 'occupancyData', 'totalRooms'));
     }
 
@@ -173,15 +173,15 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        
+
         $transactions = Transaction::with('reservation.room')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         $totalRevenue = $transactions->sum('amount');
         $byMethod = $transactions->groupBy('payment_method')->map->sum('amount');
-        
+
         return view('reports.revenue', compact('startDate', 'endDate', 'transactions', 'totalRevenue', 'byMethod'));
     }
 
@@ -189,12 +189,12 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        
+
         $reservations = Reservation::with(['room', 'guest', 'createdBy'])
-            ->whereBetween('check_in', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('check_in', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->orderBy('check_in', 'desc')
             ->get();
-        
+
         return view('reports.reservations', compact('startDate', 'endDate', 'reservations'));
     }
 
@@ -204,16 +204,16 @@ class ReportController extends Controller
     public function exportNightAudit(Request $request)
     {
         $date = $request->get('date', Carbon::today()->format('Y-m-d'));
-        $filename = 'night-audit-' . $date . '.csv';
+        $filename = 'night-audit-'.$date.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($date) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF)); // BOM UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
 
             // Header info
             fputcsv($file, ['NIGHT AUDIT REPORT']);
@@ -262,7 +262,7 @@ class ReportController extends Controller
             fputcsv($file, ['No. Transaksi', 'Waktu', 'Tamu', 'Meja', 'Item', 'Metode', 'Nominal']);
             $restoTxns = RestoTransaction::with(['guest'])->whereDate('created_at', $date)->get();
             foreach ($restoTxns as $txn) {
-                $items = collect($txn->items)->map(fn($i) => $i['name'] . ' x' . $i['qty'])->implode(', ');
+                $items = collect($txn->items)->map(fn ($i) => $i['name'].' x'.$i['qty'])->implode(', ');
                 fputcsv($file, [$txn->transaction_number, $txn->created_at->format('H:i'), $txn->guest->guest_name ?? 'Walk-in', $txn->table_number ?? '-', $items, $txn->payment_method, $txn->total_amount]);
             }
 
@@ -282,11 +282,11 @@ class ReportController extends Controller
         $status = $request->get('status', 'all');
         $search = $request->get('search', '');
 
-        $filename = 'guest-list-' . $startDate . '-to-' . $endDate . '.csv';
+        $filename = 'guest-list-'.$startDate.'-to-'.$endDate.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $query = Reservation::with(['guest', 'room'])
@@ -308,9 +308,9 @@ class ReportController extends Controller
 
         $callback = function () use ($guests, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['GUEST LIST REPORT']);
-            fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
             fputcsv($file, []);
             fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'No. Identitas', 'Kamar', 'Check-in', 'Check-out', 'Sarapan', 'Status', 'Total Amount', 'Paid Amount']);
             foreach ($guests as $g) {
@@ -341,11 +341,11 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        $filename = 'occupancy-' . $startDate . '-to-' . $endDate . '.csv';
+        $filename = 'occupancy-'.$startDate.'-to-'.$endDate.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $totalRooms = Room::count();
@@ -367,13 +367,13 @@ class ReportController extends Controller
 
         $callback = function () use ($dates, $occupancyData, $totalRooms) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['OCCUPANCY REPORT']);
             fputcsv($file, ['Total Kamar', $totalRooms]);
             fputcsv($file, []);
             fputcsv($file, ['Tanggal', 'Okupansi (%)']);
             foreach ($dates as $i => $date) {
-                fputcsv($file, [$date, $occupancyData[$i] . '%']);
+                fputcsv($file, [$date, $occupancyData[$i].'%']);
             }
             fclose($file);
         };
@@ -388,23 +388,23 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        $filename = 'revenue-' . $startDate . '-to-' . $endDate . '.csv';
+        $filename = 'revenue-'.$startDate.'-to-'.$endDate.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $transactions = Transaction::with('reservation.room')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->orderBy('created_at', 'desc')
             ->get();
 
         $callback = function () use ($transactions, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['REVENUE REPORT']);
-            fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
             fputcsv($file, []);
             fputcsv($file, ['No. Transaksi', 'Tanggal', 'Tipe', 'Metode', 'Kamar', 'Nominal']);
             foreach ($transactions as $t) {
@@ -432,23 +432,23 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        $filename = 'reservations-' . $startDate . '-to-' . $endDate . '.csv';
+        $filename = 'reservations-'.$startDate.'-to-'.$endDate.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $reservations = Reservation::with(['room', 'guest', 'createdBy'])
-            ->whereBetween('check_in', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('check_in', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->orderBy('check_in', 'desc')
             ->get();
 
         $callback = function () use ($reservations, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['RESERVATIONS REPORT']);
-            fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
             fputcsv($file, []);
             fputcsv($file, ['No. Reservasi', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out', 'Sarapan', 'Status', 'Total', 'Paid', 'Dibuat Oleh']);
             foreach ($reservations as $r) {
@@ -482,7 +482,7 @@ class ReportController extends Controller
 
         // Ambil semua grup booking yang memiliki booking_group_id
         $groups = Reservation::whereNotNull('booking_group_id')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->with(['guest', 'room', 'transactions'])
             ->get()
             ->groupBy('booking_group_id')
@@ -496,18 +496,18 @@ class ReportController extends Controller
 
                 return (object) [
                     'booking_group_id' => $groupId,
-                    'guest_name'       => $first->guest->guest_name ?? '-',
-                    'check_in'         => $first->check_in,
-                    'check_out'        => $first->check_out,
-                    'rooms'            => $reservations,
-                    'room_numbers'     => $roomNumbers,
-                    'total_rooms'      => $reservations->count(),
-                    'total_amount'     => $totalAmount,
-                    'paid_amount'      => $paidAmount,
+                    'guest_name' => $first->guest->guest_name ?? '-',
+                    'check_in' => $first->check_in,
+                    'check_out' => $first->check_out,
+                    'rooms' => $reservations,
+                    'room_numbers' => $roomNumbers,
+                    'total_rooms' => $reservations->count(),
+                    'total_amount' => $totalAmount,
+                    'paid_amount' => $paidAmount,
                     'remaining_payment' => $remainingPayment,
                     'total_transactions' => $totalTransactions,
-                    'created_at'       => $first->created_at,
-                    'created_by'       => $first->createdBy->name ?? '-',
+                    'created_at' => $first->created_at,
+                    'created_by' => $first->createdBy->name ?? '-',
                 ];
             })->sortByDesc('created_at');
 
@@ -529,15 +529,15 @@ class ReportController extends Controller
     {
         $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
-        $filename = 'group-report-' . $startDate . '-to-' . $endDate . '.csv';
+        $filename = 'group-report-'.$startDate.'-to-'.$endDate.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $groups = Reservation::whereNotNull('booking_group_id')
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+            ->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->with(['guest', 'room', 'transactions'])
             ->get()
             ->groupBy('booking_group_id')
@@ -548,21 +548,21 @@ class ReportController extends Controller
                 $paidAmount = $reservations->sum('paid_amount');
 
                 return (object) [
-                    'guest_name'   => $first->guest->guest_name ?? '-',
-                    'check_in'     => $first->check_in,
-                    'check_out'    => $first->check_out,
+                    'guest_name' => $first->guest->guest_name ?? '-',
+                    'check_in' => $first->check_in,
+                    'check_out' => $first->check_out,
                     'room_numbers' => $roomNumbers,
-                    'total_rooms'  => $reservations->count(),
+                    'total_rooms' => $reservations->count(),
                     'total_amount' => $totalAmount,
-                    'paid_amount'  => $paidAmount,
+                    'paid_amount' => $paidAmount,
                 ];
             })->sortByDesc('check_in');
 
         $callback = function () use ($groups, $startDate, $endDate) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($file, ['GROUP BOOKING REPORT']);
-            fputcsv($file, ['Periode', $startDate . ' s/d ' . $endDate]);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
             fputcsv($file, []);
             fputcsv($file, ['Nama Tamu', 'Kamar', 'Jumlah Kamar', 'Check-in', 'Check-out', 'Total', 'Terbayar', 'Sisa']);
             foreach ($groups as $g) {

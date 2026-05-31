@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Guest;
 use App\Models\Reservation;
-use Illuminate\Http\Request;
+use App\Models\Room;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class BookingController extends Controller
 {
@@ -16,17 +16,18 @@ class BookingController extends Controller
         if ($request->has('room_id')) {
             $selectedRoom = Room::find($request->input('room_id'));
         }
-        
+
         // Set default tanggal jika tidak ada parameter
         $checkIn = $request->input('check_in', Carbon::today()->format('Y-m-d'));
         $checkOut = $request->input('check_out', Carbon::tomorrow()->format('Y-m-d'));
-        
+
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'view' => view('booking.modal-create', compact('selectedRoom', 'checkIn', 'checkOut'))->render()
+                'view' => view('booking.modal-create', compact('selectedRoom', 'checkIn', 'checkOut'))->render(),
             ]);
         }
+
         return view('booking.create', compact('selectedRoom', 'checkIn', 'checkOut'));
     }
 
@@ -38,7 +39,7 @@ class BookingController extends Controller
         $checkIn = $request->get('check_in');
         $checkOut = $request->get('check_out');
 
-        if (!$checkIn || !$checkOut) {
+        if (! $checkIn || ! $checkOut) {
             return response()->json(['rooms' => []]);
         }
 
@@ -51,7 +52,7 @@ class BookingController extends Controller
         $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
-                  ->where('check_out', '>', $checkIn);
+                    ->where('check_out', '>', $checkIn);
             })
             ->pluck('room_id')
             ->toArray();
@@ -79,12 +80,12 @@ class BookingController extends Controller
 
         $otaSources = [
             'traveloka.com' => 'Traveloka',
-            'tiket.com'     => 'Tiket.com',
+            'tiket.com' => 'Tiket.com',
         ];
 
         return response()->json([
             'success' => true,
-            'view' => view('booking.modal-ota', compact('selectedRoom', 'checkIn', 'checkOut', 'otaSources'))->render()
+            'view' => view('booking.modal-ota', compact('selectedRoom', 'checkIn', 'checkOut', 'otaSources'))->render(),
         ]);
     }
 
@@ -112,7 +113,7 @@ class BookingController extends Controller
         // Validasi ketersediaan kamar (back-to-back aware)
         $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
         $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
-        if (!$room->isAvailable($checkInDate, $checkOutDate)) {
+        if (! $room->isAvailable($checkInDate, $checkOutDate)) {
             return back()->with('error', "Kamar {$room->room_number} sudah dipesan untuk periode tersebut.")->withInput();
         }
 
@@ -130,14 +131,14 @@ class BookingController extends Controller
         // (sudah di-set di atas sebelum validasi)
         // If custom price_per_night provided, use flat rate; otherwise use weekday/weekend dynamic pricing
         $days = $checkInDate->diffInDays($checkOutDate);
-        if (!empty($validated['price_per_night'])) {
+        if (! empty($validated['price_per_night'])) {
             $totalAmount = $validated['price_per_night'] * $days;
         } else {
             $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
         }
 
         $reservation = Reservation::create([
-            'reservation_number' => 'RES-' . strtoupper(uniqid()),
+            'reservation_number' => 'RES-'.strtoupper(uniqid()),
             'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
             'ota_source' => $validated['ota_source'] ?? null,
             'ota_payment_status' => $validated['ota_payment_status'] ?? null,
@@ -159,9 +160,10 @@ class BookingController extends Controller
                 'success' => true,
                 'message' => "Booking untuk kamar {$room->room_number} berhasil dibuat.",
                 'redirect_url' => route('rooms.dashboard'),
-                'reservation' => $reservation
+                'reservation' => $reservation,
             ]);
         }
+
         return redirect()->route('rooms.dashboard')->with('success', "Booking untuk kamar {$room->room_number} berhasil dibuat.");
     }
 }

@@ -3,9 +3,6 @@
 namespace Tests\Unit;
 
 use App\Models\Reservation;
-use App\Models\Room;
-use App\Models\Guest;
-use App\Models\User;
 use Carbon\Carbon;
 use Tests\TestCase;
 

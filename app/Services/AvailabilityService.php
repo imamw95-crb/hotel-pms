@@ -2,10 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Room;
 use App\Models\Reservation;
+use App\Models\Room;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 /**
  * AvailabilityService — Centralized availability engine for Hotel PMS.
@@ -27,7 +26,7 @@ class AvailabilityService
         $query = Reservation::where('room_id', $roomId)
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
-                  ->where('check_out', '>', $checkIn);
+                    ->where('check_out', '>', $checkIn);
             })
             ->whereIn('status', ['pending', 'checked_in']);
 
@@ -35,7 +34,7 @@ class AvailabilityService
             $query->where('id', '!=', $excludeReservationId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 
     /**
@@ -46,7 +45,7 @@ class AvailabilityService
         $bookedIds = Reservation::whereIn('status', ['pending', 'checked_in'])
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
-                  ->where('check_out', '>', $checkIn);
+                    ->where('check_out', '>', $checkIn);
             })
             ->pluck('room_id')
             ->unique();
@@ -95,6 +94,7 @@ class AvailabilityService
                 $booking = $roomReservations->first(function ($r) use ($day, $dayEnd) {
                     $ci = $r->check_in;
                     $co = $r->check_out;
+
                     // Occupied if check_in <= day AND check_out > day (strict)
                     return $ci->lte($dayEnd) && $co->gt($day);
                 });
@@ -160,7 +160,9 @@ class AvailabilityService
                 $blockStart = max($r->check_in->copy(), $startDate->copy());
                 $blockEnd = min($r->check_out->copy(), $endDate->copy()->addDay());
                 $nights = $blockStart->diffInDays($blockEnd);
-                if ($nights <= 0) continue;
+                if ($nights <= 0) {
+                    continue;
+                }
 
                 $blocks[] = [
                     'id' => $r->id,
@@ -201,7 +203,9 @@ class AvailabilityService
         $end = $start->copy()->addDays($days - 1);
 
         $totalRooms = Room::where('status', '!=', 'maintenance')->count();
-        if ($totalRooms === 0) return [];
+        if ($totalRooms === 0) {
+            return [];
+        }
 
         $reservations = Reservation::whereIn('status', ['pending', 'checked_in'])
             ->where('check_in', '<', $end->copy()->addDay())

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Guest;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
+use App\Models\Room;
 use App\Models\Transaction;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -19,10 +19,11 @@ class BookingGroupController extends Controller
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'view' => view('booking.modal-group')->render()
+                'view' => view('booking.modal-group')->render(),
             ]);
         }
         $rooms = Room::where('status', 'available')->orderBy('room_number')->get();
+
         return view('booking.group', compact('rooms'));
     }
 
@@ -38,7 +39,7 @@ class BookingGroupController extends Controller
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|in:' . PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'payment_method' => 'nullable|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'payment_type' => 'nullable|in:full,dp',
             'dp_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
@@ -81,7 +82,7 @@ class BookingGroupController extends Controller
 
                 $reservation = Reservation::create([
                     'booking_group_id' => $bookingGroupId,
-                    'reservation_number' => 'RES-' . strtoupper(uniqid()),
+                    'reservation_number' => 'RES-'.strtoupper(uniqid()),
                     'room_id' => $room->id,
                     'guest_id' => $guest->id,
                     'check_in' => $checkIn,
@@ -102,7 +103,7 @@ class BookingGroupController extends Controller
                 foreach ($reservations as $reservation) {
                     $reservation->update(['paid_amount' => $dpPerRoom]);
                     Transaction::create([
-                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                         'reservation_id' => $reservation->id,
                         'type' => 'dp',
                         'amount' => $dpPerRoom,
@@ -115,7 +116,7 @@ class BookingGroupController extends Controller
                 foreach ($reservations as $reservation) {
                     $reservation->update(['paid_amount' => $reservation->total_amount]);
                     Transaction::create([
-                        'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                         'reservation_id' => $reservation->id,
                         'type' => 'pelunasan',
                         'amount' => $reservation->total_amount,
@@ -127,7 +128,7 @@ class BookingGroupController extends Controller
         });
 
         $roomNumbers = $rooms->pluck('room_number')->implode(', ');
-        $paymentLabel = $paymentType === 'dp' ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : ' (Lunas)';
+        $paymentLabel = $paymentType === 'dp' ? ' dengan DP Rp '.number_format($dpAmount, 0, ',', '.') : ' (Lunas)';
         $message = "Booking grup untuk kamar: {$roomNumbers}{$paymentLabel} berhasil dibuat.";
 
         // Check if request is AJAX
@@ -135,7 +136,7 @@ class BookingGroupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'redirect_url' => route('rooms.dashboard')
+                'redirect_url' => route('rooms.dashboard'),
             ]);
         }
 

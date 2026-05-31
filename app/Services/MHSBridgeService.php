@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use App\Models\MHSLog;
+use Illuminate\Support\Facades\Http;
 
 class MHSBridgeService
 {
     protected $bridgeUrl;
+
     protected $timeout;
 
     public function __construct()
@@ -24,7 +25,7 @@ class MHSBridgeService
                 'room' => $room,
                 'name' => $name,
                 'checkin' => $checkin,
-                'checkout' => $checkout
+                'checkout' => $checkout,
             ]);
 
         $result = $response->json();

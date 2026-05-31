@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Room;
 use App\Models\Guest;
+use App\Models\Room;
+use App\Models\User;
 use Carbon\Carbon;
 use Tests\TestCase;
 

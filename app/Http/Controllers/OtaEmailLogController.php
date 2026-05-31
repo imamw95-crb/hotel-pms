@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessBookingEmailJob;
 use App\Models\ProcessedEmail;
-use App\Services\EmailParserService;
-use App\Services\ImapService;
-use App\Services\OpenRouterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -67,6 +65,7 @@ class OtaEmailLogController extends Controller
     public function show(int $id)
     {
         $log = ProcessedEmail::findOrFail($id);
+
         return view('ota-email-logs.show', compact('log'));
     }
 
@@ -80,7 +79,7 @@ class OtaEmailLogController extends Controller
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'stats'   => ProcessedEmail::getStats(),
+                'stats' => ProcessedEmail::getStats(),
             ]);
         }
 
@@ -108,8 +107,8 @@ class OtaEmailLogController extends Controller
 
         try {
             // Re-dispatch the job
-            \App\Jobs\ProcessBookingEmailJob::dispatch(
-                emailUid: $log->email_uid . '_retry_' . time(),
+            ProcessBookingEmailJob::dispatch(
+                emailUid: $log->email_uid.'_retry_'.time(),
                 sender: $log->sender,
                 subject: $log->subject ?? '',
                 body: $log->raw_body,
@@ -119,20 +118,20 @@ class OtaEmailLogController extends Controller
 
             Log::info('OTA email retry dispatched', [
                 'original_id' => $log->id,
-                'email_uid'   => $log->email_uid,
-                'sender'      => $log->sender,
+                'email_uid' => $log->email_uid,
+                'sender' => $log->sender,
             ]);
 
             return redirect()->route('ota-email-logs.show', $id)
                 ->with('success', 'Email sedang diproses ulang. Silakan cek log beberapa saat lagi.');
         } catch (\Exception $e) {
             Log::error('Failed to retry OTA email', [
-                'id'    => $log->id,
+                'id' => $log->id,
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('ota-email-logs.show', $id)
-                ->with('error', 'Gagal memproses ulang: ' . $e->getMessage());
+                ->with('error', 'Gagal memproses ulang: '.$e->getMessage());
         }
     }
 
@@ -143,7 +142,7 @@ class OtaEmailLogController extends Controller
     {
         return response()->json([
             'success' => true,
-            'stats'   => ProcessedEmail::getStats(),
+            'stats' => ProcessedEmail::getStats(),
         ]);
     }
 
@@ -160,7 +159,7 @@ class OtaEmailLogController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $logs,
+            'data' => $logs,
         ]);
     }
 }

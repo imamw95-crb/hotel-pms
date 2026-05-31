@@ -8,16 +8,19 @@ use Illuminate\Support\Facades\Log;
 class OpenRouterService
 {
     private string $apiKey;
+
     private string $model;
+
     private string $baseUrl;
+
     private int $timeout;
 
     public function __construct()
     {
-        $this->apiKey   = config('services.openrouter.api_key');
-        $this->model    = config('services.openrouter.model', 'qwen/qwen3-8b');
-        $this->baseUrl  = config('services.openrouter.base_url', 'https://openrouter.ai/api/v1');
-        $this->timeout  = (int) config('services.openrouter.timeout', 120);
+        $this->apiKey = config('services.openrouter.api_key');
+        $this->model = config('services.openrouter.model', 'qwen/qwen3-8b');
+        $this->baseUrl = config('services.openrouter.base_url', 'https://openrouter.ai/api/v1');
+        $this->timeout = (int) config('services.openrouter.timeout', 120);
     }
 
     /**
@@ -32,45 +35,48 @@ class OpenRouterService
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
-                'Content-Type'  => 'application/json',
-                'HTTP-Referer'  => config('app.url'),
-                'X-Title'       => config('app_name', 'Hotel PMS'),
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app_name', 'Hotel PMS'),
             ])
-            ->timeout($this->timeout)
-            ->retry(2, 100)
-            ->post("{$this->baseUrl}/chat/completions", [
-                'model'    => $this->model,
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-                'temperature' => 0.1,
-                'max_tokens'  => 2048,
-            ]);
+                ->timeout($this->timeout)
+                ->retry(2, 100)
+                ->post("{$this->baseUrl}/chat/completions", [
+                    'model' => $this->model,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.1,
+                    'max_tokens' => 2048,
+                ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('OpenRouter API error', [
                     'status' => $response->status(),
-                    'body'   => $response->body(),
+                    'body' => $response->body(),
                 ]);
+
                 return null;
             }
 
             $content = $response->json('choices.0.message.content');
 
-            if (!$content) {
+            if (! $content) {
                 Log::error('OpenRouter returned empty content', [
                     'full_response' => $response->json(),
-                    'model'         => $this->model,
+                    'model' => $this->model,
                     'prompt_length' => strlen($prompt),
                 ]);
+
                 return null;
             }
 
             return $this->extractJson($content);
         } catch (\Exception $e) {
-            Log::error('OpenRouter service exception: ' . $e->getMessage(), [
+            Log::error('OpenRouter service exception: '.$e->getMessage(), [
                 'exception' => get_class($e),
             ]);
+
             return null;
         }
     }
@@ -182,43 +188,46 @@ PROMPT;
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
-                'Content-Type'  => 'application/json',
-                'HTTP-Referer'  => config('app.url'),
-                'X-Title'       => config('app.name', 'Hotel PMS'),
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name', 'Hotel PMS'),
             ])
-            ->timeout($this->timeout)
-            ->retry(2, 100)
-            ->post("{$this->baseUrl}/chat/completions", [
-                'model'    => $this->model,
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-                'temperature' => 0.1,
-                'max_tokens'  => 1024,
-            ]);
+                ->timeout($this->timeout)
+                ->retry(2, 100)
+                ->post("{$this->baseUrl}/chat/completions", [
+                    'model' => $this->model,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.1,
+                    'max_tokens' => 1024,
+                ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('OpenRouter API error (natural language)', [
                     'status' => $response->status(),
-                    'body'   => $response->body(),
+                    'body' => $response->body(),
                 ]);
+
                 return null;
             }
 
             $content = $response->json('choices.0.message.content');
 
-            if (!$content) {
+            if (! $content) {
                 Log::error('OpenRouter returned empty content (natural language)', [
                     'full_response' => $response->json(),
                 ]);
+
                 return null;
             }
 
             return $this->extractJson($content);
         } catch (\Exception $e) {
-            Log::error('OpenRouter natural language exception: ' . $e->getMessage(), [
+            Log::error('OpenRouter natural language exception: '.$e->getMessage(), [
                 'exception' => get_class($e),
             ]);
+
             return null;
         }
     }
@@ -251,6 +260,7 @@ PROMPT;
         }
 
         Log::error('Failed to extract JSON from AI response', ['content' => $content]);
+
         return null;
     }
 }

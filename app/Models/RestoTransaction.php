@@ -16,10 +16,10 @@ class RestoTransaction extends Model
     ];
 
     protected $casts = [
-        'items'        => 'array',
-        'subtotal'     => 'decimal:2',
-        'tax'          => 'decimal:2',
-        'discount'     => 'decimal:2',
+        'items' => 'array',
+        'subtotal' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'discount' => 'decimal:2',
         'total_amount' => 'decimal:2',
     ];
 
@@ -28,7 +28,7 @@ class RestoTransaction extends Model
         parent::boot();
         static::creating(function ($model) {
             if (empty($model->transaction_number)) {
-                $model->transaction_number = 'RTO-' . strtoupper(uniqid());
+                $model->transaction_number = 'RTO-'.strtoupper(uniqid());
             }
         });
     }

@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 
 class Room extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'room_number', 'room_type_id', 'room_type_name', 'price_per_night',
         'price_weekday', 'price_weekend',
-        'max_occupancy', 'status', 'facilities'
+        'max_occupancy', 'status', 'facilities',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Room extends Model
     public static function isWeekend(Carbon|string $date): bool
     {
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
+
         return $carbon->isWeekend();
     }
 
@@ -90,7 +92,7 @@ class Room extends Model
         $query = $this->reservations()
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
-                  ->where('check_out', '>', $checkIn);
+                    ->where('check_out', '>', $checkIn);
             })
             ->whereIn('status', ['pending', 'checked_in']);
 
@@ -98,6 +100,6 @@ class Room extends Model
             $query->where('id', '!=', $excludeReservationId);
         }
 
-        return !$query->exists();
+        return ! $query->exists();
     }
 }

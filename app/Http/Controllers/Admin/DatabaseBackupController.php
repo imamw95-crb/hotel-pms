@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 
-
 class DatabaseBackupController extends Controller
 {
     /**
@@ -54,12 +53,12 @@ class DatabaseBackupController extends Controller
             $port = config('database.connections.mysql.port') ?: 3306;
 
             $backupPath = storage_path('app/backups');
-            if (!File::isDirectory($backupPath)) {
+            if (! File::isDirectory($backupPath)) {
                 File::makeDirectory($backupPath, 0755, true);
             }
 
-            $filename = 'backup_' . date('Y-m-d_His') . '.sql';
-            $filepath = $backupPath . '/' . $filename;
+            $filename = 'backup_'.date('Y-m-d_His').'.sql';
+            $filepath = $backupPath.'/'.$filename;
 
             // Use mysqldump
             $command = sprintf(
@@ -84,7 +83,7 @@ class DatabaseBackupController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => "Backup berhasil dibuat: {$filename}",
-                    'redirect_url' => route('admin.backups.index')
+                    'redirect_url' => route('admin.backups.index'),
                 ]);
             }
 
@@ -95,12 +94,13 @@ class DatabaseBackupController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal membuat backup: ' . $e->getMessage(),
-                    'redirect_url' => route('admin.backups.index')
+                    'message' => 'Gagal membuat backup: '.$e->getMessage(),
+                    'redirect_url' => route('admin.backups.index'),
                 ], 500);
             }
+
             return redirect()->route('admin.backups.index')
-                ->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+                ->with('error', 'Gagal membuat backup: '.$e->getMessage());
         }
     }
 
@@ -110,9 +110,9 @@ class DatabaseBackupController extends Controller
     public function download($filename)
     {
         $backupPath = storage_path('app/backups');
-        $filepath = $backupPath . '/' . basename($filename);
+        $filepath = $backupPath.'/'.basename($filename);
 
-        if (!File::exists($filepath)) {
+        if (! File::exists($filepath)) {
             return redirect()->route('admin.backups.index')
                 ->with('error', 'File backup tidak ditemukan.');
         }
@@ -126,7 +126,7 @@ class DatabaseBackupController extends Controller
     public function destroy($filename)
     {
         $backupPath = storage_path('app/backups');
-        $filepath = $backupPath . '/' . basename($filename);
+        $filepath = $backupPath.'/'.basename($filename);
 
         if (File::exists($filepath)) {
             File::delete($filepath);
@@ -136,7 +136,7 @@ class DatabaseBackupController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Backup berhasil dihapus.',
-                    'redirect_url' => route('admin.backups.index')
+                    'redirect_url' => route('admin.backups.index'),
                 ]);
             }
 
@@ -149,7 +149,7 @@ class DatabaseBackupController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'File backup tidak ditemukan.',
-                'redirect_url' => route('admin.backups.index')
+                'redirect_url' => route('admin.backups.index'),
             ], 404);
         }
 
@@ -164,9 +164,9 @@ class DatabaseBackupController extends Controller
     {
         try {
             $backupPath = storage_path('app/backups');
-            $filepath = $backupPath . '/' . basename($filename);
+            $filepath = $backupPath.'/'.basename($filename);
 
-            if (!File::exists($filepath)) {
+            if (! File::exists($filepath)) {
                 return redirect()->route('admin.backups.index')
                     ->with('error', 'File backup tidak ditemukan.');
             }
@@ -199,7 +199,7 @@ class DatabaseBackupController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => "Database berhasil di-restore dari: {$filename}",
-                    'redirect_url' => route('admin.backups.index')
+                    'redirect_url' => route('admin.backups.index'),
                 ]);
             }
 
@@ -210,12 +210,13 @@ class DatabaseBackupController extends Controller
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal restore backup: ' . $e->getMessage(),
-                    'redirect_url' => route('admin.backups.index')
+                    'message' => 'Gagal restore backup: '.$e->getMessage(),
+                    'redirect_url' => route('admin.backups.index'),
                 ], 500);
             }
+
             return redirect()->route('admin.backups.index')
-                ->with('error', 'Gagal restore backup: ' . $e->getMessage());
+                ->with('error', 'Gagal restore backup: '.$e->getMessage());
         }
     }
 
@@ -226,20 +227,20 @@ class DatabaseBackupController extends Controller
     {
         $tables = DB::select('SHOW TABLES');
         $output = "-- Database Backup\n";
-        $output .= "-- Generated: " . date('Y-m-d H:i:s') . "\n";
-        $output .= "-- Database: " . config('database.connections.mysql.database') . "\n\n";
+        $output .= '-- Generated: '.date('Y-m-d H:i:s')."\n";
+        $output .= '-- Database: '.config('database.connections.mysql.database')."\n\n";
         $output .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
         $database = config('database.connections.mysql.database');
 
         foreach ($tables as $table) {
-            $tableName = $table->{'Tables_in_' . $database};
+            $tableName = $table->{'Tables_in_'.$database};
 
             // Get table structure
             $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
             $create = $createTable[0]->{'Create Table'};
             $output .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
-            $output .= $create . ";\n\n";
+            $output .= $create.";\n\n";
 
             // Get table data
             $rows = DB::select("SELECT * FROM `{$tableName}`");
@@ -253,11 +254,11 @@ class DatabaseBackupController extends Controller
                     foreach ($chunk as $row) {
                         $rowValues = [];
                         foreach ((array) $row as $value) {
-                            $rowValues[] = is_null($value) ? 'NULL' : "'" . addslashes($value) . "'";
+                            $rowValues[] = is_null($value) ? 'NULL' : "'".addslashes($value)."'";
                         }
-                        $values[] = '(' . implode(', ', $rowValues) . ')';
+                        $values[] = '('.implode(', ', $rowValues).')';
                     }
-                    $output .= implode(",\n", $values) . ";\n\n";
+                    $output .= implode(",\n", $values).";\n\n";
                 }
             }
         }
@@ -277,6 +278,7 @@ class DatabaseBackupController extends Controller
             $bytes /= 1024;
             $i++;
         }
-        return round($bytes, 2) . ' ' . $units[$i];
+
+        return round($bytes, 2).' '.$units[$i];
     }
 }

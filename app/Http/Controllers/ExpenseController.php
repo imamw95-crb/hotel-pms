@@ -44,11 +44,11 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'description'    => 'required|string|max:255',
-            'amount'         => 'required|numeric|min:0',
+            'description' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
             'payment_method' => 'required|string|max:20',
-            'expense_date'   => 'required|date',
-            'notes'          => 'nullable|string|max:1000',
+            'expense_date' => 'required|date',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $validated['created_by'] = auth()->id();

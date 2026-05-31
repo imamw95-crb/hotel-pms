@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\ReservationApiController;
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\ReservationApiController;
 use Illuminate\Support\Facades\Route;
 
 /*

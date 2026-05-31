@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Reservation;
+use App\Models\Room;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -57,11 +57,11 @@ class RoomRackController extends Controller
 
         $roomsQuery = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo) {
             $q->where('status', 'checked_in')
-              ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
-                  $sub->where('status', 'pending')
-                      ->whereDate('check_in', '>=', $dateFrom)
-                      ->whereDate('check_in', '<=', $dateTo);
-              });
+                ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                    $sub->where('status', 'pending')
+                        ->whereDate('check_in', '>=', $dateFrom)
+                        ->whereDate('check_in', '<=', $dateTo);
+                });
         }, 'reservations.guest']);
 
         if ($roomTypeFilter !== 'all') {
@@ -123,7 +123,7 @@ class RoomRackController extends Controller
     public function occupancyCalendar(Request $request)
     {
         $month = $request->input('month', Carbon::now()->format('Y-m'));
-        $start = Carbon::parse($month . '-01')->startOfMonth();
+        $start = Carbon::parse($month.'-01')->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
         $data = $this->availability->getOccupancyCalendar($start, $end);
@@ -160,14 +160,14 @@ class RoomRackController extends Controller
         $today = Carbon::today();
 
         return [
-            'available_now' => \App\Models\Room::where('status', 'available')->count(),
-            'occupied_now' => \App\Models\Room::where('status', 'occupied')->count(),
-            'checkins_today' => \App\Models\Reservation::whereDate('check_in', $today)
+            'available_now' => Room::where('status', 'available')->count(),
+            'occupied_now' => Room::where('status', 'occupied')->count(),
+            'checkins_today' => Reservation::whereDate('check_in', $today)
                 ->where('status', 'pending')->count(),
-            'checkouts_today' => \App\Models\Reservation::whereDate('check_out', $today)
+            'checkouts_today' => Reservation::whereDate('check_out', $today)
                 ->where('status', 'checked_in')->count(),
-            'maintenance' => \App\Models\Room::where('status', 'maintenance')->count(),
-            'dirty' => \App\Models\Room::where('status', 'cleaning')->count(),
+            'maintenance' => Room::where('status', 'maintenance')->count(),
+            'dirty' => Room::where('status', 'cleaning')->count(),
             'occupancy_pct' => 0,
         ];
     }

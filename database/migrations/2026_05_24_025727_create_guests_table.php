@@ -1,4 +1,5 @@
 <?php
+
 // database/migrations/xxxx_xx_xx_000003_create_guests_table.php
 
 use Illuminate\Database\Migrations\Migration;

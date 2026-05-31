@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\BookingMapperService;
 use App\Services\EmailParserService;
 use App\Services\OpenRouterService;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class TestOtaEmailCommand extends Command
@@ -34,8 +35,9 @@ class TestOtaEmailCommand extends Command
             [$emailBody, $emailSubject, $sender] = $this->getSampleEmail();
             $this->info('📧 Using built-in sample email');
         } elseif ($emailFile = $this->option('email-file')) {
-            if (!file_exists($emailFile)) {
+            if (! file_exists($emailFile)) {
                 $this->error("File not found: {$emailFile}");
+
                 return self::FAILURE;
             }
             $emailBody = file_get_contents($emailFile);
@@ -52,19 +54,21 @@ class TestOtaEmailCommand extends Command
             $sender = 'info.partner@tiket.com';
         } else {
             $this->error('Please specify --sample, --email-file=<path>, or --raw');
+
             return self::FAILURE;
         }
 
         $this->newLine();
         $this->info("Subject: {$emailSubject}");
         $this->info("Sender: {$sender}");
-        $this->info("Body length: " . strlen($emailBody) . " chars");
+        $this->info('Body length: '.strlen($emailBody).' chars');
         $this->newLine();
 
         // ─── Step 2: Validate sender ───────────────────────────────
         $this->info('─── Step 1: Sender Validation ───');
-        if (!$parser->isWhitelistedSender($sender)) {
+        if (! $parser->isWhitelistedSender($sender)) {
             $this->error("❌ Sender not whitelisted: {$sender}");
+
             return self::FAILURE;
         }
         $this->info("✅ Sender whitelisted: {$sender}");
@@ -83,7 +87,7 @@ class TestOtaEmailCommand extends Command
         if ($this->option('skip-ai')) {
             $this->info('─── Step 3: AI Parsing (SKIPPED) ───');
             $aiData = [
-                'reservation_id' => 'TEST-' . strtoupper(substr(md5(time()), 0, 8)),
+                'reservation_id' => 'TEST-'.strtoupper(substr(md5(time()), 0, 8)),
                 'guest_name' => 'Budi Santoso',
                 'checkin_date' => '2026-06-15',
                 'checkout_date' => '2026-06-17',
@@ -96,21 +100,22 @@ class TestOtaEmailCommand extends Command
                 'ota_source' => $otaSource,
             ];
             $this->info('Using test data:');
-            $this->table(['Field', 'Value'], collect($aiData)->map(fn($v, $k) => [$k, $v])->toArray());
+            $this->table(['Field', 'Value'], collect($aiData)->map(fn ($v, $k) => [$k, $v])->toArray());
         } else {
             $this->info('─── Step 3: AI Parsing (OpenRouter) ───');
             $this->info('⏳ Sending to AI...');
 
             $aiData = $openRouter->parseBookingEmail($emailBody, $emailSubject, $otaSource);
 
-            if (!$aiData) {
+            if (! $aiData) {
                 $this->error('❌ AI parsing failed');
+
                 return self::FAILURE;
             }
 
             $this->info('✅ AI parsing successful');
             $this->newLine();
-            $this->table(['Field', 'Value'], collect($aiData)->map(fn($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray());
+            $this->table(['Field', 'Value'], collect($aiData)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray());
         }
         $this->newLine();
 
@@ -124,25 +129,26 @@ class TestOtaEmailCommand extends Command
         if (empty($aiData['guest_name'])) {
             $errors[] = 'Missing guest_name';
         }
-        if (!empty($aiData['checkin_date'])) {
+        if (! empty($aiData['checkin_date'])) {
             try {
-                \Carbon\Carbon::parse($aiData['checkin_date']);
+                Carbon::parse($aiData['checkin_date']);
             } catch (\Exception $e) {
                 $errors[] = "Invalid checkin_date: {$aiData['checkin_date']}";
             }
         }
-        if (!empty($aiData['checkout_date'])) {
+        if (! empty($aiData['checkout_date'])) {
             try {
-                \Carbon\Carbon::parse($aiData['checkout_date']);
+                Carbon::parse($aiData['checkout_date']);
             } catch (\Exception $e) {
                 $errors[] = "Invalid checkout_date: {$aiData['checkout_date']}";
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             foreach ($errors as $error) {
                 $this->error("❌ {$error}");
             }
+
             return self::FAILURE;
         }
         $this->info('✅ All validations passed');
@@ -153,7 +159,7 @@ class TestOtaEmailCommand extends Command
         $mapped = $mapper->mapToReservation($aiData);
         $this->info('✅ Mapped to reservation format');
         $this->newLine();
-        $this->table(['Field', 'Value'], collect($mapped)->map(fn($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray());
+        $this->table(['Field', 'Value'], collect($mapped)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray());
         $this->newLine();
 
         // ─── Summary ───────────────────────────────────────────────
@@ -175,7 +181,7 @@ class TestOtaEmailCommand extends Command
     {
         $subject = 'Booking Confirmation - Tiket.com Reservation #TK-987654';
 
-        $body = <<<EMAIL
+        $body = <<<'EMAIL'
 Dear Partner,
 
 We are pleased to confirm the following reservation at your property.

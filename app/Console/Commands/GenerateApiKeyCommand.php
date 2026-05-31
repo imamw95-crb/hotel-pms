@@ -42,8 +42,9 @@ class GenerateApiKeyCommand extends Command
             $user = User::whereIn('role', ['owner', 'admin'])->first();
         }
 
-        if (!$user) {
+        if (! $user) {
             $this->error('User tidak ditemukan!');
+
             return 1;
         }
 
@@ -72,8 +73,8 @@ class GenerateApiKeyCommand extends Command
         $this->info('========================================');
         $this->info('');
         $this->info('Penggunaan:');
-        $this->info('  Header: X-API-Key: ' . $apiKey);
-        $this->info('  Query : ?api_key=' . $apiKey);
+        $this->info('  Header: X-API-Key: '.$apiKey);
+        $this->info('  Query : ?api_key='.$apiKey);
 
         return 0;
     }

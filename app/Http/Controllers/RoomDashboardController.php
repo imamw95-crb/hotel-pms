@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Reservation;
+use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -25,7 +25,7 @@ class RoomDashboardController extends Controller
         $availableRoomsCount = 0;
         $checkinsToday = 0;
         $checkoutsToday = 0;
-        
+
         // Check-in/check-out jam 12:00 siang
         $checkinsToday = Reservation::whereDate('check_in', '>=', $dateFrom)
             ->whereDate('check_in', '<=', $dateTo)
@@ -56,16 +56,16 @@ class RoomDashboardController extends Controller
             ->values();
 
         // Query kamar dengan filter
-        $roomsQuery = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo, $statusFilter) {
-                $q->where(function ($query) use ($dateFrom, $dateTo, $statusFilter) {
-                    $query->where('status', 'checked_in')
-                        ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
-                            $sub->where('status', 'pending')
-                                ->whereDate('check_in', '>=', $dateFrom)
-                                ->whereDate('check_in', '<=', $dateTo);
-                        });
-                });
-            }, 'reservations.guest']);
+        $roomsQuery = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo) {
+            $q->where(function ($query) use ($dateFrom, $dateTo) {
+                $query->where('status', 'checked_in')
+                    ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                        $sub->where('status', 'pending')
+                            ->whereDate('check_in', '>=', $dateFrom)
+                            ->whereDate('check_in', '<=', $dateTo);
+                    });
+            });
+        }, 'reservations.guest']);
 
         // Filter by room type
         if ($roomTypeFilter !== 'all') {
@@ -89,7 +89,7 @@ class RoomDashboardController extends Controller
             $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
                 ->where(function ($q) use ($dateFrom, $dateTo) {
                     $q->where('check_in', '<', $dateTo)
-                      ->where('check_out', '>', $dateFrom);
+                        ->where('check_out', '>', $dateFrom);
                 })
                 ->pluck('room_id')
                 ->unique()
@@ -120,13 +120,13 @@ class RoomDashboardController extends Controller
             ->toArray();
 
         $roomsQuery = Room::with(['roomType', 'reservations' => function ($q) use ($dateFrom, $dateTo) {
-                $q->where('status', 'checked_in')
-                    ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
-                        $sub->where('status', 'pending')
-                            ->whereDate('check_in', '>=', $dateFrom)
-                            ->whereDate('check_in', '<=', $dateTo);
-                    });
-            }, 'reservations.guest']);
+            $q->where('status', 'checked_in')
+                ->orWhere(function ($sub) use ($dateFrom, $dateTo) {
+                    $sub->where('status', 'pending')
+                        ->whereDate('check_in', '>=', $dateFrom)
+                        ->whereDate('check_in', '<=', $dateTo);
+                });
+        }, 'reservations.guest']);
 
         if ($roomTypeFilter !== 'all') {
             $roomsQuery->where('room_type_name', $roomTypeFilter);
@@ -200,10 +200,10 @@ class RoomDashboardController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => count($validated['room_ids']) . " kamar diubah ke status {$validated['status']}",
+                'message' => count($validated['room_ids'])." kamar diubah ke status {$validated['status']}",
             ]);
         }
 
-        return back()->with('success', count($validated['room_ids']) . " kamar diubah ke status {$validated['status']}");
+        return back()->with('success', count($validated['room_ids'])." kamar diubah ke status {$validated['status']}");
     }
 }

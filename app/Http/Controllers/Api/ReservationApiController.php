@@ -3,15 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Guest;
+use App\Models\MHSLog;
 use App\Models\Reservation;
 use App\Models\Room;
-use App\Models\Guest;
 use App\Models\Transaction;
-use App\Models\MHSLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class ReservationApiController extends Controller
 {
@@ -32,14 +32,14 @@ class ReservationApiController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('reservation_number', 'like', "%{$search}%")
-                  ->orWhereHas('guest', function ($q) use ($search) {
-                      $q->where('guest_name', 'like', "%{$search}%")
-                        ->orWhere('id_number', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('room', function ($q) use ($search) {
-                      $q->where('room_number', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('id_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('room_number', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -94,27 +94,27 @@ class ReservationApiController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'guest_name'       => 'required|string|max:255',
-            'guest_phone'      => 'nullable|string|max:20',
-            'guest_email'      => 'nullable|email|max:255',
-            'guest_id_number'  => 'nullable|string|max:50',
-            'room_id'          => 'required|exists:rooms,id',
-            'check_in'         => 'required|date_format:Y-m-d',
-            'check_out'        => 'required|date_format:Y-m-d|after:check_in',
-            'guest_count'      => 'nullable|integer|min:1|max:10',
-            'total_amount'     => 'nullable|numeric|min:0',
-            'payment_method'   => 'nullable|string|max:50',
-            'notes'            => 'nullable|string|max:1000',
-            'ota_source'       => 'nullable|string|max:50',
+            'guest_name' => 'required|string|max:255',
+            'guest_phone' => 'nullable|string|max:20',
+            'guest_email' => 'nullable|email|max:255',
+            'guest_id_number' => 'nullable|string|max:50',
+            'room_id' => 'required|exists:rooms,id',
+            'check_in' => 'required|date_format:Y-m-d',
+            'check_out' => 'required|date_format:Y-m-d|after:check_in',
+            'guest_count' => 'nullable|integer|min:1|max:10',
+            'total_amount' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:1000',
+            'ota_source' => 'nullable|string|max:50',
             'ota_reservation_number' => 'nullable|string|max:100',
         ]);
 
-        $checkIn  = Carbon::parse($validated['check_in'])->setTime(14, 0);
+        $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0);
         $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0);
 
         // Cek kamar available (back-to-back allowed)
         $room = Room::findOrFail($validated['room_id']);
-        if (!$room->isAvailable($checkIn->format('Y-m-d H:i:s'), $checkOut->format('Y-m-d H:i:s'))) {
+        if (! $room->isAvailable($checkIn->format('Y-m-d H:i:s'), $checkOut->format('Y-m-d H:i:s'))) {
             return response()->json([
                 'success' => false,
                 'message' => "Kamar {$room->room_number} tidak tersedia untuk periode tersebut.",
@@ -127,8 +127,8 @@ class ReservationApiController extends Controller
                 $guest = Guest::firstOrCreate(
                     ['guest_name' => $validated['guest_name']],
                     [
-                        'phone'     => $validated['guest_phone'] ?? null,
-                        'email'     => $validated['guest_email'] ?? null,
+                        'phone' => $validated['guest_phone'] ?? null,
+                        'email' => $validated['guest_email'] ?? null,
                         'id_number' => $validated['guest_id_number'] ?? null,
                     ]
                 );
@@ -141,21 +141,21 @@ class ReservationApiController extends Controller
 
                 $otaSource = $validated['ota_source'] ?? 'api';
                 $reservation = Reservation::create([
-                    'guest_id'               => $guest->id,
-                    'room_id'                => $room->id,
-                    'check_in'               => $checkIn,
-                    'check_out'              => $checkOut,
-                    'number_of_cards'        => $validated['guest_count'] ?? 1,
-                    'total_amount'           => $totalAmount,
-                    'payment_method'         => $validated['payment_method'] ?? 'cash',
-                    'paid_amount'            => 0,
-                    'status'                 => 'pending',
-                    'notes'                  => $validated['notes'] ?? null,
-                    'ota_source'             => $otaSource,
-                    'ota_payment_status'     => $otaSource === 'website' ? 'pending' : null,
+                    'guest_id' => $guest->id,
+                    'room_id' => $room->id,
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
+                    'number_of_cards' => $validated['guest_count'] ?? 1,
+                    'total_amount' => $totalAmount,
+                    'payment_method' => $validated['payment_method'] ?? 'cash',
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                    'notes' => $validated['notes'] ?? null,
+                    'ota_source' => $otaSource,
+                    'ota_payment_status' => $otaSource === 'website' ? 'pending' : null,
                     'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
-                    'room_type_name'         => $room->room_type_name,
-                    'created_by'             => auth()->id(),
+                    'room_type_name' => $room->room_type_name,
+                    'created_by' => auth()->id(),
                 ]);
 
                 return $reservation;
@@ -171,7 +171,7 @@ class ReservationApiController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuat reservasi: ' . $e->getMessage(),
+                'message' => 'Gagal membuat reservasi: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -190,13 +190,13 @@ class ReservationApiController extends Controller
         }
 
         $validated = $request->validate([
-            'guest_name'     => 'sometimes|string|max:255',
-            'guest_phone'    => 'nullable|string|max:20',
-            'guest_email'    => 'nullable|email|max:255',
-            'check_in'       => 'sometimes|date_format:Y-m-d',
-            'check_out'      => 'sometimes|date_format:Y-m-d|after:check_in',
-            'guest_count'    => 'nullable|integer|min:1|max:10',
-            'notes'          => 'nullable|string|max:1000',
+            'guest_name' => 'sometimes|string|max:255',
+            'guest_phone' => 'nullable|string|max:20',
+            'guest_email' => 'nullable|email|max:255',
+            'check_in' => 'sometimes|date_format:Y-m-d',
+            'check_out' => 'sometimes|date_format:Y-m-d|after:check_in',
+            'guest_count' => 'nullable|integer|min:1|max:10',
+            'notes' => 'nullable|string|max:1000',
             'payment_method' => 'nullable|string|max:50',
         ]);
 
@@ -207,9 +207,9 @@ class ReservationApiController extends Controller
                 $guest = $reservation->guest;
                 $guest->update(array_filter([
                     'guest_name' => $validated['guest_name'] ?? null,
-                    'phone'      => $validated['guest_phone'] ?? null,
-                    'email'      => $validated['guest_email'] ?? null,
-                ], fn($v) => $v !== null));
+                    'phone' => $validated['guest_phone'] ?? null,
+                    'email' => $validated['guest_email'] ?? null,
+                ], fn ($v) => $v !== null));
             }
 
             // Update check_in/check_out jika ada
@@ -244,9 +244,10 @@ class ReservationApiController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal update reservasi: ' . $e->getMessage(),
+                'message' => 'Gagal update reservasi: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -342,15 +343,15 @@ class ReservationApiController extends Controller
 
         $validated = $request->validate([
             'new_room_id' => 'required|exists:rooms,id',
-            'reason'      => 'nullable|string|max:255',
+            'reason' => 'nullable|string|max:255',
         ]);
 
         $newRoom = Room::findOrFail($validated['new_room_id']);
 
-        $checkIn  = $reservation->check_in->format('Y-m-d H:i:s');
+        $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
         $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
 
-        if (!$newRoom->isAvailable($checkIn, $checkOut, $reservation->id)) {
+        if (! $newRoom->isAvailable($checkIn, $checkOut, $reservation->id)) {
             return response()->json([
                 'success' => false,
                 'message' => "Kamar {$newRoom->room_number} tidak tersedia untuk periode tersebut.",
@@ -374,7 +375,7 @@ class ReservationApiController extends Controller
         $reservation->room_type_name = $newRoom->room_type_name;
         $reservation->total_amount = $newTotalAmount;
         if ($validated['reason']) {
-            $reservation->notes = ($reservation->notes ? $reservation->notes . "\n" : '') . '[' . now()->format('d/m/Y H:i') . '] Pindah kamar dari ' . $oldRoomNumber . ' ke ' . $newRoomNumber . ': ' . $validated['reason'];
+            $reservation->notes = ($reservation->notes ? $reservation->notes."\n" : '').'['.now()->format('d/m/Y H:i').'] Pindah kamar dari '.$oldRoomNumber.' ke '.$newRoomNumber.': '.$validated['reason'];
         }
         $reservation->save();
 
@@ -420,11 +421,11 @@ class ReservationApiController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_type'       => 'required|in:dp,pelunasan,tambahan',
-            'payment_method'     => 'required|string|max:50',
-            'amount'             => 'required|numeric|min:0',
+            'payment_type' => 'required|in:dp,pelunasan,tambahan',
+            'payment_method' => 'required|string|max:50',
+            'amount' => 'required|numeric|min:0',
             'ota_payment_status' => 'nullable|in:paid_ota,partial_ota,unpaid_ota',
-            'ota_paid_amount'    => 'nullable|numeric|min:0',
+            'ota_paid_amount' => 'nullable|numeric|min:0',
         ]);
 
         $hotelAmount = $validated['amount'];
@@ -449,19 +450,19 @@ class ReservationApiController extends Controller
             if ($otaPaidAmount > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
                 Transaction::create([
-                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $otaTxnType,
                     'amount' => $otaPaidAmount,
                     'payment_method' => $validated['payment_method'],
-                    'notes' => 'OTA ' . $validated['payment_method'] . ' — ' . str_replace('_', ' ', $otaPaymentStatus),
+                    'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
                     'created_by' => auth()->id(),
                 ]);
             }
 
             if ($hotelAmount > 0) {
                 Transaction::create([
-                    'transaction_number' => 'TRX-' . strtoupper(uniqid()),
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $validated['payment_type'],
                     'amount' => $hotelAmount,
@@ -483,14 +484,15 @@ class ReservationApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Pembayaran sebesar Rp " . number_format($validated['amount'], 0, ',', '.') . " berhasil ditambahkan.",
+                'message' => 'Pembayaran sebesar Rp '.number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.',
                 'data' => $reservation,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan pembayaran: ' . $e->getMessage(),
+                'message' => 'Gagal menyimpan pembayaran: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -586,11 +588,11 @@ class ReservationApiController extends Controller
     public function availableRooms(Request $request)
     {
         $validated = $request->validate([
-            'check_in'  => 'required|date_format:Y-m-d',
+            'check_in' => 'required|date_format:Y-m-d',
             'check_out' => 'required|date_format:Y-m-d|after:check_in',
         ]);
 
-        $checkIn  = Carbon::parse($validated['check_in'])->setTime(14, 0)->format('Y-m-d H:i:s');
+        $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0)->format('Y-m-d H:i:s');
         $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0)->format('Y-m-d H:i:s');
 
         $availableRooms = Room::where('status', '!=', 'maintenance')
@@ -608,9 +610,9 @@ class ReservationApiController extends Controller
             'success' => true,
             'data' => $availableRooms,
             'meta' => [
-                'check_in'  => $validated['check_in'],
+                'check_in' => $validated['check_in'],
                 'check_out' => $validated['check_out'],
-                'total'     => $availableRooms->count(),
+                'total' => $availableRooms->count(),
             ],
         ]);
     }
@@ -629,9 +631,9 @@ class ReservationApiController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('guest_name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('id_number', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('id_number', 'like', "%{$search}%");
             });
         }
 
@@ -656,20 +658,20 @@ class ReservationApiController extends Controller
 
         $stats = [
             'reservations' => [
-                'pending'     => Reservation::where('status', 'pending')->count(),
-                'checked_in'  => Reservation::where('status', 'checked_in')->count(),
+                'pending' => Reservation::where('status', 'pending')->count(),
+                'checked_in' => Reservation::where('status', 'checked_in')->count(),
                 'checked_out' => Reservation::where('status', 'checked_out')->count(),
-                'cancelled'   => Reservation::where('status', 'cancelled')->count(),
+                'cancelled' => Reservation::where('status', 'cancelled')->count(),
             ],
             'rooms' => [
-                'total'       => Room::count(),
-                'available'   => Room::where('status', 'available')->count(),
-                'occupied'    => Room::where('status', 'occupied')->count(),
-                'cleaning'    => Room::where('status', 'cleaning')->count(),
+                'total' => Room::count(),
+                'available' => Room::where('status', 'available')->count(),
+                'occupied' => Room::where('status', 'occupied')->count(),
+                'cleaning' => Room::where('status', 'cleaning')->count(),
                 'maintenance' => Room::where('status', 'maintenance')->count(),
             ],
             'today' => [
-                'checkins'  => Reservation::where('status', 'pending')->whereDate('check_in', $today)->count(),
+                'checkins' => Reservation::where('status', 'pending')->whereDate('check_in', $today)->count(),
                 'checkouts' => Reservation::where('status', 'checked_in')->whereDate('check_out', $today)->count(),
             ],
             'payments' => [
@@ -694,7 +696,7 @@ class ReservationApiController extends Controller
         $user = $request->user();
 
         // Generate random key
-        $plainKey = 'hms_' . Str::random(40);
+        $plainKey = 'hms_'.Str::random(40);
 
         // Simpan sebagai Sanctum token (hashed)
         $token = $user->createToken('api-key', ['*'], now()->addYear());
@@ -710,7 +712,7 @@ class ReservationApiController extends Controller
             'message' => 'API Key berhasil dibuat. Simpan key ini, tidak bisa ditampilkan lagi.',
             'data' => [
                 'api_key' => $plainKey,
-                'name'    => 'api-key',
+                'name' => 'api-key',
                 'created_at' => now()->toISOString(),
                 'expires_at' => now()->addYear()->toISOString(),
             ],
@@ -745,7 +747,7 @@ class ReservationApiController extends Controller
             ->where('name', 'api-key')
             ->delete();
 
-        if (!$deleted) {
+        if (! $deleted) {
             return response()->json([
                 'success' => false,
                 'message' => 'API Key tidak ditemukan.',

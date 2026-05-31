@@ -36,15 +36,16 @@ class ReadHotelEmailsCommand extends Command
         $this->info('📧 OTA Email Autopilot — Auto-sync to Reservations');
         Log::info('hotel:read-emails started');
 
-        $dryRun   = $this->option('dry-run');
-        $limit    = (int) $this->option('limit');
-        $today    = $this->option('today');
-        $days     = $this->option('days') ? (int) $this->option('days') : null;
-        $daemon   = $this->option('daemon');
+        $dryRun = $this->option('dry-run');
+        $limit = (int) $this->option('limit');
+        $today = $this->option('today');
+        $days = $this->option('days') ? (int) $this->option('days') : null;
+        $daemon = $this->option('daemon');
         $interval = (int) $this->option('interval');
 
         if ($daemon) {
             $this->info("🔄 Daemon mode — polling every {$interval}s (Ctrl+C to stop)");
+
             return $this->runDaemon($imap, $parser, $openRouter, $sync, $availability, $interval, $dryRun, $today, $days);
         }
 
@@ -81,7 +82,7 @@ class ReadHotelEmailsCommand extends Command
         while ($running) {
             $cycle++;
             $this->newLine();
-            $this->info("═══ Cycle #{$cycle} — " . now()->format('Y-m-d H:i:s') . " ═══");
+            $this->info("═══ Cycle #{$cycle} — ".now()->format('Y-m-d H:i:s').' ═══');
 
             $result = $this->processBatch($imap, $parser, $openRouter, $sync, $availability, 50, $dryRun, $today, $days);
 
@@ -95,7 +96,9 @@ class ReadHotelEmailsCommand extends Command
                 pcntl_signal_dispatch();
             }
 
-            if (!$running) break;
+            if (! $running) {
+                break;
+            }
 
             $this->info("💤 Sleeping {$interval}s...");
             sleep($interval);
@@ -103,6 +106,7 @@ class ReadHotelEmailsCommand extends Command
 
         $imap->disconnect();
         $this->info('✅ Daemon stopped.');
+
         return self::SUCCESS;
     }
 
@@ -122,9 +126,10 @@ class ReadHotelEmailsCommand extends Command
         ?int $days
     ): int {
         // Connect to IMAP
-        if (!$imap->connect()) {
+        if (! $imap->connect()) {
             $this->error('❌ IMAP connection failed');
             Log::error('hotel:read-emails: IMAP connection failed');
+
             return self::FAILURE;
         }
 
@@ -145,6 +150,7 @@ class ReadHotelEmailsCommand extends Command
         if ($messages->isEmpty()) {
             $this->info('ℹ️ No new OTA emails');
             $imap->disconnect();
+
             return self::SUCCESS;
         }
 
@@ -152,39 +158,41 @@ class ReadHotelEmailsCommand extends Command
         $this->newLine();
 
         $processed = 0;
-        $skipped   = 0;
-        $failed    = 0;
+        $skipped = 0;
+        $failed = 0;
 
         foreach ($messages as $message) {
             if (($processed + $skipped + $failed) >= $limit) {
                 break;
             }
 
-            $uid     = (string) $message->getUid();
-            $sender  = $message->getFrom()[0]->mail ?? '';
+            $uid = (string) $message->getUid();
+            $sender = $message->getFrom()[0]->mail ?? '';
             $subject = $message->getSubject() ?? '';
-            $body    = $this->extractBody($message);
+            $body = $this->extractBody($message);
 
-            $this->info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             $this->info("[{$uid}] {$subject}");
             $this->info("From: {$sender}");
 
             try {
                 // ═══ STEP 1: CHECK UID FIRST (duplicate prevention) ═══
                 if ($parser->isDuplicate($uid, $sender)) {
-                    $this->warn("  ⏭️ Skipped: already processed (duplicate UID)");
+                    $this->warn('  ⏭️ Skipped: already processed (duplicate UID)');
                     $parser->markDuplicate($uid, $sender, $subject);
                     $imap->markAsSeen($message);
                     $skipped++;
+
                     continue;
                 }
 
                 // ═══ STEP 2: VALIDATE SENDER (whitelist check) ═══
-                if (!$parser->isWhitelistedSender($sender)) {
-                    $this->warn("  ⏭️ Skipped: sender not in OTA whitelist");
+                if (! $parser->isWhitelistedSender($sender)) {
+                    $this->warn('  ⏭️ Skipped: sender not in OTA whitelist');
                     $parser->markSkipped($uid, $sender, $subject, 'Sender not in OTA whitelist', $body);
                     $imap->markAsSeen($message);
                     $skipped++;
+
                     continue;
                 }
 
@@ -197,58 +205,63 @@ class ReadHotelEmailsCommand extends Command
                 // ═══ STEP 4: AI PARSING ═══
                 $aiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
 
-                if (!$aiData) {
-                    $this->error("  ❌ AI parsing failed");
+                if (! $aiData) {
+                    $this->error('  ❌ AI parsing failed');
                     $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI parsing returned null', $body);
                     // Don't mark as seen — allow retry
                     $failed++;
+
                     continue;
                 }
 
                 $this->info("  ✅ AI: {$aiData['guest_name']} ({$aiData['reservation_id']})");
 
                 // ═══ STEP 5: VALIDATE AI OUTPUT ═══
-                if (!$this->validateAiOutput($aiData)) {
-                    $this->error("  ❌ AI output validation failed");
+                if (! $this->validateAiOutput($aiData)) {
+                    $this->error('  ❌ AI output validation failed');
                     $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI output validation failed', $body);
                     $failed++;
+
                     continue;
                 }
 
                 // ═══ STEP 6: DRY-RUN CHECK ═══
                 if ($dryRun) {
-                    $this->info("  🔍 Dry-run: not saving");
+                    $this->info('  🔍 Dry-run: not saving');
                     $this->info("     → Would create: {$aiData['guest_name']}, {$aiData['checkin_date']} to {$aiData['checkout_date']}");
                     $imap->markAsSeen($message);
                     $processed++;
+
                     continue;
                 }
 
                 // ═══ STEP 7: CHECK ROOM AVAILABILITY (overbooking prevention) ═══
-                $checkIn  = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
+                $checkIn = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
                 $checkOut = Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
 
                 if ($checkIn->gte($checkOut)) {
-                    $this->error("  ❌ Invalid dates: check-in >= check-out");
+                    $this->error('  ❌ Invalid dates: check-in >= check-out');
                     $parser->markFailed($uid, $sender, $subject, $otaSource, 'Invalid dates: check-in >= check-out', $body);
                     $failed++;
+
                     continue;
                 }
 
                 // Find available room by type (back-to-back aware)
                 $roomId = $sync->findAvailableRoom($aiData['room_type'] ?? null, $checkIn, $checkOut);
 
-                if (!$roomId && ($aiData['status'] ?? '') !== 'cancelled') {
+                if (! $roomId && ($aiData['status'] ?? '') !== 'cancelled') {
                     $this->warn("  ⚠️ No available room for type '{$aiData['room_type']}' — reservation will be unassigned");
                 }
 
                 // ═══ STEP 8: CREATE/UPDATE RESERVATION ═══
                 $result = $sync->sync($aiData, $roomId);
 
-                if (!$result['success']) {
-                    $this->error("  ❌ Sync failed");
-                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'Sync failed: ' . ($result['error'] ?? 'unknown'), $body);
+                if (! $result['success']) {
+                    $this->error('  ❌ Sync failed');
+                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'Sync failed: '.($result['error'] ?? 'unknown'), $body);
                     $failed++;
+
                     continue;
                 }
 
@@ -261,8 +274,8 @@ class ReadHotelEmailsCommand extends Command
 
                 $paymentInfo = '';
                 if ($reservation->ota_reservation_number) {
-                    $paidStr = 'Rp ' . number_format($reservation->paid_amount, 0, ',', '.');
-                    $totalStr = 'Rp ' . number_format($reservation->total_amount, 0, ',', '.');
+                    $paidStr = 'Rp '.number_format($reservation->paid_amount, 0, ',', '.');
+                    $totalStr = 'Rp '.number_format($reservation->total_amount, 0, ',', '.');
                     $statusStr = str_replace('_', ' ', $reservation->ota_payment_status ?? 'unpaid_ota');
                     $paymentInfo = " | {$paidStr}/{$totalStr} ({$statusStr})";
                 }
@@ -276,9 +289,9 @@ class ReadHotelEmailsCommand extends Command
                 $processed++;
 
             } catch (\Exception $e) {
-                $this->error("  ❌ Error: " . $e->getMessage());
+                $this->error('  ❌ Error: '.$e->getMessage());
                 Log::error('hotel:read-emails: error', [
-                    'uid'   => $uid,
+                    'uid' => $uid,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
@@ -287,7 +300,7 @@ class ReadHotelEmailsCommand extends Command
                 try {
                     $parser->markFailed($uid, $sender, $subject, $otaSource ?? '', $e->getMessage(), $body);
                 } catch (\Exception $markEx) {
-                    Log::error('Failed to mark email as failed: ' . $markEx->getMessage());
+                    Log::error('Failed to mark email as failed: '.$markEx->getMessage());
                 }
 
                 $failed++;
@@ -301,6 +314,7 @@ class ReadHotelEmailsCommand extends Command
         $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         $imap->disconnect();
+
         return self::SUCCESS;
     }
 
@@ -311,16 +325,19 @@ class ReadHotelEmailsCommand extends Command
     {
         if (empty($data['reservation_id'])) {
             $this->warn('  ⚠️ Missing reservation_id');
+
             return false;
         }
 
         if (empty($data['guest_name'])) {
             $this->warn('  ⚠️ Missing guest_name');
+
             return false;
         }
 
         if (empty($data['checkin_date']) || empty($data['checkout_date'])) {
             $this->warn('  ⚠️ Missing dates');
+
             return false;
         }
 
@@ -329,10 +346,12 @@ class ReadHotelEmailsCommand extends Command
             $co = Carbon::parse($data['checkout_date']);
             if ($ci->gte($co)) {
                 $this->warn('  ⚠️ check-in >= check-out');
+
                 return false;
             }
         } catch (\Exception $e) {
             $this->warn('  ⚠️ Invalid date format');
+
             return false;
         }
 
@@ -356,8 +375,9 @@ class ReadHotelEmailsCommand extends Command
                 }
             }
         } catch (\Exception $e) {
-            Log::warning('Body extraction error: ' . $e->getMessage());
+            Log::warning('Body extraction error: '.$e->getMessage());
         }
+
         return trim(preg_replace('/\s+/', ' ', $body));
     }
 }
