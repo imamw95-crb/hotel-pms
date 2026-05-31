@@ -25,6 +25,36 @@
             </div>
         </div>
 
+        {{-- Selected Rooms Section — shows after rooms are checked --}}
+        <div id="selectedRoomsSection" class="hidden mb-4 p-3 border rounded-lg bg-gray-50">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-gray-700"><i class="fas fa-bed text-green-500 mr-1"></i> Kamar Dipilih</h3>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500">Harga bulk:</span>
+                    <input type="number" id="bulkPrice" class="w-24 border rounded px-2 py-1 text-sm" min="0" step="1000" placeholder="Rp">
+                    <button type="button" onclick="BookingGroup.applyBulkPrice()" class="bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600">Terapkan ke Semua</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-gray-500 text-xs">
+                            <th class="p-2 text-left">Kamar</th>
+                            <th class="p-2 text-left">Tipe</th>
+                            <th class="p-2 text-center">Harga Normal (Wd/We)</th>
+                            <th class="p-2 text-center">Harga Edit (Rp)</th>
+                            <th class="p-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="selectedRoomsTable"></tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center mt-3 pt-2 border-t border-gray-200">
+                <span class="font-bold text-gray-700">Total Tagihan:</span>
+                <span id="totalTagihanGroup" class="font-bold text-lg text-blue-700">Rp 0</span>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
@@ -60,15 +90,30 @@
                 <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
                 <div class="flex space-x-4 mt-2">
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="full" checked>
+                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
                         <span>Lunas</span>
                     </label>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="radio" name="payment_type" value="dp">
+                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
                         <span>DP</span>
                     </label>
                 </div>
+                {{-- DP Amount Section (hidden by default) --}}
+                <div id="dpAmountSection" class="hidden mt-3 p-3 border border-amber-200 rounded-lg bg-amber-50">
+                    <label class="block text-gray-700 font-bold mb-1 text-sm">Jumlah DP (Rp)</label>
+                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan jumlah DP">
+                    <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayarGroup" class="font-bold text-blue-600">Rp 0</span></p>
+                </div>
             </div>
+        </div>
+
+        {{-- Sarapan --}}
+        <div class="mb-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" name="include_breakfast" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <span class="text-gray-700 font-medium"><i class="fas fa-coffee text-amber-600 mr-1"></i> Termasuk Sarapan</span>
+            </label>
+            <p class="text-xs text-gray-500 mt-1 ml-6">Centang jika tamu mendapatkan sarapan</p>
         </div>
 
         <div class="mb-4">

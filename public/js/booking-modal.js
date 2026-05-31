@@ -298,6 +298,12 @@
             dpInput.addEventListener('input', updateSisaBayar);
         }
 
+        // ── Payment type radio change listeners ──
+        var paymentRadios = document.querySelectorAll('input[name="payment_type"]');
+        for (var r = 0; r < paymentRadios.length; r++) {
+            paymentRadios[r].addEventListener('change', toggleDpFields);
+        }
+
         // ── Auto-trigger if dates pre-filled ──
         if (checkInEl && checkInEl.value && checkOutEl && checkOutEl.value) {
             checkAvailability();

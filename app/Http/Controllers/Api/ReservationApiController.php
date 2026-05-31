@@ -139,6 +139,7 @@ class ReservationApiController extends Controller
                     $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
                 }
 
+                $otaSource = $validated['ota_source'] ?? 'api';
                 $reservation = Reservation::create([
                     'guest_id'               => $guest->id,
                     'room_id'                => $room->id,
@@ -150,7 +151,8 @@ class ReservationApiController extends Controller
                     'paid_amount'            => 0,
                     'status'                 => 'pending',
                     'notes'                  => $validated['notes'] ?? null,
-                    'ota_source'             => $validated['ota_source'] ?? 'api',
+                    'ota_source'             => $otaSource,
+                    'ota_payment_status'     => $otaSource === 'website' ? 'pending' : null,
                     'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
                     'room_type_name'         => $room->room_type_name,
                     'created_by'             => auth()->id(),

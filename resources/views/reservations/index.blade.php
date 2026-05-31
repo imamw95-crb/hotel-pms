@@ -51,6 +51,17 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div class="flex items-center justify-between">
             <div>
+                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Website</p>
+                <p class="text-xl font-bold text-sky-600 mt-0.5">{{ $stats['website'] ?? 0 }}</p>
+            </div>
+            <div class="w-10 h-10 bg-sky-50 rounded-lg flex items-center justify-center">
+                <i class="fas fa-globe text-sky-500"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div class="flex items-center justify-between">
+            <div>
                 <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Checked In</p>
                 <p class="text-xl font-bold text-green-600 mt-0.5">{{ $stats['checked_in'] ?? 0 }}</p>
             </div>
@@ -112,6 +123,16 @@
                 </select>
             </div>
 
+            <!-- Filter Sumber -->
+            <div class="w-full lg:w-36">
+                <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sumber</label>
+                <select name="sumber" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Semua Sumber</option>
+                    <option value="website" {{ ($sumber ?? '') === 'website' ? 'selected' : '' }}>🌐 Website</option>
+                    <option value="local" {{ ($sumber ?? '') === 'local' ? 'selected' : '' }}>🏨 Local</option>
+                </select>
+            </div>
+
             <!-- Tanggal Dari -->
             <div class="w-full lg:w-40">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Dari</label>
@@ -168,6 +189,11 @@
                             <a href="{{ route('reservations.show', $res) }}" class="font-semibold text-blue-600 text-sm hover:text-blue-800 hover:underline">
                                 {{ $res->reservation_number }}
                             </a>
+                            @if($res->ota_source === 'website')
+                                <span class="inline-flex items-center gap-0.5 bg-sky-100 text-sky-700 border border-sky-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" title="Booking dari Website">
+                                    <i class="fas fa-globe text-[8px]"></i> Web
+                                </span>
+                            @endif
                             @if($res->ota_reservation_number)
                                 <span class="inline-flex items-center gap-0.5 bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" title="OTA: {{ $res->ota_reservation_number }}">
                                     <i class="fas fa-globe text-[8px]"></i> OTA
@@ -221,9 +247,15 @@
                     </td>
                     <td class="px-4 py-3 text-center">
                         @if($res->status === 'pending')
-                            <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Pending
-                            </span>
+                            @if($res->ota_source === 'website')
+                                <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span> Menunggu Pembayaran
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Pending
+                                </span>
+                            @endif
                         @elseif($res->status === 'checked_in')
                             <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
                                 <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Checked In

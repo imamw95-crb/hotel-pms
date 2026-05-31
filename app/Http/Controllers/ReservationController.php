@@ -40,6 +40,16 @@ class ReservationController extends Controller
             $query->where('status', $status);
         }
 
+        // Filter sumber (website / local)
+        $sumber = $request->get('sumber');
+        if ($sumber === 'website') {
+            $query->where('ota_source', 'website');
+        } elseif ($sumber === 'local') {
+            $query->where(function ($q) {
+                $q->whereNull('ota_source')->orWhere('ota_source', '');
+            });
+        }
+
         // Filter tanggal
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
@@ -58,9 +68,10 @@ class ReservationController extends Controller
             'checked_in'  => Reservation::where('status', 'checked_in')->count(),
             'checked_out' => Reservation::where('status', 'checked_out')->count(),
             'cancelled'   => Reservation::where('status', 'cancelled')->count(),
+            'website'     => Reservation::where('ota_source', 'website')->count(),
         ];
 
-        return view('reservations.index', compact('reservations', 'search', 'status', 'dateFrom', 'dateTo', 'stats'));
+        return view('reservations.index', compact('reservations', 'search', 'status', 'sumber', 'dateFrom', 'dateTo', 'stats'));
     }
 
     public function show(Reservation $reservation)

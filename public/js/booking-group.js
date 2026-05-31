@@ -268,12 +268,21 @@
     // ── Toggle DP fields ──
     function toggleDpFields() {
         var dpSection = document.getElementById('dpAmountSection');
+        var dpInput = document.getElementById('dpAmount');
         var dpRadio = document.querySelector('input[name="payment_type"][value="dp"]');
-        if (dpRadio && dpRadio.checked && dpSection) {
+        var isDp = dpRadio && dpRadio.checked;
+
+        if (!dpSection || !dpInput) return;
+
+        if (isDp) {
             dpSection.classList.remove('hidden');
-        } else if (dpSection) {
+            dpInput.setAttribute('required', 'required');
+        } else {
             dpSection.classList.add('hidden');
+            dpInput.removeAttribute('required');
+            dpInput.value = '';
         }
+        updateSisaBayar();
     }
 
     // ── Update remaining balance ──
@@ -336,6 +345,12 @@
         var dpInput = document.getElementById('dpAmount');
         if (dpInput) {
             dpInput.addEventListener('input', updateSisaBayar);
+        }
+
+        // ── Payment type radio change listeners ──
+        var paymentRadios = document.querySelectorAll('input[name="payment_type"]');
+        for (var r = 0; r < paymentRadios.length; r++) {
+            paymentRadios[r].addEventListener('change', toggleDpFields);
         }
 
         // ── Auto-trigger if dates pre-filled ──
