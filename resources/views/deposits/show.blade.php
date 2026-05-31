@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Tanda Terima Deposit - {{ $deposit->receipt_number }}</title>
     @vite('resources/css/app.css')
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/hotel-pms/public/assets/fontawesome/css/all.min.css" rel="stylesheet">
     <style>
         @page { size: A5 landscape; margin: 8mm 10mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }

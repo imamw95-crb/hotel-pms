@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Laporan Housekeeping - {{ $dateFrom }} s/d {{ $dateTo }}</title>
     @vite('resources/css/app.css')
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/hotel-pms/public/assets/fontawesome/css/all.min.css" rel="stylesheet">
     <style>
         @page { size: A4 landscape; margin: 10mm 12mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }

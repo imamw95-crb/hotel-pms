@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Admin Dashboard') - Hotel PMS</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.23/+esm"></script>
+    <link href="/hotel-pms/public/assets/fontawesome/css/all.min.css" rel="stylesheet">
+    <script src="/hotel-pms/public/assets/chartjs/chart.js"></script>
+    <script type="module" src="/hotel-pms/public/assets/turbo/turbo.esm.js"></script>
     <script nomodule>
         // Fallback: Turbo tidak support browser ini (halaman tetap jalan normal)
     </script>
