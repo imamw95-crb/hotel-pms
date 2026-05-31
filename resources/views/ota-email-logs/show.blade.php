@@ -6,12 +6,12 @@
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
 
-    {{-- ─── Back Button ─── ──}}
+    {{-- Back Button --}}
     <a href="{{ route('ota-email-logs.index') }}" class="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center gap-1">
         <i class="fas fa-arrow-left"></i> Kembali ke Log
     </a>
 
-    {{-- ─── Info Card ─── ──}}
+    {{-- Info Card --}}
     <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-bold mb-4">Informasi Email</h2>
 
@@ -73,7 +73,7 @@
         </div>
     </div>
 
-    {{-- ─── Subject ─── ──}}
+    {{-- Subject --}}
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-sm font-bold text-gray-700 mb-2">Subjek Email</h3>
         <div class="bg-gray-50 rounded p-3 text-sm font-medium">
@@ -81,7 +81,7 @@
         </div>
     </div>
 
-    {{-- ─── Error Message ─── ──}}
+    {{-- Error Message --}}
     @if($log->error_message)
         <div class="bg-red-50 border border-red-200 rounded-lg p-4">
             <h3 class="text-sm font-bold text-red-700 mb-2 flex items-center gap-1">
@@ -91,7 +91,7 @@
         </div>
     @endif
 
-    {{-- ─── Raw Body ─── ──}}
+    {{-- Raw Body --}}
     @if($log->raw_body)
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center justify-between mb-3">
@@ -109,7 +109,7 @@
         </div>
     @endif
 
-    {{-- ─── Actions ─── ──}}
+    {{-- Actions --}}
     <div class="flex items-center gap-3">
         <a href="{{ route('ota-email-logs.index') }}"
             class="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-300">
