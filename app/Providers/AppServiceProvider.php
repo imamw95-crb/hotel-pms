@@ -3,8 +3,9 @@
 namespace App\Providers;
 
 use App\Models\NightAuditLog;
-use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,19 +22,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        URL::forceScheme('https');
+
         // Ensure helper functions are always loaded
-        if (file_exists($helper = app_path('Helpers/PermissionHelper.php'))) {
-            require_once $helper;
+        if (file_exists( = app_path('Helpers/PermissionHelper.php'))) {
+            require_once ;
         }
 
-        // Share Night Audit v2 status with the main layout
-        View::composer('layouts.app', function ($view) {
-            $today = now()->format('Y-m-d');
-            $locked = NightAuditLog::where('audit_date', $today)
-                ->where('status', 'locked')
-                ->exists();
-
-            $view->with('nightAuditPending', ! $locked);
+        // Share night audit status with all views
+        View::composer('*', function () {
+             = NightAuditLog::latest()->first();
+            ->with('nightAuditClosed',  && ->status === 'completed' && ->audit_date === now()->subDay()->toDateString());
         });
     }
 }

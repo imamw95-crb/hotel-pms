@@ -200,6 +200,15 @@ class ReadHotelEmailsCommand extends Command
                 $emailType = $parser->detectEmailType($subject, $body);
                 $otaSource = $parser->getOtaSource($sender);
 
+
+                // ═══ STEP 3b: SKIP UNKNOWN TYPES (no AI call needed) ═══
+                if ($emailType === 'unknown') {
+                    $this->warn("  ⏭️ Skipped: not a booking email");
+                    $parser->markSkipped($uid, $sender, $subject, 'Not a booking email (type: unknown)', $body);
+                    $imap->markAsSeen($message);
+                    $skipped++;
+                    continue;
+                }
                 $this->info("  📋 Type: {$emailType} | OTA: {$otaSource}");
 
                 // ═══ STEP 4: AI PARSING ═══
