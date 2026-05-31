@@ -40,6 +40,7 @@
             <a href="#ai-chat" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-robot mr-1.5 w-4 text-center"></i> AI Chat Assistant</a>
             <a href="#admin" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-cog mr-1.5 w-4 text-center"></i> Administrasi (Owner)</a>
             <a href="#api" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-plug mr-1.5 w-4 text-center"></i> API Eksternal</a>
+            <a href="#ota-email" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-envelope-open-text mr-1.5 w-4 text-center"></i> Log Email OTA</a>
         </div>
     </div>
 
@@ -159,7 +160,8 @@
                 <li>Isi data tamu: <em>Nama, No. Identitas, Telepon, Alamat (opsional), Email (opsional)</em></li>
                 <li>Atur <strong>Harga per Malam</strong> — otomatis terisi harga weekday/weekend, bisa diubah manual. Kosongkan untuk harga otomatis.</li>
                 <li>Centang <strong>Include Breakfast</strong> jika termasuk sarapan</li>
-                <li>Pilih <strong>Metode Pembayaran</strong></li>
+                <li>Isi <strong>DP (Down Payment)</strong> — nominal uang muka jika ada. Sistem akan otomatis mencatat pembayaran DP.</li>
+                <li>Pilih <strong>Metode Pembayaran</strong> — Tunai, Transfer Bank, QRIS, atau Debit/Kredit Card</li>
                 <li>Klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Simpan</span></li>
             </ol>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm mb-4">
@@ -171,6 +173,16 @@
                 <li>Masukkan <strong>Nama Grup</strong> (contoh: "Rombongan Wedding")</li>
                 <li>Pilih tanggal Check-in dan Check-out</li>
                 <li>Untuk setiap kamar: pilih kamar, isi data tamu, atur harga</li>
+                <li>Klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Simpan</span></li>
+            </ol>
+            <h4 class="font-bold text-sm mb-2 mt-4">📌 Booking OTA</h4>
+            <p class="text-sm text-gray-700 mb-2">Untuk reservasi yang berasal dari OTA (Booking.com, Tiket.com, Traveloka) yang perlu dicatat manual ke sistem.</p>
+            <ol class="list-decimal ml-5 space-y-1.5 text-sm text-gray-700">
+                <li>Buka menu <strong>Booking → Booking OTA</strong></li>
+                <li>Pilih <strong>Platform OTA</strong> (Booking.com / Tiket.com / Traveloka / Lainnya)</li>
+                <li>Masukkan <strong>No. Reservasi OTA</strong> — nomor reservasi dari platform OTA</li>
+                <li>Isi data tamu dan detail reservasi seperti booking biasa</li>
+                <li>Sistem otomatis menandai reservasi sebagai <strong>OTA</strong> untuk memudahkan rekonsiliasi</li>
                 <li>Klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Simpan</span></li>
             </ol>
         </div>
@@ -629,6 +641,42 @@
                         <tr class="hover:bg-gray-50"><td class="border border-gray-300 p-2 text-green-600 font-mono">GET</td><td class="border border-gray-300 p-2 font-mono">/api/stats</td><td class="border border-gray-300 p-2">Statistik dashboard</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 21. OTA EMAIL LOG --}}
+    {{-- ================================================================ --}}
+    <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-envelope-open-text text-purple-500"></i> 21. Log Email OTA
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Memantau dan mengelola email reservasi dari platform OTA (Booking.com, Tiket.com, Traveloka) yang masuk ke sistem. Fitur ini membaca email otomatis dan mengekstrak data reservasi.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <h4 class="font-bold text-purple-800 mb-2">📊 Statistik</h4>
+                    <p class="text-xs text-purple-700">Ringkasan jumlah email: <strong>Total, Diproses, Sukses, Gagal, Pending</strong> — tampil di halaman utama Log Email OTA.</p>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-2">📋 Daftar Email</h4>
+                    <p class="text-xs text-blue-700">Tabel semua email OTA dengan status, platform, subjek, tanggal, dan aksi.</p>
+                </div>
+            </div>
+            <p class="text-sm font-semibold mb-2">Fitur:</p>
+            <ul class="space-y-1.5 text-sm text-gray-700 ml-2">
+                <li><i class="fas fa-circle text-purple-400 text-[6px] mr-2 align-middle"></i><strong>Refresh Stats</strong> — perbarui statistik email terkini</li>
+                <li><i class="fas fa-circle text-purple-400 text-[6px] mr-2 align-middle"></i><strong>Detail Email</strong> — klik email untuk melihat isi lengkap email dan data parsing</li>
+                <li><i class="fas fa-circle text-purple-400 text-[6px] mr-2 align-middle"></i><strong>Retry</strong> — coba ulang proses parsing untuk email yang gagal</li>
+                <li><i class="fas fa-circle text-purple-400 text-[6px] mr-2 align-middle"></i>Filter berdasarkan <strong>Platform OTA</strong> dan <strong>Status</strong></li>
+                <li><i class="fas fa-circle text-purple-400 text-[6px] mr-2 align-middle"></i>Pencarian berdasarkan <strong>subjek email</strong> atau <strong>nomor reservasi</strong></li>
+            </ul>
+            <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <p><i class="fas fa-lightbulb text-yellow-600 mr-1"></i> <strong>Tips:</strong> Pastikan koneksi IMAP email sudah dikonfigurasi di <strong>Setting Hotel</strong> agar fitur ini dapat membaca email OTA secara otomatis.</p>
             </div>
         </div>
     </div>
