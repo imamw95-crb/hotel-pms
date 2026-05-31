@@ -21,16 +21,20 @@ return [
             'permission' => 'manage_users',
         ],
 
+        // ─── Reservasi (semua role termasuk user_manager) ────────────
+        [
+            'label' => 'Reservasi',
+            'icon' => 'calendar-alt',
+            'route' => 'reservations.index',
+            'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
+        ],
+
         // ─── Front Desk ──────────────────────────────────────────────
         [
             'label' => 'Front Desk',
             'icon' => 'concierge-bell',
             'roles' => ['owner', 'admin', 'frontoffice'],
             'children' => [
-                [
-                    'label' => 'Reservasi',
-                    'route' => 'reservations.index',
-                ],
                 [
                     'label' => 'Check-in',
                     'route' => 'checkin.index',
@@ -176,7 +180,7 @@ return [
             'icon' => 'moon',
             'route' => 'reports.night-audit-v2.index',
             'permission' => 'view_reports',
-            'roles' => ['owner', 'admin', 'frontoffice'],
+            'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
         ],
 
         // ─── Pengeluaran ────────────────────────────────────────────
@@ -185,56 +189,62 @@ return [
             'icon' => 'money-bill-wave',
             'route' => 'expenses.index',
             'permission' => 'view_reports',
-            'roles' => ['owner', 'admin', 'frontoffice'],
+            'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
         ],
 
         // ─── Reports ─────────────────────────────────────────────────
         [
             'label' => 'Reports',
             'icon' => 'chart-bar',
-            'roles' => ['owner', 'admin', 'frontoffice'],
+            'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
             'children' => [
                 [
                     'label' => 'Night Audit',
                     'route' => 'reports.night-audit',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Guest List Report',
                     'route' => 'reports.guest-list',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Occupancy',
                     'route' => 'reports.occupancy',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Revenue',
                     'route' => 'reports.revenue',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Reservation Report',
                     'route' => 'reports.reservations',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Group Report',
                     'route' => 'reports.group',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
+                ],
+                [
+                    'label' => 'Laporan Pengeluaran',
+                    'route' => 'reports.expenses',
+                    'permission' => 'view_reports',
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
                     'label' => 'Log Email OTA',
                     'route' => 'ota-email-logs.index',
                     'permission' => 'view_reports',
-                    'roles' => ['owner', 'admin', 'frontoffice'],
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
             ],
         ],
@@ -243,6 +253,7 @@ return [
         [
             'label' => 'Administration',
             'icon' => 'cog',
+            'roles' => ['owner', 'admin'],
             'children' => [
                 [
                     'label' => 'Permission Dashboard',
@@ -281,6 +292,7 @@ return [
         [
             'label' => 'Master Data',
             'icon' => 'database',
+            'roles' => ['owner', 'admin'],
             'children' => [
                 [
                     'label' => 'Metode Pembayaran',
@@ -295,6 +307,7 @@ return [
             'label' => 'Setting Hotel',
             'icon' => 'sliders-h',
             'route' => 'admin.settings',
+            'roles' => ['owner', 'admin'],
             'permission' => 'manage_users',
         ],
 

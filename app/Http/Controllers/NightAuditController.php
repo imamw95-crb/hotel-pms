@@ -151,8 +151,8 @@ class NightAuditController extends Controller
      */
     public function deleteDraft(Request $request)
     {
-        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin()) {
-            abort(403, 'Unauthorized — hanya Owner dan Admin yang bisa Unlock & Buat Baru.');
+        if (! auth()->user()->isOwner() && ! auth()->user()->isAdmin() && ! auth()->user()->isUserManager()) {
+            abort(403, 'Unauthorized — hanya Owner, Admin, dan Manager yang bisa Unlock & Buat Baru.');
         }
 
         $date = $request->get('date');
@@ -437,14 +437,14 @@ class NightAuditController extends Controller
             ->orderBy('check_out', 'asc')
             ->get()
             ->map(fn ($r) => [
-            'reservation_number' => $r->reservation_number,
-            'guest_name' => $r->guest->guest_name ?? '-',
-            'room_number' => $r->room->room_number ?? '-',
-            'check_in' => $r->check_in->format('d/m/Y'),
-            'check_out' => $r->check_out->format('d/m/Y'),
-            'total_nights' => $r->nights,
-            'include_breakfast' => $r->include_breakfast,
-        ]);
+                'reservation_number' => $r->reservation_number,
+                'guest_name' => $r->guest->guest_name ?? '-',
+                'room_number' => $r->room->room_number ?? '-',
+                'check_in' => $r->check_in->format('d/m/Y'),
+                'check_out' => $r->check_out->format('d/m/Y'),
+                'total_nights' => $r->nights,
+                'include_breakfast' => $r->include_breakfast,
+            ]);
 
         // New bookings
         $newBookings = Reservation::whereDate('created_at', $date)

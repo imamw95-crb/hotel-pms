@@ -30,7 +30,7 @@
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $user->email }}</td>
                         <td class="px-6 py-4 text-sm">
                             <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
-                                {{ ucfirst($user->role) }}
+                                {{ $user->role === 'user_manager' ? 'Manager' : ucfirst($user->role) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">

@@ -25,6 +25,7 @@
             <thead class="bg-gray-50 border-b">
                 <tr>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Username</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Role</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Created</th>
@@ -37,10 +38,11 @@
                         <td class="px-6 py-4 text-sm">
                             <div class="font-semibold">{{ $user->name }}</div>
                         </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ $user->username ?? '-' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $user->email }}</td>
                         <td class="px-6 py-4 text-sm">
                             <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
-                                {{ ucfirst($user->role) }}
+                                {{ $user->role === 'user_manager' ? 'Manager' : ucfirst($user->role) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">
@@ -55,7 +57,7 @@
                                     <i class="fas fa-lock"></i>
                                 </a>
                                 @if($user->id !== auth()->id())
-                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" data-ajax="true">
+                                    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="inline" data-ajax="true" data-refresh="true">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-800">

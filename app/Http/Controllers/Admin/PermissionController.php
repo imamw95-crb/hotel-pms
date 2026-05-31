@@ -19,7 +19,7 @@ class PermissionController extends Controller
         $permissionGroups = Permission::select('group')->distinct()->get()->pluck('group');
         $roleStats = [];
 
-        foreach (['owner', 'admin', 'frontoffice'] as $role) {
+        foreach (['owner', 'admin', 'frontoffice', 'housekeeping', 'user_manager'] as $role) {
             $roleStats[$role] = DB::table('role_permission')
                 ->where('role', $role)
                 ->count();

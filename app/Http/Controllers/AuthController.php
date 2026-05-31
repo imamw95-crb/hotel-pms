@@ -14,12 +14,15 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
+        $request->validate([
+            'login' => 'required',
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $login = $request->input('login');
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+
+        if (Auth::attempt([$field => $login, 'password' => $request->input('password')])) {
             $request->session()->regenerate();
             $user = Auth::user();
 
@@ -29,12 +32,14 @@ class AuthController extends Controller
                 return redirect()->intended('/admin/dashboard');
             } elseif ($user->isHousekeeping()) {
                 return redirect()->intended('/housekeeping');
+            } elseif ($user->isUserManager()) {
+                return redirect()->intended('/dashboard');
             } else {
                 return redirect()->intended('/frontoffice/dashboard');
             }
         }
 
-        return back()->withErrors(['email' => 'Email atau password salah']);
+        return back()->withErrors(['login' => 'Username/Email atau password salah']);
     }
 
     public function logout(Request $request)

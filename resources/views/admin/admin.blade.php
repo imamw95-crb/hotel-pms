@@ -26,7 +26,7 @@
             <div class="p-4 text-center border-b border-blue-700">
                 <i class="fas fa-hotel text-3xl"></i>
                 <h1 class="text-xl font-bold mt-2">Dynamic PMS V.2</h1>
-                <p class="text-xs text-blue-200">{{ ucfirst(auth()->user()->role) }}</p>
+                <p class="text-xs text-blue-200">{{ auth()->user()->role === 'user_manager' ? 'Manager' : ucfirst(auth()->user()->role) }}</p>
             </div>
             <nav class="mt-6">
                 @if(auth()->user()->isOwner())
@@ -36,6 +36,10 @@
                 @elseif(auth()->user()->isAdmin())
                     <a href="{{ route('admin.dashboard') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('admin.dashboard') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-tachometer-alt w-5 mr-2"></i> Dashboard Admin
+                    </a>
+                @elseif(auth()->user()->isUserManager())
+                    <a href="{{ route('admin.users.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('admin.users.*') ? 'active' : 'hover:bg-blue-700' }}">
+                        <i class="fas fa-tachometer-alt w-5 mr-2"></i> Dashboard User Manager
                     </a>
                 @else
                     <a href="{{ route('frontoffice.dashboard') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('frontoffice.dashboard') ? 'active' : 'hover:bg-blue-700' }}">
@@ -66,7 +70,7 @@
                     <i class="fas fa-users w-5 mr-2"></i> Booking Group
                 </a>
 
-                @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+                @if(auth()->user()->isOwner() || auth()->user()->isAdmin() || auth()->user()->isUserManager())
                     <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Manajemen</div>
                     <a href="{{ route('rooms.index') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('rooms.*') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-door-open w-5 mr-2"></i> Kelola Kamar
@@ -76,7 +80,7 @@
                     </a>
                 @endif
 
-                @if(auth()->user()->isOwner() || auth()->user()->isAdmin())
+                @if(auth()->user()->isOwner() || auth()->user()->isAdmin() || auth()->user()->isUserManager())
                     <div class="text-xs text-blue-300 uppercase tracking-wider mt-6 mb-2 px-4">Laporan</div>
                     <a href="{{ route('reports.night-audit') }}" class="sidebar-item block py-2.5 px-4 rounded transition duration-200 {{ request()->routeIs('reports.night-audit') ? 'active' : 'hover:bg-blue-700' }}">
                         <i class="fas fa-moon w-5 mr-2"></i> Night Audit

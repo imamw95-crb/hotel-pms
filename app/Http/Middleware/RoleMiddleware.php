@@ -7,15 +7,13 @@ use Illuminate\Http\Request;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
         if (! auth()->check()) {
             abort(403, 'Unauthorized');
         }
 
-        $allowedRoles = array_map('trim', explode(',', $role));
-
-        if (! in_array(auth()->user()->role, $allowedRoles, true)) {
+        if (! in_array(auth()->user()->role, $roles, true)) {
             abort(403, 'Unauthorized');
         }
 

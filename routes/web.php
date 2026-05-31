@@ -44,8 +44,8 @@ Route::get('/', function () {
     return redirect()->route('rooms.dashboard');
 })->middleware('auth')->name('home');
 
-// Dashboard shortcut — restrict to owner only
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner'])->name('dashboard');
+// Dashboard shortcut
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard routes — all use the same controller method which adapts to role
@@ -129,18 +129,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/group', [ReportController::class, 'groupReport'])->name('reports.group');
 
         // Night Audit v2 — Preview, Draft, Lock, History
-        Route::get('/reports/night-audit-v2', [NightAuditController::class, 'index'])->name('reports.night-audit-v2.index');
-        Route::get('/reports/night-audit-v2/preview', [NightAuditController::class, 'preview'])->name('reports.night-audit-v2.preview');
-        Route::post('/reports/night-audit-v2/save-draft', [NightAuditController::class, 'saveDraft'])->name('reports.night-audit-v2.save-draft');
-        Route::post('/reports/night-audit-v2/lock', [NightAuditController::class, 'lock'])->name('reports.night-audit-v2.lock');
-        Route::post('/reports/night-audit-v2/delete-draft', [NightAuditController::class, 'deleteDraft'])->name('reports.night-audit-v2.delete-draft');
-        Route::get('/reports/night-audit-v2/{id}', [NightAuditController::class, 'show'])->name('reports.night-audit-v2.show');
-        Route::get('/reports/night-audit-v2/{id}/export', [NightAuditController::class, 'export'])->name('reports.night-audit-v2.export');
+        Route::get('/reports/night-audit-v2', [NightAuditController::class, 'index'])->middleware('permission:view_reports')->name('reports.night-audit-v2.index');
+        Route::get('/reports/night-audit-v2/preview', [NightAuditController::class, 'preview'])->middleware('permission:view_reports')->name('reports.night-audit-v2.preview');
+        Route::post('/reports/night-audit-v2/save-draft', [NightAuditController::class, 'saveDraft'])->middleware('permission:view_reports')->name('reports.night-audit-v2.save-draft');
+        Route::post('/reports/night-audit-v2/lock', [NightAuditController::class, 'lock'])->middleware('permission:view_reports')->name('reports.night-audit-v2.lock');
+        Route::post('/reports/night-audit-v2/delete-draft', [NightAuditController::class, 'deleteDraft'])->middleware('permission:view_reports')->name('reports.night-audit-v2.delete-draft');
+        Route::get('/reports/night-audit-v2/{id}', [NightAuditController::class, 'show'])->middleware('permission:view_reports')->name('reports.night-audit-v2.show');
+        Route::get('/reports/night-audit-v2/{id}/export', [NightAuditController::class, 'export'])->middleware('permission:view_reports')->name('reports.night-audit-v2.export');
 
         // Pengeluaran (Expenses)
         Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
         Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
         Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+
+        // Laporan Pengeluaran (Expenses Report)
+        Route::get('/reports/expenses', [ReportController::class, 'expenses'])->name('reports.expenses');
+        Route::get('/reports/expenses/export', [ReportController::class, 'exportExpenses'])->name('reports.expenses.export');
+        Route::get('/reports/expenses/print', [ReportController::class, 'printExpenses'])->name('reports.expenses.print');
 
         // Export routes
         Route::get('/reports/night-audit/export', [ReportController::class, 'exportNightAudit'])->name('reports.night-audit.export');
@@ -162,8 +167,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/permissions/user/{user}', [PermissionController::class, 'updateUserPermissions'])->name('admin.permissions.update-user');
     });
 
-    // Admin: User Management (Owner only)
-    Route::middleware(['role:owner'])->group(function () {
+    // Admin: User Management (Owner & User Manager)
+    Route::middleware(['role:owner,user_manager'])->group(function () {
         Route::resource('admin/users', UserController::class, ['names' => 'admin.users']);
         Route::get('/admin/users/{user}/permissions', [UserController::class, 'permissions'])->name('admin.users.permissions');
     });

@@ -5,7 +5,7 @@
 
 @section('content')
     {{-- OWNER DASHBOARD --}}
-    @if(auth()->user()->isOwner())
+    @if(auth()->user()->isOwner() || auth()->user()->isUserManager())
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
@@ -362,7 +362,7 @@
 @endsection
 
 @section('scripts')
-@if(auth()->user()->isOwner())
+@if(auth()->user()->isOwner() || auth()->user()->isUserManager())
 <script>
     (function() {
         var occEl = document.getElementById('occupancyChart');

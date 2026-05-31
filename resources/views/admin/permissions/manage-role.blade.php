@@ -1,13 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Manage ' . ucfirst($role) . ' Permissions')
+@php
+    $displayRole = $role === 'user_manager' ? 'Manager' : ucfirst($role);
+@endphp
+
+@section('title', 'Manage ' . $displayRole . ' Permissions')
 
 @section('content')
 <div class="p-8">
     <div class="flex items-center justify-between mb-8">
         <div>
             <a href="{{ route('admin.permissions.dashboard') }}" class="text-blue-600 hover:text-blue-800">← Permission Dashboard</a>
-            <h1 class="text-3xl font-bold mt-2">Manage {{ ucfirst($role) }} Permissions</h1>
+            <h1 class="text-3xl font-bold mt-2">Manage {{ $displayRole }} Permissions</h1>
             <p class="text-gray-600 mt-1">{{ count($rolePermissionIds) }} permissions assigned</p>
         </div>
     </div>

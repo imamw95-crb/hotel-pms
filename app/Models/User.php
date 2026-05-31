@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role',
+        'name', 'username', 'email', 'password', 'role',
     ];
 
     protected $hidden = [
@@ -50,6 +50,11 @@ class User extends Authenticatable
     public function isHousekeeping()
     {
         return $this->role === 'housekeeping';
+    }
+
+    public function isUserManager()
+    {
+        return $this->role === 'user_manager';
     }
 
     /**

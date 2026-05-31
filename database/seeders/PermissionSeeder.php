@@ -107,9 +107,17 @@ class PermissionSeeder extends Seeder
             'manage_guests',
         ]);
 
+        $this->assignPermissionToRole('user_manager', [
+            'manage_users',
+            'create_user',
+            'edit_user',
+            'delete_user',
+            'view_reports',
+        ]);
+
         $this->assignPermissionToRole('owner', [
             'view_reports', 'export_reports',
-            'manage_users',
+            'manage_users', 'create_user', 'edit_user', 'delete_user',
         ]);
     }
 

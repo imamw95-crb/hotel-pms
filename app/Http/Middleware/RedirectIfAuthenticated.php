@@ -21,6 +21,8 @@ class RedirectIfAuthenticated
                     return redirect()->route('admin.dashboard');
                 } elseif ($user->isHousekeeping()) {
                     return redirect()->route('housekeeping.index');
+                } elseif ($user->isUserManager()) {
+                    return redirect()->route('admin.users.index');
                 } else {
                     return redirect()->route('frontoffice.dashboard');
                 }

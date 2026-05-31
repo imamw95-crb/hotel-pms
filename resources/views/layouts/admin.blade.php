@@ -23,7 +23,7 @@
                     <i class="fas fa-hotel text-white text-xl"></i>
                 </div>
                 <div class="sidebar-brand-title">Dynamic PMS V.2</div>
-                <div class="sidebar-brand-subtitle">{{ ucfirst(auth()->user()->role ?? 'Admin') }}</div>
+                <div class="sidebar-brand-subtitle">{{ auth()->user()->role === 'user_manager' ? 'Manager' : ucfirst(auth()->user()->role ?? 'Admin') }}</div>
             </div>
             <div class="sidebar-scroll">
                 <x-menu />

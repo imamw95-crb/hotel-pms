@@ -17,7 +17,7 @@
         @foreach($roleStats as $role => $count)
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="text-3xl font-bold text-green-600">{{ $count }}</div>
-                <div class="text-gray-600">{{ ucfirst($role) }} Permissions</div>
+                <div class="text-gray-600">{{ $role === 'user_manager' ? 'Manager' : ucfirst($role) }} Permissions</div>
             </div>
         @endforeach
     </div>
@@ -28,12 +28,12 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-xl font-bold mb-4">Manage Permissions by Role</h2>
                 <div class="space-y-3">
-                    @foreach(['owner', 'admin', 'frontoffice'] as $role)
+                    @foreach(['owner', 'admin', 'frontoffice', 'housekeeping', 'user_manager'] as $role)
                         <a href="{{ route('admin.permissions.manage-role', $role) }}" 
                            class="block p-4 border rounded-lg hover:bg-blue-50 transition">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="font-semibold">{{ ucfirst($role) }}</h3>
+                                    <h3 class="font-semibold">{{ $role === 'user_manager' ? 'Manager' : ucfirst($role) }}</h3>
                                     <p class="text-sm text-gray-600">{{ $roleStats[$role] ?? 0 }} permissions assigned</p>
                                 </div>
                                 <i class="fas fa-arrow-right text-gray-400"></i>
@@ -66,7 +66,7 @@
                         <div class="text-xs text-gray-600">{{ $user->email }}</div>
                         <div class="text-xs text-gray-500">
                             <span class="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                                {{ ucfirst($user->role) }}
+                                {{ $user->role === 'user_manager' ? 'Manager' : ucfirst($user->role) }}
                             </span>
                         </div>
                     </div>

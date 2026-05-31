@@ -19,9 +19,9 @@
             <form method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="mb-4">
-                    <label class="block text-gray-700 mb-2">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" class="w-full border rounded px-3 py-2 @error('email') border-red-500 @enderror" required>
-                    @error('email')
+                    <label class="block text-gray-700 mb-2">Username atau Email</label>
+                    <input type="text" name="login" value="{{ old('login') }}" class="w-full border rounded px-3 py-2 @error('login') border-red-500 @enderror" required autofocus>
+                    @error('login')
                         <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                     @enderror
                 </div>

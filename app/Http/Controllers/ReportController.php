@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
+use App\Models\HotelSetting;
 use App\Models\Reservation;
 use App\Models\RestoTransaction;
 use App\Models\Room;
@@ -579,6 +581,98 @@ class ReportController extends Controller
             }
             fputcsv($file, []);
             fputcsv($file, ['TOTAL', '', $groups->sum('total_rooms'), '', '', $groups->sum('total_amount'), $groups->sum('paid_amount'), $groups->sum('total_amount') - $groups->sum('paid_amount')]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Laporan Pengeluaran (Expenses Report)
+     */
+    public function expenses(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $expenses = Expense::with('createdBy')
+            ->whereBetween('expense_date', [$startDate, $endDate])
+            ->orderBy('expense_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalExpenses = $expenses->sum('amount');
+        $byMethod = $expenses->groupBy('payment_method')->map->sum('amount');
+        $byDescription = $expenses->groupBy('description')->map->sum('amount')->sortDesc();
+
+        return view('reports.expenses', compact(
+            'startDate', 'endDate', 'expenses', 'totalExpenses', 'byMethod', 'byDescription'
+        ));
+    }
+
+    /**
+     * Print Laporan Pengeluaran — clean layout tanpa sidebar/menu
+     */
+    public function printExpenses(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+
+        $expenses = Expense::with('createdBy')
+            ->whereBetween('expense_date', [$startDate, $endDate])
+            ->orderBy('expense_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $totalExpenses = $expenses->sum('amount');
+        $byMethod = $expenses->groupBy('payment_method')->map->sum('amount');
+        $byDescription = $expenses->groupBy('description')->map->sum('amount')->sortDesc();
+        $hotel = HotelSetting::get();
+
+        return view('reports.print-expenses', compact(
+            'startDate', 'endDate', 'expenses', 'totalExpenses', 'byMethod', 'byDescription', 'hotel'
+        ));
+    }
+
+    /**
+     * Export Expenses Report to CSV
+     */
+    public function exportExpenses(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $filename = 'expenses-'.$startDate.'-to-'.$endDate.'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $expenses = Expense::with('createdBy')
+            ->whereBetween('expense_date', [$startDate, $endDate])
+            ->orderBy('expense_date', 'desc')
+            ->get();
+
+        $callback = function () use ($expenses, $startDate, $endDate) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, ['LAPORAN PENGELUARAN']);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
+            fputcsv($file, []);
+            fputcsv($file, ['No. Expense', 'Tanggal', 'Deskripsi', 'Metode', 'Jumlah', 'Catatan', 'Dibuat Oleh']);
+            foreach ($expenses as $e) {
+                fputcsv($file, [
+                    $e->expense_number,
+                    $e->expense_date->format('d/m/Y'),
+                    $e->description,
+                    $e->payment_method,
+                    $e->amount,
+                    $e->notes ?? '',
+                    $e->createdBy?->name ?? '-',
+                ]);
+            }
+            fputcsv($file, []);
+            fputcsv($file, ['TOTAL', '', '', '', $expenses->sum('amount'), '', '']);
             fclose($file);
         };
 

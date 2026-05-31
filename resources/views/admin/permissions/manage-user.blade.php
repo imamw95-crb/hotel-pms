@@ -8,7 +8,7 @@
         <div>
             <a href="{{ route('admin.permissions.user-permissions') }}" class="text-blue-600 hover:text-blue-800">← User Permissions</a>
             <h1 class="text-3xl font-bold mt-2">Manage {{ $user->name }}'s Permissions</h1>
-            <p class="text-gray-600 mt-1">Email: {{ $user->email }} | Role: <span class="font-semibold">{{ ucfirst($user->role) }}</span></p>
+            <p class="text-gray-600 mt-1">Email: {{ $user->email }} | Role: <span class="font-semibold">{{ $user->role === 'user_manager' ? 'Manager' : ucfirst($user->role) }}</span></p>
         </div>
     </div>
 

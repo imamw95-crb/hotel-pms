@@ -25,6 +25,10 @@ class DashboardController extends Controller
             return $this->adminData();
         }
 
+        if ($user->isUserManager()) {
+            return $this->ownerData();
+        }
+
         return $this->frontOfficeData();
     }
 

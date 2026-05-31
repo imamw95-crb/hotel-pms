@@ -25,7 +25,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = ['owner', 'admin', 'frontoffice', 'housekeeping'];
+        $roles = ['owner', 'admin', 'frontoffice', 'housekeeping', 'user_manager'];
 
         return view('admin.users.create', compact('roles'));
     }
@@ -37,9 +37,10 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:50|unique:users,username',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:owner,admin,frontoffice,housekeeping',
+            'role' => 'required|in:owner,admin,frontoffice,housekeeping,user_manager',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -73,7 +74,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = ['owner', 'admin', 'frontoffice', 'housekeeping'];
+        $roles = ['owner', 'admin', 'frontoffice', 'housekeeping', 'user_manager'];
 
         return view('admin.users.edit', compact('user', 'roles'));
     }
@@ -85,8 +86,9 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'required|string|max:50|unique:users,username,'.$user->id,
             'email' => 'required|email|unique:users,email,'.$user->id,
-            'role' => 'required|in:owner,admin,frontoffice,housekeeping',
+            'role' => 'required|in:owner,admin,frontoffice,housekeeping,user_manager',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 

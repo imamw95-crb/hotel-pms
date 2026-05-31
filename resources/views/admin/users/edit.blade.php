@@ -28,13 +28,19 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6" data-ajax="true">
+        <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6" data-ajax="true" data-refresh="true">
             @csrf
             @method('PUT')
 
             <div>
                 <label class="block text-sm font-semibold mb-2">Name</label>
                 <input type="text" name="name" value="{{ old('name', $user->name) }}" required 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold mb-2">Username</label>
+                <input type="text" name="username" value="{{ old('username', $user->username) }}" required
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
             </div>
 
@@ -50,7 +56,7 @@
                     <option value="">-- Select Role --</option>
                     @foreach($roles as $role)
                         <option value="{{ $role }}" {{ old('role', $user->role) === $role ? 'selected' : '' }}>
-                            {{ ucfirst($role) }}
+                            {{ $role === 'user_manager' ? 'Manager' : ucfirst($role) }}
                         </option>
                     @endforeach
                 </select>

@@ -42,10 +42,12 @@
                     </td>
                     <td class="p-2">
                         <a href="{{ route('rooms.edit', $room) }}" class="text-blue-600 hover:underline">Edit</a>
+                        @if(!in_array(auth()->user()->role, ['frontoffice', 'user_manager']))
                         <form action="{{ route('rooms.destroy', $room) }}" method="POST" class="inline" data-ajax="true">
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-600 hover:underline ml-2">Hapus</button>
                         </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
