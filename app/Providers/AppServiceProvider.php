@@ -22,17 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        URL::forceScheme('https');
-
-        // Ensure helper functions are always loaded
-        if (file_exists( = app_path('Helpers/PermissionHelper.php'))) {
-            require_once ;
+        // Only force HTTPS in production
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
         }
 
         // Share night audit status with all views
-        View::composer('*', function () {
-             = NightAuditLog::latest()->first();
-            ->with('nightAuditClosed',  && ->status === 'completed' && ->audit_date === now()->subDay()->toDateString());
+        View::composer('*', function ($view) {
+            $nightAudit = NightAuditLog::latest()->first();
+            $view->with('nightAuditClosed', $nightAudit && $nightAudit->status === 'completed' && $nightAudit->audit_date === now()->subDay()->toDateString());
         });
     }
 }
