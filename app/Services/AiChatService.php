@@ -118,7 +118,7 @@ PROMPT;
                 'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
-                'X-Title' => config('app.name', 'Hotel PMS'),
+                'X-Title' => config('app.name', 'Dynamic PMS V.2'),
             ])
                 ->timeout(config('services.openrouter.timeout', 120))
                 ->post(config('services.openrouter.base_url', 'https://openrouter.ai/api/v1').'/chat/completions', [
@@ -360,7 +360,7 @@ PROMPT;
         $revenueData = $this->buildRevenueContext($today);
 
         return <<<CONTEXT
-You are an AI assistant for Hotel PMS (Property Management System). You help hotel staff with daily operations.
+You are an AI assistant for Dynamic PMS V.2 (Property Management System). You help hotel staff with daily operations.
 
 TODAY: {$today->format('l, d F Y')}
 

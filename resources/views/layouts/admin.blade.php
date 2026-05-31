@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') - Hotel PMS</title>
+    <title>@yield('title', 'Admin Dashboard') - Dynamic PMS V.2</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
@@ -22,7 +22,7 @@
                 <div class="sidebar-brand-icon">
                     <i class="fas fa-hotel text-white text-xl"></i>
                 </div>
-                <div class="sidebar-brand-title">Hotel PMS</div>
+                <div class="sidebar-brand-title">Dynamic PMS V.2</div>
                 <div class="sidebar-brand-subtitle">{{ ucfirst(auth()->user()->role ?? 'Admin') }}</div>
             </div>
             <div class="sidebar-scroll">

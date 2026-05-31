@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') - Hotel PMS</title>
+    <title>@yield('title', 'Admin Dashboard') - Dynamic PMS V.2</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ asset('assets/fontawesome/css/all.min.css') }}">
     <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
@@ -25,7 +25,7 @@
         <aside class="w-64 bg-blue-800 text-white flex-shrink-0 overflow-y-auto">
             <div class="p-4 text-center border-b border-blue-700">
                 <i class="fas fa-hotel text-3xl"></i>
-                <h1 class="text-xl font-bold mt-2">Hotel PMS</h1>
+                <h1 class="text-xl font-bold mt-2">Dynamic PMS V.2</h1>
                 <p class="text-xs text-blue-200">{{ ucfirst(auth()->user()->role) }}</p>
             </div>
             <nav class="mt-6">

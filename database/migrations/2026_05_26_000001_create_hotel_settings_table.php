@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('hotel_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('hotel_name')->default('Hotel PMS');
+            $table->string('hotel_name')->default('Dynamic PMS V.2');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->text('address')->nullable();
@@ -22,7 +22,7 @@ return new class extends Migration
 
         // Insert default setting
         DB::table('hotel_settings')->insert([
-            'hotel_name' => 'Hotel PMS',
+            'hotel_name' => 'Dynamic PMS V.2',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -102,7 +102,7 @@
         @if($hotel->logo_path)
             <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:45px;margin-bottom:4px;display:block;margin-left:auto;margin-right:auto;">
         @endif
-        <div class="hotel-name">{{ $hotel->hotel_name ?? 'Hotel PMS' }}</div>
+        <div class="hotel-name">{{ $hotel->hotel_name ?? 'Dynamic PMS V.2' }}</div>
         @if($hotel->address)<div class="hotel-info">{{ $hotel->address }}</div>@endif
         <div class="hotel-info">
             @if($hotel->phone)Telp: {{ $hotel->phone }}@endif
@@ -281,7 +281,7 @@
 
     {{-- Footer --}}
     <div class="footer">
-        Dicetak pada {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }} — {{ $hotel->hotel_name ?? 'Hotel PMS' }}
+        Dicetak pada {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }} — {{ $hotel->hotel_name ?? 'Dynamic PMS V.2' }}
     </div>
 
 </body>

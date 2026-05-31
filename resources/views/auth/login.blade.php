@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Hotel PMS</title>
+    <title>Login - Dynamic PMS V.2</title>
     @vite('resources/css/app.css')
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
 </head>
@@ -12,7 +12,7 @@
         <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md">
             <div class="text-center mb-8">
                 <i class="fas fa-hotel text-4xl text-blue-600"></i>
-                <h2 class="text-2xl font-bold mt-2">Hotel PMS</h2>
+                <h2 class="text-2xl font-bold mt-2">Dynamic PMS V.2</h2>
                 <p class="text-gray-600">Silakan login untuk melanjutkan</p>
             </div>
             

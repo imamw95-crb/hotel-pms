@@ -37,7 +37,7 @@ class OpenRouterService
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
-                'X-Title' => config('app_name', 'Hotel PMS'),
+                'X-Title' => config('app_name', 'Dynamic PMS V.2'),
             ])
                 ->timeout($this->timeout)
                 ->retry(2, 100)
@@ -190,7 +190,7 @@ PROMPT;
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => config('app.url'),
-                'X-Title' => config('app.name', 'Hotel PMS'),
+                'X-Title' => config('app.name', 'Dynamic PMS V.2'),
             ])
                 ->timeout($this->timeout)
                 ->retry(2, 100)

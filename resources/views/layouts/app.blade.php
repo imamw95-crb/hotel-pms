@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Hotel PMS') - Hotel PMS</title>
+    <title>@yield('title', 'Dynamic PMS V.2') - Dynamic PMS V.2</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
@@ -27,7 +27,7 @@
                 <div class="sidebar-brand-icon">
                     <i class="fas fa-hotel text-white text-xl"></i>
                 </div>
-                <div class="sidebar-brand-title">Hotel PMS</div>
+                <div class="sidebar-brand-title">Dynamic PMS V.2</div>
                 <div class="sidebar-brand-subtitle">{{ ucfirst(auth()->user()->role ?? 'Guest') }}</div>
             </div>
             <div class="sidebar-scroll">

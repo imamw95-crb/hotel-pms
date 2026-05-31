@@ -17,6 +17,6 @@ class HotelSetting extends Model
      */
     public static function get(): self
     {
-        return self::first() ?? self::create(['hotel_name' => 'Hotel PMS']);
+        return self::first() ?? self::create(['hotel_name' => 'Dynamic PMS V.2']);
     }
 }

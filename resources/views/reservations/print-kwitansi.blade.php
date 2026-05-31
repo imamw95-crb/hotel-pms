@@ -166,7 +166,7 @@
         @if($hotel->logo_path)
             <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:40px; margin-bottom:4px;">
         @endif
-        <h1>{{ strtoupper($hotel->hotel_name ?? 'HOTEL PMS') }}</h1>
+        <h1>{{ strtoupper($hotel->hotel_name ?? 'DYNAMIC PMS V.2') }}</h1>
         @if($hotel->address)<p>{{ $hotel->address }}</p>@endif
         @if($hotel->phone)<p>Telp: {{ $hotel->phone }}</p>@endif
         @if($hotel->website)<p>{{ $hotel->website }}</p>@endif

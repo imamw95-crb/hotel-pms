@@ -60,7 +60,7 @@
             @if($hotel->logo_path)
                 <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:50px; margin-bottom:8px;">
             @endif
-            <h1>{{ strtoupper($hotel->hotel_name ?? 'HOTEL PMS') }}</h1>
+            <h1>{{ strtoupper($hotel->hotel_name ?? 'DYNAMIC PMS V.2') }}</h1>
             @if($hotel->address)<p>{{ $hotel->address }}</p>@endif
             @if($hotel->phone || $hotel->email)
                 <p>
@@ -189,7 +189,7 @@
 
     <div class="footer">
         <p>Invoice ini sah sebagai bukti tagihan pembayaran</p>
-        <p>Hotel PMS &copy; {{ date('Y') }}</p>
+        <p>Dynamic PMS V.2 &copy; {{ date('Y') }}</p>
     </div>
 </body>
 </html>

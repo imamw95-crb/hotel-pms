@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Panduan Penggunaan')
-@section('header', 'Panduan Penggunaan Hotel PMS')
+@section('header', 'Panduan Penggunaan Dynamic PMS V.2')
 
 @section('content')
 <div class="max-w-5xl mx-auto">
@@ -683,7 +683,7 @@
 
     {{-- Footer --}}
     <div class="text-center text-xs text-gray-400 py-6 border-t border-gray-200">
-        <p>Hotel PMS — Property Management System</p>
+        <p>Dynamic PMS V.2 — Property Management System</p>
         <p class="mt-1">Dokumentasi ini dicetak pada {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 

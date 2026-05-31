@@ -127,7 +127,7 @@
 <div class="hidden print:block mt-6">
     <hr class="my-4">
     <div class="flex justify-between text-sm text-gray-500">
-        <span>Hotel PMS - Guest List Report</span>
+        <span>Dynamic PMS V.2 - Guest List Report</span>
         <span>Halaman 1</span>
     </div>
 </div>

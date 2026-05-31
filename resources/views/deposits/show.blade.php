@@ -38,7 +38,7 @@
             @if($hotel->logo_path)
                 <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height: 40px; margin-bottom: 4px;">
             @endif
-            <div style="font-size: 16px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">{{ $hotel->hotel_name ?? 'Hotel PMS' }}</div>
+            <div style="font-size: 16px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">{{ $hotel->hotel_name ?? 'Dynamic PMS V.2' }}</div>
             @if($hotel->address)<div style="font-size: 10px; color: #555;">{{ $hotel->address }}</div>@endif
             <div style="font-size: 10px; color: #555;">
                 @if($hotel->phone)Telp: {{ $hotel->phone }}@endif
