@@ -36,12 +36,7 @@
                 </button>
             </form>
             
-            <div class="mt-6 text-center text-sm text-gray-500">
-                <p>Demo Account:</p>
-                <p>owner@hotel.com / password</p>
-                <p>admin@hotel.com / password</p>
-                <p>frontoffice@hotel.com / password</p>
-            </div>
+            {{-- Demo accounts removed for production --}}
         </div>
     </div>
 </body>
