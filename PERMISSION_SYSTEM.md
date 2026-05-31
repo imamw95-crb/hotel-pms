@@ -229,3 +229,10 @@ php artisan db:seed
 - Pastikan route sudah terdaftar
 - Cek apakah role user sesuai dengan config menus
 - Verifikasi permission user dengan `hasPermission('slug')`
+
+**user login demo**
+Demo Account:
+owner@hotel.com / password
+admin@hotel.com / password
+frontoffice@hotel.com / password
+
