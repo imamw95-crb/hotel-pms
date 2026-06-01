@@ -156,8 +156,19 @@ class BookingController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        // Trigger notification for new web booking
-        app(BookingNotificationService::class)->webBookingCreated($reservation);
+        // Trigger notification — OTA or web
+        if (! empty($validated['ota_source'])) {
+            app(BookingNotificationService::class)->otaBookingCreated(
+                $reservation,
+                [
+                    'guest_name' => $validated['guest_name'],
+                    'reservation_id' => $validated['ota_reservation_number'] ?? '',
+                ],
+                $validated['ota_source']
+            );
+        } else {
+            app(BookingNotificationService::class)->webBookingCreated($reservation);
+        }
 
         if (request()->expectsJson()) {
             return response()->json([
