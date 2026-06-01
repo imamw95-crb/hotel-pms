@@ -1,129 +1,201 @@
 <?php
 /**
  * GitHub Auto-Deploy Webhook
- * 
+ *
+ * Menerima push event dari GitHub, lalu menjalankan:
+ *   git pull → composer install → migrate → optimize → queue restart
+ *
  * Setup:
- * 1. Upload this file to public/deploy.php
- * 2. Go to GitHub repo -> Settings -> Webhooks -> Add webhook
- * 3. Payload URL: https://icon.cloudnod.my.id/deploy.php
- * 4. Content type: application/json
- * 5. Secret: (isi dengan secret yang kamu buat)
- * 6. Events: Just push the push event
+ * 1. Pastikan file ini ada di public/deploy.php
+ * 2. Set DEPLOY_SECRET di .env (generate: php -r "echo bin2hex(random_bytes(32));")
+ * 3. GitHub repo → Settings → Webhooks → Add webhook
+ *    - Payload URL : https://icon.cloudnod.my.id/deploy.php
+ *    - Content type: application/json
+ *    - Secret      : (isi dengan DEPLOY_SECRET dari .env)
+ *    - Events      : Just the push event
+ * 4. Pastikan storage/logs/ writable oleh web server
  */
 
 // ===== KONFIGURASI =====
-$secret = getenv('DEPLOY_SECRET') ?: 'hotel-pms-deploy-2026';
-$projectDir = '/www/wwwroot/icon.cloudnod.my.id';
-$logFile = '/www/wwwroot/icon.cloudnod.my.id/storage/logs/deploy.log';
+$projectDir  = '/www/wwwroot/icon.cloudnod.my.id';
+$logFile     = $projectDir . '/storage/logs/deploy.log';
+$branch      = 'refs/heads/main';
+
+// Read DEPLOY_SECRET from .env file directly (web server doesn't load .env into getenv)
+$secret = null;
+$envFile = $projectDir . '/.env';
+if (is_readable($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        if (str_starts_with($line, 'DEPLOY_SECRET=')) {
+            $value = substr($line, strlen('DEPLOY_SECRET='));
+            // Strip surrounding quotes
+            $value = trim($value, '"\'');
+            $secret = $value !== '' ? $value : null;
+            break;
+        }
+    }
+}
 // =======================
 
-// Headers for response
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
 
-function writeLog($msg) {
+function writeLog(string $msg): void
+{
     global $logFile;
     $time = date('Y-m-d H:i:s');
-    file_put_contents($logFile, "[$time] $msg\n", FILE_APPEND);
+    @file_put_contents($logFile, "[$time] {$msg}\n", FILE_APPEND);
 }
 
-writeLog("=== DEPLOY STARTED ===");
-writeLog("Method: " . $_SERVER['REQUEST_METHOD']);
-writeLog("IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+function runCmd(string $cmd): array
+{
+    $output    = [];
+    $exitCode  = 0;
+    exec($cmd, $output, $exitCode);
+    return ['output' => implode("\n", $output), 'exitCode' => $exitCode];
+}
 
-// Hanya terima POST
+// --- Require DEPLOY_SECRET ---
+if (!$secret) {
+    writeLog('ERROR: DEPLOY_SECRET not configured');
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'DEPLOY_SECRET not configured']);
+    exit;
+}
+
+writeLog('=== DEPLOY TRIGGERED ===');
+writeLog('IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+
+// --- Only accept POST ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    writeLog("ERROR: Invalid method " . $_SERVER['REQUEST_METHOD']);
+    writeLog('ERROR: Invalid method ' . $_SERVER['REQUEST_METHOD']);
     http_response_code(405);
-    die(json_encode(['error' => 'Method not allowed']));
+    echo json_encode(['success' => false, 'error' => 'Method not allowed']);
+    exit;
 }
 
-// Verifikasi signature
-$payload = file_get_contents('php://input');
+// --- Verify HMAC signature ---
+$payload   = file_get_contents('php://input');
 $sigHeader = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
+
 if ($sigHeader) {
-    list($algo, $sig) = explode('=', $sigHeader, 2);
+    [$algo, $sig] = explode('=', $sigHeader, 2);
     $expected = hash_hmac('sha256', $payload, $secret);
     if (!hash_equals($expected, $sig)) {
-        writeLog("ERROR: Invalid signature");
+        writeLog('ERROR: Invalid HMAC signature');
         http_response_code(403);
-        die(json_encode(['error' => 'Invalid signature']));
+        echo json_encode(['success' => false, 'error' => 'Invalid signature']);
+        exit;
     }
 } else {
-    // Fallback: cek token via query string
-    $token = $_GET['token'] ?? '';
-    if ($token !== $secret) {
-        writeLog("ERROR: Invalid token");
-        http_response_code(403);
-        die(json_encode(['error' => 'Invalid token']));
-    }
+    writeLog('ERROR: No signature header');
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Missing signature']);
+    exit;
 }
 
-// Parse event
+// --- Parse event ---
 $event = $_SERVER['HTTP_X_GITHUB_EVENT'] ?? 'push';
-$data = json_decode($payload, true);
+$data  = json_decode($payload, true);
 
 if ($event === 'ping') {
-    writeLog("PING received - webhook OK");
+    writeLog('PING received — webhook OK');
     echo json_encode(['success' => true, 'message' => 'pong']);
     exit;
 }
 
-writeLog("Event: $event | Branch: " . ($data['ref'] ?? 'unknown'));
+writeLog("Event: {$event} | Ref: " . ($data['ref'] ?? 'unknown'));
 
-// Hanya deploy untuk push ke main
 if ($event !== 'push') {
-    writeLog("SKIP: Not a push event");
+    writeLog('SKIP: Not a push event');
     echo json_encode(['success' => true, 'message' => 'Not a push event, ignored']);
     exit;
 }
 
-// Cek branch
+// --- Only deploy main branch ---
 $ref = $data['ref'] ?? '';
-if ($ref !== 'refs/heads/main') {
-    writeLog("SKIP: Push to $ref, not main");
-    echo json_encode(['success' => true, 'message' => "Push to $ref ignored"]);
+if ($ref !== $branch) {
+    writeLog("SKIP: Push to {$ref}, not {$branch}");
+    echo json_encode(['success' => true, 'message' => "Push to {$ref} ignored"]);
     exit;
 }
 
 // === EKSEKUSI DEPLOY ===
-$output = [];
-$exitCode = 0;
+$results = [];
 
-writeLog("Starting git pull...");
+// 1. Git pull
+writeLog('Step 1/7: git pull origin main');
+$result = runCmd("cd {$projectDir} && git pull origin main 2>&1");
+$results['git_pull'] = $result;
+writeLog('Git pull exit=' . $result['exitCode'] . ' | ' . substr($result['output'], 0, 500));
 
-// Git pull
-$cmd = "cd $projectDir && git pull origin main 2>&1";
-$outputStr = shell_exec($cmd);
-// shell_exec already returns string
-writeLog("Git pull: $outputStr");
-
-if ($exitCode !== 0) {
-    writeLog("ERROR: Git pull failed");
-    echo json_encode(['success' => false, 'error' => 'Git pull failed', 'output' => $outputStr]);
+if ($result['exitCode'] !== 0) {
+    writeLog('ERROR: Git pull failed');
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Git pull failed', 'results' => $results]);
     exit;
 }
 
-// Post-deploy commands
-$commands = [
-    "cd $projectDir && php artisan migrate --force 2>&1",
-    "cd $projectDir && php artisan view:clear 2>&1",
-    "cd $projectDir && php artisan config:clear 2>&1",
-    "cd $projectDir && php artisan route:clear 2>&1",
-    "cd $projectDir && php artisan cache:clear 2>&1",
-    "cd $projectDir && php artisan optimize:clear 2>&1",
-];
-
-foreach ($commands as $cmd) {
-    $cmdStr = shell_exec($cmd);
-    // shell_exec already returns string
-    writeLog("Artisan: $cmdStr");
+// 2. Composer install (only if composer.json or lock changed)
+$composerChanged = str_contains($result['output'], 'composer.json')
+                || str_contains($result['output'], 'composer.lock');
+if ($composerChanged) {
+    writeLog('Step 2/7: composer install (dependencies changed)');
+    $result = runCmd("cd {$projectDir} && composer install --no-dev --optimize-autoloader --no-interaction 2>&1");
+    $results['composer_install'] = $result;
+    writeLog('Composer exit=' . $result['exitCode'] . ' | ' . substr($result['output'], 0, 500));
+} else {
+    writeLog('Step 2/7: composer install (skipped — no dependency changes)');
+    $results['composer_install'] = ['output' => 'skipped', 'exitCode' => 0];
 }
 
-writeLog("=== DEPLOY COMPLETED ===");
+// 3. Database migrate
+writeLog('Step 3/7: artisan migrate --force');
+$result = runCmd("cd {$projectDir} && php artisan migrate --force 2>&1");
+$results['migrate'] = $result;
+writeLog('Migrate exit=' . $result['exitCode'] . ' | ' . substr($result['output'], 0, 500));
+
+if ($result['exitCode'] !== 0) {
+    writeLog('ERROR: Migration failed — deploy halted');
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Migration failed', 'results' => $results]);
+    exit;
+}
+
+// 4. Config cache
+writeLog('Step 4/7: artisan config:cache');
+$result = runCmd("cd {$projectDir} && php artisan config:cache 2>&1");
+$results['config_cache'] = $result;
+writeLog('Config cache exit=' . $result['exitCode']);
+
+// 5. Route cache
+writeLog('Step 5/7: artisan route:cache');
+$result = runCmd("cd {$projectDir} && php artisan route:cache 2>&1");
+$results['route_cache'] = $result;
+writeLog('Route cache exit=' . $result['exitCode']);
+
+// 6. View cache
+writeLog('Step 6/7: artisan view:cache');
+$result = runCmd("cd {$projectDir} && php artisan view:cache 2>&1");
+$results['view_cache'] = $result;
+writeLog('View cache exit=' . $result['exitCode']);
+
+// 7. Queue restart
+writeLog('Step 7/7: artisan queue:restart');
+$result = runCmd("cd {$projectDir} && php artisan queue:restart 2>&1");
+$results['queue_restart'] = $result;
+writeLog('Queue restart exit=' . $result['exitCode']);
+
+writeLog('=== DEPLOY COMPLETED SUCCESSFULLY ===');
 
 echo json_encode([
     'success' => true,
-    'message' => 'Deploy completed successfully',
-    'output' => $outputStr,
+    'message'  => 'Deploy completed',
+    'branch'   => $ref,
+    'commit'   => $data['after'] ?? null,
+    'results'  => $results,
 ]);
