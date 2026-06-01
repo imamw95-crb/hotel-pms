@@ -18,8 +18,14 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - **Database:** MySQL via Laragon
 - **Frontend:** Blade templates + Tailwind CSS + vanilla JS
 - **Auth:** Laravel Sanctum + custom Permission/Role system
-- **Key Models:** Room, Reservation, Guest, Transaction, Deposit, RestoTransaction, PaymentMethod, User, Role, Permission
+- **Key Models:** Room, Reservation, Guest, Transaction, Deposit, RestoTransaction, PaymentMethod, User, Role, Permission, BookingNotification, HousekeepingTask, NightAuditLog, ServiceCharge, Expense
 - **Key Feature:** Back-to-Back Booking (check-out 12:00 & check-in 14:00 same day = NOT a conflict)
+
+## AI Services
+- **OpenRouterService** - Integrasi dengan OpenRouter API untuk AI chat
+- **AiChatService** - Chat assistant untuk booking & query hotel
+- **Model:** openrouter/owl-alpha
+- **Endpoint:** POST /api/ai/chat
 
 ## Ignore These Folders Completely
 - `vendor/`
@@ -45,6 +51,14 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - Prefer service classes for complex business logic.
 - Use Form Request validation for complex rules.
 - Keep code compatible with Laravel 10+.
+
+## Services Architecture
+- `app/Services/OpenRouterService.php` - OpenRouter API client
+- `app/Services/AiChatService.php` - AI chat business logic
+- `app/Services/AvailabilityService.php` - Room availability checks
+- `app/Services/BookingSyncService.php` - OTA booking synchronization
+- `app/Services/ImapService.php` - Email parsing for OTA integration
+- `app/Services/MHSBridgeService.php` - Integration with MHS system
 
 ## Hotel Business Logic
 - Check-in time: 14:00 (2 PM)

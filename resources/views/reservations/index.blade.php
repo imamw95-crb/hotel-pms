@@ -107,23 +107,24 @@
 
 <!-- Filter & Pencarian -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-    <form method="GET" action="{{ route('reservations.index') }}">
-        <div class="flex flex-col lg:flex-row lg:items-end gap-3">
-            <!-- Pencarian -->
-            <div class="flex-1 min-w-0">
-                <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    Pencarian
-                </label>
-                <div class="relative">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ $search ?? '' }}"
-                        placeholder="No. reservasi, nama tamu, no. kamar..."
-                        class="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
+    <form method="GET" action="{{ route('reservations.index') }}" data-turbo="false">
+        <!-- Baris 1: Pencarian -->
+        <div class="mb-3">
+            <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Pencarian
+            </label>
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <input type="text" name="search" value="{{ $search ?? '' }}"
+                    placeholder="Cari no. reservasi, nama tamu, no. kamar..."
+                    class="w-full border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
+        </div>
 
+        <!-- Baris 2: Filter + Tombol -->
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3">
             <!-- Filter Status -->
-            <div class="w-full lg:w-40">
+            <div class="w-full sm:w-36">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Status</label>
                 <select name="status" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Semua Status</option>
@@ -135,10 +136,10 @@
             </div>
 
             <!-- Filter Sumber -->
-            <div class="w-full lg:w-36">
+            <div class="w-full sm:w-24">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sumber</label>
                 <select name="sumber" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">Semua Sumber</option>
+                    <option value="">Semua</option>
                     <option value="website" {{ ($sumber ?? '') === 'website' ? 'selected' : '' }}>🌐 Website</option>
                     <option value="ota" {{ ($sumber ?? '') === 'ota' ? 'selected' : '' }}>🔗 OTA</option>
                     <option value="local" {{ ($sumber ?? '') === 'local' ? 'selected' : '' }}>🏨 Local</option>
@@ -146,14 +147,14 @@
             </div>
 
             <!-- Tanggal Dari -->
-            <div class="w-full lg:w-40">
+            <div class="w-full sm:w-36">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Dari</label>
                 <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
 
             <!-- Tanggal Sampai -->
-            <div class="w-full lg:w-40">
+            <div class="w-full sm:w-36">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sampai</label>
                 <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
