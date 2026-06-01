@@ -15,6 +15,7 @@ use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HousekeepingController;
 use App\Http\Controllers\IssueCardController;
 use App\Http\Controllers\NightAuditController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtaEmailLogController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ReportController;
@@ -61,6 +62,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Booking
     Route::get('/booking/create', [BookingController::class, 'create'])->middleware('permission:create_booking')->name('booking.create');
+
+    // Booking Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     Route::get('/booking/ota-create', [BookingController::class, 'otaCreate'])->middleware('permission:create_booking')->name('booking.ota-create');
     Route::get('/booking/check-availability', [BookingController::class, 'checkAvailability'])->middleware('permission:create_booking')->name('booking.check-availability');
     Route::post('/booking', [BookingController::class, 'store'])->middleware('permission:create_booking')->name('booking.store');

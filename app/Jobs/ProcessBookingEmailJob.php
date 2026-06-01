@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ProcessedEmail;
+use App\Services\BookingNotificationService;
 use App\Services\BookingSyncService;
 use App\Services\EmailParserService;
 use App\Services\OpenRouterService;
@@ -165,7 +166,7 @@ class ProcessBookingEmailJob implements ShouldQueue
 
     /**
      * Trigger notification to Front Office.
-     * Uses session flash + database notification approach compatible with existing system.
+     * Uses persistent database notifications via BookingNotificationService.
      */
     private function triggerNotification(array $result, array $aiData): void
     {
@@ -175,48 +176,19 @@ class ProcessBookingEmailJob implements ShouldQueue
 
         $reservation = $result['reservation'];
         $action = $result['action'];
+        $notifService = app(BookingNotificationService::class);
 
-        // Store notification in cache for Front Office dashboard pickup
-        $notificationKey = 'ota_notification_'.$reservation->id;
-        $notificationData = [
-            'type' => 'ota_booking',
-            'action' => $action,
-            'reservation_id' => $reservation->id,
-            'ota_reservation_number' => $aiData['reservation_id'] ?? null,
-            'guest_name' => $aiData['guest_name'] ?? '',
-            'ota_source' => $this->otaSource,
-            'message' => $this->buildNotificationMessage($action, $aiData),
-            'created_at' => now()->toDateTimeString(),
-        ];
-
-        // Store in cache for 24 hours — Front Office dashboard can pick this up
-        cache([$notificationKey => $notificationData], now()->addHours(24));
-
-        // Also store in a global OTA notifications list
-        $allNotifications = cache('ota_notifications', []);
-        $allNotifications[] = $notificationData;
-        // Keep only last 50 notifications
-        $allNotifications = array_slice($allNotifications, -50);
-        cache(['ota_notifications' => $allNotifications], now()->addHours(24));
+        match ($action) {
+            'created' => $notifService->otaBookingCreated($reservation, $aiData, $this->otaSource),
+            'updated' => $notifService->otaBookingUpdated($reservation, $aiData, $this->otaSource),
+            'cancelled' => $notifService->otaBookingCancelled($reservation, $aiData, $this->otaSource),
+            default => null,
+        };
 
         Log::info('OTA notification triggered for Front Office', [
             'reservation_id' => $reservation->id,
             'action' => $action,
         ]);
-    }
-
-    private function buildNotificationMessage(string $action, array $aiData): string
-    {
-        $guestName = $aiData['guest_name'] ?? 'Unknown';
-        $otaRef = $aiData['reservation_id'] ?? 'N/A';
-        $checkin = $aiData['checkin_date'] ?? 'N/A';
-
-        return match ($action) {
-            'created' => "🆕 New OTA booking from {$this->otaSource}: {$guestName} (Ref: {$otaRef}, Check-in: {$checkin})",
-            'updated' => "✏️ OTA booking modified from {$this->otaSource}: {$guestName} (Ref: {$otaRef})",
-            'cancelled' => "❌ OTA booking cancelled from {$this->otaSource}: {$guestName} (Ref: {$otaRef})",
-            default => "OTA booking update from {$this->otaSource}: {$guestName}",
-        };
     }
 
     /**

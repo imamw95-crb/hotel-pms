@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BookingNotification;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\RestoTransaction;
@@ -97,6 +98,7 @@ Instructions:
 - Answer in Bahasa Indonesia, friendly but professional.
 - Use real data from the context above.
 - If user asks about availability, give specific room numbers and types.
+- If user asks about NOTIFICATIONS ("ada notifikasi?", "ada booking baru?", "apa yang baru?"), answer using the "NOTIFIKASI BOOKING BARU" data above. Mention how many unread notifications and list them. Ask if they want to mark as read.
 - FORMAT: Use simple formatting. Use **bold** for important numbers/statuses. Use emoji icons (✅, 📋, 🏨, 👤, 🛏️, 📅, 💰). Keep paragraphs short (2-3 lines max).
 
 - When user wants to BOOK A ROOM, follow this process:
@@ -359,6 +361,20 @@ PROMPT;
         // ─── REVENUE DATA ────────────────────────────────────────
         $revenueData = $this->buildRevenueContext($today);
 
+        // ─── BOOKING NOTIFICATIONS ─────────────────────────────────
+        $unreadNotifs = BookingNotification::unread()->recent(5)->get();
+        $notifText = '';
+        if ($unreadNotifs->isNotEmpty()) {
+            $notifLines = [];
+            foreach ($unreadNotifs as $n) {
+                $time = $n->created_at ? $n->created_at->format('H:i') : '--:--';
+                $notifLines[] = "- [{$time}] {$n->message}";
+            }
+            $notifText = "\n\n=== NOTIFIKASI BOOKING BARU (".BookingNotification::unread()->count()." belum dibaca) ===\n".implode("\n", $notifLines);
+        } else {
+            $notifText = "\n\n=== NOTIFIKASI BOOKING BARU ===\nTidak ada notifikasi baru.";
+        }
+
         return <<<CONTEXT
 You are an AI assistant for Dynamic PMS V.2 (Property Management System). You help hotel staff with daily operations.
 
@@ -378,6 +394,7 @@ Due Out: {$dueOutText}
 Active Guests: {$activeGuestsText}
 
 {$revenueData}
+{$notifText}
 
 All Rooms:
 {$roomsList}

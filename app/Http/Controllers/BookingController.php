@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Services\BookingNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -154,6 +155,9 @@ class BookingController extends Controller
             'include_breakfast' => $request->boolean('include_breakfast'),
             'created_by' => auth()->id(),
         ]);
+
+        // Trigger notification for new web booking
+        app(BookingNotificationService::class)->webBookingCreated($reservation);
 
         if (request()->expectsJson()) {
             return response()->json([
