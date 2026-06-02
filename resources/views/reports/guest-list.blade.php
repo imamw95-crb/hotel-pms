@@ -75,7 +75,11 @@
             <tbody>
                 @forelse($guests as $res)
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-medium text-blue-600">{{ $res->reservation_number }}</td>
+                    <td class="p-3 font-medium">
+                        <a href="{{ route('reservations.show', $res->id) }}" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res->reservation_number }}
+                        </a>
+                    </td>
                     <td class="p-3 font-medium">{{ $res->guest->guest_name ?? '-' }}</td>
                     <td class="p-3">{{ $res->guest->id_number ?? '-' }}</td>
                     <td class="p-3">{{ $res->guest->phone ?? '-' }}</td>
