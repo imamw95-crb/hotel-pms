@@ -1,9 +1,10 @@
+@php $hotelSetting = \App\Models\HotelSetting::get(); @endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') - Dynamic PMS V.2</title>
+    <title>@yield('title', 'Admin Dashboard') - {{ $hotelSetting->hotel_name }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <script src="{{ asset('assets/chartjs/chart.js') }}"></script>
@@ -20,9 +21,13 @@
         <aside class="app-sidebar" id="appSidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-brand-icon">
-                    <i class="fas fa-hotel text-white text-xl"></i>
+                    @if($hotelSetting->logo_path)
+                        <img src="{{ asset('storage/' . $hotelSetting->logo_path) }}" alt="Logo" class="h-8 w-auto object-contain">
+                    @else
+                        <i class="fas fa-hotel text-white text-xl"></i>
+                    @endif
                 </div>
-                <div class="sidebar-brand-title">Dynamic PMS V.2</div>
+                <div class="sidebar-brand-title">{{ $hotelSetting->hotel_name }}</div>
                 <div class="sidebar-brand-subtitle">{{ auth()->user()->role === 'user_manager' ? 'Manager' : ucfirst(auth()->user()->role ?? 'Admin') }}</div>
             </div>
             <div class="sidebar-scroll">
