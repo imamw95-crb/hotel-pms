@@ -91,7 +91,7 @@
                         <strong>Service tidak aktif!</strong> Tidak ada aktivitas email dalam 15 menit terakhir.
                         Pastikan scheduler Laravel berjalan dengan menambahkan cron job:
                         <code class="block mt-1 text-xs bg-red-100 px-2 py-1 rounded font-mono">
-                            * * * * * cd {{ base_path() }} && php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1
+                            * * * * * cd /www/wwwroot/icon.cloudnod.my.id &amp;&amp; php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1
                         </code>
                     </div>
                 </div>
