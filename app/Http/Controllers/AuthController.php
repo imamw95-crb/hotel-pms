@@ -29,15 +29,15 @@ class AuthController extends Controller
             $user = Auth::user();
 
             if ($user->isOwner()) {
-                return redirect()->intended('/owner/dashboard');
+                return redirect()->to('/owner/dashboard');
             } elseif ($user->isAdmin()) {
-                return redirect()->intended('/admin/dashboard');
+                return redirect()->to('/admin/dashboard');
             } elseif ($user->isHousekeeping()) {
-                return redirect()->intended('/housekeeping');
+                return redirect()->to('/housekeeping');
             } elseif ($user->isUserManager()) {
-                return redirect()->intended('/dashboard');
+                return redirect()->to('/dashboard');
             } else {
-                return redirect()->intended('/frontoffice/dashboard');
+                return redirect()->to('/frontoffice/dashboard');
             }
         }
 
