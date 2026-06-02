@@ -80,6 +80,7 @@ window.AiChat = {
     /**
      * Show a booking notification popup automatically.
      * Called by BookingNotifications polling when new unread detected.
+     * Banner is refreshed on every poll and persists until all notifications are read.
      */
     showNotification: function(notif) {
         // Play notification sound
@@ -87,10 +88,10 @@ window.AiChat = {
             playNotificationSound();
         }
 
-        // Don't auto-open if already open and has messages
+        // Don't auto-open the panel if user is actively chatting
         if (this.open && this.messages.length > 0) return;
 
-        // Open the chat panel
+        // Open the chat panel if closed
         if (!this.open) {
             this.toggle();
         }
@@ -100,17 +101,17 @@ window.AiChat = {
         var roomInfo = notif.room_number ? 'Kamar ' + notif.room_number : '-';
         var sourceInfo = notif.ota_source || 'Web Booking';
 
+        var container = document.getElementById('chatMessages');
+        if (!container) return;
+
         // Remove old banner if exists
         var oldBanner = document.getElementById('notifBanner');
         if (oldBanner) oldBanner.remove();
 
-        var container = document.getElementById('chatMessages');
-        if (!container) return;
-
         var bubble = document.createElement('div');
         bubble.id = 'notifBanner';
         bubble.innerHTML =
-            '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:12px;margin:8px 12px;padding:14px 16px;box-shadow:0 2px 8px rgba(245,158,11,0.15);animation:notifSlide 0.4s ease">' +
+            '<div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b;border-radius:12px;margin:8px 12px;padding:14px 16px;box-shadow:0 2px 8px rgba(245,158,11,0.15)">' +
             '<div style="display:flex;align-items:flex-start;gap:10px">' +
             '<span style="font-size:20px;flex-shrink:0;line-height:1">🔔</span>' +
             '<div style="flex:1;min-width:0">' +
@@ -119,11 +120,7 @@ window.AiChat = {
             '<tr><td style="padding:1px 6px 1px 0;white-space:nowrap;vertical-align:top;width:1%">👤</td><td style="padding:1px 0;font-weight:600">' + this.escapeHtml(guestName) + '</td></tr>' +
             '<tr><td style="padding:1px 6px 1px 0;white-space:nowrap;vertical-align:top">🛏️</td><td style="padding:1px 0">' + this.escapeHtml(roomInfo) + '</td></tr>' +
             '<tr><td style="padding:1px 6px 1px 0;white-space:nowrap;vertical-align:top">📎</td><td style="padding:1px 0">' + this.escapeHtml(sourceInfo) + '</td></tr>' +
-            '</table>' +
-            '<button onclick="this.closest(\'#notifBanner\').remove()" style="margin-top:8px;font-size:11px;font-weight:600;color:#92400e;background:rgba(255,255,255,0.6);border:1px solid #f59e0b;border-radius:6px;padding:4px 12px;cursor:pointer">' +
-            '<i class="fas fa-check" style="margin-right:4px"></i>Tutup</button>' +
-            '</div></div></div>' +
-            '<style>.notifBanner{animation:notifSlide 0.4s ease}@keyframes notifSlide{0%{opacity:0;transform:translateY(-10px)}100%{opacity:1;transform:translateY(0)}}</style>';
+            '</table></div></div></div>';
 
         // Add right after the welcome message
         if (container.children.length > 0) {
@@ -131,6 +128,15 @@ window.AiChat = {
         } else {
             container.appendChild(bubble);
         }
+    },
+
+    /**
+     * Hide the booking notification banner.
+     * Called by BookingNotifications polling when all notifications are read.
+     */
+    hideNotification: function() {
+        var banner = document.getElementById('notifBanner');
+        if (banner) banner.remove();
     },
 
     toggle() {

@@ -1,4 +1,7 @@
-@php $hotelSetting = \App\Models\HotelSetting::get(); @endphp
+@php
+    use DateTime as Date;
+    $hotelSetting = \App\Models\HotelSetting::get();
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -234,12 +237,17 @@
                         self.unreadCount = newCount;
                         self.updateBadge();
 
-                        // If new notification detected, play sound & auto-show in AI Chat
-                        if (hasNew && data.notifications && data.notifications.length > 0) {
+                        // Play sound only on actual new notification
+                        if (hasNew) {
                             playNotificationSound();
-                            var latest = data.notifications[0];
-                            if (typeof AiChat !== 'undefined' && AiChat.showNotification) {
-                                AiChat.showNotification(latest);
+                        }
+
+                        // Always show/hide AI Chat banner based on unread count (persists until read)
+                        if (typeof AiChat !== 'undefined') {
+                            if (newCount > 0 && data.notifications && data.notifications.length > 0) {
+                                AiChat.showNotification(data.notifications[0]);
+                            } else if (newCount === 0) {
+                                AiChat.hideNotification();
                             }
                         }
                     })
