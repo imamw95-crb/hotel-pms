@@ -23,21 +23,13 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // ─── OTA Email Autopilot ──────────────────────────────────
-        // Check for new OTA emails every 2 minutes
+        // Check for new OTA emails every 5 minutes
         // and auto-sync to reservations
         $schedule->command('hotel:read-emails --limit=5')
-            ->everyTwoMinutes()
+            ->everyFiveMinutes()
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
-
-        // ─── Alternative: every minute (more responsive) ──────────
-        // Uncomment below and comment above for 1-minute interval
-        // $schedule->command('hotel:read-emails --limit=5')
-        //     ->everyMinute()
-        //     ->withoutOverlapping()
-        //     ->runInBackground()
-        //     ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
     }
 
     /**

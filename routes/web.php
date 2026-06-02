@@ -321,6 +321,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('ota-email-logs.retry');
         Route::post('/ota-email-logs/refresh-stats', [OtaEmailLogController::class, 'refreshStats'])
             ->name('ota-email-logs.refresh-stats');
+        Route::post('/ota-email-logs/refresh-service-status', [OtaEmailLogController::class, 'refreshServiceStatus'])
+            ->name('ota-email-logs.refresh-service-status');
     });
 
     // ─── API: OTA Email Stats (for dashboard widgets) ──────────

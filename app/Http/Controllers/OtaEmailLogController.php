@@ -54,8 +54,11 @@ class OtaEmailLogController extends Controller
             ->orderByDesc('total')
             ->pluck('total', 'email_type');
 
+        // Service monitoring status
+        $serviceStatus = ProcessedEmail::getServiceStatus();
+
         return view('ota-email-logs.index', compact(
-            'logs', 'stats', 'otaSources', 'emailTypes'
+            'logs', 'stats', 'otaSources', 'emailTypes', 'serviceStatus'
         ));
     }
 
@@ -85,6 +88,24 @@ class OtaEmailLogController extends Controller
 
         return redirect()->route('ota-email-logs.index')
             ->with('success', 'Statistik berhasil diperbarui.');
+    }
+
+    /**
+     * Refresh service monitoring status (clear cache).
+     */
+    public function refreshServiceStatus()
+    {
+        ProcessedEmail::clearServiceStatusCache();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'service_status' => ProcessedEmail::getServiceStatus(),
+            ]);
+        }
+
+        return redirect()->route('ota-email-logs.index')
+            ->with('success', 'Status service berhasil diperbarui.');
     }
 
     /**

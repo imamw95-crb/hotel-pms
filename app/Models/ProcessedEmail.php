@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -184,6 +185,70 @@ class ProcessedEmail extends Model
     public static function clearStatsCache(): void
     {
         Cache::forget('ota_email_stats');
+        Cache::forget('ota_service_status');
+    }
+
+    // ─── Service Monitor ───────────────────────────────────────────────
+
+    /**
+     * Get service monitoring status — apakah OTA email autopilot berjalan.
+     */
+    public static function getServiceStatus(): array
+    {
+        $cacheKey = 'ota_service_status';
+
+        return Cache::remember($cacheKey, now()->addSeconds(30), function () {
+            $latest = static::latest('created_at')->first();
+            $lastLogActivity = null;
+            $logFile = storage_path('logs/ota-autopilot.log');
+
+            // Cek file log modified time
+            if (file_exists($logFile)) {
+                $lastLogActivity = filemtime($logFile);
+            }
+
+            $now = now();
+            $lastEmailAt = $latest?->created_at;
+            $minutesSinceLastEmail = $lastEmailAt ? $lastEmailAt->diffInMinutes($now) : null;
+            $minutesSinceLastLog = $lastLogActivity ? Carbon::createFromTimestamp($lastLogActivity)->diffInMinutes($now) : null;
+
+            // Dianggap "running" jika ada aktivitas email atau log dalam 15 menit terakhir
+            $isRunning = ($minutesSinceLastEmail !== null && $minutesSinceLastEmail <= 15)
+                || ($minutesSinceLastLog !== null && $minutesSinceLastLog <= 15);
+
+            $lastActivity = null;
+            if ($lastEmailAt && $lastLogActivity) {
+                $logTime = Carbon::createFromTimestamp($lastLogActivity);
+                $lastActivity = $lastEmailAt->greaterThan($logTime) ? $lastEmailAt : $logTime;
+            } elseif ($lastEmailAt) {
+                $lastActivity = $lastEmailAt;
+            } elseif ($lastLogActivity) {
+                $lastActivity = Carbon::createFromTimestamp($lastLogActivity);
+            }
+
+            return [
+                'is_running' => $isRunning,
+                'status_label' => $isRunning ? 'Berjalan' : 'Tidak Aktif',
+                'status_color' => $isRunning ? 'emerald' : 'red',
+                'status_icon' => $isRunning ? 'fa-check-circle' : 'fa-exclamation-triangle',
+                'last_email_at' => $lastEmailAt,
+                'last_email_subject' => $latest?->subject,
+                'minutes_since_last_email' => $minutesSinceLastEmail,
+                'last_log_activity' => $lastLogActivity ? Carbon::createFromTimestamp($lastLogActivity)->format('Y-m-d H:i:s') : null,
+                'minutes_since_last_log' => $minutesSinceLastLog,
+                'last_activity' => $lastActivity?->format('Y-m-d H:i:s'),
+                'schedule_interval' => '5 menit',
+                'check_command' => 'hotel:read-emails --limit=5',
+            ];
+        });
+    }
+
+    /**
+     * Clear service status cache.
+     */
+    public static function clearServiceStatusCache(): void
+    {
+        Cache::forget('ota_service_status');
     }
 
     // ─── Original Methods ───────────────────────────────────────────────

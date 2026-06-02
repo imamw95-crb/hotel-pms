@@ -33,6 +33,72 @@
         </div>
     </div>
 
+    {{-- Service Monitoring Card --}}
+    <div class="bg-white rounded-lg shadow p-4 border-l-4 {{ $serviceStatus['is_running'] ? 'border-emerald-500' : 'border-red-500' }}">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-2xl {{ $serviceStatus['is_running'] ? 'text-emerald-500' : 'text-red-500' }}">
+                    <i class="fas {{ $serviceStatus['status_icon'] }}"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-gray-700">
+                        Monitoring Service Email OTA
+                    </h3>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $serviceStatus['is_running'] ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}">
+                            <i class="fas {{ $serviceStatus['status_icon'] }} mr-1"></i>
+                            {{ $serviceStatus['status_label'] }}
+                        </span>
+                        <span class="text-xs text-gray-500">
+                            Interval: setiap {{ $serviceStatus['schedule_interval'] }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="text-right text-xs text-gray-500 space-y-1">
+                    @if($serviceStatus['last_activity'])
+                        <div>Aktivitas terakhir: <strong>{{ $serviceStatus['last_activity'] }}</strong></div>
+                    @endif
+                    @if($serviceStatus['last_email_subject'])
+                        <div>Email terakhir: <span class="text-gray-700">{{ \Illuminate\Support\Str::limit($serviceStatus['last_email_subject'], 40) }}</span></div>
+                    @endif
+                    @if($serviceStatus['minutes_since_last_email'] !== null)
+                        <div>
+                            @if($serviceStatus['minutes_since_last_email'] <= 1)
+                                <span class="text-emerald-600 font-medium">🔹 Baru saja</span>
+                            @else
+                                🔹 {{ $serviceStatus['minutes_since_last_email'] }} menit yang lalu
+                            @endif
+                        </div>
+                    @else
+                        <div class="text-gray-400">Belum ada aktivitas email</div>
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('ota-email-logs.refresh-service-status') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="bg-gray-100 text-gray-600 px-3 py-2 rounded text-sm hover:bg-gray-200" title="Refresh Status">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        @if(!$serviceStatus['is_running'])
+            <div class="mt-3 pt-3 border-t border-red-100">
+                <div class="flex items-start gap-2 text-sm text-red-700 bg-red-50 p-3 rounded">
+                    <i class="fas fa-info-circle mt-0.5"></i>
+                    <div>
+                        <strong>Service tidak aktif!</strong> Tidak ada aktivitas email dalam 15 menit terakhir.
+                        Pastikan scheduler Laravel berjalan dengan menambahkan cron job:
+                        <code class="block mt-1 text-xs bg-red-100 px-2 py-1 rounded font-mono">
+                            * * * * * cd {{ base_path() }} && php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1
+                        </code>
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
+
     {{-- Breakdown by Source & Type --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         @if(!empty($stats['by_source']))
