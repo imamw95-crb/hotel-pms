@@ -151,6 +151,46 @@
         });
     </script>
 
+    {{-- Play notification sound using Web Audio API --}}
+    <script>
+        function playNotificationSound() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var now = ctx.currentTime;
+
+                // First tone (C5 - higher pitch)
+                var osc1 = ctx.createOscillator();
+                var gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.value = 523.25;
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.25);
+
+                // Second tone (E5 - higher, pleasant chime)
+                var osc2 = ctx.createOscillator();
+                var gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.value = 659.25;
+                gain2.gain.setValueAtTime(0.01, now);
+                gain2.gain.setValueAtTime(0.3, now + 0.1);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.1);
+                osc2.stop(now + 0.4);
+
+                // Auto-resume if suspended (needed for modern browsers)
+                if (ctx.state === 'suspended') ctx.resume();
+            } catch(e) {
+                // Audio not supported - silently ignore
+            }
+        }
+    </script>
+
     {{-- Booking Notification Polling --}}
     <script data-turbo-permanent>
         window.BookingNotifications = {
@@ -194,8 +234,9 @@
                         self.unreadCount = newCount;
                         self.updateBadge();
 
-                        // If new notification detected, auto-show in AI Chat
+                        // If new notification detected, play sound & auto-show in AI Chat
                         if (hasNew && data.notifications && data.notifications.length > 0) {
+                            playNotificationSound();
                             var latest = data.notifications[0];
                             if (typeof AiChat !== 'undefined' && AiChat.showNotification) {
                                 AiChat.showNotification(latest);

@@ -82,6 +82,11 @@ window.AiChat = {
      * Called by BookingNotifications polling when new unread detected.
      */
     showNotification: function(notif) {
+        // Play notification sound
+        if (typeof playNotificationSound === 'function') {
+            playNotificationSound();
+        }
+
         // Don't auto-open if already open and has messages
         if (this.open && this.messages.length > 0) return;
 
