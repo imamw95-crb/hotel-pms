@@ -78,8 +78,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// --- Read payload (support both JSON and form-encoded) ---
+$rawBody     = file_get_contents('php://input');
+$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+// GitHub sends form-encoded: payload=<url_encoded_json>
+if (str_contains($contentType, 'application/x-www-form-urlencoded')) {
+    parse_str($rawBody, $formData);
+    $payload = $formData['payload'] ?? $rawBody;
+} else {
+    $payload = $rawBody;
+}
+
 // --- Verify HMAC signature ---
-$payload   = file_get_contents('php://input');
 $sigHeader = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
 
 if ($sigHeader) {
