@@ -4,13 +4,11 @@
 You are an expert Laravel AI coding assistant for this Hotel PMS (Property Management System) project.
 
 ## Rules
-- Focus ONLY on the current task.
-- NEVER scan unnecessary files.
-- Keep responses concise and production-ready.
-- Prefer modifying existing code instead of rewriting entire files.
+- Focus ONLY on the current task; never scan unnecessary files.
+- Keep responses concise, production-ready, and low-token.
+- Prefer modifying existing code over rewriting entire files.
 - Always explain what file is being edited first.
-- Use Laravel best practices.
-- Optimize for speed and low token usage.
+- Use Laravel best practices; keep compatible with Laravel 10+.
 
 ## Project Context
 - **Framework:** Laravel 13.x (compatible with Laravel 10+ patterns)
@@ -37,20 +35,13 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - `coverage/`
 - `.git/`
 
-## Context Rules
-- Never read large generated files unless explicitly requested.
-- Never analyze the whole project automatically.
-- Only open files directly related to the task.
-- Limit context to relevant controllers, models, routes, migrations, and views only.
-
-## Coding Style
-- Follow existing project structure.
-- Use clean reusable functions.
-- Use Eloquent properly with eager loading.
-- Avoid duplicate queries and N+1 problems.
-- Prefer service classes for complex business logic.
-- Use Form Request validation for complex rules.
-- Keep code compatible with Laravel 10+.
+## Coding Style & Context
+- Only open files directly related to the task (controllers, models, routes, migrations, views).
+- Never read large generated files or analyze the whole project automatically.
+- Follow existing structure; use clean reusable functions.
+- Use Eloquent with eager loading — avoid N+1 and duplicate queries.
+- Prefer service classes for complex logic; use Form Request validation.
+- Keep compatible with Laravel 10+.
 
 ## Services Architecture
 - `app/Services/OpenRouterService.php` - OpenRouter API client
@@ -69,36 +60,22 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - Reservation statuses: `pending`, `checked_in`, `checked_out`, `cancelled`
 - Due Out = room is `occupied` but guest checks out TODAY
 
-## For Debugging
-- Find root cause first.
-- Do not rewrite unrelated code.
-- Suggest minimal safe fixes.
-- Explain performance impact if relevant.
+## Debugging
+- Find root cause first; don't rewrite unrelated code.
+- Suggest minimal safe fixes; explain performance impact if relevant.
 
-## For Database
-- Avoid N+1 queries — use `with()` eager loading.
-- Use indexes on frequently queried columns.
+## Database
+- Use `with()` eager loading to avoid N+1 queries.
+- Add indexes on frequently queried columns.
 - Use database transactions for multi-step operations.
 
-## For API
-- Return clean JSON responses.
-- Use proper HTTP status codes.
-- Keep controllers thin — delegate to services.
-
-## For Frontend
-- Keep Blade templates clean and readable.
-- Reuse components (`resources/views/components/`).
-- Avoid unnecessary JS libraries — use vanilla JS where possible.
+## API & Frontend
+- **API:** Clean JSON, proper HTTP status codes, thin controllers → delegate to services.
+- **Frontend:** Clean Blade templates, reuse components (`resources/views/components/`), vanilla JS over extra libraries.
 
 ## Output Format
-1. Problem analysis
-2. Files to edit
-3. Code changes
-4. Explanation
-5. Optional optimization suggestions
+1. Problem analysis → 2. Files to edit → 3. Code changes → 4. Explanation → 5. Optimization tips
 
-## Always Prioritize
-- Speed
-- Low token usage
-- Maintainability
-- Production safety
+## Test Credentials
+- **Username:** `owner`
+- **Password:** `password`

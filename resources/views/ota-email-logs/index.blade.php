@@ -55,8 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="text-right text-xs text-gray-500 space-y-1">
+            <div class="text-right text-xs text-gray-500 space-y-1">
                     @if($serviceStatus['last_activity'])
                         <div>Aktivitas terakhir: <strong>{{ $serviceStatus['last_activity'] }}</strong></div>
                     @endif
@@ -68,11 +67,19 @@
                             @if($serviceStatus['minutes_since_last_email'] <= 1)
                                 <span class="text-emerald-600 font-medium">🔹 Baru saja</span>
                             @else
-                                🔹 {{ $serviceStatus['minutes_since_last_email'] }} menit yang lalu
+                                🔹 {{ number_format($serviceStatus['minutes_since_last_email'], 0) }} menit yang lalu
                             @endif
                         </div>
                     @else
                         <div class="text-gray-400">Belum ada aktivitas email</div>
+                    @endif
+                    {{-- Scheduler Heartbeat Indicator --}}
+                    @if($serviceStatus['scheduler_heartbeat'] ?? false)
+                        <div class="mt-1 {{ $serviceStatus['scheduler_running'] ? 'text-emerald-600' : 'text-red-500' }}">
+                            <i class="fas fa-clock mr-1"></i>
+                            Scheduler: {{ $serviceStatus['scheduler_running'] ? '✅ Aktif' : '❌ Tidak Aktif' }}
+                            <span class="text-gray-400">({{ $serviceStatus['minutes_since_heartbeat'] ?? '?' }}m)</span>
+                        </div>
                     @endif
                 </div>
                 <form method="POST" action="{{ route('ota-email-logs.refresh-service-status') }}" class="inline">
@@ -89,6 +96,12 @@
                     <i class="fas fa-info-circle mt-0.5"></i>
                     <div>
                         <strong>Service tidak aktif!</strong> Tidak ada aktivitas email dalam 15 menit terakhir.
+                        @if(!($serviceStatus['scheduler_running'] ?? false))
+                            <div class="mt-1 text-amber-700 bg-amber-100 p-2 rounded text-xs">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <strong>Scheduler tidak terdeteksi!</strong> Heartbeat scheduler tidak diperbarui.
+                            </div>
+                        @endif
                         Pastikan scheduler Laravel berjalan dengan menambahkan cron job:
                         <code class="block mt-1 text-xs bg-red-100 px-2 py-1 rounded font-mono">
                             * * * * * cd /www/wwwroot/icon.cloudnod.my.id &amp;&amp; php artisan schedule:run &gt;&gt; /dev/null 2&gt;&amp;1

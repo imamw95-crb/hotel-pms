@@ -192,6 +192,11 @@ class ProcessedEmail extends Model
 
     /**
      * Get service monitoring status — apakah OTA email autopilot berjalan.
+     *
+     * Checks THREE things:
+     * 1. Scheduler heartbeat (updated every 1 min by cron) → scheduler alive?
+     * 2. Autopilot log (updated every 5 min) → command running?
+     * 3. DB processed_emails (updated when email found) → emails processed?
      */
     public static function getServiceStatus(): array
     {
@@ -199,31 +204,63 @@ class ProcessedEmail extends Model
 
         return Cache::remember($cacheKey, now()->addSeconds(30), function () {
             $latest = static::latest('created_at')->first();
-            $lastLogActivity = null;
-            $logFile = storage_path('logs/ota-autopilot.log');
+            $now = now();
 
-            // Cek file log modified time
-            if (file_exists($logFile)) {
-                $lastLogActivity = filemtime($logFile);
+            // ─── Check 1: Scheduler Heartbeat ─────────────────────
+            $heartbeatFile = storage_path('logs/scheduler-heartbeat.log');
+            $lastHeartbeatAt = null;
+            $minutesSinceHeartbeat = null;
+            if (file_exists($heartbeatFile)) {
+                $lastHeartbeatAt = filemtime($heartbeatFile);
+                $minutesSinceHeartbeat = $lastHeartbeatAt
+                    ? Carbon::createFromTimestamp($lastHeartbeatAt)->diffInMinutes($now)
+                    : null;
             }
 
-            $now = now();
+            // ─── Check 2: Autopilot Log ───────────────────────────
+            $logFile = storage_path('logs/ota-autopilot.log');
+            $lastLogActivity = null;
+            $minutesSinceLastLog = null;
+            if (file_exists($logFile)) {
+                $lastLogActivity = filemtime($logFile);
+                $minutesSinceLastLog = $lastLogActivity
+                    ? Carbon::createFromTimestamp($lastLogActivity)->diffInMinutes($now)
+                    : null;
+            }
+
+            // ─── Check 3: Last Processed Email ───────────────────
             $lastEmailAt = $latest?->created_at;
             $minutesSinceLastEmail = $lastEmailAt ? $lastEmailAt->diffInMinutes($now) : null;
-            $minutesSinceLastLog = $lastLogActivity ? Carbon::createFromTimestamp($lastLogActivity)->diffInMinutes($now) : null;
 
-            // Dianggap "running" jika ada aktivitas email atau log dalam 15 menit terakhir
-            $isRunning = ($minutesSinceLastEmail !== null && $minutesSinceLastEmail <= 15)
-                || ($minutesSinceLastLog !== null && $minutesSinceLastLog <= 15);
+            // ─── Determine Status ─────────────────────────────────
+            // Scheduler hidup jika heartbeat ≤ 2 menit
+            $schedulerRunning = $minutesSinceHeartbeat !== null && $minutesSinceHeartbeat <= 2;
+            // Autopilot berjalan jika log ≤ 7 menit (every 5 min + margin)
+            $autopilotRunning = $minutesSinceLastLog !== null && $minutesSinceLastLog <= 7;
+            // Email diproses jika ≤ 15 menit
+            $recentEmail = $minutesSinceLastEmail !== null && $minutesSinceLastEmail <= 15;
+
+            $isRunning = $autopilotRunning || $recentEmail;
 
             $lastActivity = null;
-            if ($lastEmailAt && $lastLogActivity) {
+            $lastActivitySource = null;
+            if ($lastHeartbeatAt) {
+                $hbTime = Carbon::createFromTimestamp($lastHeartbeatAt);
+                if ($lastActivity === null || $hbTime->greaterThan($lastActivity)) {
+                    $lastActivity = $hbTime;
+                    $lastActivitySource = 'heartbeat';
+                }
+            }
+            if ($lastLogActivity) {
                 $logTime = Carbon::createFromTimestamp($lastLogActivity);
-                $lastActivity = $lastEmailAt->greaterThan($logTime) ? $lastEmailAt : $logTime;
-            } elseif ($lastEmailAt) {
+                if ($lastActivity === null || $logTime->greaterThan($lastActivity)) {
+                    $lastActivity = $logTime;
+                    $lastActivitySource = 'log';
+                }
+            }
+            if ($lastEmailAt && ($lastActivity === null || $lastEmailAt->greaterThan($lastActivity))) {
                 $lastActivity = $lastEmailAt;
-            } elseif ($lastLogActivity) {
-                $lastActivity = Carbon::createFromTimestamp($lastLogActivity);
+                $lastActivitySource = 'email';
             }
 
             return [
@@ -231,13 +268,17 @@ class ProcessedEmail extends Model
                 'status_label' => $isRunning ? 'Berjalan' : 'Tidak Aktif',
                 'status_color' => $isRunning ? 'emerald' : 'red',
                 'status_icon' => $isRunning ? 'fa-check-circle' : 'fa-exclamation-triangle',
+                'scheduler_running' => $schedulerRunning,
+                'scheduler_heartbeat' => $lastHeartbeatAt ? Carbon::createFromTimestamp($lastHeartbeatAt)->format('Y-m-d H:i:s') : null,
+                'minutes_since_heartbeat' => $minutesSinceHeartbeat,
                 'last_email_at' => $lastEmailAt,
                 'last_email_subject' => $latest?->subject,
                 'minutes_since_last_email' => $minutesSinceLastEmail,
                 'last_log_activity' => $lastLogActivity ? Carbon::createFromTimestamp($lastLogActivity)->format('Y-m-d H:i:s') : null,
                 'minutes_since_last_log' => $minutesSinceLastLog,
                 'last_activity' => $lastActivity?->format('Y-m-d H:i:s'),
-                'schedule_interval' => '5 menit',
+                'last_activity_source' => $lastActivitySource,
+                'schedule_interval' => 'setiap 5 menit',
                 'check_command' => 'hotel:read-emails --limit=5',
             ];
         });

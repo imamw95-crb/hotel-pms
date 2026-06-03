@@ -22,12 +22,34 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
+        // ─── Scheduler Heartbeat ───────────────────────────────────
+        // Writes a timestamp every minute so monitoring can detect
+        // if the Laravel scheduler (cron) is actually running.
+        // If this stops updating → cron job is dead.
+        $schedule->call(function () {
+            $heartbeatFile = storage_path('logs/scheduler-heartbeat.log');
+            $dir = dirname($heartbeatFile);
+            if (! is_dir($dir)) {
+                mkdir($dir, 0775, true);
+            }
+            file_put_contents(
+                $heartbeatFile,
+                now()->format('Y-m-d H:i:s').PHP_EOL,
+                FILE_APPEND | LOCK_EX
+            );
+            // Keep only last ~100 lines to prevent unbounded growth
+            $lines = file($heartbeatFile);
+            if (count($lines) > 100) {
+                file_put_contents($heartbeatFile, implode('', array_slice($lines, -100)));
+            }
+        })->everyMinute();
+
         // ─── OTA Email Autopilot ──────────────────────────────────
         // Check for new OTA emails every 5 minutes
         // and auto-sync to reservations
         $schedule->command('hotel:read-emails --limit=5')
             ->everyFiveMinutes()
-            ->withoutOverlapping()
+            ->withoutOverlapping(30) // lock expires after 30 minutes as fallback
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
     }
