@@ -37,6 +37,7 @@
             <a href="#reports" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-chart-bar mr-1.5 w-4 text-center"></i> Laporan (Reports)</a>
             <a href="#guests" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-users mr-1.5 w-4 text-center"></i> Manajemen Tamu</a>
             <a href="#rooms" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-door-open mr-1.5 w-4 text-center"></i> Kamar & Tipe Kamar</a>
+            <a href="#promo-prices" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-tag mr-1.5 w-4 text-center"></i> Promo Harga</a>
             <a href="#ai-chat" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-robot mr-1.5 w-4 text-center"></i> AI Chat Assistant</a>
             <a href="#admin" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-cog mr-1.5 w-4 text-center"></i> Administrasi (Owner)</a>
             <a href="#api" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-plug mr-1.5 w-4 text-center"></i> API Eksternal</a>
@@ -540,12 +541,85 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 18. AI CHAT --}}
+    {{-- 18. PROMO HARGA --}}
+    {{-- ================================================================ --}}
+    <div id="promo-prices" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-tag text-amber-500"></i> 18. Promo Harga
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Fitur untuk menetapkan <strong>harga khusus (promo)</strong> per tanggal untuk setiap Tipe Kamar. Harga promo otomatis digunakan saat menghitung total booking.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                    <h4 class="font-bold text-amber-800 mb-2">🎯 Cara Kerja</h4>
+                    <ul class="space-y-1.5 text-xs text-amber-700">
+                        <li><i class="fas fa-check-circle mr-1"></i> Promo berlaku per <strong>Tipe Kamar</strong>, bukan per kamar individu</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Setiap promo memiliki <strong>label</strong> (misal: "Promo Lebaran", "High Season")</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Bisa input <strong>range tanggal</strong> — otomatis create untuk setiap tanggal</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Jika sudah ada promo di tanggal yang sama, akan <strong>diupdate</strong></li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-2">📊 Prioritas Harga</h4>
+                    <div class="flex items-center gap-2 text-xs mb-2">
+                        <span class="bg-amber-500 text-white px-2 py-0.5 rounded font-bold">1</span>
+                        <span class="font-semibold">Harga Promo</span>
+                        <i class="fas fa-arrow-right text-gray-400"></i>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs mb-2 ml-6">
+                        <span class="bg-gray-300 text-gray-700 px-2 py-0.5 rounded font-bold">2</span>
+                        <span class="font-semibold">Harga Weekend</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs mb-2 ml-6">
+                        <span class="bg-gray-300 text-gray-700 px-2 py-0.5 rounded font-bold">3</span>
+                        <span class="font-semibold">Harga Weekday</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs ml-6">
+                        <span class="bg-gray-300 text-gray-700 px-2 py-0.5 rounded font-bold">4</span>
+                        <span class="font-semibold">Default (price_per_night)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-sm">
+                <h4 class="font-bold text-gray-800 mb-2">📝 Cara Menggunakan</h4>
+                <ol class="space-y-1.5 text-sm text-gray-700 ml-2 list-decimal list-inside">
+                    <li>Buka menu <strong>Room Management → Promo Harga</strong> di sidebar</li>
+                    <li>Klik tombol <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">+ Tambah Promo</span></li>
+                    <li>Pilih <strong>Tipe Kamar</strong> yang ingin diberi promo</li>
+                    <li>Isi <strong>Dari Tanggal</strong> dan <strong>Sampai Tanggal</strong> (kosongkan jika 1 hari)</li>
+                    <li>Masukkan <strong>Harga Promo</strong> per malam (Rp)</li>
+                    <li>Isi <strong>Label Promo</strong> untuk identifikasi (contoh: "Promo Lebaran")</li>
+                    <li>Klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Simpan Promo</span></li>
+                </ol>
+                <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i> Harga promo akan otomatis terpakai saat membuat booking untuk tanggal dan tipe kamar yang sesuai.</p>
+            </div>
+
+            <div class="mt-4 text-sm">
+                <h4 class="font-bold text-gray-800 mb-2">🔌 API Endpoint</h4>
+                <p class="text-xs text-gray-600 mb-2">Endpoint API untuk integrasi eksternal (OTA, channel manager, dll):</p>
+                <div class="bg-gray-800 text-gray-200 rounded-lg p-3 text-xs font-mono space-y-1">
+                    <p><span class="text-green-400">GET</span> /api/promo-prices <span class="text-gray-500">— Daftar semua harga promo (filter: ?room_type_id=, ?date=, ?date_from=&date_to=)</span></p>
+                    <p><span class="text-green-400">GET</span> /api/promo-prices/room-types <span class="text-gray-500">— Tipe kamar + promo prices masing-masing</span></p>
+                    <p><span class="text-green-400">GET</span> /api/promo-prices/check?room_id=X&date=YYYY-MM-DD <span class="text-gray-500">— Cek harga efektif (dengan promo)</span></p>
+                    <p><span class="text-green-400">GET</span> /api/promo-prices/check?room_id=X&check_in=...&check_out=... <span class="text-gray-500">— Cek range dengan breakdown per malam</span></p>
+                </div>
+                <p class="text-xs text-gray-500 mt-1"><i class="fas fa-key mr-1"></i> Semua endpoint menggunakan autentikasi <code class="bg-gray-100 px-1 rounded">X-API-Key</code>.</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 19. AI CHAT --}}
     {{-- ================================================================ --}}
     <div id="ai-chat" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-robot text-purple-500"></i> 18. AI Chat Assistant
+                <i class="fas fa-robot text-purple-500"></i> 19. AI Chat Assistant
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -561,12 +635,12 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 19. ADMIN --}}
+    {{-- 20. ADMIN --}}
     {{-- ================================================================ --}}
     <div id="admin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-cog text-gray-600"></i> 19. Administrasi (Owner Only)
+                <i class="fas fa-cog text-gray-600"></i> 20. Administrasi (Owner Only)
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -606,7 +680,7 @@
     <div id="api" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-plug text-blue-500"></i> 20. API Eksternal
+                <i class="fas fa-plug text-cyan-500"></i> 21. API Eksternal
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -646,12 +720,12 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 21. OTA EMAIL LOG --}}
+    {{-- 22. LOG EMAIL OTA --}}
     {{-- ================================================================ --}}
     <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-envelope-open-text text-purple-500"></i> 21. Log Email OTA
+                <i class="fas fa-envelope-open-text text-teal-500"></i> 22. Log Email OTA
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>

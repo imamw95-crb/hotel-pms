@@ -37,12 +37,24 @@ class Room extends Model
 
     /**
      * Get the effective price per night for a given date.
-     * Falls back to price_per_night if weekday/weekend prices are not set.
+     * Priority: Promo price > Weekend price > Weekday price > Default price_per_night.
      */
     public function getPriceForDate(Carbon|string $date): float
     {
         $carbon = $date instanceof Carbon ? $date : Carbon::parse($date);
+        $dateStr = $carbon->format('Y-m-d');
 
+        // Check promo price from room type date prices
+        if ($this->relationLoaded('roomType') && $this->roomType) {
+            $promo = $this->roomType->datePrices->first(function ($dp) use ($dateStr) {
+                return $dp->date->format('Y-m-d') === $dateStr;
+            });
+            if ($promo && $promo->price > 0) {
+                return (float) $promo->price;
+            }
+        }
+
+        // Fallback: weekend/weekday pricing
         if (self::isWeekend($carbon)) {
             return $this->price_weekend > 0 ? (float) $this->price_weekend : (float) $this->price_per_night;
         }

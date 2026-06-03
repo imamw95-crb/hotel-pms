@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\PromoPriceApiController;
 use App\Http\Controllers\Api\ReservationApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,17 @@ Route::middleware(['api', 'api.key'])->group(function () {
 
     // Cek kamar available
     Route::get('/rooms/available', [ReservationApiController::class, 'availableRooms']);
+
+    // ========== PROMO PRICES ==========
+
+    // List promo prices with filters
+    Route::get('/promo-prices', [PromoPriceApiController::class, 'index']);
+
+    // Room types with promo prices
+    Route::get('/promo-prices/room-types', [PromoPriceApiController::class, 'roomTypes']);
+
+    // Check effective price for a room on specific date/range
+    Route::get('/promo-prices/check', [PromoPriceApiController::class, 'checkPrice']);
 
     // ========== GUESTS ==========
 

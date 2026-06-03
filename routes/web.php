@@ -26,6 +26,7 @@ use App\Http\Controllers\RoomDashboardController;
 use App\Http\Controllers\RoomListController;
 use App\Http\Controllers\RoomRackController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\PromoPriceController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\SettingController;
 use App\Models\User;
@@ -121,6 +122,14 @@ Route::middleware(['auth'])->group(function () {
     // Rooms & Room Types (all roles with permission)
     Route::resource('rooms', RoomController::class);
     Route::resource('room-types', RoomTypeController::class);
+
+    // Promo Prices
+    Route::get('/promo-prices', [PromoPriceController::class, 'index'])->middleware('permission:manage_promo_prices')->name('promo-prices.index');
+    Route::get('/promo-prices/create', [PromoPriceController::class, 'create'])->middleware('permission:manage_promo_prices')->name('promo-prices.create');
+    Route::post('/promo-prices', [PromoPriceController::class, 'store'])->middleware('permission:manage_promo_prices')->name('promo-prices.store');
+    Route::get('/promo-prices/{roomTypeDatePrice}/edit', [PromoPriceController::class, 'edit'])->middleware('permission:manage_promo_prices')->name('promo-prices.edit');
+    Route::put('/promo-prices/{roomTypeDatePrice}', [PromoPriceController::class, 'update'])->middleware('permission:manage_promo_prices')->name('promo-prices.update');
+    Route::delete('/promo-prices/{roomTypeDatePrice}', [PromoPriceController::class, 'destroy'])->middleware('permission:manage_promo_prices')->name('promo-prices.destroy');
 
     // Guests
     Route::resource('guests', GuestController::class)->middleware('permission:manage_guests');

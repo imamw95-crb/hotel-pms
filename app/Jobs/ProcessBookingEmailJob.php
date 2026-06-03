@@ -56,6 +56,14 @@ class ProcessBookingEmailJob implements ShouldQueue
             'ota_source' => $this->otaSource,
         ]);
 
+        // ═══ SKIP EMBUN BOOKINGS ═══
+        if (\Illuminate\Support\Str::contains(strtolower($this->subject.' '.$this->body), 'embun')) {
+            Log::info('Skipped Embun booking', ['uid' => $this->emailUid, 'subject' => $this->subject]);
+            $this->markFailed('Embun property booking — not processed');
+
+            return;
+        }
+
         // Step 1: AI Parsing
         $aiData = $openRouter->parseBookingEmail($this->body, $this->subject, $this->otaSource);
 

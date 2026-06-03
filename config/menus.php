@@ -131,6 +131,11 @@ return [
                     'route' => 'room-types.index',
                     'permission' => 'view_room_types',
                 ],
+                [
+                    'label' => 'Promo Harga',
+                    'route' => 'promo-prices.index',
+                    'permission' => 'manage_promo_prices',
+                ],
 
             ],
         ],

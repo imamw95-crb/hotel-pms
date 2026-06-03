@@ -16,4 +16,9 @@ class RoomType extends Model
     {
         return $this->hasMany(Room::class);
     }
+
+    public function datePrices(): HasMany
+    {
+        return $this->hasMany(RoomTypeDatePrice::class);
+    }
 }

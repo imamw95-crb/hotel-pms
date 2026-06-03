@@ -10,6 +10,7 @@ use App\Services\OpenRouterService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ReadHotelEmailsCommand extends Command
 {
@@ -210,6 +211,16 @@ class ReadHotelEmailsCommand extends Command
                     continue;
                 }
                 $this->info("  📋 Type: {$emailType} | OTA: {$otaSource}");
+
+                // ═══ STEP 3c: SKIP EMBUN BOOKINGS ═══
+                if (Str::contains(strtolower($subject.' '.$body), 'embun')) {
+                    $this->warn('  ⏭️ Skipped: Embun property booking (not for this hotel)');
+                    $parser->markSkipped($uid, $sender, $subject, 'Embun property booking — not processed', $body);
+                    $imap->markAsSeen($message);
+                    $skipped++;
+
+                    continue;
+                }
 
                 // ═══ STEP 4: AI PARSING ═══
                 $aiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);

@@ -415,8 +415,8 @@
             },
 
             timeAgo: function(dateStr) {
-                const now = new Date();
-                const date = new Date(dateStr.replace(' ', 'T') + 'Z');
+                const now = new window.Date();
+                const date = new window.Date(dateStr.replace(' ', 'T') + 'Z');
                 const diff = Math.floor((now - date) / 1000);
                 if (diff < 60) return 'baru saja';
                 if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';

@@ -70,6 +70,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'Update Housekeeping Status', 'slug' => 'update_housekeeping_status', 'group' => 'housekeeping', 'description' => 'Dapat mengubah status tugas housekeeping'],
             ['name' => 'Assign Housekeeping Task', 'slug' => 'assign_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menugaskan staff housekeeping'],
             ['name' => 'Delete Housekeeping Task', 'slug' => 'delete_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menghapus tugas housekeeping'],
+
+            // Promo Pricing Permissions
+            ['name' => 'Manage Promo Prices', 'slug' => 'manage_promo_prices', 'group' => 'pricing', 'description' => 'Dapat mengelola harga promo per tanggal'],
         ];
 
         foreach ($permissions as $permission) {
@@ -89,6 +92,7 @@ class PermissionSeeder extends Seeder
             'view_reports', 'manage_guests',
             'view_service_charges', 'create_service_charge',
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
+            'manage_promo_prices',
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
@@ -100,6 +104,7 @@ class PermissionSeeder extends Seeder
             'view_rooms', 'view_room_types', 'manage_guests',
             'view_service_charges', 'create_service_charge',
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status',
+            'manage_promo_prices',
         ]);
 
         $this->assignPermissionToRole('housekeeping', [
@@ -113,10 +118,12 @@ class PermissionSeeder extends Seeder
             'edit_user',
             'delete_user',
             'view_reports',
+            'manage_promo_prices',
         ]);
 
         $this->assignPermissionToRole('owner', [
             'view_reports', 'export_reports',
+            'manage_promo_prices',
             'manage_users', 'create_user', 'edit_user', 'delete_user',
         ]);
     }
