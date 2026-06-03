@@ -79,20 +79,19 @@ window.AiChat = {
 
     /**
      * Show a booking notification popup automatically.
-     * Called by BookingNotifications polling when new unread detected.
-     * Banner is refreshed on every poll and persists until all notifications are read.
+     * Called by BookingNotifications polling every 15s while unread exists.
+     * Banner persists until all notifications are read (hideNotification called).
      */
     showNotification: function(notif) {
-        // Play notification sound
-        if (typeof playNotificationSound === 'function') {
+        // Play notification sound only on first detection (not on every poll cycle)
+        // Sound is played once when notif banner doesn't already exist
+        var existingBanner = document.getElementById('notifBanner');
+        if (!existingBanner && typeof playNotificationSound === 'function') {
             playNotificationSound();
         }
 
-        // Don't auto-open the panel if user is actively chatting
-        if (this.open && this.messages.length > 0) return;
-
-        // Open the chat panel if closed
-        if (!this.open) {
+        // Auto-open panel ONLY if user hasn't interacted yet (no messages)
+        if (!this.open && this.messages.length === 0) {
             this.toggle();
         }
 
@@ -104,9 +103,8 @@ window.AiChat = {
         var container = document.getElementById('chatMessages');
         if (!container) return;
 
-        // Remove old banner if exists
-        var oldBanner = document.getElementById('notifBanner');
-        if (oldBanner) oldBanner.remove();
+        // Remove old banner if exists (refresh content)
+        if (existingBanner) existingBanner.remove();
 
         var bubble = document.createElement('div');
         bubble.id = 'notifBanner';
@@ -221,10 +219,19 @@ window.AiChat = {
     render() {
         const container = document.getElementById('chatMessages');
         if (!container) return;
+
+        // Preserve notification banner across renders
+        var existingBanner = document.getElementById('notifBanner');
+        var bannerHTML = existingBanner ? existingBanner.outerHTML : null;
+
         container.innerHTML = '';
 
         if (this.messages.length === 0) {
             container.innerHTML = this.welcomeHTML();
+            // Re-insert banner if it existed
+            if (bannerHTML && container.children.length > 0) {
+                container.insertAdjacentHTML('afterbegin', bannerHTML);
+            }
             return;
         }
 
@@ -236,6 +243,11 @@ window.AiChat = {
             html += this.loadingHTML();
         }
         container.innerHTML = html;
+
+        // Re-insert banner at the top of messages
+        if (bannerHTML) {
+            container.insertAdjacentHTML('afterbegin', bannerHTML);
+        }
     },
 
     bubbleHTML(role, text) {

@@ -290,11 +290,14 @@
                         self.unreadCount = newCount;
                         self.updateBadge();
 
-                        // If new notification detected, auto-show in AI Chat
-                        if (hasNew && data.notifications && data.notifications.length > 0) {
-                            var latest = data.notifications[0];
-                            if (typeof AiChat !== 'undefined' && AiChat.showNotification) {
-                                AiChat.showNotification(latest);
+                        // Show/hide notification banner on every poll cycle
+                        if (typeof AiChat !== 'undefined') {
+                            if (newCount > 0 && data.notifications && data.notifications.length > 0) {
+                                // Show banner with latest notification — refreshes on every poll
+                                AiChat.showNotification(data.notifications[0]);
+                            } else {
+                                // No unread notifications — hide banner
+                                AiChat.hideNotification();
                             }
                         }
                     })
@@ -392,6 +395,9 @@
                 }).catch(() => {});
                 this.unreadCount = Math.max(0, this.unreadCount - 1);
                 this.updateBadge();
+                if (this.unreadCount === 0 && typeof AiChat !== 'undefined' && AiChat.hideNotification) {
+                    AiChat.hideNotification();
+                }
             },
 
             markAllRead: function() {
@@ -402,6 +408,9 @@
                     this.unreadCount = 0;
                     this.updateBadge();
                     this.loadNotifications();
+                    if (typeof AiChat !== 'undefined' && AiChat.hideNotification) {
+                        AiChat.hideNotification();
+                    }
                 }).catch(() => {});
             },
 
