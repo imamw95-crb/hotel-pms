@@ -303,6 +303,11 @@ return [
                     'route' => 'admin.api-keys',
                     'permission' => 'manage_users',
                 ],
+                [
+                    'label' => 'TV Welcome Settings',
+                    'route' => 'admin.tv-settings',
+                    'permission' => 'manage_users',
+                ],
             ],
         ],
 

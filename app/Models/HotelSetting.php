@@ -10,6 +10,7 @@ class HotelSetting extends Model
 
     protected $fillable = [
         'hotel_name', 'phone', 'email', 'address', 'logo_path', 'website', 'theme',
+        'company_video_path', 'company_video_url', 'tv_refresh_interval', 'tv_welcome_message',
     ];
 
     /**

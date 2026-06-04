@@ -31,6 +31,8 @@ use App\Http\Controllers\RoomTypeController;
 use App\Http\Controllers\PromoPriceController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TvController;
+use App\Http\Controllers\Admin\TvSettingController;
 use App\Models\User;
 use App\Services\OpenRouterService;
 use Illuminate\Http\Request;
@@ -47,6 +49,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/', function () {
     return redirect()->route('rooms.dashboard');
 })->middleware('auth')->name('home');
+
+// TV Welcome Screen — publik (tanpa auth)
+Route::get('/tv/{room}', [TvController::class, 'welcome'])->name('tv.welcome');
+Route::get('/tv/{room}/status', [TvController::class, 'status'])->name('tv.status');
 
 // Dashboard shortcut
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard');
@@ -277,6 +283,12 @@ Route::middleware(['auth'])->group(function () {
     // Master Metode Pembayaran (Owner only)
     Route::middleware(['role:owner'])->group(function () {
         Route::resource('admin/payment-methods', PaymentMethodController::class, ['names' => 'admin.payment-methods']);
+    });
+
+    // TV Welcome Settings (Owner & Admin)
+    Route::middleware(['role:owner,admin'])->group(function () {
+        Route::get('/admin/tv-settings', [TvSettingController::class, 'index'])->name('admin.tv-settings');
+        Route::post('/admin/tv-settings', [TvSettingController::class, 'update'])->name('admin.tv-settings.update');
     });
 
     // Deposit Kartu
