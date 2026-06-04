@@ -646,6 +646,60 @@ class ReservationApiController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/reservations/checked-in
+     * List reservations that are already checked-in.
+     * Optional filters: room_number, guest_name, search
+     */
+    public function checkedIn(Request $request)
+    {
+        $query = Reservation::with(['guest', 'room'])->where('status', 'checked_in');
+
+        if ($request->get('room_number')) {
+            $roomNumber = $request->get('room_number');
+            $query->whereHas('room', function ($q) use ($roomNumber) {
+                $q->where('room_number', 'like', "%{$roomNumber}%");
+            });
+        }
+
+        if ($request->get('guest_name')) {
+            $guestName = $request->get('guest_name');
+            $query->whereHas('guest', function ($q) use ($guestName) {
+                $q->where('guest_name', 'like', "%{$guestName}%");
+            });
+        }
+
+        if ($request->get('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('guest', function ($q) use ($search) {
+                    $q->where('guest_name', 'like', "%{$search}%")
+                        ->orWhere('id_number', 'like', "%{$search}%");
+                })
+                ->orWhereHas('room', function ($q) use ($search) {
+                    $q->where('room_number', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $reservations = $query->orderBy('check_in', 'asc')->get()->map(function ($reservation) {
+            return [
+                'reservation_number' => $reservation->reservation_number,
+                'guest_name' => $reservation->guest->guest_name ?? null,
+                'room_number' => $reservation->room->room_number ?? null,
+                'room_type_name' => $reservation->room_type_name,
+                'check_in' => optional($reservation->check_in)->format('Y-m-d H:i:s'),
+                'check_out' => optional($reservation->check_out)->format('Y-m-d H:i:s'),
+                'status' => $reservation->status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $reservations,
+        ]);
+    }
+
     // ========== STATS ==========
 
     /**

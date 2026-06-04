@@ -64,11 +64,30 @@
                 <span class="text-lg font-bold text-green-800">TOTAL PENDAPATAN HARI INI</span>
                 <span class="text-3xl font-bold text-green-700">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</span>
             </div>
-            <div class="flex justify-between items-center mt-2 text-sm">
-                <span class="text-gray-600">Pendapatan Kamar:</span>
-                <span class="font-semibold text-green-700">Rp {{ number_format($revenueToday ?? 0, 0, ',', '.') }}</span>
+
+            {{-- Room Revenue Breakdown: Cash | OTA | Web --}}
+            <div class="mt-3 pt-3 border-t border-green-200">
+                <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="font-bold text-gray-700">PENDAPATAN KAMAR</span>
+                    <span class="font-bold text-green-700">Rp {{ number_format($revenueToday ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="ml-4 space-y-1">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-600"><i class="fas fa-money-bill-wave text-green-500 mr-1"></i>Cash</span>
+                        <span class="font-semibold text-green-700">Rp {{ number_format($cashRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-600"><i class="fas fa-globe text-purple-500 mr-1"></i>OTA</span>
+                        <span class="font-semibold text-purple-700">Rp {{ number_format($otaRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-600"><i class="fas fa-laptop text-blue-500 mr-1"></i>Web / Direct</span>
+                        <span class="font-semibold text-blue-700">Rp {{ number_format($webRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex justify-between items-center text-sm">
+
+            <div class="flex justify-between items-center mt-2 text-sm">
                 <span class="text-gray-600">Pendapatan Resto / F&amp;B:</span>
                 <span class="font-semibold text-orange-600">Rp {{ number_format($restoRevenueToday ?? 0, 0, ',', '.') }}</span>
             </div>
@@ -92,6 +111,7 @@
                         <th class="text-left p-1 font-bold">No. Transaksi</th>
                         <th class="text-left p-1 font-bold">Nama Tamu</th>
                         <th class="text-center p-1 font-bold">Kamar</th>
+                        <th class="text-center p-1 font-bold">Sumber</th>
                         <th class="text-center p-1 font-bold">Status</th>
                         <th class="text-right p-1 font-bold">Nominal (Rp)</th>
                     </tr>
@@ -102,6 +122,20 @@
                         <td class="p-1 font-medium">{{ $txn['transaction_number'] ?? '-' }}</td>
                         <td class="p-1">{{ $txn['guest_name'] ?? '-' }}</td>
                         <td class="p-1 text-center">{{ $txn['room_number'] ?? '-' }}</td>
+                        <td class="p-1 text-center">
+                            @php
+                                $srcColors = [
+                                    'Cash' => 'bg-green-100 text-green-800',
+                                    'OTA' => 'bg-purple-100 text-purple-800',
+                                    'Web' => 'bg-blue-100 text-blue-800',
+                                ];
+                                $srcColor = $srcColors[$txn['source'] ?? ''] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="px-1 py-0.5 rounded text-xs font-bold {{ $srcColor }}">
+                                {{ $txn['source'] ?? '-' }}
+                                @if(!empty($txn['ota_source']))<br><small class="font-normal">{{ $txn['ota_source'] }}</small>@endif
+                            </span>
+                        </td>
                         <td class="p-1 text-center">
                             @php
                                 $statusColors = [
@@ -452,39 +486,37 @@
 
     <hr class="mb-6 border-t border-gray-300">
 
-    <!-- New Bookings -->
+    <!-- OTA Bookings -->
     <div class="mb-6">
-        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-blue-600 pb-1 text-blue-700">
-            New Bookings ({{ count($newBookings ?? []) }})
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-purple-600 pb-1 text-purple-700">
+            <i class="fas fa-globe text-purple-500 mr-2"></i>OTA Bookings ({{ count($otaBookings ?? []) }})
         </h2>
-        @if(count($newBookings ?? []) > 0)
+        @if(count($otaBookings ?? []) > 0)
         <table class="w-full text-sm">
             <thead>
-                <tr class="bg-blue-50 border-b border-blue-200">
+                <tr class="bg-purple-50 border-b border-purple-200">
                     <th class="text-left p-2 font-bold text-xs">NO. RES</th>
                     <th class="text-left p-2 font-bold text-xs">NAMA TAMU</th>
                     <th class="text-center p-2 font-bold text-xs">KAMAR</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
-                    <th class="text-center p-2 font-bold text-xs">SUMBER</th>
+                    <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
+                    <th class="text-center p-2 font-bold text-xs">OTA</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
                     <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($newBookings ?? [] as $res)
+                @foreach($otaBookings ?? [] as $res)
                 <tr class="border-b border-gray-100">
                     <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
                     <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
                     <td class="p-2 text-center text-xs">
-                        @if(!empty($res['ota_source']))
-                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800">{{ $res['ota_source'] }}</span>
-                        @else
-                            <span class="text-gray-400 text-xs">Langsung</span>
-                        @endif
+                        <span class="px-1 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800">{{ $res['ota_source'] }}</span>
                     </td>
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
@@ -505,9 +537,140 @@
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr class="bg-purple-50 border-t-2 border-purple-300">
+                    <td colspan="5" class="p-2 text-right font-bold text-xs text-purple-800">TOTAL OTA BOOKING</td>
+                    <td class="p-2 text-right font-bold text-xs text-purple-700">Rp {{ number_format(collect($otaBookings)->sum('total_amount'), 0, ',', '.') }}</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
         </table>
         @else
-        <p class="text-gray-400 text-center py-6 text-sm italic">Tidak ada booking baru</p>
+        <p class="text-gray-400 text-center py-4 text-sm italic">Tidak ada booking OTA</p>
+        @endif
+    </div>
+
+    <!-- Web Bookings -->
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-blue-600 pb-1 text-blue-700">
+            <i class="fas fa-laptop text-blue-500 mr-2"></i>Web Bookings ({{ count($webBookings ?? []) }})
+        </h2>
+        @if(count($webBookings ?? []) > 0)
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-blue-50 border-b border-blue-200">
+                    <th class="text-left p-2 font-bold text-xs">NO. RES</th>
+                    <th class="text-left p-2 font-bold text-xs">NAMA TAMU</th>
+                    <th class="text-center p-2 font-bold text-xs">KAMAR</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
+                    <th class="text-center p-2 font-bold text-xs">PEMBAYARAN</th>
+                    <th class="text-center p-2 font-bold text-xs">STATUS</th>
+                    <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($webBookings ?? [] as $res)
+                <tr class="border-b border-gray-100">
+                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                    <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
+                    <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
+                    <td class="p-2 text-center text-xs">
+                        <span class="px-1 py-0.5 rounded text-xs font-bold bg-cyan-100 text-cyan-800">{{ ucwords(str_replace('_', ' ', $res['payment_method'] ?? '-')) }}</span>
+                    </td>
+                    <td class="p-2 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold
+                            @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
+                            @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
+                            @else bg-gray-100 text-gray-800 @endif">
+                            {{ strtoupper($res['status'] ?? '-') }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center text-xs">
+                        @if(!empty($res['include_breakfast']))
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-blue-50 border-t-2 border-blue-300">
+                    <td colspan="5" class="p-2 text-right font-bold text-xs text-blue-800">TOTAL WEB BOOKING</td>
+                    <td class="p-2 text-right font-bold text-xs text-blue-700">Rp {{ number_format(collect($webBookings)->sum('total_amount'), 0, ',', '.') }}</td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p class="text-gray-400 text-center py-4 text-sm italic">Tidak ada web booking</p>
+        @endif
+    </div>
+
+    <!-- Direct Bookings (Cash / Langsung) -->
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-green-600 pb-1 text-green-700">
+            <i class="fas fa-building text-green-500 mr-2"></i>Direct Bookings ({{ count($directBookings ?? []) }})
+        </h2>
+        @if(count($directBookings ?? []) > 0)
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-green-50 border-b border-green-200">
+                    <th class="text-left p-2 font-bold text-xs">NO. RES</th>
+                    <th class="text-left p-2 font-bold text-xs">NAMA TAMU</th>
+                    <th class="text-center p-2 font-bold text-xs">KAMAR</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
+                    <th class="text-center p-2 font-bold text-xs">STATUS</th>
+                    <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($directBookings ?? [] as $res)
+                <tr class="border-b border-gray-100">
+                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                    <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
+                    <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
+                    <td class="p-2 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold
+                            @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
+                            @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
+                            @else bg-gray-100 text-gray-800 @endif">
+                            {{ strtoupper($res['status'] ?? '-') }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center text-xs">
+                        @if(!empty($res['include_breakfast']))
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-green-50 border-t-2 border-green-300">
+                    <td colspan="5" class="p-2 text-right font-bold text-xs text-green-800">TOTAL DIRECT BOOKING</td>
+                    <td class="p-2 text-right font-bold text-xs text-green-700">Rp {{ number_format(collect($directBookings)->sum('total_amount'), 0, ',', '.') }}</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p class="text-gray-400 text-center py-4 text-sm italic">Tidak ada direct booking</p>
         @endif
     </div>
 

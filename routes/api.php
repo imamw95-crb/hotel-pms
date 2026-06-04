@@ -43,6 +43,9 @@ Route::middleware(['api', 'api.key'])->group(function () {
     // Check-out
     Route::post('/reservations/{reservation}/checkout', [ReservationApiController::class, 'checkout']);
 
+    // List checked-in reservations
+    Route::get('/reservations/checked-in', [ReservationApiController::class, 'checkedIn']);
+
     // Pindah kamar
     Route::post('/reservations/{reservation}/change-room', [ReservationApiController::class, 'changeRoom']);
 

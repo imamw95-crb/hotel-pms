@@ -98,7 +98,7 @@ class NightAuditController extends Controller
                 'checkins_count' => $data['checkinsToday']->count(),
                 'checkouts_count' => $data['checkoutsToday']->count(),
                 'in_house_count' => $data['inHouseGuests']->count(),
-                'new_bookings_count' => $data['newBookings']->count(),
+                'new_bookings_count' => ($data['otaBookings']->count() ?? 0) + ($data['webBookings']->count() ?? 0) + ($data['directBookings']->count() ?? 0),
                 'snapshot_data' => $data,
                 'draft_notes' => $request->notes,
                 'created_by' => auth()->id(),
@@ -133,7 +133,7 @@ class NightAuditController extends Controller
                 'checkins_count' => $data['checkinsToday']->count(),
                 'checkouts_count' => $data['checkoutsToday']->count(),
                 'in_house_count' => $data['inHouseGuests']->count(),
-                'new_bookings_count' => $data['newBookings']->count(),
+                'new_bookings_count' => ($data['otaBookings']->count() ?? 0) + ($data['webBookings']->count() ?? 0) + ($data['directBookings']->count() ?? 0),
                 'snapshot_data' => $data,
                 'draft_notes' => $request->notes,
                 'locked_by' => auth()->id(),
@@ -210,6 +210,9 @@ class NightAuditController extends Controller
 
             fputcsv($file, ['REVENUE']);
             fputcsv($file, ['Pendapatan Kamar', $data['revenueToday'] ?? 0]);
+            fputcsv($file, ['  - Cash', $data['cashRevenueToday'] ?? 0]);
+            fputcsv($file, ['  - OTA', $data['otaRevenueToday'] ?? 0]);
+            fputcsv($file, ['  - Web / Direct', $data['webRevenueToday'] ?? 0]);
             fputcsv($file, ['Pendapatan Resto', $data['restoRevenueToday'] ?? 0]);
             fputcsv($file, ['Service Charge', $data['serviceChargeRevenueToday'] ?? 0]);
             fputcsv($file, ['Total', $data['totalRevenue'] ?? 0]);
@@ -219,10 +222,14 @@ class NightAuditController extends Controller
             $txByMethod = $data['transactionsByMethod'] ?? [];
             foreach ($txByMethod as $method => $txns) {
                 fputcsv($file, [strtoupper(str_replace('_', ' ', $method))]);
-                fputcsv($file, ['No.', 'No. Transaksi', 'Tamu', 'Kamar', 'Status', 'Nominal']);
+                fputcsv($file, ['No.', 'No. Transaksi', 'Tamu', 'Kamar', 'Sumber', 'Status', 'Nominal']);
                 $i = 1;
                 foreach ($txns as $txn) {
-                    fputcsv($file, [$i++, $txn['transaction_number'] ?? '-', $txn['guest_name'] ?? '-', $txn['room_number'] ?? '-', $txn['status'] ?? '-', $txn['amount'] ?? 0]);
+                    $source = $txn['source'] ?? '-';
+                    if (! empty($txn['ota_source'])) {
+                        $source .= ' ('.$txn['ota_source'].')';
+                    }
+                    fputcsv($file, [$i++, $txn['transaction_number'] ?? '-', $txn['guest_name'] ?? '-', $txn['room_number'] ?? '-', $source, $txn['status'] ?? '-', $txn['amount'] ?? 0]);
                 }
                 fputcsv($file, []);
             }
@@ -279,6 +286,42 @@ class NightAuditController extends Controller
             }
             fputcsv($file, []);
 
+            // ── OTA Bookings ──
+            $otaList = $data['otaBookings'] ?? [];
+            fputcsv($file, ['OTA BOOKINGS ('.count($otaList).')']);
+            if (count($otaList) > 0) {
+                fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Nominal', 'OTA', 'Status', 'Sarapan']);
+                foreach ($otaList as $i => $r) {
+                    $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                    fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_amount'] ?? 0, $r['ota_source'] ?? '-', $r['status'] ?? '-', $sarapan]);
+                }
+            }
+            fputcsv($file, []);
+
+            // ── Web Bookings ──
+            $webList = $data['webBookings'] ?? [];
+            fputcsv($file, ['WEB BOOKINGS ('.count($webList).')']);
+            if (count($webList) > 0) {
+                fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Nominal', 'Pembayaran', 'Status', 'Sarapan']);
+                foreach ($webList as $i => $r) {
+                    $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                    fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_amount'] ?? 0, $r['payment_method'] ?? '-', $r['status'] ?? '-', $sarapan]);
+                }
+            }
+            fputcsv($file, []);
+
+            // ── Direct Bookings ──
+            $directList = $data['directBookings'] ?? [];
+            fputcsv($file, ['DIRECT BOOKINGS ('.count($directList).')']);
+            if (count($directList) > 0) {
+                fputcsv($file, ['No.', 'Reservasi', 'Tamu', 'Kamar', 'Check-in', 'Check-out', 'Nominal', 'Status', 'Sarapan']);
+                foreach ($directList as $i => $r) {
+                    $sarapan = ! empty($r['include_breakfast']) ? 'Ya' : 'Tidak';
+                    fputcsv($file, [$i + 1, $r['reservation_number'] ?? '-', $r['guest_name'] ?? '-', $r['room_number'] ?? '-', $r['check_in'] ?? '-', $r['check_out'] ?? '-', $r['total_amount'] ?? 0, $r['status'] ?? '-', $sarapan]);
+                }
+            }
+            fputcsv($file, []);
+
             fclose($file);
         };
 
@@ -330,6 +373,9 @@ class NightAuditController extends Controller
         $serviceChargeRevenueToday = ServiceCharge::whereDate('charge_date', $date)->sum('total_amount');
         $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
 
+        // ─── OTA payment method list ───────────────────────────────
+        $otaPaymentMethods = ['tiket.com', 'traveloka.com', 'ota_payment'];
+
         // Revenue by method with details
         $transactions = Transaction::whereDate('created_at', $date)
             ->with(['reservation.guest', 'reservation.room'])
@@ -337,20 +383,40 @@ class NightAuditController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $transactionsByMethod = $transactions->groupBy('payment_method')->map(function ($txns) {
-            return $txns->map(fn ($t) => [
-                'transaction_number' => $t->transaction_number,
-                'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
-                'room_number' => $t->reservation?->room?->room_number ?? '-',
-                'status' => $t->reservation?->status ?? '-',
-                'amount' => $t->amount,
-            ]);
+        $transactionsByMethod = $transactions->groupBy('payment_method')->map(function ($txns) use ($otaPaymentMethods) {
+            return $txns->map(function ($t) use ($otaPaymentMethods) {
+                $isOta = ($t->reservation && $t->reservation->ota_source)
+                    || in_array($t->payment_method, $otaPaymentMethods);
+                return [
+                    'transaction_number' => $t->transaction_number,
+                    'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
+                    'room_number' => $t->reservation?->room?->room_number ?? '-',
+                    'status' => $t->reservation?->status ?? '-',
+                    'amount' => $t->amount,
+                    'source' => $t->payment_method === 'cash' ? 'Cash' : ($isOta ? 'OTA' : 'Web'),
+                    'ota_source' => $t->reservation?->ota_source,
+                ];
+            });
         });
 
         $revenueByMethod = Transaction::whereDate('created_at', $date)
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
+
+        // ─── Revenue by Source Category (Cash, OTA, Web) ──────────
+
+        $cashRevenueToday = $transactions->where('payment_method', 'cash')->sum('amount');
+
+        $otaRevenueToday = $transactions->filter(function ($t) use ($otaPaymentMethods) {
+            return ($t->reservation && $t->reservation->ota_source)
+                || in_array($t->payment_method, $otaPaymentMethods);
+        })->sum('amount');
+
+        $webRevenueToday = $revenueToday - $cashRevenueToday - $otaRevenueToday;
+        if ($webRevenueToday < 0) {
+            $webRevenueToday = 0;
+        }
 
         // Resto transactions
         $restoTransactions = RestoTransaction::with(['guest'])
@@ -446,8 +512,10 @@ class NightAuditController extends Controller
                 'include_breakfast' => $r->include_breakfast,
             ]);
 
-        // New bookings
-        $newBookings = Reservation::whereDate('created_at', $date)
+        // New bookings — split OTA vs Web vs Direct
+        $webPaymentMethods = ['bank_transfer', 'credit_card', 'debit_card', 'virtual_account', 'ewallet', 'qris'];
+
+        $allNewBookings = Reservation::whereDate('created_at', $date)
             ->with(['guest', 'room'])
             ->get()
             ->map(fn ($r) => [
@@ -456,20 +524,28 @@ class NightAuditController extends Controller
                 'room_number' => $r->room->room_number ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
+                'total_amount' => $r->total_amount,
                 'status' => $r->status,
                 'include_breakfast' => $r->include_breakfast,
                 'ota_source' => $r->ota_source,
+                'payment_method' => $r->payment_method,
             ]);
+
+        $otaBookings = $allNewBookings->filter(fn ($r) => ! empty($r['ota_source']))->values();
+        $webBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods))->values();
+        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods))->values();
 
         return compact(
             'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms', 'occupancyRate',
             'revenueToday', 'restoRevenueToday', 'serviceChargeRevenueToday', 'totalRevenue',
+            'cashRevenueToday', 'otaRevenueToday', 'webRevenueToday',
             'revenueByMethod', 'transactionsByMethod',
             'restoTransactions', 'restoRevenueByMethod',
             'serviceCharges', 'serviceChargeByMethod',
             'expensesToday', 'expensesList', 'expensesByMethod',
             'cashRevenue', 'cashExpenses', 'cashFlowBalance',
-            'checkinsToday', 'checkoutsToday', 'inHouseGuests', 'newBookings'
+            'checkinsToday', 'checkoutsToday', 'inHouseGuests',
+            'otaBookings', 'webBookings', 'directBookings'
         );
     }
 }

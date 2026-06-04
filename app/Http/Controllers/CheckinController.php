@@ -23,8 +23,8 @@ class CheckinController extends Controller
     {
         $rooms = Room::orderBy('room_number')->get();
 
-        // Default tanggal: hari ini
-        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        // Default tanggal: kemarin sampai hari ini
+        $dateFrom = $request->input('date_from', Carbon::yesterday()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
 
         // Fetch pending and upcoming reservations for check-in
