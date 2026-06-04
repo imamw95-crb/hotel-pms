@@ -1,23 +1,25 @@
 <?php
+
 require __DIR__.'/vendor/autoload.php';
 $app = require __DIR__.'/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
 use App\Models\BookingNotification;
-use App\Models\Reservation;
 use App\Models\Guest;
+use App\Models\Reservation;
 use App\Models\Room;
 use App\Services\BookingNotificationService;
 use Carbon\Carbon;
+use Illuminate\Contracts\Console\Kernel;
 
 echo "=== SEBELUM ===\n";
-echo "Notifications: " . BookingNotification::count() . "\n\n";
+echo 'Notifications: '.BookingNotification::count()."\n\n";
 
 // Test: create notification via service like BookingController would
 $room = Room::where('status', '!=', 'maintenance')->first();
 $guest = Guest::first();
 
-if (!$room || !$guest) {
+if (! $room || ! $guest) {
     echo "ERROR: Need room and guest in database\n";
     exit(1);
 }
@@ -27,8 +29,8 @@ echo "Using Guest: {$guest->guest_name} (ID: {$guest->id})\n\n";
 
 // Simulasi: BookingController store() untuk OTA booking
 $reservation = Reservation::create([
-    'reservation_number' => 'TEST-OTA-' . substr(strtoupper(uniqid()), -6),
-    'ota_reservation_number' => 'TVL-TEST-' . date('Ymd'),
+    'reservation_number' => 'TEST-OTA-'.substr(strtoupper(uniqid()), -6),
+    'ota_reservation_number' => 'TVL-TEST-'.date('Ymd'),
     'ota_source' => 'traveloka.com',
     'room_id' => $room->id,
     'guest_id' => $guest->id,
@@ -48,14 +50,14 @@ $service->otaBookingCreated(
     $reservation,
     [
         'guest_name' => $guest->guest_name,
-        'reservation_id' => 'TVL-TEST-' . date('Ymd'),
+        'reservation_id' => 'TVL-TEST-'.date('Ymd'),
     ],
     'traveloka.com'
 );
 
 echo "\n=== SESUDAH ===\n";
-echo "Notifications: " . BookingNotification::count() . "\n";
-foreach(BookingNotification::latest()->take(5)->get() as $n) {
+echo 'Notifications: '.BookingNotification::count()."\n";
+foreach (BookingNotification::latest()->take(5)->get() as $n) {
     echo "[{$n->id}] {$n->type}/{$n->action} - {$n->message}\n";
     echo "     is_read: {$n->is_read} | ota: {$n->ota_source}\n\n";
 }

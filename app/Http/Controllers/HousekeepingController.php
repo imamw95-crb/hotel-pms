@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HotelSetting;
 use App\Models\HousekeepingTask;
 use App\Models\HousekeepingTaskChecklist;
-use App\Models\HotelSetting;
 use App\Models\Room;
-use App\Models\User;
 use App\Services\HousekeepingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class HousekeepingController extends Controller
 {

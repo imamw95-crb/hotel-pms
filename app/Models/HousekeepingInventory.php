@@ -49,6 +49,7 @@ class HousekeepingInventory extends Model
         if ($this->quantity <= $this->min_quantity) {
             return 'menipis';
         }
+
         return 'tersedia';
     }
 

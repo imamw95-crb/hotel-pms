@@ -1,5 +1,13 @@
 @php
     $hotel = \App\Models\HotelSetting::get();
+    $statusLabels = [
+        'pending' => 'Pending',
+        'menunggu_pembayaran' => 'Menunggu Transfer',
+        'checked_in' => 'Check In',
+        'checked_out' => 'Check Out',
+        'cancelled' => 'Batal',
+        'no_show' => 'No Show',
+    ];
 @endphp
 
 <!-- ===== PRINTABLE AREA ===== -->
@@ -140,6 +148,7 @@
                             @php
                                 $statusColors = [
                                     'pending' => 'bg-indigo-100 text-indigo-800',
+                                    'menunggu_pembayaran' => 'bg-yellow-100 text-yellow-800',
                                     'checked_in' => 'bg-green-100 text-green-800',
                                     'checked_out' => 'bg-blue-100 text-blue-800',
                                     'cancelled' => 'bg-red-100 text-red-800',
@@ -147,7 +156,7 @@
                                 $sColor = $statusColors[$txn['status'] ?? ''] ?? 'bg-gray-100 text-gray-800';
                             @endphp
                             <span class="px-1 py-0.5 rounded text-xs font-bold {{ $sColor }}">
-                                {{ strtoupper($txn['status'] ?? '-') }}
+                                {{ $statusLabels[$txn['status'] ?? ''] ?? strtoupper(str_replace('_', ' ', $txn['status'] ?? '-')) }}
                             </span>
                         </td>
                         <td class="p-1 text-right font-bold">Rp {{ number_format($txn['amount'] ?? 0, 0, ',', '.') }}</td>
@@ -521,10 +530,11 @@
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
                             @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'menunggu_pembayaran') bg-yellow-100 text-yellow-800
                             @elseif(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
                             @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
                             @else bg-gray-100 text-gray-800 @endif">
-                            {{ strtoupper($res['status'] ?? '-') }}
+                            {{ $statusLabels[$res['status'] ?? ''] ?? strtoupper(str_replace('_', ' ', $res['status'] ?? '-')) }}
                         </span>
                     </td>
                     <td class="p-2 text-center text-xs">
@@ -585,10 +595,11 @@
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
                             @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'menunggu_pembayaran') bg-yellow-100 text-yellow-800
                             @elseif(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
                             @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
                             @else bg-gray-100 text-gray-800 @endif">
-                            {{ strtoupper($res['status'] ?? '-') }}
+                            {{ $statusLabels[$res['status'] ?? ''] ?? strtoupper(str_replace('_', ' ', $res['status'] ?? '-')) }}
                         </span>
                     </td>
                     <td class="p-2 text-center text-xs">
@@ -645,10 +656,11 @@
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
                             @if(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'menunggu_pembayaran') bg-yellow-100 text-yellow-800
                             @elseif(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
                             @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
                             @else bg-gray-100 text-gray-800 @endif">
-                            {{ strtoupper($res['status'] ?? '-') }}
+                            {{ $statusLabels[$res['status'] ?? ''] ?? strtoupper(str_replace('_', ' ', $res['status'] ?? '-')) }}
                         </span>
                     </td>
                     <td class="p-2 text-center text-xs">

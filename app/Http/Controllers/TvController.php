@@ -47,7 +47,7 @@ class TvController extends Controller
             'room_number' => $room->room_number,
             'room_status' => $room->status,
             'has_guest' => ! is_null($reservation),
-            'guest_name' => $reservation && $reservation->guest ? 'Mr/Ms. ' . $reservation->guest->guest_name : null,
+            'guest_name' => $reservation && $reservation->guest ? 'Mr/Ms. '.$reservation->guest->guest_name : null,
             'check_in' => $reservation?->check_in,
             'check_out' => $reservation?->check_out,
             'hotel_name' => $hotelSetting->hotel_name,

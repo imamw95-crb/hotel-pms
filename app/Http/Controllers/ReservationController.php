@@ -283,13 +283,13 @@ class ReservationController extends Controller
                     'room_id' => $reservation->room_id,
                     'task_type' => 'cleaning',
                     'priority' => 'normal',
-                    'description' => 'Auto-generated from check-out: ' . ($reservation->guest->guest_name ?? '') . ' (' . $reservation->reservation_number . ')',
+                    'description' => 'Auto-generated from check-out: '.($reservation->guest->guest_name ?? '').' ('.$reservation->reservation_number.')',
                     'status' => 'pending',
                     'created_by' => Auth::id(),
                 ]);
             }
         } catch (\Exception $e) {
-            Log::warning('Failed to auto-create housekeeping task on checkout: ' . $e->getMessage());
+            Log::warning('Failed to auto-create housekeeping task on checkout: '.$e->getMessage());
         }
 
         // Check if request is AJAX

@@ -14,6 +14,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProcessBookingEmailJob implements ShouldQueue
 {
@@ -57,7 +58,7 @@ class ProcessBookingEmailJob implements ShouldQueue
         ]);
 
         // ═══ SKIP EMBUN BOOKINGS ═══
-        if (\Illuminate\Support\Str::contains(strtolower($this->subject.' '.$this->body), 'embun')) {
+        if (Str::contains(strtolower($this->subject.' '.$this->body), 'embun')) {
             Log::info('Skipped Embun booking', ['uid' => $this->emailUid, 'subject' => $this->subject]);
             $this->markFailed('Embun property booking — not processed');
 

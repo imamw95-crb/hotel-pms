@@ -140,6 +140,8 @@ class ReservationApiController extends Controller
                 }
 
                 $otaSource = $validated['ota_source'] ?? 'api';
+                $isWebsite = $otaSource === 'website';
+
                 $reservation = Reservation::create([
                     'guest_id' => $guest->id,
                     'room_id' => $room->id,
@@ -147,12 +149,12 @@ class ReservationApiController extends Controller
                     'check_out' => $checkOut,
                     'number_of_cards' => $validated['guest_count'] ?? 1,
                     'total_amount' => $totalAmount,
-                    'payment_method' => $validated['payment_method'] ?? 'cash',
+                    'payment_method' => $validated['payment_method'] ?? ($isWebsite ? 'transfer_bca' : 'cash'),
                     'paid_amount' => 0,
-                    'status' => 'pending',
+                    'status' => $isWebsite ? 'menunggu_pembayaran' : 'pending',
                     'notes' => $validated['notes'] ?? null,
                     'ota_source' => $otaSource,
-                    'ota_payment_status' => $otaSource === 'website' ? 'pending' : null,
+                    'ota_payment_status' => $isWebsite ? 'pending' : null,
                     'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
                     'room_type_name' => $room->room_type_name,
                     'created_by' => auth()->id(),
@@ -676,9 +678,9 @@ class ReservationApiController extends Controller
                     $q->where('guest_name', 'like', "%{$search}%")
                         ->orWhere('id_number', 'like', "%{$search}%");
                 })
-                ->orWhereHas('room', function ($q) use ($search) {
-                    $q->where('room_number', 'like', "%{$search}%");
-                });
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('room_number', 'like', "%{$search}%");
+                    });
             });
         }
 

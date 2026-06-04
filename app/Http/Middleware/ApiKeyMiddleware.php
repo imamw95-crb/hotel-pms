@@ -25,10 +25,20 @@ class ApiKeyMiddleware
             ], 401);
         }
 
+        // Sanctum token format: {id}|{secret}
+        // The stored hash is only for the {secret} part
+        // Support both plain secret (legacy) and id|secret format
+        if (str_contains($apiKey, '|')) {
+            $parts = explode('|', $apiKey, 2);
+            $secret = $parts[1];
+        } else {
+            $secret = $apiKey;
+        }
+
         // Cari user yang punya token dengan nama 'api-key' dan token cocok
-        $user = User::whereHas('tokens', function ($q) use ($apiKey) {
+        $user = User::whereHas('tokens', function ($q) use ($secret) {
             $q->where('name', 'api-key')
-                ->where('token', hash('sha256', $apiKey));
+                ->where('token', hash('sha256', $secret));
         })->first();
 
         if (! $user) {

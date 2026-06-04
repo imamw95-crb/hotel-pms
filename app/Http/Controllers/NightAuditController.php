@@ -385,8 +385,9 @@ class NightAuditController extends Controller
 
         $transactionsByMethod = $transactions->groupBy('payment_method')->map(function ($txns) use ($otaPaymentMethods) {
             return $txns->map(function ($t) use ($otaPaymentMethods) {
-                $isOta = ($t->reservation && $t->reservation->ota_source)
+                $isOta = ($t->reservation && $t->reservation->ota_source && $t->reservation->ota_source !== 'website')
                     || in_array($t->payment_method, $otaPaymentMethods);
+
                 return [
                     'transaction_number' => $t->transaction_number,
                     'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
@@ -409,7 +410,7 @@ class NightAuditController extends Controller
         $cashRevenueToday = $transactions->where('payment_method', 'cash')->sum('amount');
 
         $otaRevenueToday = $transactions->filter(function ($t) use ($otaPaymentMethods) {
-            return ($t->reservation && $t->reservation->ota_source)
+            return ($t->reservation && $t->reservation->ota_source && $t->reservation->ota_source !== 'website')
                 || in_array($t->payment_method, $otaPaymentMethods);
         })->sum('amount');
 
@@ -531,9 +532,9 @@ class NightAuditController extends Controller
                 'payment_method' => $r->payment_method,
             ]);
 
-        $otaBookings = $allNewBookings->filter(fn ($r) => ! empty($r['ota_source']))->values();
-        $webBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods))->values();
-        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods))->values();
+        $otaBookings = $allNewBookings->filter(fn ($r) => ! empty($r['ota_source']) && $r['ota_source'] !== 'website')->values();
+        $webBookings = $allNewBookings->filter(fn ($r) => $r['ota_source'] === 'website' || (empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods)))->values();
+        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website')->values();
 
         return compact(
             'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms', 'occupancyRate',

@@ -134,8 +134,8 @@ class HousekeepingService
         string $typeFilter = 'all',
         string $priorityFilter = 'all',
         string $roomFilter = 'all',
-        string $dateFrom = null,
-        string $dateTo = null
+        ?string $dateFrom = null,
+        ?string $dateTo = null
     ): Collection {
         $dateFrom ??= Carbon::today()->format('Y-m-d');
         $dateTo ??= Carbon::today()->format('Y-m-d');
@@ -256,6 +256,7 @@ class HousekeepingService
                 'created' => HousekeepingTask::whereDate('created_at', $date)->count(),
             ];
         }
+
         return $data;
     }
 
@@ -271,6 +272,7 @@ class HousekeepingService
                 'count' => HousekeepingTask::where('task_type', $key)->count(),
             ];
         }
+
         return $distribution;
     }
 
@@ -395,6 +397,7 @@ class HousekeepingService
                 $created++;
             }
         }
+
         return $created;
     }
 
@@ -527,7 +530,7 @@ class HousekeepingService
                         ->count(),
                     'avg_duration_minutes' => $avgDuration,
                     'avg_duration_label' => $avgDuration > 0
-                        ? intdiv($avgDuration, 60) . 'j ' . ($avgDuration % 60) . 'm'
+                        ? intdiv($avgDuration, 60).'j '.($avgDuration % 60).'m'
                         : '-',
                 ];
             });

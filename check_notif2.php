@@ -1,23 +1,24 @@
 <?php
+
 require __DIR__.'/vendor/autoload.php';
 $app = require __DIR__.'/bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
-use App\Models\BookingNotification;
-use App\Models\Reservation;
-use App\Models\ProcessedEmail;
 use App\Models\MHSLog;
+use App\Models\ProcessedEmail;
+use App\Models\Reservation;
 use Carbon\Carbon;
+use Illuminate\Contracts\Console\Kernel;
 
 echo "=== PROCESSED EMAILS ===\n";
-echo "Total: " . ProcessedEmail::count() . "\n";
-foreach(ProcessedEmail::latest()->take(5)->get() as $e) {
+echo 'Total: '.ProcessedEmail::count()."\n";
+foreach (ProcessedEmail::latest()->take(5)->get() as $e) {
     echo "[{$e->id}] {$e->ota_source} - {$e->status} - {$e->subject} ({$e->created_at})\n";
 }
 
 echo "\n=== OTA RESERVATIONS DETAILS ===\n";
 $otas = Reservation::whereNotNull('ota_source')->where('ota_source', '!=', '')->where('ota_source', '!=', 'website')->get();
-foreach($otas as $r) {
+foreach ($otas as $r) {
     echo "[{$r->id}] {$r->reservation_number}\n";
     echo "  ota_source: {$r->ota_source}\n";
     echo "  ota_reservation_number: {$r->ota_reservation_number}\n";
@@ -30,8 +31,8 @@ foreach($otas as $r) {
 }
 
 echo "\n=== MHS LOGS ===\n";
-echo "Total: " . MHSLog::count() . "\n";
-foreach(MHSLog::latest()->take(5)->get() as $log) {
+echo 'Total: '.MHSLog::count()."\n";
+foreach (MHSLog::latest()->take(5)->get() as $log) {
     echo "[{$log->id}] {$log->level} - {$log->message} ({$log->created_at})\n";
 }
 

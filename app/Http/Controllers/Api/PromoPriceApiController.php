@@ -48,7 +48,7 @@ class PromoPriceApiController extends Controller
                 'room_type_name' => $item->roomType->name ?? null,
                 'date' => $item->date->format('Y-m-d'),
                 'price' => (float) $item->price,
-                'price_formatted' => 'Rp ' . number_format($item->price, 0, ',', '.'),
+                'price_formatted' => 'Rp '.number_format($item->price, 0, ',', '.'),
                 'label' => $item->label,
                 'created_at' => $item->created_at->toISOString(),
                 'updated_at' => $item->updated_at->toISOString(),
@@ -100,7 +100,7 @@ class PromoPriceApiController extends Controller
                         'id' => $pp->id,
                         'date' => $pp->date->format('Y-m-d'),
                         'price' => (float) $pp->price,
-                        'price_formatted' => 'Rp ' . number_format($pp->price, 0, ',', '.'),
+                        'price_formatted' => 'Rp '.number_format($pp->price, 0, ',', '.'),
                         'label' => $pp->label,
                     ];
                 }),
@@ -158,14 +158,14 @@ class PromoPriceApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Harga efektif untuk tanggal ' . $date->format('Y-m-d'),
+                'message' => 'Harga efektif untuk tanggal '.$date->format('Y-m-d'),
                 'data' => [
                     'room_id' => $room->id,
                     'room_number' => $room->room_number,
                     'room_type_name' => $room->room_type_name,
                     'date' => $date->format('Y-m-d'),
                     'effective_price' => (float) $price,
-                    'effective_price_formatted' => 'Rp ' . number_format($price, 0, ',', '.'),
+                    'effective_price_formatted' => 'Rp '.number_format($price, 0, ',', '.'),
                     'price_breakdown' => [
                         'promo_price' => $promoPrice,
                         'weekday_price' => (float) $room->price_weekday,
@@ -210,7 +210,7 @@ class PromoPriceApiController extends Controller
                     'day_name' => $current->isoFormat('dddd'),
                     'is_weekend' => Room::isWeekend($current),
                     'effective_price' => (float) $nightPrice,
-                    'effective_price_formatted' => 'Rp ' . number_format($nightPrice, 0, ',', '.'),
+                    'effective_price_formatted' => 'Rp '.number_format($nightPrice, 0, ',', '.'),
                     'promo_applied' => $promoPrice,
                 ];
                 $current->addDay();
@@ -227,7 +227,7 @@ class PromoPriceApiController extends Controller
                     'check_out' => $checkOut->format('Y-m-d'),
                     'nights' => $nights,
                     'total_price' => (float) $total,
-                    'total_price_formatted' => 'Rp ' . number_format($total, 0, ',', '.'),
+                    'total_price_formatted' => 'Rp '.number_format($total, 0, ',', '.'),
                     'nightly_breakdown' => $nightlyBreakdown,
                 ],
             ]);

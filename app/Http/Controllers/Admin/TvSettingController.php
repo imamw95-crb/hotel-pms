@@ -21,8 +21,8 @@ class TvSettingController extends Controller
         $rooms = Room::with(['reservations' => function ($q) {
             $q->where('status', 'checked_in');
         }, 'reservations.guest'])
-        ->orderBy('room_number')
-        ->get();
+            ->orderBy('room_number')
+            ->get();
 
         return view('admin.tv-settings.index', compact('setting', 'rooms'));
     }

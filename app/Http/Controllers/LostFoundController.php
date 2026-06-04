@@ -44,6 +44,7 @@ class LostFoundController extends Controller
 
         if (request()->expectsJson()) {
             $view = view('lost-and-found.create', compact('rooms'))->render();
+
             return response()->json(['success' => true, 'view' => $view]);
         }
 

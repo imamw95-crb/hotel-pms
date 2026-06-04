@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Models\NightAuditLog;
-use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -54,15 +54,15 @@ class AppServiceProvider extends ServiceProvider
 
         $dangerousCommands = ['migrate:fresh', 'migrate:reset', 'migrate:refresh'];
 
-        Event::listen(function (\Illuminate\Console\Events\CommandStarting $event) use ($dangerousCommands) {
+        Event::listen(function (CommandStarting $event) use ($dangerousCommands) {
             $command = $event->command;
 
             if (in_array($command, $dangerousCommands)) {
-                $output = new ConsoleOutput();
-                $output->writeln('<error>❌ BLOCKED: ' . strtoupper($command) . ' cannot be executed in PRODUCTION!</error>');
+                $output = new ConsoleOutput;
+                $output->writeln('<error>❌ BLOCKED: '.strtoupper($command).' cannot be executed in PRODUCTION!</error>');
                 $output->writeln('<comment>This command would DELETE ALL DATA.</comment>');
                 $output->writeln('<info>To reset database, contact system administrator with backup verification.</info>');
-                
+
                 exit(1);
             }
         });

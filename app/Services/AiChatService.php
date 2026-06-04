@@ -20,6 +20,7 @@ class AiChatService
 
     /** Confirmation keywords (Bahasa Indonesia + English) */
     private const CONFIRM_WORDS = ['ya', 'yes', 'oke', 'ok', 'okay', 'lanjut', 'lanjutkan', 'setuju', 'confirm', 'iya', 'y', 'siap', 'aye'];
+
     private const REJECT_WORDS = ['tidak', 'no', 'nope', 'batal', 'cancel', 'jangan', 'gak', 'ga', 'nggak', 'enggak', 'batalkan'];
 
     public function __construct(AiActionService $actionService)

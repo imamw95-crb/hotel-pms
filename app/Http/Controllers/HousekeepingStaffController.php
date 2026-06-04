@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HousekeepingTask;
+use App\Models\Reservation;
 use App\Models\Room;
 use App\Services\HousekeepingService;
 use Carbon\Carbon;
@@ -54,7 +55,7 @@ class HousekeepingStaffController extends Controller
     {
         $dirtyRooms = $this->hkService->getDirtyRooms();
 
-        $todayCheckouts = \App\Models\Reservation::with('room')
+        $todayCheckouts = Reservation::with('room')
             ->whereDate('check_out', Carbon::today())
             ->where('status', 'checked_in')
             ->get();
@@ -85,6 +86,7 @@ class HousekeepingStaffController extends Controller
                     'message' => 'Sudah ada tugas aktif untuk kamar ini',
                 ], 409);
             }
+
             return redirect()->back()->with('error', 'Sudah ada tugas aktif untuk kamar ini');
         }
 

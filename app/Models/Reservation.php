@@ -82,6 +82,7 @@ class Reservation extends Model
     {
         return [
             'pending' => 'Pending',
+            'menunggu_pembayaran' => 'Menunggu Pembayaran',
             'checked_in' => 'Checked In',
             'checked_out' => 'Checked Out',
             'cancelled' => 'Cancelled',

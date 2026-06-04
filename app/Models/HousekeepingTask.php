@@ -191,7 +191,7 @@ class HousekeepingTask extends Model
      */
     public function getPhotoBeforeUrlAttribute(): ?string
     {
-        return $this->photo_before ? asset('storage/' . $this->photo_before) : null;
+        return $this->photo_before ? asset('storage/'.$this->photo_before) : null;
     }
 
     /**
@@ -199,7 +199,7 @@ class HousekeepingTask extends Model
      */
     public function getPhotoAfterUrlAttribute(): ?string
     {
-        return $this->photo_after ? asset('storage/' . $this->photo_after) : null;
+        return $this->photo_after ? asset('storage/'.$this->photo_after) : null;
     }
 
     /**
