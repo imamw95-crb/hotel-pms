@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AvailabilityService;
+use App\Services\BookingNotificationService;
 use App\Services\BookingSyncService;
 use App\Services\EmailParserService;
 use App\Services\ImapService;
@@ -302,7 +303,16 @@ class ReadHotelEmailsCommand extends Command
 
                 $this->info("  ✅ {$action}: {$reservation->reservation_number} ({$roomInfo}){$paymentInfo}");
 
-                // ═══ STEP 9: SAVE UID + MARK AS READ (atomic) ═══
+                // ═══ STEP 9: TRIGGER NOTIFICATION ═══
+                $notifService = app(BookingNotificationService::class);
+                match ($action) {
+                    'created' => $notifService->otaBookingCreated($reservation, $aiData, $otaSource),
+                    'updated' => $notifService->otaBookingUpdated($reservation, $aiData, $otaSource),
+                    'cancelled' => $notifService->otaBookingCancelled($reservation, $aiData, $otaSource),
+                    default => null,
+                };
+
+                // ═══ STEP 10: SAVE UID + MARK AS READ (atomic) ═══
                 $imap->markAsSeen($message);
                 $parser->markProcessed($uid, $sender, $subject, $emailType, $otaSource, $aiData['reservation_id'] ?? null, $body);
 

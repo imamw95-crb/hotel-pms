@@ -3,9 +3,12 @@
 namespace App\Providers;
 
 use App\Models\NightAuditLog;
+use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +37,34 @@ class AppServiceProvider extends ServiceProvider
             $nightAudit = NightAuditLog::latest()->first();
             $view->with('nightAuditClosed', $nightAudit && $nightAudit->status === 'completed' && $nightAudit->audit_date === now()->subDay()->toDateString());
             $view->with('nightAuditPending', ! $nightAudit || $nightAudit->audit_date->toDateString() !== now()->toDateString() || $nightAudit->status !== 'locked');
+        });
+
+        // Block dangerous migrate commands in production
+        $this->blockDangerousMigrateCommands();
+    }
+
+    /**
+     * Block migrate:fresh, migrate:reset, migrate:refresh in production
+     */
+    private function blockDangerousMigrateCommands(): void
+    {
+        if (! app()->isProduction()) {
+            return;
+        }
+
+        $dangerousCommands = ['migrate:fresh', 'migrate:reset', 'migrate:refresh'];
+
+        Event::listen(function (\Illuminate\Console\Events\CommandStarting $event) use ($dangerousCommands) {
+            $command = $event->command;
+
+            if (in_array($command, $dangerousCommands)) {
+                $output = new ConsoleOutput();
+                $output->writeln('<error>❌ BLOCKED: ' . strtoupper($command) . ' cannot be executed in PRODUCTION!</error>');
+                $output->writeln('<comment>This command would DELETE ALL DATA.</comment>');
+                $output->writeln('<info>To reset database, contact system administrator with backup verification.</info>');
+                
+                exit(1);
+            }
         });
     }
 }

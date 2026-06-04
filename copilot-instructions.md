@@ -84,7 +84,27 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 5. Optional optimization suggestions
 
 ## Always Prioritize
-- Speed
+- Speed and efficiency
 - Low token usage
 - Maintainability
 - Production safety
+
+## CRITICAL: Database Protection
+⚠️ **PRODUCTION SAFETY RULES:**
+- **NEVER** suggest or execute: `php artisan migrate:fresh`, `php artisan migrate:reset`, `php artisan migrate:refresh`
+- These commands **DELETE ALL DATA** in production
+- **SYSTEM AUTOMATICALLY BLOCKS THESE** — they will fail with error message in production
+- Use `php artisan migrate` ONLY for running new migrations
+- If reset is needed → require explicit user confirmation + backup verification
+
+## Migration File Optimization
+- **Read ONLY new/modified migration files** relevant to current task
+- **NEVER** read all migrations or historical migration files
+- Migration file reading = high token cost, avoid unless essential
+- Focus on `database/migrations/` files created/changed in this session only
+
+## Implementation Details
+- `app/Providers/AppServiceProvider.php` — Listens for Artisan `CommandStarting` event
+- Blocks dangerous commands before they execute in production environment
+- Logs all blocked attempts for audit trail
+- Safe commands like `migrate` work normally

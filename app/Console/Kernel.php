@@ -15,6 +15,8 @@ class Kernel extends ConsoleKernel
         Commands\TestReadOneEmailCommand::class,
         Commands\TestOtaEmailCommand::class,
         Commands\AiReservationCommand::class,
+        Commands\BlockMigrateFreshCommand::class,
+        Commands\BlockMigrateResetCommand::class,
     ];
 
     /**
