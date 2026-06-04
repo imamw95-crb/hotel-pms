@@ -147,12 +147,25 @@ return [
             'permission' => 'view_housekeeping',
             'children' => [
                 [
-                    'label' => 'Housekeeping',
+                    'label' => 'Dashboard',
                     'route' => 'housekeeping.index',
+                ],
+                [
+                    'label' => 'Tugas Saya',
+                    'route' => 'housekeeping.my-tasks',
+                ],
+                [
+                    'label' => 'Ambil Tugas',
+                    'route' => 'housekeeping.available-rooms',
                 ],
                 [
                     'label' => 'Print Room List',
                     'route' => 'room-list.print',
+                ],
+                [
+                    'label' => 'Lost & Found',
+                    'route' => 'lost-and-found.index',
+                    'permission' => 'manage_lost_found',
                 ],
             ],
         ],

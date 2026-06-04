@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HousekeepingTask extends Model
@@ -21,12 +23,20 @@ class HousekeepingTask extends Model
         'assigned_to',
         'completed_by',
         'completed_at',
+        'started_at',
+        'duration_minutes',
+        'photo_before',
+        'photo_after',
+        'room_condition_before',
+        'room_condition_after',
         'notes',
         'created_by',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'started_at' => 'datetime',
+        'duration_minutes' => 'integer',
     ];
 
     /**
@@ -80,6 +90,21 @@ class HousekeepingTask extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(HousekeepingTaskChecklist::class);
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(HousekeepingTaskLog::class, 'housekeeping_task_id');
+    }
+
+    public function lostFound(): HasMany
+    {
+        return $this->hasMany(LostFound::class);
     }
 
     // ─── Accessors ────────────────────────────────────────────────────
@@ -140,5 +165,101 @@ class HousekeepingTask extends Model
             'turndown' => 'fa-moon',
             default => 'fa-tasks',
         };
+    }
+
+    /**
+     * Get human-readable duration label.
+     */
+    public function getDurationLabelAttribute(): ?string
+    {
+        if (! $this->duration_minutes) {
+            return null;
+        }
+
+        $hours = intdiv($this->duration_minutes, 60);
+        $mins = $this->duration_minutes % 60;
+
+        if ($hours > 0) {
+            return "{$hours}j {$mins}m";
+        }
+
+        return "{$mins} menit";
+    }
+
+    /**
+     * Get full URL for photo before.
+     */
+    public function getPhotoBeforeUrlAttribute(): ?string
+    {
+        return $this->photo_before ? asset('storage/' . $this->photo_before) : null;
+    }
+
+    /**
+     * Get full URL for photo after.
+     */
+    public function getPhotoAfterUrlAttribute(): ?string
+    {
+        return $this->photo_after ? asset('storage/' . $this->photo_after) : null;
+    }
+
+    /**
+     * Get formatted started_at.
+     */
+    public function getStartedAtFormattedAttribute(): ?string
+    {
+        return $this->started_at?->format('d/m/Y H:i');
+    }
+
+    // ─── Scopes ───────────────────────────────────────────────────────
+
+    /**
+     * Scope: only urgent tasks that are still active.
+     */
+    public function scopeUrgent($query)
+    {
+        return $query->where('priority', 'urgent')
+            ->whereIn('status', ['pending', 'in_progress']);
+    }
+
+    /**
+     * Scope: tasks assigned to a specific staff.
+     */
+    public function scopeByStaff($query, int $userId)
+    {
+        return $query->where('assigned_to', $userId);
+    }
+
+    /**
+     * Scope: tasks created today.
+     */
+    public function scopeToday($query)
+    {
+        return $query->whereDate('created_at', Carbon::today());
+    }
+
+    /**
+     * Scope: tasks that are overdue (in_progress for more than 4 hours).
+     */
+    public function scopeOverdue($query)
+    {
+        return $query->where('status', 'in_progress')
+            ->where('started_at', '<', Carbon::now()->subHours(4));
+    }
+
+    /**
+     * Scope: active tasks (pending or in_progress).
+     */
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['pending', 'in_progress']);
+    }
+
+    /**
+     * Scope: completed tasks within a date range.
+     */
+    public function scopeCompletedBetween($query, $start, $end)
+    {
+        return $query->where('status', 'completed')
+            ->whereBetween('completed_at', [$start, $end]);
     }
 }

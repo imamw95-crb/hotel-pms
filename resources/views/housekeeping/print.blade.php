@@ -260,6 +260,63 @@
         </tbody>
     </table>
 
+    {{-- Staff Performance --}}
+    @if(isset($staffPerformance) && $staffPerformance->count() > 0)
+    <div class="section-title"><i class="fas fa-users"></i> Performa Staff</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama Staff</th>
+                <th style="width:12%;text-align:center;">Total Tugas</th>
+                <th style="width:12%;text-align:center;">Selesai</th>
+                <th style="width:12%;text-align:center;">Rata-rata Durasi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($staffPerformance as $sp)
+            <tr>
+                <td><strong>{{ $sp['name'] }}</strong></td>
+                <td style="text-align:center;">{{ $sp['total_tasks'] }}</td>
+                <td style="text-align:center;">{{ $sp['total_completed'] }}</td>
+                <td style="text-align:center;">{{ $sp['avg_duration_label'] }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+
+    {{-- Task Type Breakdown --}}
+    @if(isset($typeBreakdown) && count($typeBreakdown) > 0)
+    <div class="section-title"><i class="fas fa-chart-bar"></i> Breakdown per Tipe Tugas</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Tipe Tugas</th>
+                <th style="width:12%;text-align:center;">Total</th>
+                <th style="width:12%;text-align:center;">Selesai</th>
+                <th style="width:16%;text-align:center;">Rata-rata Durasi</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($typeBreakdown as $tb)
+            @if($tb['total'] > 0)
+            <tr>
+                <td><strong>{{ $tb['label'] }}</strong></td>
+                <td style="text-align:center;">{{ $tb['total'] }}</td>
+                <td style="text-align:center;">{{ $tb['completed'] }}</td>
+                <td style="text-align:center;">
+                    @php
+                        $avg = $tb['avg_duration'];
+                        echo $avg > 0 ? intdiv($avg, 60) . 'j ' . ($avg % 60) . 'm' : '-';
+                    @endphp
+                </td>
+            </tr>
+            @endif
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+
     {{-- Sign-off --}}
     <div class="sign-off">
         <div class="sign-box">

@@ -70,6 +70,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'Update Housekeeping Status', 'slug' => 'update_housekeeping_status', 'group' => 'housekeeping', 'description' => 'Dapat mengubah status tugas housekeeping'],
             ['name' => 'Assign Housekeeping Task', 'slug' => 'assign_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menugaskan staff housekeeping'],
             ['name' => 'Delete Housekeeping Task', 'slug' => 'delete_housekeeping_task', 'group' => 'housekeeping', 'description' => 'Dapat menghapus tugas housekeeping'],
+            ['name' => 'Manage Lost & Found', 'slug' => 'manage_lost_found', 'group' => 'housekeeping', 'description' => 'Dapat mengelola barang temuan'],
+            ['name' => 'Manage Housekeeping Inventory', 'slug' => 'manage_hk_inventory', 'group' => 'housekeeping', 'description' => 'Dapat mengelola inventaris housekeeping'],
 
             // Promo Pricing Permissions
             ['name' => 'Manage Promo Prices', 'slug' => 'manage_promo_prices', 'group' => 'pricing', 'description' => 'Dapat mengelola harga promo per tanggal'],
@@ -92,6 +94,7 @@ class PermissionSeeder extends Seeder
             'view_reports', 'manage_guests',
             'view_service_charges', 'create_service_charge',
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
+            'manage_lost_found', 'manage_hk_inventory',
             'manage_promo_prices',
         ]);
 
@@ -109,6 +112,7 @@ class PermissionSeeder extends Seeder
 
         $this->assignPermissionToRole('housekeeping', [
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
+            'manage_lost_found',
             'manage_guests',
         ]);
 

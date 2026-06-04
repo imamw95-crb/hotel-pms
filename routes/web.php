@@ -13,6 +13,8 @@ use App\Http\Controllers\DepositController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\HousekeepingController;
+use App\Http\Controllers\HousekeepingStaffController;
+use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\IssueCardController;
 use App\Http\Controllers\NightAuditController;
 use App\Http\Controllers\NotificationController;
@@ -305,15 +307,32 @@ Route::middleware(['auth'])->group(function () {
     // Housekeeping
     Route::middleware(['auth'])->group(function () {
         Route::get('/housekeeping', [HousekeepingController::class, 'index'])->name('housekeeping.index');
+        Route::get('/housekeeping/my-tasks', [HousekeepingStaffController::class, 'myTasks'])->name('housekeeping.my-tasks');
+        Route::get('/housekeeping/available-rooms', [HousekeepingStaffController::class, 'availableRooms'])->name('housekeeping.available-rooms');
+        Route::post('/housekeeping/self-assign', [HousekeepingStaffController::class, 'selfAssign'])->name('housekeeping.self-assign');
         Route::post('/housekeeping', [HousekeepingController::class, 'store'])->name('housekeeping.store');
         Route::get('/housekeeping/stats', [HousekeepingController::class, 'stats'])->name('housekeeping.stats');
+        Route::get('/housekeeping/distribution', [HousekeepingController::class, 'distribution'])->name('housekeeping.distribution');
         Route::get('/housekeeping/print', [HousekeepingController::class, 'printReport'])->name('housekeeping.print');
         Route::get('/housekeeping/room/{room}/tasks', [HousekeepingController::class, 'roomTasks'])->name('housekeeping.room-tasks');
+        Route::get('/housekeeping/room/{room}/history', [HousekeepingController::class, 'roomHistory'])->name('housekeeping.room-history');
         Route::get('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'show'])->name('housekeeping.show');
         Route::patch('/housekeeping/{housekeepingTask}/status', [HousekeepingController::class, 'updateStatus'])->name('housekeeping.update-status');
         Route::patch('/housekeeping/{housekeepingTask}/assign', [HousekeepingController::class, 'assign'])->name('housekeeping.assign');
+        Route::post('/housekeeping/{housekeepingTask}/auto-assign', [HousekeepingController::class, 'autoAssign'])->name('housekeeping.auto-assign');
         Route::post('/housekeeping/bulk-create', [HousekeepingController::class, 'bulkCreate'])->name('housekeeping.bulk-create');
+        Route::patch('/housekeeping/checklist/{checklist}/toggle', [HousekeepingController::class, 'toggleChecklist'])->name('housekeeping.checklist-toggle');
         Route::delete('/housekeeping/{housekeepingTask}', [HousekeepingController::class, 'destroy'])->name('housekeeping.destroy');
+    });
+
+    // Lost & Found
+    Route::middleware(['auth', 'permission:manage_lost_found'])->group(function () {
+        Route::get('/lost-and-found', [LostFoundController::class, 'index'])->name('lost-and-found.index');
+        Route::get('/lost-and-found/create', [LostFoundController::class, 'create'])->name('lost-and-found.create');
+        Route::post('/lost-and-found', [LostFoundController::class, 'store'])->name('lost-and-found.store');
+        Route::get('/lost-and-found/{lostFound}', [LostFoundController::class, 'show'])->name('lost-and-found.show');
+        Route::patch('/lost-and-found/{lostFound}/status', [LostFoundController::class, 'updateStatus'])->name('lost-and-found.update-status');
+        Route::delete('/lost-and-found/{lostFound}', [LostFoundController::class, 'destroy'])->name('lost-and-found.destroy');
     });
 
     // ─── AI Chat Assistant ───

@@ -194,6 +194,68 @@
             </div>
         </div>
 
+        {{-- Housekeeping Widget --}}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-bold text-lg mb-4"><i class="fas fa-broom text-yellow-500 mr-2"></i>Housekeeping Status</h3>
+                @php
+                    $hkPending = \App\Models\HousekeepingTask::where('status', 'pending')->count();
+                    $hkInProgress = \App\Models\HousekeepingTask::where('status', 'in_progress')->count();
+                    $hkUrgent = \App\Models\HousekeepingTask::urgent()->count();
+                    $hkTodayCompleted = \App\Models\HousekeepingTask::where('status', 'completed')
+                        ->whereDate('completed_at', \Carbon\Carbon::today())->count();
+                @endphp
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-yellow-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-yellow-600">{{ $hkPending }}</p>
+                        <p class="text-xs text-gray-500">Menunggu</p>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-blue-600">{{ $hkInProgress }}</p>
+                        <p class="text-xs text-gray-500">Dikerjakan</p>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-red-600">{{ $hkUrgent }}</p>
+                        <p class="text-xs text-gray-500">Urgent</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-green-600">{{ $hkTodayCompleted }}</p>
+                        <p class="text-xs text-gray-500">Selesai Hari Ini</p>
+                    </div>
+                </div>
+                <a href="{{ route('housekeeping.index') }}" class="text-blue-500 hover:underline text-sm">
+                    <i class="fas fa-arrow-right mr-1"></i> Kelola Housekeeping
+                </a>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-bold text-lg mb-4"><i class="fas fa-door-open text-green-500 mr-2"></i>Status Kamar</h3>
+                @php
+                    $roomStatsAvail = \App\Models\Room::where('status', 'available')->count();
+                    $roomStatsCleaning = \App\Models\Room::where('status', 'cleaning')->count();
+                    $roomStatsOccupied = \App\Models\Room::where('status', 'occupied')->count();
+                    $roomStatsMaint = \App\Models\Room::where('status', 'maintenance')->count();
+                @endphp
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-green-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-green-600">{{ $roomStatsAvail }}</p>
+                        <p class="text-xs text-gray-500">Available</p>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-yellow-600">{{ $roomStatsCleaning }}</p>
+                        <p class="text-xs text-gray-500">Cleaning</p>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-red-600">{{ $roomStatsOccupied }}</p>
+                        <p class="text-xs text-gray-500">Terisi</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-gray-600">{{ $roomStatsMaint }}</p>
+                        <p class="text-xs text-gray-500">Maintenance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-lg shadow p-6 mt-6">
             <h3 class="font-bold text-lg mb-4"><i class="fas fa-history text-blue-500 mr-2"></i>Reservasi Terbaru</h3>
             @php

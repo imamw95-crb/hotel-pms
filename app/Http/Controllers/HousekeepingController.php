@@ -2,108 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\HotelSetting;
 use App\Models\HousekeepingTask;
-use App\Models\Reservation;
+use App\Models\HousekeepingTaskChecklist;
+use App\Models\HotelSetting;
 use App\Models\Room;
 use App\Models\User;
+use App\Services\HousekeepingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class HousekeepingController extends Controller
 {
+    protected HousekeepingService $hkService;
+
+    public function __construct(HousekeepingService $hkService)
+    {
+        $this->hkService = $hkService;
+    }
+
     /**
      * Display housekeeping dashboard
      */
     public function index(Request $request)
     {
-        $statusFilter = $request->input('status', 'all');
-        $typeFilter = $request->input('type', 'all');
-        $priorityFilter = $request->input('priority', 'all');
-        $roomFilter = $request->input('room_id', 'all');
-        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+        $data = $this->hkService->getDashboardData($request->all());
 
-        // Query tasks
-        $tasksQuery = HousekeepingTask::with(['room', 'assignedTo', 'completedBy', 'createdBy']);
-
-        if ($statusFilter !== 'all') {
-            $tasksQuery->where('status', $statusFilter);
-        }
-
-        if ($typeFilter !== 'all') {
-            $tasksQuery->where('task_type', $typeFilter);
-        }
-
-        if ($priorityFilter !== 'all') {
-            $tasksQuery->where('priority', $priorityFilter);
-        }
-
-        if ($roomFilter !== 'all') {
-            $tasksQuery->where('room_id', $roomFilter);
-        }
-
-        // Date filter based on created_at
-        $tasksQuery->whereDate('created_at', '>=', $dateFrom)
-            ->whereDate('created_at', '<=', $dateTo);
-
-        $tasks = $tasksQuery->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 ELSE 5 END ASC")
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Stats
-        $stats = [
-            'pending' => HousekeepingTask::where('status', 'pending')->count(),
-            'in_progress' => HousekeepingTask::where('status', 'in_progress')->count(),
-            'completed' => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
-            'total' => HousekeepingTask::count(),
-            'urgent' => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
-        ];
-
-        // Rooms for filter dropdown
-        $rooms = Room::orderBy('room_number')->get(['id', 'room_number']);
-
-        // Staff users for assignment
-        $staffUsers = User::whereIn('role', ['admin', 'frontoffice'])->orderBy('name')->get();
-
-        // Rooms needing cleaning:
-        // 1. Rooms checked out today or yesterday (via reservation)
-        // 2. Rooms with status cleaning/available without active cleaning task
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
-
-        $checkedOutRoomIds = Reservation::whereIn('status', ['checked_out'])
-            ->where(function ($q) use ($today, $yesterday) {
-                $q->whereDate('check_out', $today)
-                    ->orWhereDate('check_out', $yesterday);
-            })
-            ->pluck('room_id')
-            ->unique()
-            ->toArray();
-
-        $dirtyRoomsQuery = Room::where(function ($q) use ($checkedOutRoomIds) {
-            // Kamar yang baru di-checkout
-            if (! empty($checkedOutRoomIds)) {
-                $q->whereIn('id', $checkedOutRoomIds);
-            }
-            // Kamar dengan status cleaning/available
-            $q->orWhereIn('status', ['cleaning', 'available']);
-        })
-            ->whereDoesntHave('housekeepingTasks', function ($q) {
-                $q->whereIn('status', ['pending', 'in_progress'])
-                    ->where('task_type', 'cleaning');
-            })
-            ->orderBy('room_number')
-            ->get();
-
-        $dirtyRooms = $dirtyRoomsQuery;
-
-        return view('housekeeping.index', compact(
-            'tasks', 'stats', 'rooms', 'staffUsers', 'dirtyRooms',
-            'statusFilter', 'typeFilter', 'priorityFilter', 'roomFilter',
-            'dateFrom', 'dateTo'
-        ));
+        return view('housekeeping.index', $data);
     }
 
     /**
@@ -119,24 +44,13 @@ class HousekeepingController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        $validated['created_by'] = Auth::id();
-        $validated['status'] = 'pending';
-
-        $task = HousekeepingTask::create($validated);
-
-        // If room is available/cleaning, set to cleaning when cleaning task created
-        if (in_array($validated['task_type'], ['cleaning', 'deep_clean'])) {
-            $room = Room::find($validated['room_id']);
-            if ($room && in_array($room->status, ['available', 'cleaning'])) {
-                $room->update(['status' => 'cleaning']);
-            }
-        }
+        $task = $this->hkService->createTask($validated);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Tugas housekeeping berhasil dibuat',
-                'task' => $task->load(['room', 'assignedTo', 'createdBy']),
+                'task' => $task->load(['room', 'assignedTo', 'createdBy', 'checklistItems']),
             ]);
         }
 
@@ -155,48 +69,13 @@ class HousekeepingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $task->status = $validated['status'];
-
-        if ($validated['status'] === 'in_progress') {
-            $task->assigned_to = $task->assigned_to ?? Auth::id();
-        }
-
-        if ($validated['status'] === 'completed') {
-            $task->completed_by = Auth::id();
-            $task->completed_at = now();
-
-            // Update room status based on task type
-            $room = $task->room;
-            if ($room) {
-                if (in_array($task->task_type, ['cleaning', 'deep_clean'])) {
-                    // Only set to available if room is not occupied
-                    if ($room->status === 'cleaning' || $room->status === 'available') {
-                        $room->update(['status' => 'available']);
-                    }
-                } elseif ($task->task_type === 'maintenance') {
-                    // After maintenance, set to available if not occupied
-                    if ($room->status === 'maintenance') {
-                        $room->update(['status' => 'available']);
-                    }
-                }
-            }
-        }
-
-        if ($validated['status'] === 'cancelled') {
-            $task->notes = $validated['notes'] ?? $task->notes;
-        }
-
-        if (! empty($validated['notes'])) {
-            $task->notes = $validated['notes'];
-        }
-
-        $task->save();
+        $task = $this->hkService->updateStatus($task, $validated['status'], $validated['notes'] ?? null);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Status tugas berhasil diperbarui',
-                'task' => $task->fresh()->load(['room', 'assignedTo', 'completedBy']),
+                'task' => $task->load(['room', 'assignedTo', 'completedBy', 'checklistItems']),
             ]);
         }
 
@@ -238,26 +117,12 @@ class HousekeepingController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        $created = 0;
-        foreach ($validated['room_ids'] as $roomId) {
-            // Skip if there's already a pending/in_progress task for this room+type
-            $existing = HousekeepingTask::where('room_id', $roomId)
-                ->where('task_type', $validated['task_type'])
-                ->whereIn('status', ['pending', 'in_progress'])
-                ->exists();
-
-            if (! $existing) {
-                HousekeepingTask::create([
-                    'room_id' => $roomId,
-                    'task_type' => $validated['task_type'],
-                    'priority' => $validated['priority'],
-                    'assigned_to' => $validated['assigned_to'],
-                    'created_by' => Auth::id(),
-                    'status' => 'pending',
-                ]);
-                $created++;
-            }
-        }
+        $created = $this->hkService->bulkCreateTasks(
+            $validated['room_ids'],
+            $validated['task_type'],
+            $validated['priority'],
+            $validated['assigned_to'] ?? null
+        );
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -287,28 +152,25 @@ class HousekeepingController extends Controller
     }
 
     /**
-     * Get housekeeping stats (AJAX for dashboard)
+     * Get housekeeping stats (AJAX for dashboard, auto-polling)
      */
     public function stats()
     {
         return response()->json([
             'success' => true,
-            'stats' => [
-                'pending' => HousekeepingTask::where('status', 'pending')->count(),
-                'in_progress' => HousekeepingTask::where('status', 'in_progress')->count(),
-                'completed' => HousekeepingTask::whereDate('completed_at', Carbon::today())->count(),
-                'total' => HousekeepingTask::count(),
-                'urgent' => HousekeepingTask::where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
-            ],
+            'stats' => $this->hkService->getStats(),
         ]);
     }
 
     /**
-     * Show task detail
+     * Show task detail (with logs, checklist, lost & found)
      */
     public function show(HousekeepingTask $task)
     {
-        $task->load(['room', 'assignedTo', 'completedBy', 'createdBy']);
+        $task->load([
+            'room', 'assignedTo', 'completedBy', 'createdBy',
+            'checklistItems.checkedBy', 'logs.user', 'lostFound',
+        ]);
 
         if (request()->expectsJson()) {
             return response()->json([
@@ -338,58 +200,84 @@ class HousekeepingController extends Controller
     }
 
     /**
-     * Print housekeeping report
+     * Print housekeeping report (with staff performance)
      */
     public function printReport(Request $request)
     {
-        $statusFilter = $request->input('status', 'all');
-        $typeFilter = $request->input('type', 'all');
-        $priorityFilter = $request->input('priority', 'all');
-        $roomFilter = $request->input('room_id', 'all');
         $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
 
-        $tasksQuery = HousekeepingTask::with(['room', 'assignedTo', 'completedBy', 'createdBy']);
-
-        if ($statusFilter !== 'all') {
-            $tasksQuery->where('status', $statusFilter);
-        }
-        if ($typeFilter !== 'all') {
-            $tasksQuery->where('task_type', $typeFilter);
-        }
-        if ($priorityFilter !== 'all') {
-            $tasksQuery->where('priority', $priorityFilter);
-        }
-        if ($roomFilter !== 'all') {
-            $tasksQuery->where('room_id', $roomFilter);
-        }
-
-        $tasksQuery->whereDate('created_at', '>=', $dateFrom)
-            ->whereDate('created_at', '<=', $dateTo);
-
-        $tasks = $tasksQuery->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 ELSE 5 END ASC")
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Group tasks by status for summary
-        $groupedTasks = $tasks->groupBy('status');
-
-        // Stats
-        $stats = [
-            'total' => $tasks->count(),
-            'pending' => $tasks->where('status', 'pending')->count(),
-            'in_progress' => $tasks->where('status', 'in_progress')->count(),
-            'completed' => $tasks->where('status', 'completed')->count(),
-            'cancelled' => $tasks->where('status', 'cancelled')->count(),
-            'urgent' => $tasks->where('priority', 'urgent')->whereIn('status', ['pending', 'in_progress'])->count(),
-        ];
+        $report = $this->hkService->generateReport($dateFrom, $dateTo, $request->all());
 
         $hotel = HotelSetting::get();
 
-        return view('housekeeping.print', compact(
-            'tasks', 'groupedTasks', 'stats', 'hotel',
-            'statusFilter', 'typeFilter', 'priorityFilter', 'roomFilter',
-            'dateFrom', 'dateTo'
-        ));
+        return view('housekeeping.print', array_merge($report, [
+            'hotel' => $hotel,
+            'statusFilter' => $request->input('status', 'all'),
+            'typeFilter' => $request->input('type', 'all'),
+            'priorityFilter' => $request->input('priority', 'all'),
+            'roomFilter' => $request->input('room_id', 'all'),
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+        ]));
+    }
+
+    // ─── New Endpoints ───────────────────────────────────────────────
+
+    /**
+     * Toggle checklist item (AJAX)
+     */
+    public function toggleChecklist(Request $request, HousekeepingTaskChecklist $checklist)
+    {
+        $validated = $request->validate([
+            'is_checked' => 'required|boolean',
+        ]);
+
+        $item = $this->hkService->toggleChecklist($checklist, $validated['is_checked']);
+
+        return response()->json([
+            'success' => true,
+            'message' => $validated['is_checked'] ? 'Item selesai' : 'Item dibatalkan',
+            'item' => $item,
+        ]);
+    }
+
+    /**
+     * Auto-assign task to staff with lightest workload (AJAX)
+     */
+    public function autoAssign(HousekeepingTask $task)
+    {
+        $task = $this->hkService->autoAssignTask($task);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tugas berhasil ditugaskan otomatis',
+            'task' => $task->load(['assignedTo']),
+        ]);
+    }
+
+    /**
+     * Get housekeeping distribution data (AJAX for chart)
+     */
+    public function distribution()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->hkService->getTaskTypeDistribution(),
+        ]);
+    }
+
+    /**
+     * Get room cleaning history (AJAX)
+     */
+    public function roomHistory(Room $room)
+    {
+        $history = $this->hkService->getRoomCleaningHistory($room->id);
+
+        return response()->json([
+            'success' => true,
+            'room' => $room->room_number,
+            'history' => $history,
+        ]);
     }
 }

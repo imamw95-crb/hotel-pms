@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\HousekeepingTask;
 use App\Models\MHSLog;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
@@ -270,17 +271,38 @@ class ReservationController extends Controller
         ]);
         $reservation->room->update(['status' => 'available']);
 
+        // Auto-create housekeeping cleaning task
+        try {
+            $existing = HousekeepingTask::where('room_id', $reservation->room_id)
+                ->where('task_type', 'cleaning')
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->exists();
+
+            if (! $existing) {
+                HousekeepingTask::create([
+                    'room_id' => $reservation->room_id,
+                    'task_type' => 'cleaning',
+                    'priority' => 'normal',
+                    'description' => 'Auto-generated from check-out: ' . ($reservation->guest->guest_name ?? '') . ' (' . $reservation->reservation_number . ')',
+                    'status' => 'pending',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to auto-create housekeeping task on checkout: ' . $e->getMessage());
+        }
+
         // Check if request is AJAX
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Check-out berhasil untuk kamar {$reservation->room->room_number}. Status kamar: Available.",
+                'message' => "Check-out berhasil untuk kamar {$reservation->room->room_number}. Tugas pembersihan telah dibuat.",
                 'redirect_url' => route('checkout.index'),
                 'reservation' => $reservation,
             ]);
         }
 
-        return redirect()->route('checkout.index')->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}. Status kamar: Available.");
+        return redirect()->route('checkout.index')->with('success', "Check-out berhasil untuk kamar {$reservation->room->room_number}. Tugas pembersihan telah dibuat.");
     }
 
     /**

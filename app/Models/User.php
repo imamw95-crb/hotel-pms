@@ -32,6 +32,14 @@ class User extends Authenticatable
     }
 
     // ========== TAMBAHKAN METHOD INI ==========
+    /**
+     * Relasi ke housekeeping tasks yang ditugaskan ke user ini.
+     */
+    public function assignedTasks()
+    {
+        return $this->hasMany(HousekeepingTask::class, 'assigned_to');
+    }
+
     public function isOwner()
     {
         return $this->role === 'owner';
