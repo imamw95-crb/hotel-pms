@@ -1,7 +1,7 @@
 ﻿# 📚 Hotel PMS - Tutorial & Documentation
 
-**Versi:** 2.1  
-**Terakhir Diperbarui:** Juni 1, 2026  
+**Versi:** 2.2  
+**Terakhir Diperbarui:** Juni 4, 2026  
 **Framework:** Laravel 13.x (PHP 8.3+)  
 **Database:** MySQL via Laragon  
 
@@ -62,12 +62,15 @@ npm run dev
 ### 4. **OTA Integration**
 - Email parsing otomatis dari Tiket.com & Traveloka
 - Sync booking otomatis
-- Payment status tracking
-
+- Payment status tracking- **OTA Email Log** — Monitoring dashboard real-time
+- Retry failed email parsing
+- Refresh stats & filter by platform
 ### 5. **Front Office**
 - Check-in / Check-out
-- Housekeeping management
+- Housekeeping management (dengan checklist, log, inventory)
 - Issue kartu kamar
+- Lost & Found items
+- Service charge & deposit kartu
 
 ---
 
@@ -170,6 +173,9 @@ where('check_in', '<', $checkOut)
 | `BookingNotificationService` | Notifikasi booking |
 | `ImapService` | Baca email OTA |
 | `MHSBridgeService` | Integrasi ke MHS |
+| `HousekeepingService` | Logika bisnis housekeeping |
+| `EmailParserService` | Parse konten email OTA |
+| `BookingMapperService` | Mapping data OTA ke sistem |
 
 ### Jobs
 
@@ -186,16 +192,139 @@ Manajemen tugas pembersihan dan perawatan kamar.
 **Fitur:**
 - Buat Tugas — untuk satu kamar
 - Bulk Create — buat tugas untuk banyak kamar sekaligus
-- Assign petugas housekeeping
+- Assign petugas housekeeping (manual & auto-assign)
 - Update status: Pending → In Progress → Completed
+- **Checklist** — Checklist item per tugas (toggle selesai/belum)
+- **Task Log** — Riwayat perubahan status tugas
+- **Inventory** — Catat inventaris kamar (handuk, linen, amenities, dll)
+- **Photo Dokumentasi** — Upload foto sebelum & sesudah
 - Print laporan housekeeping
 - Lihat semua tugas per kamar (Room Tasks)
+- Charts: penyelesaian 7 hari & distribusi tipe tugas
+- Staff workload dashboard
+
+**Staff Management:**
+- **My Tasks** — Staff bisa melihat tugas yang ditugaskan ke dirinya
+- **Self-Assign** — Staff bisa mengambil tugas kamar yang tersedia
+- **Auto-Assign** — Otomatis assign ke staff dengan beban kerja paling ringan
+- Staff workload monitoring dengan progress bar
 
 **Status Tugas:**
 - Menunggu (Pending)
 - Sedang Dikerjakan (In Progress)
 - Selesai Hari Ini (Completed)
 - Urgent
+- Overdue (lewat batas waktu)
+
+---
+
+## 🔔 Notification System
+
+Sistem notifikasi untuk booking dan event penting.
+
+**Fitur:**
+- Notifikasi booking baru dari OTA
+- Notification bell di sidebar dengan unread count
+- Mark as read
+- Auto-refresh unread count
+
+**Model:** `BookingNotification`  
+**Controller:** `NotificationController`
+
+---
+
+## 🎫 Promo Pricing
+
+Mengelola harga promosi per tipe kamar berdasarkan rentang tanggal.
+
+**Fitur:**
+- **Buat Promo** — Tentukan harga khusus untuk tipe kamar di tanggal tertentu
+- **Date Range** — Promo berlaku untuk rentang tanggal
+- **Room Type** — Promo per tipe kamar (bukan per kamar)
+- **Harga Efektif** — Otomatis menggunakan harga promo jika ada
+- **API** — Endpoint untuk cek promo price
+
+**Menu:** `Promo Prices` di sidebar  
+**Model:** `RoomTypeDatePrice`  
+**Controller:** `PromoPriceController`, `Api\PromoPriceApiController`
+
+**Langkah:**
+1. Pilih tipe kamar
+2. Tentukan tanggal mulai & selesai
+3. Masukkan harga promo
+4. Simpan — harga otomatis dipakai saat reservasi di tanggal tersebut
+
+---
+
+## 🔍 Lost & Found
+
+Mencatat dan melacak barang hilang atau ditemukan di hotel.
+
+**Fitur:**
+- Catat barang hilang/ditemukan
+- Status: `reported`, `found`, `returned`, `disposed`
+- Link ke reservasi tamu
+- Deskripsi detail barang
+- Kategori item
+
+**Menu:** `Lost & Found` di sidebar  
+**Model:** `LostFound`  
+**Controller:** `LostFoundController`
+
+**Langkah:**
+1. Klik **Tambah Item**
+2. Isi deskripsi barang, kategori, lokasi ditemukan
+3. Hubungkan dengan reservasi tamu (opsional)
+4. Update status saat barang sudah diambil
+
+---
+
+## 💾 Database Backup
+
+Manajemen backup database dari panel admin.
+
+**Fitur:**
+- **Create Backup** — Buat backup manual kapan saja
+- **Download** — Download file backup
+- **Restore** — Restore dari file backup tertentu
+- **List Backups** — Lihat semua file backup yang tersedia
+- Hanya bisa diakses oleh role **Owner**
+
+**Menu:** `Admin → Backups`  
+**Controller:** `Admin\DatabaseBackupController`
+
+---
+
+## ⚙️ Hotel Settings
+
+Pengaturan konfigurasi hotel dari panel admin.
+
+**Fitur:**
+- Konfigurasi IMAP email (untuk OTA)
+- Konfigurasi MHS Bridge
+- Konfigurasi OpenRouter API
+- Dynamic logo & theme
+- Hanya bisa diakses oleh role **Owner**
+
+**Menu:** `Admin → Settings`  
+**Model:** `HotelSetting`  
+**Controller:** `SettingController`
+
+---
+
+## 💰 Expense Tracking
+
+Mencatat pengeluaran operasional hotel. Bisa di-export CSV & Print.
+
+**Fitur:**
+- Catat pengeluaran dengan kategori
+- Filter berdasarkan tanggal
+- Export & print laporan
+- Terintegrasi dengan laporan keuangan
+
+**Menu:** `Expenses` di sidebar  
+**Model:** `Expense`  
+**Controller:** `ExpenseController`
 
 ---
 
@@ -350,6 +479,23 @@ Laporan ringkasan: total kamar, occupied, available, check-in/out hari ini, pend
 
 ---
 
+## 📧 OTA Email Monitoring Dashboard
+
+Memantau dan mengelola email reservasi dari platform OTA secara real-time.
+
+**Fitur Tambahan:**
+- **Live Stats** — Statistik real-time jumlah email pending, sukses, dan gagal
+- **Refresh Stats** — Perbarui statistik email terkini
+- **Detail Parsing** — Lihat hasil parsing lengkap termasuk error detail
+- **Retry** — Coba ulang proses parsing untuk email yang gagal
+- **Auto-refresh** — Data otomatis diperbarui setiap 30 detik
+- Filter berdasarkan **Platform OTA**, **Status**, dan **Tanggal**
+- Pencarian berdasarkan subjek email atau nomor reservasi
+
+**Tips:** Pastikan koneksi IMAP email sudah dikonfigurasi di **Setting Hotel** agar fitur ini dapat membaca email OTA secara otomatis.
+
+---
+
 ## 📧 OTA Email Log
 
 Memantau dan mengelola email reservasi dari platform OTA (Booking.com, Tiket.com, Traveloka) yang masuk ke sistem.
@@ -388,6 +534,9 @@ Semua endpoint di bawah ini memerlukan API Key di header `X-API-Key` atau query 
 | `GET` | `/api/rooms/available` | Cek kamar tersedia |
 | `GET` | `/api/guests` | Daftar tamu |
 | `GET` | `/api/stats` | Statistik dashboard |
+| `GET` | `/api/promo-prices` | Daftar promo price |
+| `POST` | `/api/promo-prices` | Buat promo price baru |
+| `GET` | `/api/promo-prices/effective` | Cek harga efektif untuk tanggal tertentu |
 
 #### AI Chat
 
