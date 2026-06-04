@@ -3,20 +3,29 @@
 namespace App\Services;
 
 use App\Models\BookingNotification;
-use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\RestoTransaction;
 use App\Models\Room;
 use App\Models\ServiceCharge;
 use App\Models\Transaction;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AiChatService
 {
     private ?OpenRouterService $openRouter = null;
+
+    private AiActionService $actionService;
+
+    /** Confirmation keywords (Bahasa Indonesia + English) */
+    private const CONFIRM_WORDS = ['ya', 'yes', 'oke', 'ok', 'okay', 'lanjut', 'lanjutkan', 'setuju', 'confirm', 'iya', 'y', 'siap', 'aye'];
+    private const REJECT_WORDS = ['tidak', 'no', 'nope', 'batal', 'cancel', 'jangan', 'gak', 'ga', 'nggak', 'enggak', 'batalkan'];
+
+    public function __construct(AiActionService $actionService)
+    {
+        $this->actionService = $actionService;
+    }
 
     /**
      * Get or create OpenRouterService instance.
@@ -31,14 +40,63 @@ class AiChatService
     }
 
     /**
+     * Check if message is a confirmation or rejection.
+     */
+    private function isConfirmation(string $message): ?bool
+    {
+        $msg = trim(strtolower($message));
+
+        // Check exact match or simple words
+        if (in_array($msg, self::CONFIRM_WORDS)) {
+            return true;
+        }
+        if (in_array($msg, self::REJECT_WORDS)) {
+            return false;
+        }
+
+        return null;
+    }
+
+    /**
      * Process a chat message and return AI response.
-     * Jika terdeteksi booking, akan langsung dibuatkan reservasi.
+     * Flow: pending action? → booking? → front office action? → AI chat
      */
     public function chat(string $message, ?string $currentRoute = null, array $history = []): array
     {
         $today = Carbon::now()->startOfDay();
 
-        // ─── Coba deteksi booking dari pesan user ───
+        // ─── Step 1: Check pending action (confirmation workflow) ───
+        $pendingAction = session('ai_pending_action');
+        if ($pendingAction) {
+            $confirmed = $this->isConfirmation($message);
+
+            if ($confirmed === true) {
+                // User confirmed — execute pending action
+                session()->forget('ai_pending_action');
+
+                $result = $this->actionService->execute(array_merge(
+                    $pendingAction,
+                    ['data' => array_merge($pendingAction['data'] ?? [], ['confirmed' => true])]
+                ));
+
+                return $result;
+            }
+
+            if ($confirmed === false) {
+                // User rejected — cancel pending action
+                session()->forget('ai_pending_action');
+
+                return [
+                    'success' => true,
+                    'message' => 'Baik, aksi dibatalkan. Ada yang bisa saya bantu lain? 😊',
+                ];
+            }
+
+            // User said something else — treat as new message, clear pending
+            session()->forget('ai_pending_action');
+        }
+
+        // ─── Step 2: Coba deteksi booking dari pesan user ───
         $bookingData = $this->openRouter()->parseNaturalLanguage($message);
 
         if ($bookingData && ! empty($bookingData['guest_name'])) {
@@ -49,7 +107,10 @@ class AiChatService
 
             if ($complete) {
                 // Data lengkap (nama + tanggal + tipe kamar) — langsung buat booking
-                return $this->createBooking($bookingData);
+                return $this->actionService->execute([
+                    'action' => 'create_booking',
+                    'data' => $bookingData,
+                ]);
             }
 
             // Data tidak lengkap — AI akan tanya sisanya, beri konteks
@@ -71,7 +132,21 @@ class AiChatService
                 ". Butuh info: {$missingText}. Jangan buat reservasi sampai semua info lengkap.";
         }
 
-        // ─── Chat normal via AI ───
+        // ─── Step 3: Coba deteksi front office action ───
+        $actionData = $this->openRouter()->parseAction($message);
+
+        if ($actionData && $actionData['action'] !== 'chat') {
+            $result = $this->actionService->execute($actionData);
+
+            // If action needs confirmation, store pending action in session
+            if (isset($result['needs_confirmation']) && $result['needs_confirmation']) {
+                session(['ai_pending_action' => $actionData]);
+            }
+
+            return $result;
+        }
+
+        // ─── Step 4: Chat normal via AI ───
         $systemContext = $this->buildSystemContext($today);
         $partialContext = isset($partialInfo) ? "\n\nPartial booking info: {$partialInfo}" : '';
 
@@ -94,25 +169,13 @@ Current page: {$currentRoute}
 
 Pesan user sekarang: {$message}{$partialContext}
 
-Instructions:
-- Answer in Bahasa Indonesia, friendly but professional.
-- Use real data from the context above.
-- If user asks about availability, give specific room numbers and types.
-- If user asks about NOTIFICATIONS ("ada notifikasi?", "ada booking baru?", "apa yang baru?"), answer using the "NOTIFIKASI BOOKING BARU" data above. Mention how many unread notifications and list them. Ask if they want to mark as read.
-- FORMAT: Use simple formatting. Use **bold** for important numbers/statuses. Use emoji icons (✅, 📋, 🏨, 👤, 🛏️, 📅, 💰). Keep paragraphs short (2-3 lines max).
+Instructions: B.Indonesia, ramah-pro. Gunakan data real. Format: **bold** utk angka penting, emoji minimal ✅📋👤🛏️💰. Maks 3 paragraf singkat.
 
-- When user wants to BOOK A ROOM, follow this process:
-  1. First ask: guest name, check-in date, check-out date (or number of nights)
-  2. Then MUST ask about ROOM TYPE — list available room types from "All Rooms" data above.
-     Show the tipe kamar names and prices (e.g. "Deluxe Rp 650.000", "Superior Rp 450.000", etc.)
-  3. Do NOT proceed until the user picks a room type.
-  4. After user picks a room type, confirm all details before saying "Baik, saya akan buatkan reservasi sekarang".
+Booking: tanya nama tamu → tanggal CI/CO → TIPE KAMAR (wajib, tampilkan harga) → konfirmasi. Jangan buat reservasi sampai semua lengkap. Jika ada partial info, tanya yg kurang saja.
 
-- If you already have partial booking info (see "Partial booking info" above), only ask for what's still missing. Always prioritize asking for ROOM TYPE if not specified.
-- After the booking is created (handled by system), just confirm the result briefly.
-- If user asks something outside hotel operations, politely redirect.
-- Keep answers concise, maximum 3-4 paragraphs.
-- Do NOT mention internal functions or technical details.
+Jika tanya notifikasi: sebut jumlah & isi, tanya mau ditandai dibaca.
+Jika di luar operasional hotel: tolak halus.
+Jangan sebut teknis internal.
 PROMPT;
 
         try {
@@ -168,286 +231,38 @@ PROMPT;
     }
 
     /**
-     * Create a booking from parsed natural language data.
-     */
-    private function createBooking(array $data): array
-    {
-        $today = Carbon::now()->startOfDay();
-
-        try {
-            // Validate dates
-            $checkIn = Carbon::parse($data['checkin_date'])->setTime(14, 0);
-            $checkOut = Carbon::parse($data['checkout_date'])->setTime(12, 0);
-        } catch (\Exception $e) {
-            return [
-                'success' => true,
-                'message' => 'Maaf, format tanggal tidak valid. Coba lagi dengan format yang benar (contoh: 30 Mei 2026).',
-            ];
-        }
-
-        if ($checkIn->gte($checkOut)) {
-            return [
-                'success' => true,
-                'message' => 'Maaf, tanggal check-out harus setelah check-in. Silakan periksa kembali tanggalnya.',
-            ];
-        }
-
-        if ($checkIn->lt($today)) {
-            return [
-                'success' => true,
-                'message' => 'Maaf, tanggal check-in tidak boleh di masa lalu. Silakan pilih tanggal hari ini atau setelahnya.',
-            ];
-        }
-
-        // Find available room
-        $roomId = null;
-        $roomTypeName = $data['room_type'] ?? null;
-
-        $availableQuery = Room::where('status', '!=', 'maintenance')
-            ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
-                $q->select('room_id')
-                    ->from('reservations')
-                    ->whereIn('status', ['pending', 'checked_in'])
-                    ->where('check_in', '<', $checkOut)
-                    ->where('check_out', '>', $checkIn);
-            });
-
-        if ($roomTypeName) {
-            $availableRooms = (clone $availableQuery)
-                ->where('room_type_name', $roomTypeName)
-                ->orderBy('room_number')
-                ->get();
-
-            if ($availableRooms->isNotEmpty()) {
-                $roomId = $availableRooms->first()->id;
-            }
-        }
-
-        // Fallback: any available room
-        if (! $roomId) {
-            $anyAvailable = (clone $availableQuery)
-                ->orderBy('room_number')
-                ->first();
-
-            if (! $anyAvailable) {
-                return [
-                    'success' => true,
-                    'message' => 'Maaf, tidak ada kamar tersedia untuk tanggal tersebut. Silakan coba tanggal lain.',
-                ];
-            }
-
-            $roomId = $anyAvailable->id;
-            $roomTypeName = $anyAvailable->room_type_name;
-        }
-
-        $room = Room::find($roomId);
-
-        // Create reservation in transaction
-        try {
-            $reservation = DB::transaction(function () use ($data, $roomId, $checkIn, $checkOut, $room) {
-                // Find or create guest
-                $guest = Guest::firstOrCreate(
-                    ['guest_name' => $data['guest_name']],
-                    ['phone' => null, 'email' => null, 'address' => null]
-                );
-
-                // Calculate total
-                $totalAmount = (float) ($data['total_price'] ?? 0);
-                if ($totalAmount <= 0 && $room) {
-                    $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
-                }
-
-                $reservation = Reservation::create([
-                    'guest_id' => $guest->id,
-                    'room_id' => $roomId,
-                    'check_in' => $checkIn,
-                    'check_out' => $checkOut,
-                    'number_of_cards' => $data['guest_count'] ?? 1,
-                    'total_amount' => $totalAmount,
-                    'payment_method' => $data['payment_method'] ?: 'cash',
-                    'paid_amount' => 0,
-                    'status' => 'pending',
-                    'notes' => ($data['notes'] ? $data['notes'].' ' : '').'(via AI Chat)',
-                    'ota_source' => 'ai_chat',
-                    'created_by' => auth()->id() ?? 1,
-                ]);
-
-                $reservation->load(['guest', 'room']);
-
-                return $reservation;
-            });
-
-            $roomInfo = $reservation->room
-                ? "Kamar {$reservation->room->room_number} ({$reservation->room->room_type_name})"
-                : 'Kamar belum ditentukan';
-
-            $checkInFormatted = $reservation->check_in->format('d M Y');
-            $checkOutFormatted = $reservation->check_out->format('d M Y');
-            $totalFormatted = 'Rp '.number_format((float) $reservation->total_amount, 0, ',', '.');
-
-            return [
-                'success' => true,
-                'message' => "✅ **Reservasi berhasil dibuat!**\n\n".
-                    "📋 No. Reservasi: `{$reservation->reservation_number}`\n".
-                    "👤 Tamu: {$reservation->guest->guest_name}\n".
-                    "🛏️ {$roomInfo}\n".
-                    "📅 Check-in: {$checkInFormatted} (14:00)\n".
-                    "📅 Check-out: {$checkOutFormatted} (12:00)\n".
-                    "💰 Total: {$totalFormatted}\n\n".
-                    'Status: **Pending** — silakan lanjutkan ke proses check-in saat tamu datang.',
-            ];
-        } catch (\Exception $e) {
-            Log::error('AI Chat booking failed: '.$e->getMessage(), [
-                'data' => $data,
-            ]);
-
-            return [
-                'success' => true,
-                'message' => 'Maaf, gagal membuat reservasi karena kesalahan sistem. Silakan coba lagi atau buat manual.',
-            ];
-        }
-    }
-
-    /**
-     * Build real-time system context from database.
+     * Build compact real-time system context — low token version.
      */
     private function buildSystemContext(Carbon $today): string
     {
-        // Room stats
-        $totalRooms = Room::count();
-        $occupied = Room::where('status', 'occupied')->count();
-        $available = Room::where('status', 'available')->count();
-        $cleaning = Room::where('status', 'cleaning')->count();
-        $maintenance = Room::where('status', 'maintenance')->count();
+        $stats = [
+            'total' => Room::count(),
+            'occupied' => Room::where('status', 'occupied')->count(),
+            'available' => Room::where('status', 'available')->count(),
+            'cleaning' => Room::where('status', 'cleaning')->count(),
+            'maintenance' => Room::where('status', 'maintenance')->count(),
+        ];
+        $stats['occupancy'] = $stats['total'] > 0 ? round(($stats['occupied'] / $stats['total']) * 100) : 0;
 
-        // Today's reservations
-        $checkInsToday = Reservation::whereDate('check_in', $today)
-            ->whereIn('status', ['pending', 'checked_in'])
-            ->count();
+        $checkIns = Reservation::whereDate('check_in', $today)->whereIn('status', ['pending', 'checked_in'])->count();
+        $checkOuts = Reservation::whereDate('check_out', $today)->where('status', 'checked_in')->count();
+        $activeCount = Reservation::where('status', 'checked_in')->count();
 
-        $checkOutsToday = Reservation::whereDate('check_out', $today)
-            ->whereIn('status', ['checked_in'])
-            ->count();
+        $roomRev = (float) Transaction::whereDate('created_at', $today)->whereHas('reservation')->sum('amount');
+        $restoRev = (float) RestoTransaction::whereDate('created_at', $today)->sum('total_amount');
+        $serviceRev = (float) ServiceCharge::whereDate('created_at', $today)->sum('total_amount');
+        $totalRev = $roomRev + $restoRev + $serviceRev;
 
-        // Due out — occupied but check-out today
-        $dueOutList = Reservation::whereDate('check_out', $today)
-            ->where('status', 'checked_in')
-            ->with('room', 'guest')
-            ->get()
-            ->map(fn ($r) => $r->room && $r->guest ? "Kamar {$r->room->room_number} - {$r->guest->guest_name}" : null)
-            ->filter()
-            ->implode(', ');
-
-        $dueOutText = $dueOutList ?: 'Tidak ada';
-
-        // Active guests
-        $activeGuestsList = Reservation::where('status', 'checked_in')
-            ->with('room', 'guest')
-            ->get()
-            ->map(fn ($r) => $r->guest && $r->room ? "{$r->guest->guest_name} (Kamar {$r->room->room_number})" : null)
-            ->filter()
-            ->implode('; ');
-
-        $activeGuestsText = $activeGuestsList ?: 'Tidak ada';
-
-        // Occupancy rate
-        $occupancyRate = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100) : 0;
-
-        // All rooms list
-        $roomsList = Room::orderBy('room_number')->get()
-            ->map(fn ($r) => "{$r->room_number} ({$r->room_type_name}) - {$r->status}".($r->price_per_night > 0 ? ' - Rp '.number_format($r->price_per_night, 0, ',', '.') : ''))
-            ->implode("\n");
-
-        // ─── REVENUE DATA ────────────────────────────────────────
-        $revenueData = $this->buildRevenueContext($today);
-
-        // ─── BOOKING NOTIFICATIONS ─────────────────────────────────
-        $unreadNotifs = BookingNotification::unread()->recent(5)->get();
-        $notifText = '';
-        if ($unreadNotifs->isNotEmpty()) {
-            $notifLines = [];
-            foreach ($unreadNotifs as $n) {
-                $time = $n->created_at ? $n->created_at->format('H:i') : '--:--';
-                $notifLines[] = "- [{$time}] {$n->message}";
-            }
-            $notifText = "\n\n=== NOTIFIKASI BOOKING BARU (".BookingNotification::unread()->count()." belum dibaca) ===\n".implode("\n", $notifLines);
-        } else {
-            $notifText = "\n\n=== NOTIFIKASI BOOKING BARU ===\nTidak ada notifikasi baru.";
-        }
-
-        return <<<CONTEXT
-You are an AI assistant for Dynamic PMS V.2 (Property Management System). You help hotel staff with daily operations.
-
-TODAY: {$today->format('l, d F Y')}
-
-=== REAL-TIME DATA ===
-Total Rooms: {$totalRooms}
-Occupied: {$occupied} ({$occupancyRate}%)
-Available: {$available}
-Cleaning: {$cleaning}
-Maintenance: {$maintenance}
-
-Check-in Today: {$checkInsToday} guests
-Check-out Today: {$checkOutsToday} guests
-Due Out: {$dueOutText}
-
-Active Guests: {$activeGuestsText}
-
-{$revenueData}
-{$notifText}
-
-All Rooms:
-{$roomsList}
-CONTEXT;
-    }
-
-    /**
-     * Build revenue summary context for today.
-     */
-    private function buildRevenueContext(Carbon $today): string
-    {
-        // Room revenue — transactions created today linked to reservations
-        $roomRevenue = (float) Transaction::whereDate('created_at', $today)
-            ->whereHas('reservation')
-            ->sum('amount');
-
-        // Resto revenue today
-        $restoRevenue = (float) RestoTransaction::whereDate('created_at', $today)
-            ->sum('total_amount');
-
-        // Service charge revenue today
-        $serviceRevenue = (float) ServiceCharge::whereDate('created_at', $today)
-            ->sum('total_amount');
-
-        $totalRevenue = $roomRevenue + $restoRevenue + $serviceRevenue;
-
-        // Counts
-        $transactionCount = Transaction::whereDate('created_at', $today)
-            ->whereHas('reservation')
-            ->count();
-
-        $restoCount = RestoTransaction::whereDate('created_at', $today)->count();
-        $serviceCount = ServiceCharge::whereDate('created_at', $today)->count();
-
-        // Payment method breakdown (transactions)
-        $paymentMethods = Transaction::whereDate('created_at', $today)
-            ->whereHas('reservation')
-            ->selectRaw('payment_method, SUM(amount) as total')
-            ->groupBy('payment_method')
-            ->get()
-            ->map(fn ($t) => "{$t->payment_method}: Rp ".number_format((float) $t->total, 0, ',', '.'))
-            ->implode(', ');
+        $unread = BookingNotification::unread()->recent(5)->get();
+        $notifText = $unread->isNotEmpty()
+            ? 'Notif: '.BookingNotification::unread()->count().' baru — '.$unread->map(fn ($n) => $n->message)->implode('; ')
+            : 'Notif: tidak ada';
 
         $fmt = fn ($v) => 'Rp '.number_format($v, 0, ',', '.');
 
-        return <<<REVENUE
-=== PENDAPATAN HARI INI ===
-Total Pendapatan: {$fmt($totalRevenue)}
-  - Room Revenue (Reservasi): {$fmt($roomRevenue)} ({$transactionCount} transaksi)
-  - Resto Revenue: {$fmt($restoRevenue)} ({$restoCount} transaksi)
-  - Service Charge: {$fmt($serviceRevenue)} ({$serviceCount} transaksi)
-
-Metode Pembayaran: {$paymentMethods}
-REVENUE;
+        return "Hotel: {$stats['total']} kmr ({$stats['occupied']} isi/{$stats['available']} kosong/{$stats['cleaning']} bersihin/{$stats['maintenance']} rusak, {$stats['occupancy']}% okupansi)."
+            ." CI hari ini: {$checkIns}. CO hari ini: {$checkOuts}. Tamu aktif: {$activeCount}."
+            ." Revenue: {$fmt($totalRev)} (Room {$fmt($roomRev)}, Resto {$fmt($restoRev)}, SC {$fmt($serviceRev)})."
+            ." {$notifText}";
     }
 }

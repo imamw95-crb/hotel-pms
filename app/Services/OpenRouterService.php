@@ -135,54 +135,19 @@ PROMPT;
     }
 
     /**
-     * Parse natural language input into structured reservation data.
-     * AI directly creates the reservation in the system.
-     *
-     * @return array{guest_name: string, checkin_date: string, checkout_date: string, room_type: string, guest_count: int, total_price: float, payment_method: string, notes: string, status: string}|null
+     * Parse natural language input into structured reservation data (low-token).
      */
     public function parseNaturalLanguage(string $input): ?array
     {
         $today = date('Y-m-d');
         $prompt = <<<PROMPT
-You are a hotel reservation assistant. Convert the user's natural language request into a structured reservation JSON.
+Extract hotel reservation from user input into JSON. Today: {$today}. No markdown, JSON only.
 
-Today's date is {$today}.
+{"guest_name":"","checkin_date":"","checkout_date":"","room_type":"","guest_count":1,"total_price":0,"payment_method":"","notes":"","status":"pending"}
 
-Return ONLY valid JSON. Do not explain anything. No markdown. No additional text.
+Rules: guest_name required. Dates YYYY-MM-DD. "besok"=tomorrow, "lusa"=+2d, "2 malam"=CI+2d. room_type e.g. Deluxe/Superior/Standard. guest_count from "2 orang". total_price from "Rp 500rb"=500000. payment_method=cash|bank_transfer|credit_card|debit_card|tiket.com|traveloka.com|"" (default cash). notes for extra info. status always "pending".
 
-Format must EXACTLY follow this JSON structure:
-{
-  "guest_name": "",
-  "checkin_date": "",
-  "checkout_date": "",
-  "room_type": "",
-  "guest_count": 1,
-  "total_price": 0,
-  "payment_method": "",
-  "notes": "",
-  "status": "pending"
-}
-
-Rules:
-- guest_name: the guest full name (required)
-- checkin_date: check-in date in YYYY-MM-DD format (required). If user says "today", use {$today}. If "tomorrow", use tomorrow's date. If "besok", use tomorrow. If "lusa", use day after tomorrow.
-- checkout_date: check-out date in YYYY-MM-DD format (required). If user says "2 malam" or "2 nights", calculate from checkin_date.
-- room_type: the room type/name (e.g. "Deluxe", "Superior", "Standard", "Suite"). Extract from input. If not mentioned, set "".
-- guest_count: number of guests (integer, default 1). Look for "2 orang", "3 tamu", "2 guests", etc.
-- total_price: the total price in number (0 if not mentioned). Look for "Rp", "harga", "total", "tarif".
-- payment_method: one of these exact values:
-  * "cash" — if cash / bayar di hotel / pay at hotel (DEFAULT if not specified)
-  * "bank_transfer" — if bank transfer / transfer
-  * "credit_card" — if credit card / kartu kredit
-  * "debit_card" — if debit card / kartu debit
-  * "tiket.com" — if via tiket.com
-  * "traveloka.com" — if via traveloka.com
-  * "" — if not mentioned at all
-- notes: any additional notes from the input (e.g. "request lantai atas", "extra bed"). If none, set "".
-- status: always "pending" (for new reservations via AI)
-
-User Input:
-{$input}
+User Input: {$input}
 PROMPT;
 
         try {
@@ -225,6 +190,81 @@ PROMPT;
             return $this->extractJson($content);
         } catch (\Exception $e) {
             Log::error('OpenRouter natural language exception: '.$e->getMessage(), [
+                'exception' => get_class($e),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Parse natural language into a front office action intent (low-token).
+     */
+    public function parseAction(string $input): ?array
+    {
+        $today = date('Y-m-d');
+        $prompt = <<<PROMPT
+Classify hotel front office request into JSON. Today: {$today}. No markdown, JSON only.
+
+Actions (data fields, 1 example each):
+1. checkin {query,card_count:1} → "Check-in Budi 2 kartu"={"action":"checkin","data":{"query":"Budi","card_count":2}}
+2. checkout {query,amount:0,payment_method:"cash"} → "Check-out Budi bayar 500k cash"={"action":"checkout","data":{"query":"Budi","amount":500000,"payment_method":"cash"}}
+3. payment {query,amount,payment_method:"cash",type:"dp"} → "Bayar DP 300k Budi transfer"={"action":"payment","data":{"query":"Budi","amount":300000,"payment_method":"bank_transfer","type":"dp"}}
+4. cancel {query} → "Cancel INV-001"={"action":"cancel","data":{"query":"INV-001"}}
+5. change_room {query,new_room_number,reason:"pindah kamar"} → "Pindah Budi ke 205"={"action":"change_room","data":{"query":"Budi","new_room_number":"205"}}
+6. search_guest {query} → "Cari Siti"={"action":"search_guest","data":{"query":"Siti"}}
+7. deposit_create {query,card_count:2,nominal_per_card:50000,payment_method:"cash"} → "Deposit Budi 2 kartu 50rb"={"action":"deposit_create","data":{"query":"Budi","card_count":2,"nominal_per_card":50000}}
+8. deposit_return {query,receipt_number:""} → "Kembalikan deposit Budi"={"action":"deposit_return","data":{"query":"Budi"}}
+9. housekeeping {room_number,task_type:"cleaning",priority:"normal",description:""} → "Cleaning kamar 101 urgent"={"action":"housekeeping","data":{"room_number":"101","task_type":"cleaning","priority":"urgent"}}
+10. extend_stay {query,additional_nights:1,new_checkout:""} → "Perpanjang Budi 1 malam"={"action":"extend_stay","data":{"query":"Budi","additional_nights":1}}
+11. update_rate {query,new_rate} → "Rate Budi jadi 650rb"={"action":"update_rate","data":{"query":"Budi","new_rate":650000}}
+12. toggle_breakfast {query} → "Sarapan Budi"={"action":"toggle_breakfast","data":{"query":"Budi"}}
+
+Types: payment_method=cash|bank_transfer|credit_card|debit_card|qris|ewallet|virtual_account. task_type=cleaning|deep_clean|maintenance|inspection|turndown. priority=low|normal|high|urgent. payment type=dp|pelunasan|additional.
+General chat or booking request → {"action":"chat","data":{}}. Booking is handled separately, return chat.
+"50rb"=50000. query=name/room/reservation#. Default card_count=1, payment_method="cash". amount=0 if not mentioned.
+PROMPT;
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$this->apiKey}",
+                'Content-Type' => 'application/json',
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name', 'Dynamic PMS V.2'),
+            ])
+                ->timeout($this->timeout)
+                ->retry(2, 100)
+                ->post("{$this->baseUrl}/chat/completions", [
+                    'model' => $this->model,
+                    'messages' => [
+                        ['role' => 'user', 'content' => $prompt],
+                    ],
+                    'temperature' => 0.1,
+                    'max_tokens' => 1024,
+                ]);
+
+            if (! $response->successful()) {
+                Log::error('OpenRouter API error (parseAction)', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            $content = $response->json('choices.0.message.content');
+
+            if (! $content) {
+                Log::error('OpenRouter returned empty content (parseAction)', [
+                    'full_response' => $response->json(),
+                ]);
+
+                return null;
+            }
+
+            return $this->extractJson($content);
+        } catch (\Exception $e) {
+            Log::error('OpenRouter parseAction exception: '.$e->getMessage(), [
                 'exception' => get_class($e),
             ]);
 
