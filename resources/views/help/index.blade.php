@@ -6,20 +6,96 @@
 @section('content')
 <div class="max-w-5xl mx-auto">
 
-    {{-- Tombol Print --}}
-    <div class="mb-6 flex justify-end no-print">
+    {{-- Tombol Aksi --}}
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
+        <div class="flex items-center gap-2">
+            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <i class="fas fa-book-open mr-1"></i> Panduan Interaktif
+            </span>
+            <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <i class="fas fa-graduation-cap mr-1"></i> Belajar Step-by-Step
+            </span>
+        </div>
         <button onclick="window.print()"
             class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 text-sm shadow-sm">
             <i class="fas fa-print"></i> Cetak Panduan
         </button>
     </div>
 
+    {{-- Pencarian --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 no-print">
+        <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" id="helpSearch" placeholder="Cari panduan, fitur, atau istilah..." 
+                class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm outline-none transition">
+            <button onclick="document.getElementById('helpSearch').value='';filterSections();" 
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 hidden" id="clearSearch">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-1.5 text-xs" id="quickFilters">
+            <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-blue-100 transition font-medium quick-filter" data-filter="frontdesk">🏨 Front Desk</span>
+            <span class="bg-green-50 text-green-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-green-100 transition font-medium quick-filter" data-filter="housekeeping">🧹 Housekeeping</span>
+            <span class="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-purple-100 transition font-medium quick-filter" data-filter="report">📊 Laporan</span>
+            <span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-amber-100 transition font-medium quick-filter" data-filter="admin">⚙️ Admin</span>
+            <span class="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-rose-100 transition font-medium quick-filter" data-filter="keuangan">💰 Keuangan</span>
+            <span class="bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full cursor-pointer hover:bg-teal-100 transition font-medium quick-filter" data-filter="all">📋 Semua</span>
+        </div>
+    </div>
+
+    {{-- Quick Reference Card --}}
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-5 mb-6 no-print">
+        <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-bolt text-blue-500"></i>
+            <h2 class="text-base font-bold text-blue-900">Quick Reference — Panduan Cepat</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+            <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                <p class="font-bold text-blue-800 mb-1.5"><i class="fas fa-calendar-plus mr-1"></i> Booking Baru</p>
+                <ol class="text-gray-600 space-y-0.5 ml-3 list-decimal">
+                    <li>Klik kamar <span class="bg-emerald-100 text-emerald-700 px-1 rounded text-[10px]">Available</span></li>
+                    <li>Isi data tamu & tanggal</li>
+                    <li>Atur harga & DP</li>
+                    <li>Klik Simpan</li>
+                </ol>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                <p class="font-bold text-blue-800 mb-1.5"><i class="fas fa-sign-in-alt mr-1"></i> Check-In</p>
+                <ol class="text-gray-600 space-y-0.5 ml-3 list-decimal">
+                    <li>Buka menu Check-In</li>
+                    <li>Cari reservasi</li>
+                    <li>Klik tombol Check-in</li>
+                    <li>Kamar jadi Occupied</li>
+                </ol>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                <p class="font-bold text-blue-800 mb-1.5"><i class="fas fa-sign-out-alt mr-1"></i> Check-Out</p>
+                <ol class="text-gray-600 space-y-0.5 ml-3 list-decimal">
+                    <li>Verifikasi tagihan</li>
+                    <li>Kembalikan deposit</li>
+                    <li>Klik Checkout</li>
+                    <li>Kamar jadi Available</li>
+                </ol>
+            </div>
+            <div class="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                <p class="font-bold text-blue-800 mb-1.5"><i class="fas fa-moon mr-1"></i> Night Audit</p>
+                <ol class="text-gray-600 space-y-0.5 ml-3 list-decimal">
+                    <li>Preview data</li>
+                    <li>Save Draft</li>
+                    <li>Lock final</li>
+                    <li>Export laporan</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
     {{-- Daftar Isi --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 no-print">
         <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
             <i class="fas fa-list text-blue-500"></i> Daftar Isi
+            <span class="text-xs font-normal text-gray-400 ml-1">(klik untuk langsung ke bagian)</span>
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 text-sm" id="tocContainer">
             <a href="#login" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-sign-in-alt mr-1.5 w-4 text-center"></i> Login & Akses</a>
             <a href="#dashboard" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-th-large mr-1.5 w-4 text-center"></i> Dashboard Kamar</a>
             <a href="#room-rack" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-bed mr-1.5 w-4 text-center"></i> Room Rack & Availability</a>
@@ -42,13 +118,16 @@
             <a href="#admin" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-cog mr-1.5 w-4 text-center"></i> Administrasi (Owner)</a>
             <a href="#api" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-plug mr-1.5 w-4 text-center"></i> API Eksternal</a>
             <a href="#ota-email" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-envelope-open-text mr-1.5 w-4 text-center"></i> Log Email OTA</a>
+            <a href="#faq" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-question-circle mr-1.5 w-4 text-center"></i> FAQ — Tanya Jawab</a>
+            <a href="#glossary" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-book mr-1.5 w-4 text-center"></i> Glosarium Istilah</a>
+            <a href="#tips" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-lightbulb mr-1.5 w-4 text-center"></i> Tips & Trik</a>
         </div>
     </div>
 
     {{-- ================================================================ --}}
     {{-- 1. LOGIN --}}
     {{-- ================================================================ --}}
-    <div id="login" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="login" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-sign-in-alt text-blue-500"></i> 1. Login & Akses
@@ -84,7 +163,7 @@
     {{-- ================================================================ --}}
     {{-- 2. DASHBOARD --}}
     {{-- ================================================================ --}}
-    <div id="dashboard" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="dashboard" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-th-large text-emerald-500"></i> 2. Dashboard Kamar
@@ -113,7 +192,7 @@
     {{-- ================================================================ --}}
     {{-- 3. ROOM RACK --}}
     {{-- ================================================================ --}}
-    <div id="room-rack" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="room-rack" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-bed text-indigo-500"></i> 3. Room Rack & Availability
@@ -145,7 +224,7 @@
     {{-- ================================================================ --}}
     {{-- 4. BOOKING --}}
     {{-- ================================================================ --}}
-    <div id="booking" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="booking" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-calendar-plus text-orange-500"></i> 4. Booking / Reservasi
@@ -192,7 +271,7 @@
     {{-- ================================================================ --}}
     {{-- 5. CHECK-IN --}}
     {{-- ================================================================ --}}
-    <div id="checkin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="checkin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-sign-in-alt text-green-500"></i> 5. Check-in
@@ -213,7 +292,7 @@
     {{-- ================================================================ --}}
     {{-- 6. CHECK-OUT --}}
     {{-- ================================================================ --}}
-    <div id="checkout" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="checkout" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-sign-out-alt text-amber-500"></i> 6. Check-out
@@ -237,7 +316,7 @@
     {{-- ================================================================ --}}
     {{-- 7. DETAIL RESERVASI --}}
     {{-- ================================================================ --}}
-    <div id="reservation" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="reservation" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-file-alt text-blue-500"></i> 7. Detail Reservasi
@@ -271,7 +350,7 @@
     {{-- ================================================================ --}}
     {{-- 8. ROOM CHANGE --}}
     {{-- ================================================================ --}}
-    <div id="room-change" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="room-change" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-exchange-alt text-teal-500"></i> 8. Pindah Kamar (Room Change)
@@ -292,7 +371,7 @@
     {{-- ================================================================ --}}
     {{-- 9. ISSUE CARD --}}
     {{-- ================================================================ --}}
-    <div id="issue-card" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="issue-card" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-id-card text-cyan-500"></i> 9. Issue Card MHS
@@ -327,7 +406,7 @@
     {{-- ================================================================ --}}
     {{-- 10. DEPOSIT --}}
     {{-- ================================================================ --}}
-    <div id="deposit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="deposit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-credit-card text-rose-500"></i> 10. Deposit Kartu
@@ -348,7 +427,7 @@
     {{-- ================================================================ --}}
     {{-- 11. SERVICE CHARGE --}}
     {{-- ================================================================ --}}
-    <div id="service-charge" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="service-charge" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-receipt text-sky-500"></i> 11. Service Charge
@@ -368,7 +447,7 @@
     {{-- ================================================================ --}}
     {{-- 12. RESTO --}}
     {{-- ================================================================ --}}
-    <div id="resto" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="resto" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-utensils text-orange-500"></i> 12. Pendapatan Resto
@@ -388,7 +467,7 @@
     {{-- ================================================================ --}}
     {{-- 13. HOUSEKEEPING --}}
     {{-- ================================================================ --}}
-    <div id="housekeeping" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="housekeeping" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="housekeeping">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-broom text-yellow-600"></i> 13. Housekeeping
@@ -425,7 +504,7 @@
     {{-- ================================================================ --}}
     {{-- 14. NIGHT AUDIT --}}
     {{-- ================================================================ --}}
-    <div id="night-audit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="night-audit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-moon text-indigo-500"></i> 14. Night Audit
@@ -457,7 +536,7 @@
     {{-- ================================================================ --}}
     {{-- 15. REPORTS --}}
     {{-- ================================================================ --}}
-    <div id="reports" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="reports" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="report">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-chart-bar text-purple-500"></i> 15. Laporan (Reports)
@@ -494,7 +573,7 @@
     {{-- ================================================================ --}}
     {{-- 16. GUESTS --}}
     {{-- ================================================================ --}}
-    <div id="guests" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="guests" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-users text-blue-500"></i> 16. Manajemen Tamu
@@ -515,7 +594,7 @@
     {{-- ================================================================ --}}
     {{-- 17. ROOMS --}}
     {{-- ================================================================ --}}
-    <div id="rooms" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="rooms" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-door-open text-emerald-500"></i> 17. Kamar & Tipe Kamar
@@ -543,7 +622,7 @@
     {{-- ================================================================ --}}
     {{-- 18. PROMO HARGA --}}
     {{-- ================================================================ --}}
-    <div id="promo-prices" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="promo-prices" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-tag text-amber-500"></i> 18. Promo Harga
@@ -616,7 +695,7 @@
     {{-- ================================================================ --}}
     {{-- 19. AI CHAT --}}
     {{-- ================================================================ --}}
-    <div id="ai-chat" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="ai-chat" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-robot text-purple-500"></i> 19. AI Chat Assistant
@@ -637,7 +716,7 @@
     {{-- ================================================================ --}}
     {{-- 20. ADMIN --}}
     {{-- ================================================================ --}}
-    <div id="admin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="admin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-cog text-gray-600"></i> 20. Administrasi (Owner Only)
@@ -677,7 +756,7 @@
     {{-- ================================================================ --}}
     {{-- 20. API --}}
     {{-- ================================================================ --}}
-    <div id="api" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="api" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-plug text-cyan-500"></i> 21. API Eksternal
@@ -722,7 +801,7 @@
     {{-- ================================================================ --}}
     {{-- 22. LOG EMAIL OTA --}}
     {{-- ================================================================ --}}
-    <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card">
+    <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
                 <i class="fas fa-envelope-open-text text-teal-500"></i> 22. Log Email OTA
@@ -755,6 +834,326 @@
         </div>
     </div>
 
+    {{-- ================================================================ --}}
+    {{-- 23. FAQ --}}
+    {{-- ================================================================ --}}
+    <div id="faq" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-question-circle text-pink-500"></i> 23. FAQ — Pertanyaan yang Sering Diajukan
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <div class="space-y-3 text-sm">
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara membuat booking baru?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600 space-y-1">
+                        <p>Bisa melalui 2 cara:</p>
+                        <p><strong>Via Dashboard:</strong> Klik kamar dengan status <span class="bg-emerald-100 text-emerald-700 px-1.5 rounded text-xs">Available</span> → isi data → simpan.</p>
+                        <p><strong>Via Menu:</strong> <em>Front Desk → Booking</em> → pilih kamar & tanggal → isi data tamu → simpan.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Kenapa kamar tidak muncul saat booking?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600 space-y-1">
+                        <p>Kamar hanya muncul jika <strong>Available</strong> dan tidak <strong>overlap</strong> dengan reservasi lain. Periksa:</p>
+                        <ul class="list-disc ml-5 space-y-1">
+                            <li>Status kamar bukan <code>maintenance</code> atau <code>cleaning</code></li>
+                            <li>Tanggal check-in/out tidak bertabrakan dengan reservasi lain</li>
+                            <li>Ingat: <strong>Back-to-Booking</strong> diperbolehkan (check-out 12:00, check-in 14:00)</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Apa itu Back-to-Back Booking?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Ketika tamu A check-out <strong>jam 12:00</strong> dan tamu B check-in di kamar yang sama <strong>jam 14:00</strong> di hari yang sama. Sistem mengizinkan ini karena ada jeda 2 jam untuk cleaning.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara mengubah harga booking?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Buka <strong>Detail Reservasi</strong> → pada bagian <strong>Room Rate</strong>, klik <span class="bg-blue-100 text-blue-700 px-1.5 rounded text-xs">Edit</span> → ubah nominal → simpan. Total tagihan akan menyesuaikan otomatis.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara membatalkan reservasi?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Buka <strong>Detail Reservasi</strong> → klik tombol <span class="bg-red-100 text-red-700 px-1.5 rounded text-xs">Batalkan Reservasi</span> → konfirmasi. Status reservasi berubah menjadi <code>cancelled</code> dan kamar kembali <strong>Available</strong>.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Apa perbedaan role Owner, Admin, dan Front Office?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600 space-y-2">
+                        <p><strong>Owner</strong> — akses penuh termasuk manajemen user, permission, backup DB, API keys.</p>
+                        <p><strong>Admin</strong> — akses operasional penuh tanpa fitur administrasi owner.</p>
+                        <p><strong>Front Office</strong> — akses terbatas pada front desk (reservasi, check-in/out, pembayaran).</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara menambahkan pembayaran (DP) ke reservasi?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Buka <strong>Detail Reservasi</strong> → pada bagian <strong>Riwayat Pembayaran</strong>, klik <span class="bg-blue-100 text-blue-700 px-1.5 rounded text-xs">Tambah Pembayaran</span> → isi nominal dan metode pembayaran → simpan.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Kenapa tombol Check-in tidak muncul?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Tombol Check-in hanya muncul untuk reservasi berstatus <code>pending</code>. Pastikan tanggal check-in sudah sesuai (hari ini atau sebelumnya).</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana jika lupa melakukan Night Audit?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Night Audit bisa dilakukan kapan saja. Pilih tanggal yang sesuai saat melakukan audit. Sebaiknya dilakukan <strong>setiap tengah malam</strong> untuk menjaga akurasi laporan.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara export laporan ke Excel/CSV?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Di halaman laporan, klik tombol <span class="bg-green-100 text-green-700 px-1.5 rounded text-xs">Export CSV</span>. File akan terdownload otomatis. Bisa dibuka dengan Excel atau Google Sheets.</p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 24. GLOSARIUM --}}
+    {{-- ================================================================ --}}
+    <div id="glossary" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-book text-amber-500"></i> 24. Glosarium — Istilah Penting
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-sm">
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Available</p>
+                    <p class="text-xs text-gray-600">Kamar kosong dan siap dipesan</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Occupied</p>
+                    <p class="text-xs text-gray-600">Kamar sedang ditempati tamu (checked-in)</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Cleaning / Dirty</p>
+                    <p class="text-xs text-gray-600">Kamar sedang dibersihkan setelah check-out</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Maintenance</p>
+                    <p class="text-xs text-gray-600">Kamar dalam perbaikan — tidak bisa dipesan</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Due Out</p>
+                    <p class="text-xs text-gray-600">Kamar yang jadwal check-out-nya hari ini</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Pending</p>
+                    <p class="text-xs text-gray-600">Reservasi sudah dibuat tapi belum check-in</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Checked In</p>
+                    <p class="text-xs text-gray-600">Tamu sudah check-in dan menempati kamar</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Checked Out</p>
+                    <p class="text-xs text-gray-600">Tamu sudah check-out dan kamar kosong</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Cancelled</p>
+                    <p class="text-xs text-gray-600">Reservasi dibatalkan</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">DP / Down Payment</p>
+                    <p class="text-xs text-gray-600">Uang muka yang dibayarkan saat booking</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Deposit Kartu</p>
+                    <p class="text-xs text-gray-600">Uang jaminan kartu akses kamar (dikembalikan saat check-out)</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Service Charge</p>
+                    <p class="text-xs text-gray-600">Biaya tambahan (minibar, laundry, snack) yang dibebankan ke kamar</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">OTA</p>
+                    <p class="text-xs text-gray-600">Online Travel Agent (Booking.com, Tiket.com, Traveloka)</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Night Audit</p>
+                    <p class="text-xs text-gray-600">Proses penutupan hari operasional — rekonsiliasi data harian</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Room Rack</p>
+                    <p class="text-xs text-gray-600">Tampilan rack tradisional untuk melihat status kamar per lantai/tipe</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">MHS</p>
+                    <p class="text-xs text-gray-600">Magic Hotel System — perangkat penerbit kartu akses kamar</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Okupansi / Occupancy</p>
+                    <p class="text-xs text-gray-600">Tingkat hunian kamar (persentase kamar terisi)</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold text-gray-800">Walk-in Guest</p>
+                    <p class="text-xs text-gray-600">Tamu yang datang langsung tanpa reservasi sebelumnya</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 25. TIPS & TRIK --}}
+    {{-- ================================================================ --}}
+    <div id="tips" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-lightbulb text-yellow-500"></i> 25. Tips & Trik Penggunaan
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <h4 class="font-bold text-yellow-800 mb-2 flex items-center gap-1.5">
+                        <i class="fas fa-rocket"></i> Efisiensi Operasional
+                    </h4>
+                    <ul class="space-y-2 text-xs text-yellow-700">
+                        <li><i class="fas fa-check-circle mr-1"></i> Gunakan <strong>Bulk Update Status</strong> di Dashboard untuk mengubah status banyak kamar sekaligus</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Manfaatkan <strong>AI Chat Assistant</strong> untuk mencari reservasi tanpa perlu navigasi manual</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Aktifkan <strong>IMAP Email</strong> di Setting Hotel agar reservasi OTA otomatis terbaca</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Gunakan <strong>Forecast</strong> untuk merencanakan okupansi minggu depan</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Booking <strong>Group</strong> untuk rombongan besar — lebih cepat daripada booking satu per satu</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-1.5">
+                        <i class="fas fa-shield-alt"></i> Best Practice
+                    </h4>
+                    <ul class="space-y-2 text-xs text-blue-700">
+                        <li><i class="fas fa-check-circle mr-1"></i> Lakukan <strong>Night Audit</strong> setiap malam untuk menjaga akurasi data keuangan</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Catat <strong>Service Charge</strong> segera setelah tamu menggunakan layanan tambahan</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Selalu <strong>Return Deposit</strong> saat check-out untuk menghindari komplain</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Backup database secara rutin melalui menu <strong>Administrasi → Backup Database</strong></li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Atur <strong>Promo Harga</strong> jauh-jauh hari untuk musim liburan</li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <h4 class="font-bold text-green-800 mb-2 flex items-center gap-1.5">
+                        <i class="fas fa-tools"></i> Troubleshooting Cepat
+                    </h4>
+                    <ul class="space-y-2 text-xs text-green-700">
+                        <li><i class="fas fa-wrench mr-1"></i> <strong>Gagal Issue Card?</strong> — Cek koneksi MHS via tombol Test Connection</li>
+                        <li><i class="fas fa-wrench mr-1"></i> <strong>Email OTA tidak terbaca?</strong> — Periksa konfigurasi IMAP di Setting Hotel</li>
+                        <li><i class="fas fa-wrench mr-1"></i> <strong>Data tidak muncul?</strong> — Coba refresh halaman atau filter tanggal</li>
+                        <li><i class="fas fa-wrench mr-1"></i> <strong>Harga salah?</strong> — Cek apakah ada promo harga yang aktif di tanggal tersebut</li>
+                        <li><i class="fas fa-wrench mr-1"></i> <strong>Kamar tidak bisa di booking?</strong> — Periksa apakah statusnya Maintenance</li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <h4 class="font-bold text-purple-800 mb-2 flex items-center gap-1.5">
+                        <i class="fas fa-keyboard"></i> Pintasan & Navigasi Cepat
+                    </h4>
+                    <ul class="space-y-2 text-xs text-purple-700">
+                        <li><i class="fas fa-check-circle mr-1"></i> Gunakan <strong>? (tanda tanya)</strong> di keyboard untuk membuka pintasan keyboard</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Klik logo hotel di sidebar untuk kembali ke Dashboard</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Manfaatkan <strong>pencarian</strong> di halaman ini untuk menemukan panduan cepat</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Gunakan filter kategori untuk fokus pada modul tertentu</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Buka semua section dengan klik <strong>Expand All</strong> saat ingin mencari</li>
+                    </ul>
+                </div>
+            </div>
+
+            {{-- Learning Path --}}
+            <div class="mt-5 bg-white border border-gray-200 rounded-lg p-5">
+                <h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fas fa-graduation-cap text-blue-500"></i> 🎯 Learning Path — Panduan Belajar untuk Pengguna Baru
+                </h4>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <span class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                        <div>
+                            <p class="font-semibold text-blue-800">📖 Mulai dari sini — Login & Dashboard</p>
+                            <p class="text-xs text-blue-600">Pahami cara login, role pengguna, dan membaca status kamar di dashboard.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
+                        <span class="bg-green-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                        <div>
+                            <p class="font-semibold text-green-800">📅 Buat Reservasi & Check-in</p>
+                            <p class="text-xs text-green-600">Praktik membuat booking, mengisi data tamu, dan melakukan check-in.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-100">
+                        <span class="bg-amber-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+                        <div>
+                            <p class="font-semibold text-amber-800">💰 Kelola Keuangan Tamu</p>
+                            <p class="text-xs text-amber-600">Belajar mencatat deposit, service charge, dan pembayaran.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
+                        <span class="bg-red-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+                        <div>
+                            <p class="font-semibold text-red-800">✅ Check-out & Night Audit</p>
+                            <p class="text-xs text-red-600">Proses check-out, return deposit, dan tutup hari dengan Night Audit.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                        <span class="bg-purple-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">5</span>
+                        <div>
+                            <p class="font-semibold text-purple-800">📊 Laporan & Evaluasi</p>
+                            <p class="text-xs text-purple-600">Pelajari cara membaca laporan okupansi, revenue, dan evaluasi kinerja.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Footer --}}
     <div class="text-center text-xs text-gray-400 py-6 border-t border-gray-200">
         <p>Dynamic PMS V.2 — Property Management System</p>
@@ -770,13 +1169,13 @@
     .section-card .section-body {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.35s ease, opacity 0.25s ease, padding-top 0.25s ease, padding-bottom 0.25s ease;
+        transition: max-height 0.4s ease, opacity 0.3s ease, padding-top 0.3s ease, padding-bottom 0.3s ease;
         opacity: 0;
         padding-top: 0;
         padding-bottom: 0;
     }
     .section-card.open .section-body {
-        max-height: 2000px;
+        max-height: 3000px;
         opacity: 1;
         padding-top: 0.5rem;
         padding-bottom: 0.25rem;
@@ -786,6 +1185,74 @@
     }
     .section-card .section-arrow {
         transition: transform 0.3s ease;
+    }
+
+    /* Section highlight saat di-search */
+    .section-card.highlight {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59,130,246,0.15), 0 1px 3px rgba(0,0,0,0.08);
+        transition: box-shadow 0.3s ease;
+    }
+    .section-card.highlight .section-body {
+        max-height: 3000px;
+        opacity: 1;
+        padding-top: 0.5rem;
+        padding-bottom: 0.25rem;
+    }
+    .section-card.highlight .section-arrow {
+        transform: rotate(180deg);
+    }
+
+    /* Hidden state untuk filter */
+    .section-card.filtered-out {
+        display: none;
+    }
+
+    /* Search highlight dalam teks */
+    .search-highlight {
+        background-color: #fef08a;
+        padding: 0 2px;
+        border-radius: 2px;
+        box-shadow: 0 0 0 1px rgba(250,204,21,0.4);
+    }
+
+    /* Quick filter active state */
+    .quick-filter.active {
+        ring: 2px solid currentColor;
+    }
+
+    /* Smooth scroll */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Sticky TOC on scroll */
+    .toc-sticky {
+        position: sticky;
+        top: 1rem;
+        z-index: 10;
+    }
+
+    /* FAQ details styling */
+    details[open] summary {
+        margin-bottom: 0;
+    }
+    details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    /* Animasi fade in untuk section */
+    .section-card {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .section-card.filtered-out {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    /* Stats counter */
+    .stat-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     /* Print styles */
@@ -822,6 +1289,10 @@
         .max-w-5xl {
             max-width: 100% !important;
         }
+        .search-highlight {
+            background: none !important;
+            box-shadow: none !important;
+        }
     }
 </style>
 @endpush
@@ -833,6 +1304,130 @@
         card.classList.toggle('open');
     }
 
+    function filterSections() {
+        const query = document.getElementById('helpSearch').value.toLowerCase().trim();
+        const clearBtn = document.getElementById('clearSearch');
+        const cards = document.querySelectorAll('.section-card');
+        const tocLinks = document.querySelectorAll('#tocContainer a');
+
+        // Toggle clear button
+        if (clearBtn) {
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+        }
+
+        // Hapus highlight lama
+        document.querySelectorAll('.search-highlight').forEach(el => {
+            const parent = el.parentNode;
+            parent.replaceChild(document.createTextNode(el.textContent), el);
+            parent.normalize();
+        });
+
+        if (!query) {
+            // Reset semua
+            cards.forEach((card, index) => {
+                card.classList.remove('filtered-out', 'highlight');
+                if (index === 0) card.classList.add('open');
+            });
+            tocLinks.forEach(link => link.style.display = '');
+            document.querySelectorAll('.quick-filter').forEach(f => f.classList.remove('ring-2', 'ring-blue-400'));
+            return;
+        }
+
+        let visibleCount = 0;
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            // Cari di header h3
+            const header = card.querySelector('h3');
+            const headerText = header ? header.textContent.toLowerCase() : '';
+
+            if (text.includes(query)) {
+                card.classList.remove('filtered-out');
+                card.classList.add('highlight');
+                visibleCount++;
+
+                // Highlight kata yang cocok di body (tidak di header)
+                const body = card.querySelector('.section-body');
+                if (body && !headerText.includes(query)) {
+                    highlightText(body, query);
+                }
+            } else {
+                card.classList.add('filtered-out');
+                card.classList.remove('highlight');
+            }
+        });
+
+        // Filter TOC
+        tocLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (!href) return;
+            const targetId = href.substring(1);
+            const target = document.getElementById(targetId);
+            const match = target && !target.classList.contains('filtered-out');
+            link.style.display = match ? '' : 'none';
+        });
+
+        // Update hasil pencarian
+        updateSearchStats(visibleCount, cards.length);
+    }
+
+    function highlightText(container, query) {
+        if (!container || query.length < 1) return;
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+        const nodesToReplace = [];
+        const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            if (node.parentElement && node.parentElement.closest('script, style, summary, code')) continue;
+            if (regex.test(node.textContent)) {
+                nodesToReplace.push(node);
+            }
+            regex.lastIndex = 0;
+        }
+
+        nodesToReplace.forEach(node => {
+            const fragment = document.createDocumentFragment();
+            const text = node.textContent;
+            regex.lastIndex = 0;
+            let lastIndex = 0;
+            let match;
+
+            while ((match = regex.exec(text)) !== null) {
+                if (match.index > lastIndex) {
+                    fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+                }
+                const mark = document.createElement('mark');
+                mark.className = 'search-highlight';
+                mark.textContent = match[0];
+                fragment.appendChild(mark);
+                lastIndex = regex.lastIndex;
+            }
+            if (lastIndex < text.length) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+            }
+            node.parentNode.replaceChild(fragment, node);
+        });
+    }
+
+    function updateSearchStats(visible, total) {
+        const searchBox = document.getElementById('helpSearch');
+        // Cari atau buat stats indicator
+        let statsEl = document.getElementById('searchStats');
+        if (!statsEl) {
+            statsEl = document.createElement('div');
+            statsEl.id = 'searchStats';
+            statsEl.className = 'text-xs text-gray-500 mt-1.5';
+            searchBox.parentNode.appendChild(statsEl);
+        }
+        if (visible > 0) {
+            statsEl.innerHTML = `<i class="fas fa-search mr-1"></i> Menampilkan <strong>${visible}</strong> dari <strong>${total}</strong> bagian`;
+        } else if (visible === 0 && searchBox.value.trim()) {
+            statsEl.innerHTML = `<i class="fas fa-exclamation-circle text-amber-500 mr-1"></i> Tidak ditemukan. Coba kata kunci lain.`;
+        } else {
+            statsEl.innerHTML = '';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Buka section pertama sebagai default
         const firstCard = document.querySelector('.section-card');
@@ -841,8 +1436,96 @@
         // Buka section berdasarkan hash di URL
         if (window.location.hash) {
             const target = document.querySelector(window.location.hash);
-            if (target) target.classList.add('open');
+            if (target) {
+                // Tutup semua dulu
+                document.querySelectorAll('.section-card.open').forEach(c => c.classList.remove('open'));
+                target.classList.add('open');
+                setTimeout(() => {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
         }
+
+        // Search dengan debounce
+        const searchInput = document.getElementById('helpSearch');
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(filterSections, 200);
+        });
+
+        // Quick filter buttons
+        document.querySelectorAll('.quick-filter').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                document.querySelectorAll('.quick-filter').forEach(f => f.classList.remove('ring-2', 'ring-blue-400'));
+
+                if (filter === 'all') {
+                    searchInput.value = '';
+                    filterSections();
+                    return;
+                }
+
+                this.classList.add('ring-2', 'ring-blue-400');
+
+                // Map filter ke kata kunci pencarian
+                const keywords = {
+                    'frontdesk': '',
+                    'housekeeping': '',
+                    'report': '',
+                    'admin': '',
+                    'keuangan': ''
+                };
+
+                // Filter via data-category attribute
+                const cards = document.querySelectorAll('.section-card');
+                let visibleCount = 0;
+                cards.forEach(card => {
+                    const cat = card.dataset.category;
+                    if (cat === filter) {
+                        card.classList.remove('filtered-out');
+                        card.classList.add('highlight');
+                        if (!card.classList.contains('open')) card.classList.add('open');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('filtered-out');
+                        card.classList.remove('highlight');
+                    }
+                });
+
+                // Filter TOC
+                document.querySelectorAll('#tocContainer a').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (!href) return;
+                    const targetId = href.substring(1);
+                    const target = document.getElementById(targetId);
+                    const match = target && !target.classList.contains('filtered-out');
+                    link.style.display = match ? '' : 'none';
+                });
+
+                updateSearchStats(visibleCount, cards.length);
+            });
+        });
+
+        // Clear search
+        const clearBtn = document.getElementById('clearSearch');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function() {
+                document.getElementById('helpSearch').value = '';
+                filterSections();
+                document.getElementById('helpSearch').focus();
+            });
+        }
+
+        // Keyboard shortcut: Ctrl+F fokus ke search
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                if (document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            }
+        });
     });
 </script>
 @endpush

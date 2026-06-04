@@ -1,604 +1,430 @@
-﻿# 📚 Hotel PMS - Tutorial & Documentation
+﻿# 📚 Hotel PMS — Tutorial & Dokumentasi
 
-**Versi:** 2.2  
-**Terakhir Diperbarui:** Juni 4, 2026  
-**Framework:** Laravel 13.x (PHP 8.3+)  
-**Database:** MySQL via Laragon  
+**Versi:** 2.2 | **Update:** Juni 2026 | **Stack:** Laravel 13 / PHP 8.3 / MySQL / Blade + Tailwind
+
+---
+
+## 📑 Daftar Isi
+1. [Pendahuluan & Prasyarat](#-pendahuluan)
+2. [Login & Test Credentials](#-login)
+3. [Learning Path](#-learning-path)
+4. [Navigasi Menu](#-navigasi-menu)
+5. [Quick Start — Instalasi](#-quick-start)
+6. [Fitur Step-by-Step](#-fitur-lengkap)
+7. [Permission & Role](#-permission--role)
+8. [Model, API & Struktur Project](#-model--api--struktur)
+9. [Troubleshooting](#-troubleshooting)
+10. [Glossary](#-glossary)
+11. [Latihan Mandiri](#-latihan-mandiri)
+12. [Deployment & Support](#-deployment--support)
+
+---
+
+## 🎯 Pendahuluan
+
+**Hotel PMS** — Aplikasi manajemen hotel berbasis web: reservasi, check-in/out, housekeeping, keuangan, OTA, AI Chat, & laporan.
+
+**Prasyarat:** PHP 8.3+, Composer, Node.js/NPM, MySQL, Git, Web Browser.  
+💡 Pakai Laragon? Semua sudah include — download di [laragon.org](https://laragon.org).
+
+---
+
+## 🔑 Login
+
+| Username | Password | Role | Akses |
+|----------|----------|------|-------|
+| `owner` | `password` | Owner | **Semua fitur** + admin panel |
+| `admin` | `password` | Admin | Semua kecuali settings sensitif |
+| `frontoffice` | `password` | Front Office | Reservasi, check-in/out, HK, transaksi |
+
+**Cara:** Buka `http://localhost:8000` → Login → isi username/password → **Login**.
+
+> 🧪 **Latihan 1:** Login dengan 3 akun, amati perbedaan menu!
+
+---
+
+## 🗺️ Learning Path
+
+| Level | Waktu | Topik |
+|-------|-------|-------|
+| 🟢 **Pemula** | 1-2 jam | Login, Dashboard, Kamar, Reservasi Dasar, Check-in/out |
+| 🟡 **Menengah** | 3-5 jam | Pembayaran, Housekeeping, Laporan, Service Charge, Expense |
+| 🔵 **Mahir** | 5-8 jam | OTA, Night Audit, Promo Pricing, AI Chat, Reports Export |
+| ⚫ **Expert** | 8+ jam | API, Role & Permission, Backup, Deployment, Troubleshooting |
+
+---
+
+## 🧭 Navigasi Menu
+
+```
+📋 Sidebar
+├── 🏨 Front Desk       → Reservasi, Check-In/Out, Pindah Kamar, Issue Card MHS, Housekeeping
+├── 💰 Keuangan         → Transaksi, Deposit, Service Charge, Expense, Pendapatan Resto
+├── 📊 Laporan          → Reports (Okupansi, Revenue, Reservations, dll)
+└── ⚙️ Admin            → Users, Roles, Promo Prices, Lost & Found, OTA Log, Settings, Backups, Night Audit
+```
+
+> Menu tergantung **Role** Anda. Login sebagai `owner` untuk akses penuh.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Setup Environment
-
 ```bash
-# Clone project (jika belum ada)
-git clone https://github.com/imamw95-crb/hotel-pms.git
+# 1. Clone & install
+git clone https://github.com/imamw95-crb/hotel-pms.git && cd hotel-pms
+composer install && npm install
 
-# Install dependencies
-composer install
-npm install
-
-# Setup environment
+# 2. Setup env
 cp .env.example .env
 php artisan key:generate
 
-# Setup database
-php artisan migrate --seed
+# 3. Setup DB (edit .env: DB_DATABASE=hotel_pms, DB_USERNAME=root, DB_PASSWORD=)
+php artisan migrate && php artisan db:seed
+
+# 4. Jalankan (2 terminal)
+php artisan serve    # Terminal 1
+npm run dev          # Terminal 2
 ```
 
-### 2. Jalankan Server
+Buka `http://localhost:8000` — login `owner` / `password`.
 
-```bash
-# Terminal 1 - Laravel Server
-php artisan serve
-
-# Terminal 2 - Vite (Frontend)
-npm run dev
-```
-
----
-
-## 📋 Daftar Fitur Utama
-
-### 1. **AI Chat Assistant** (OpenRouter)
-- ✅ Chat dengan AI via OpenRouter
-- ✅ Deteksi booking dari bahasa alami
-- ✅ Auto-create reservasi
-- ✅ Widget floating di UI
-
-**Endpoint:** `POST /api/ai/chat`
-
-### 2. **Sistem Permission & Role**
-- Role: `owner`, `admin`, `frontoffice`, `user_manager`
-- Permission-based access control
-- Menu dinamis berdasarkan permission
-
-### 3. **Manajemen Reservasi**
-- Booking manual & OTA
-- Back-to-back booking support
-- Room rack & availability calendar
-
-### 4. **OTA Integration**
-- Email parsing otomatis dari Tiket.com & Traveloka
-- Sync booking otomatis
-- Payment status tracking- **OTA Email Log** — Monitoring dashboard real-time
-- Retry failed email parsing
-- Refresh stats & filter by platform
-### 5. **Front Office**
-- Check-in / Check-out
-- Housekeeping management (dengan checklist, log, inventory)
-- Issue kartu kamar
-- Lost & Found items
-- Service charge & deposit kartu
-
----
-
-## 🔧 Konfigurasi Penting
-
-### Environment Variables (.env)
-
+**Konfigurasi Tambahan (.env):**
 ```env
-# Database
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=hotel_pms
-DB_USERNAME=root
-DB_PASSWORD=
-
-# OpenRouter AI
-OPENROUTER_API_KEY=sk-or-v1-xxx
-OPENROUTER_MODEL=openrouter/owl-alpha
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-
-# IMAP (OTA Email)
-IMAP_HOST=imap.hostinger.com
-IMAP_PORT=993
+OPENROUTER_API_KEY=sk-or-v1-xxx       # AI Chat
+IMAP_HOST=imap.hostinger.com          # OTA Email
 IMAP_USERNAME=info@theicon.id
-IMAP_PASSWORD=xxx
-
-# Deployment
 DEPLOY_SECRET=xxx
 MHS_BRIDGE_URL=http://100.98.230.92/bridge_api.php
 ```
 
 ---
 
-## 📊 Model & Database
+## 🧩 Fitur Lengkap
+
+### 1. 📅 Dashboard
+Statistik real-time: total kamar, check-in/out hari ini, pendapatan, reservasi aktif, notifikasi.
+
+> 🧪 **Latihan 2:** Login sebagai `owner`, catat jumlah kamar occupied hari ini.
+
+---
+
+### 2. 🛏️ Reservasi
+
+**Buat Reservasi:** Reservasi → + Tambah → Pilih tipe kamar → Pilih kamar (hijau = available) → Isi data tamu → Tentukan tanggal (CI: 14:00, CO: 12:00) → Harga → Pembayaran → **Simpan**.
+
+**Check-In:** Cari reservasi → Verifikasi data & bayaran → Klik **Check-In** → (Opsional) Issue card MHS → Status kamar → `occupied`.
+
+**Check-Out:** Buka reservasi → Hitung tagihan + service charge → Bayar final → Return deposit → Klik **Check-Out** → Kamar → `cleaning`, tugas HK otomatis.
+
+> 💡 **Back-to-back:** Check-out 12:00 & check-in 14:00 di kamar sama = **BUKAN konflik**.
+> 🧪 **Latihan 3:** Buat reservasi → check-in → check-out. Amati perubahan status kamar.
+
+---
+
+### 3. 🧹 Housekeeping
+
+**Akses:** Front Desk → Housekeeping.
+
+**Buat Tugas:** Buat Tugas → Pilih kamar → Tipe (`cleaning`/`deep_clean`/`maintenance`/`inspection`/`turndown`) → Prioritas (`low`/`normal`/`high`/`urgent`) → Deskripsi → Assign staff → **Simpan**.
+
+**Bulk Create:** Buat tugas untuk banyak kamar sekaligus.
+
+**Assign:** Manual (👤) atau Auto-Assign (✨) — otomatis ke staff dengan beban paling ringan.
+
+**Kerjakan:** ▶️ (Mulai) → timer berjalan → ✅ (Selesai) → upload foto, isi checklist → durasi tercatat.
+
+**Detail Tugas:** 👁️ Lihat checklist, log riwayat, foto, durasi.
+
+> 💡 **Tips:** Filter by status/tipe/prioritas/kamar/tanggal. Tugas overdue = badge merah.
+> 🧪 **Latihan 4:** Buat 3 tugas, assign ke staff berbeda, selesaikan 1, amati statistik.
+
+---
+
+### 4. 💳 Transaksi & Deposit
+
+**Pembayaran:** Transaksi → Tambah → Pilih tipe (Bayar/Refund) → Pilih reservasi → Jumlah → Metode → **Simpan**.
+
+**Deposit Kartu:** Saat CI: Deposit → Tambah → Pilih reservasi → Rp 100.000 (default) → Simpan.  
+Saat CO: Cari deposit → **Return Deposit** → Masukkan jumlah kembali.
+
+> 🧪 **Latihan 5:** Buat deposit untuk reservasi check-in, lalu return deposit.
+
+---
+
+### 5. 📊 Laporan
+
+| Laporan | Akses | Export |
+|---------|-------|--------|
+| Guest List | Reports → Guest List | CSV / Print |
+| Occupancy | Reports → Occupancy | CSV / Print |
+| Revenue | Reports → Revenue | CSV / Print |
+| Reservations | Reports → Reservations | CSV / Print |
+| Group Report | Reports → Group | CSV / Print |
+
+> 🧪 **Latihan 6:** Buka Occupancy bulan ini, export CSV, buka di Excel.
+
+---
+
+### 6. 🎫 Promo Pricing
+
+Promo → Tambah → Pilih tipe kamar → Tanggal mulai/selesai → Harga promo → **Simpan**.  
+Saat reservasi di tanggal promo, harga otomatis terpakai.
+
+> 🧪 **Latihan 7:** Buat promo Deluxe diskon 20% selama 3 hari, verifikasi di reservasi.
+
+---
+
+### 7. 🔍 Lost & Found
+
+Lost & Found → Tambah Item → Isi nama, kategori, deskripsi, lokasi, penemu → **Simpan**.  
+Status: `reported` → `found` → `returned` → `disposed`.
+
+> 🧪 **Latihan 8:** Catat "Dompet Hitam" ditemukan di kamar 102, update ke `returned`.
+
+---
+
+### 8. ⚙️ Hotel Settings (Owner Only)
+
+Admin → Settings. Konfigurasi: nama hotel, logo, IMAP (OTA), OpenRouter key, MHS Bridge URL.
+
+> 💡 Setelah ubah IMAP, cek OTA Email Log untuk verifikasi.
+
+---
+
+### 9. 💾 Database Backup (Owner Only)
+
+Admin → Backups → **Create Backup** → download ⬇️ atau **Restore**.  
+⚠️ Backup **setiap hari**, simpan di **2 tempat**, backup **sebelum update besar**.
+
+---
+
+### 10. 🧾 Service Charge
+
+Service Charge → Tambah Biaya → Pilih reservasi → Deskripsi (contoh: "Minibar 2x Coca Cola") → Rp 35.000 → **Simpan**.  
+Otomatis masuk tagihan kamar.
+
+> 🧪 **Latihan 9:** Tambah service charge laundry Rp 75.000 ke reservasi check-in.
+
+---
+
+### 11. 🍽️ Pendapatan Resto & 12. 💳 Issue Card MHS
+
+**Resto:** Pendapatan Resto → Tambah → Deskripsi, jumlah → (Opsional) hubungkan ke tagihan kamar.
+
+**Issue Card MHS:** Cari reservasi → Atur jumlah kartu → **Issue Card**. Fitur: Test Connection, Read Card, Re-Issue.
+
+---
+
+### 13. 🔄 Pindah Kamar & 14. 🌙 Night Audit
+
+**Pindah Kamar:** Pilih reservasi → Pilih kamar baru (available) → Alasan → **Pindahkan**.
+
+**Night Audit:** Admin → Night Audit → **Preview** → Periksa data occupied, CI/CO, pendapatan → **Save Draft** atau **Lock**. Lakukan **setiap malam**.
+
+---
+
+### 15. 📧 OTA Integration
+
+OTA Email Log: Lihat email dari Tiket.com/Traveloka → ✅ Success / ⏳ Pending / ❌ Failed → Klik detail → **Retry** jika gagal.
+
+Pastikan IMAP dikonfigurasi di **Hotel Settings**.
+
+> 🧪 **Latihan 10:** Cek OTA Email Log, retry email yang gagal.
+
+---
+
+### 16. 🤖 AI Chat Assistant
+
+Klik 💬 di pojok kanan bawah → Ketik dalam Bahasa Indonesia, contoh:  
+- *"Cari kamar deluxe tersedia 3 malam mulai besok"*  
+- *"Booking deluxe 102 untuk 2 malam atas nama Budi Santoso"*
+
+AI bisa auto-create reservasi. Pastikan `OPENROUTER_API_KEY` terisi.
+
+---
+
+## 🔐 Permission & Role
+
+| Role | Level | Akses |
+|------|-------|-------|
+| `owner` | ⭐⭐⭐⭐⭐ | Semua fitur |
+| `admin` | ⭐⭐⭐⭐ | Semua kecuali settings sensitif |
+| `frontoffice` | ⭐⭐⭐ | Operasional harian |
+| `user_manager` | ⭐⭐⭐ | Kelola user (tanpa admin panel) |
+
+**Kelola User:** Admin → Users → Tambah/Edit → Atur Role.  
+**Kelola Permission:** Admin → Roles → Edit Permission → Centang → Simpan.
+
+```blade
+@if(hasPermission('view_reports')) ... @endif
+@if(hasAllPermissions(['view_reports','export_reports'])) ... @endif
+@if(hasAnyPermission(['manage_users','manage_rooms'])) ... @endif
+```
+
+```php
+// Middleware
+Route::get('/reports', ...)->middleware('permission:view_reports');
+Route::group(['middleware' => ['role:owner']], function () { ... });
+```
+
+> 🧪 **Latihan 11:** Login owner → Admin → Roles → edit permission frontoffice, lalu cek perubahannya.
+
+---
+
+## 📊 Model, API & Struktur
 
 ### Core Models
 
-| Model | Tabel | Keterangan |
-|-------|-------|------------|
-| `Room` | `rooms` | Data kamar & tipe |
-| `Reservation` | `reservations` | Data reservasi |
-| `Guest` | `guests` | Data tamu |
-| `Transaction` | `transactions` | Transaksi pembayaran |
-| `User` | `users` | Pengguna sistem |
-| `Role` | `roles` | Role pengguna |
-| `Permission` | `permissions` | Permission akses |
+| Model | Tabel | Relasi |
+|-------|-------|--------|
+| Room | rooms | → RoomType, hasMany Reservation |
+| RoomType | room_types | hasMany Room, hasMany RoomTypeDatePrice |
+| Reservation | reservations | → Room, Guest, User |
+| Guest | guests | hasMany Reservation |
+| Transaction | transactions | → Reservation, PaymentMethod |
+| User | users | → Role |
+| Role | roles | hasMany User, belongsToMany Permission |
+| Permission | permissions | belongsToMany Role |
+| HousekeepingTask | housekeeping_tasks | → Room, User |
+| Deposit | deposits | → Reservation |
+| ServiceCharge | service_charges | → Reservation |
+| Expense | expenses | - |
+| RestoTransaction | resto_transactions | → Reservation (opsional) |
+| BookingNotification | booking_notifications | morphTo |
+| NightAuditLog | night_audit_logs | - |
+| LostFound | lost_founds | → Reservation (opsional) |
+| HotelSetting | hotel_settings | - |
+| PaymentMethod | payment_methods | hasMany Transaction |
 
-### Migration Terbaru (2026)
-
-```
-2026_07_20_000001_enhance_reservations_for_ota.php
-2026_07_20_000002_enhance_processed_emails.php
-2026_07_20_000003_fix_subject_length.php
-2026_07_20_000004_add_paid_date_to_reservations.php
-2026_07_20_000005_seed_ota_payment_methods.php
-2026_07_20_000006_add_include_breakfast_to_reservations.php
-```
-
----
-
-## 🎯 Business Logic
-
-### Waktu Standar
-- **Check-in:** 14:00 (2 PM)
-- **Check-out:** 12:00 (noon)
-- **Back-to-back booking:** Check-out & check-in sampai jam 12:00 = **TIDAK konflik**
-
-### Overlap Query Pattern
-```php
-// Untuk cek konflik booking
-where('check_in', '<', $checkOut)
-->where('check_out', '>', $checkIn)
-```
-
-### Room Status
-- `available` - Tersedia
-- `occupied` - Terisi
-- `cleaning` - Sedang dibersihkan
-- `maintenance` - Perawatan
-
-### Reservation Status
-- `pending` - Menunggu
-- `checked_in` - Check-in sudah dilakukan
-- `checked_out` - Check-out sudah dilakukan
-- `cancelled` - Dibatalkan
-
----
-
-## 🛠️ Services & Jobs
+### Business Logic Penting
+- **Check-in:** 14:00 | **Check-out:** 12:00
+- **Back-to-back:** CI 14:00 setelah CO 12:00 di kamar sama = ✅ **AMAN**
+- **Overlap query:** `where('check_in', '<', $checkOut)->where('check_out', '>', $checkIn)`
+- **Room status:** `available` 🟢 → `occupied` 🔴 → `cleaning` 🟡 → `maintenance` ⚫
+- **Reservation status:** `pending` → `checked_in` → `checked_out` / `cancelled`
 
 ### Services
 
 | Service | Fungsi |
 |---------|--------|
-| `AiChatService` | Chat dengan AI |
-| `OpenRouterService` | Integrasi OpenRouter API |
-| `AvailabilityService` | Cek ketersediaan kamar |
-| `BookingSyncService` | Sync booking OTA |
-| `BookingNotificationService` | Notifikasi booking |
-| `ImapService` | Baca email OTA |
-| `MHSBridgeService` | Integrasi ke MHS |
-| `HousekeepingService` | Logika bisnis housekeeping |
-| `EmailParserService` | Parse konten email OTA |
-| `BookingMapperService` | Mapping data OTA ke sistem |
-
-### Jobs
-
-| Job | Fungsi |
-|-----|--------|
-| `ProcessBookingEmailJob` | Proses email booking OTA |
-
----
-
-## 🧹 Housekeeping
-
-Manajemen tugas pembersihan dan perawatan kamar.
-
-**Fitur:**
-- Buat Tugas — untuk satu kamar
-- Bulk Create — buat tugas untuk banyak kamar sekaligus
-- Assign petugas housekeeping (manual & auto-assign)
-- Update status: Pending → In Progress → Completed
-- **Checklist** — Checklist item per tugas (toggle selesai/belum)
-- **Task Log** — Riwayat perubahan status tugas
-- **Inventory** — Catat inventaris kamar (handuk, linen, amenities, dll)
-- **Photo Dokumentasi** — Upload foto sebelum & sesudah
-- Print laporan housekeeping
-- Lihat semua tugas per kamar (Room Tasks)
-- Charts: penyelesaian 7 hari & distribusi tipe tugas
-- Staff workload dashboard
-
-**Staff Management:**
-- **My Tasks** — Staff bisa melihat tugas yang ditugaskan ke dirinya
-- **Self-Assign** — Staff bisa mengambil tugas kamar yang tersedia
-- **Auto-Assign** — Otomatis assign ke staff dengan beban kerja paling ringan
-- Staff workload monitoring dengan progress bar
-
-**Status Tugas:**
-- Menunggu (Pending)
-- Sedang Dikerjakan (In Progress)
-- Selesai Hari Ini (Completed)
-- Urgent
-- Overdue (lewat batas waktu)
-
----
-
-## 🔔 Notification System
-
-Sistem notifikasi untuk booking dan event penting.
-
-**Fitur:**
-- Notifikasi booking baru dari OTA
-- Notification bell di sidebar dengan unread count
-- Mark as read
-- Auto-refresh unread count
-
-**Model:** `BookingNotification`  
-**Controller:** `NotificationController`
-
----
-
-## 🎫 Promo Pricing
-
-Mengelola harga promosi per tipe kamar berdasarkan rentang tanggal.
-
-**Fitur:**
-- **Buat Promo** — Tentukan harga khusus untuk tipe kamar di tanggal tertentu
-- **Date Range** — Promo berlaku untuk rentang tanggal
-- **Room Type** — Promo per tipe kamar (bukan per kamar)
-- **Harga Efektif** — Otomatis menggunakan harga promo jika ada
-- **API** — Endpoint untuk cek promo price
-
-**Menu:** `Promo Prices` di sidebar  
-**Model:** `RoomTypeDatePrice`  
-**Controller:** `PromoPriceController`, `Api\PromoPriceApiController`
-
-**Langkah:**
-1. Pilih tipe kamar
-2. Tentukan tanggal mulai & selesai
-3. Masukkan harga promo
-4. Simpan — harga otomatis dipakai saat reservasi di tanggal tersebut
-
----
-
-## 🔍 Lost & Found
-
-Mencatat dan melacak barang hilang atau ditemukan di hotel.
-
-**Fitur:**
-- Catat barang hilang/ditemukan
-- Status: `reported`, `found`, `returned`, `disposed`
-- Link ke reservasi tamu
-- Deskripsi detail barang
-- Kategori item
-
-**Menu:** `Lost & Found` di sidebar  
-**Model:** `LostFound`  
-**Controller:** `LostFoundController`
-
-**Langkah:**
-1. Klik **Tambah Item**
-2. Isi deskripsi barang, kategori, lokasi ditemukan
-3. Hubungkan dengan reservasi tamu (opsional)
-4. Update status saat barang sudah diambil
-
----
-
-## 💾 Database Backup
-
-Manajemen backup database dari panel admin.
-
-**Fitur:**
-- **Create Backup** — Buat backup manual kapan saja
-- **Download** — Download file backup
-- **Restore** — Restore dari file backup tertentu
-- **List Backups** — Lihat semua file backup yang tersedia
-- Hanya bisa diakses oleh role **Owner**
-
-**Menu:** `Admin → Backups`  
-**Controller:** `Admin\DatabaseBackupController`
-
----
-
-## ⚙️ Hotel Settings
-
-Pengaturan konfigurasi hotel dari panel admin.
-
-**Fitur:**
-- Konfigurasi IMAP email (untuk OTA)
-- Konfigurasi MHS Bridge
-- Konfigurasi OpenRouter API
-- Dynamic logo & theme
-- Hanya bisa diakses oleh role **Owner**
-
-**Menu:** `Admin → Settings`  
-**Model:** `HotelSetting`  
-**Controller:** `SettingController`
-
----
-
-## 💰 Expense Tracking
-
-Mencatat pengeluaran operasional hotel. Bisa di-export CSV & Print.
-
-**Fitur:**
-- Catat pengeluaran dengan kategori
-- Filter berdasarkan tanggal
-- Export & print laporan
-- Terintegrasi dengan laporan keuangan
-
-**Menu:** `Expenses` di sidebar  
-**Model:** `Expense`  
-**Controller:** `ExpenseController`
-
----
-
-## 📊 Reports (Laporan)
-
-Semua laporan bisa di-**Export CSV** dan **Print**.
-
-| Laporan | Fungsi |
-|---------|--------|
-| Guest List Report | Daftar tamu yang sedang check-in |
-| Occupancy | Laporan okupansi kamar per periode |
-| Revenue | Pendapatan hotel per periode |
-| Reservation Report | Semua reservasi dalam periode |
-| Group Report | Laporan reservasi grup/rombongan |
-
----
-
-## 🔐 Permission System
-
-### Helper Functions (Blade)
-
-```blade
-{{-- Check single permission --}}
-@if(hasPermission('view_reports'))
-    <a href="{{ route('reports.index') }}">Laporan</a>
-@endif
-
-{{-- Check multiple permissions --}}
-@if(hasAllPermissions(['view_reports', 'export_reports']))
-    <button>Export</button>
-@endif
-
-{{-- Check any permission --}}
-@if(hasAnyPermission(['manage_users', 'manage_rooms']))
-    <div class="admin-section">...</div>
-@endif
-```
-
-### Middleware
-
-```php
-// Di routes/web.php
-Route::get('/reports', [ReportController::class, 'index'])
-    ->middleware('permission:view_reports');
-```
-
----
-
-## 🔄 Pindah Kamar (Room Change)
-
-Untuk reservasi yang sudah check-in dan ingin dipindahkan ke kamar lain.
-
-**Langkah:**
-1. Buka menu **Front Desk → Pindah Kamar**
-2. Pilih reservasi yang akan dipindah
-3. Pilih kamar baru yang tersedia
-4. Masukkan alasan pemindahan (opsional)
-5. Klik **Pindahkan**
-
----
-
-## 💳 Issue Card MHS
-
-Menerbitkan kartu akses kamar melalui perangkat **MHS (Magic Hotel System)**.
-
-**Langkah:**
-1. Cari reservasi (berdasarkan no. reservasi, nama tamu, atau no. kamar)
-2. Data tamu dan kamar terisi otomatis
-3. Atur jumlah kartu (default 1)
-4. Klik **Issue Card**
-
-**Fitur Tambahan:**
-- **Re-Issue** — Untuk kartu hilang/rusak
-- **Test Connection** — Uji koneksi ke perangkat MHS
-- **Read Card** — Baca data kartu yang sudah diterbitkan
-
----
-
-## 💰 Deposit Kartu
-
-Mengelola deposit/uang jaminan kartu tamu (nominal default Rp 100.000 per kartu).
-
-**Alur:**
-1. Saat check-in — catat deposit kartu tamu via **Tambah Deposit**
-2. Filter daftar deposit berdasarkan tanggal atau cari no. receipt / nama tamu
-3. Saat check-out — lakukan **Return Deposit** untuk mengembalikan uang jaminan
-
----
-
-## 🧾 Service Charge
-
-Mencatat biaya layanan tambahan ke kamar (minibar, laundry, telepon, snack, dll).
-
-**Langkah:**
-1. Pilih reservasi tujuan
-2. Masukkan deskripsi biaya dan nominal
-3. Simpan — total biaya otomatis masuk ke tagihan reservasi
-
----
-
-## 🍽️ Pendapatan Resto
-
-Mencatat transaksi restoran hotel. Bisa dikaitkan ke tagihan kamar tamu.
-
-- **Tambah Transaksi** — catat penjualan makanan/minuman dari restoran
-- Filter berdasarkan periode tanggal
-- Transaksi bisa ditambahkan ke tagihan kamar tamu tertentu
-
----
-
-## 🚀 Deployment
-
-### GitHub Actions Flow
-
-```
-Push ke main → GitHub Actions → Webhook → deploy.php → git pull → migrate → optimize
-```
-
-### Setup Deployment
-
-1. **Generate Secret:**
-```bash
-php -r "echo bin2hex(random_bytes(32));"
-```
-
-2. **Set di .env & GitHub Secrets:**
-   - `DEPLOY_SECRET`
-   - `DEPLOY_URL`
-
-3. **GitHub Webhook:**
-   - URL: `https://domain.com/deploy.php`
-   - Events: Push event
-
----
-
-## 🌙 Night Audit
-
-### Night Audit v2 (Baru)
-
-Night Audit adalah proses penutupan harian yang dilakukan setiap malam untuk mencatat semua transaksi dan status hotel.
-
-**Fitur:**
-- **Preview** — Lihat pratinjau data audit sebelum disimpan
-- **Save Draft** — Simpan sebagai draft (masih bisa diedit)
-- **Lock** — Kunci data final (tidak bisa diubah lagi)
-- **History** — Lihat laporan night audit sebelumnya
-- **Export** — Download file laporan
-
-### Night Audit Report (v1)
-
-Laporan ringkasan: total kamar, occupied, available, check-in/out hari ini, pendapatan (tunai, transfer, dll), expected revenue. Bisa filter tanggal, export CSV, dan print.
-
----
-
-## 📧 OTA Email Monitoring Dashboard
-
-Memantau dan mengelola email reservasi dari platform OTA secara real-time.
-
-**Fitur Tambahan:**
-- **Live Stats** — Statistik real-time jumlah email pending, sukses, dan gagal
-- **Refresh Stats** — Perbarui statistik email terkini
-- **Detail Parsing** — Lihat hasil parsing lengkap termasuk error detail
-- **Retry** — Coba ulang proses parsing untuk email yang gagal
-- **Auto-refresh** — Data otomatis diperbarui setiap 30 detik
-- Filter berdasarkan **Platform OTA**, **Status**, dan **Tanggal**
-- Pencarian berdasarkan subjek email atau nomor reservasi
-
-**Tips:** Pastikan koneksi IMAP email sudah dikonfigurasi di **Setting Hotel** agar fitur ini dapat membaca email OTA secara otomatis.
-
----
-
-## 📧 OTA Email Log
-
-Memantau dan mengelola email reservasi dari platform OTA (Booking.com, Tiket.com, Traveloka) yang masuk ke sistem.
-
-**Fitur:**
-- **Refresh Stats** — Perbarui statistik email terkini
-- **Detail Email** — Klik email untuk melihat isi lengkap dan data parsing
-- **Retry** — Coba ulang proses parsing untuk email yang gagal
-- Filter berdasarkan **Platform OTA** dan **Status**
-- Pencarian berdasarkan subjek email atau nomor reservasi
-
-**Tips:** Pastikan koneksi IMAP email sudah dikonfigurasi di **Setting Hotel** agar fitur ini dapat membaca email OTA secara otomatis.
-
----
-
-## 🔌 API Documentation
-
-### External API (API Key Auth)
-
-Semua endpoint di bawah ini memerlukan API Key di header `X-API-Key` atau query parameter `?api_key=`.
-
-#### API Endpoints
+| AiChatService / OpenRouterService | AI Chat |
+| AvailabilityService | Cek ketersediaan kamar |
+| BookingSyncService / ImapService / EmailParserService / BookingMapperService | OTA Integration |
+| MHSBridgeService | Issue card MHS |
+| HousekeepingService | Logika housekeeping |
+
+### API Endpoints (Auth: `X-API-Key`)
 
 | Method | Endpoint | Fungsi |
 |--------|----------|--------|
-| `GET` | `/api/reservations` | Daftar reservasi (filter & pagination) |
-| `GET` | `/api/reservations/{id}` | Detail reservasi |
-| `POST` | `/api/reservations` | Buat reservasi baru |
-| `PUT` | `/api/reservations/{id}` | Update reservasi |
-| `POST` | `/api/reservations/{id}/cancel` | Batalkan reservasi |
-| `POST` | `/api/reservations/{id}/checkin` | Check-in reservasi |
-| `POST` | `/api/reservations/{id}/checkout` | Check-out reservasi |
-| `POST` | `/api/reservations/{id}/change-room` | Pindah kamar |
-| `POST` | `/api/reservations/{id}/payments` | Tambah pembayaran |
-| `GET` | `/api/rooms` | Daftar kamar dengan status |
-| `GET` | `/api/rooms/available` | Cek kamar tersedia |
-| `GET` | `/api/guests` | Daftar tamu |
-| `GET` | `/api/stats` | Statistik dashboard |
-| `GET` | `/api/promo-prices` | Daftar promo price |
-| `POST` | `/api/promo-prices` | Buat promo price baru |
-| `GET` | `/api/promo-prices/effective` | Cek harga efektif untuk tanggal tertentu |
+| GET | `/api/reservations` | Daftar reservasi |
+| POST | `/api/reservations` | Buat reservasi |
+| POST | `/api/reservations/{id}/checkin` | Check-in |
+| POST | `/api/reservations/{id}/checkout` | Check-out |
+| POST | `/api/reservations/{id}/change-room` | Pindah kamar |
+| POST | `/api/reservations/{id}/payments` | Tambah pembayaran |
+| GET | `/api/rooms` | Daftar kamar |
+| GET | `/api/rooms/available` | Kamar tersedia |
+| GET | `/api/guests` | Daftar tamu |
+| GET | `/api/stats` | Statistik |
+| GET/POST | `/api/promo-prices` | Promo pricing |
+| POST | `/api/ai/chat` | AI Chat |
 
-#### AI Chat
-
-| Method | Endpoint | Fungsi |
-|--------|----------|--------|
-| `POST` | `/api/ai/chat` | Chat dengan AI assistant |
-
-**Request Body:**
-```json
-{
-  "message": "Cari kamar untuk besok",
-  "current_page": "/reservations",
-  "history": []
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Jawaban AI dalam Bahasa Indonesia"
-}
-```
-
----
-
-## 📁 Struktur Project
+### Struktur Project
 
 ```
 hotel-pms/
-├── app/
-│   ├── Models/           # Eloquent Models
-│   ├── Services/         # Business Logic
-│   ├── Http/Controllers/ # Controllers
-│   └── ...
-├── database/
-│   ├── migrations/       # Database migrations
-│   └── seeders/          # Data seeders
-├── resources/
-│   ├── views/            # Blade templates
-│   └── js/               # JavaScript
-├── routes/
-│   ├── web.php           # Web routes
-│   └── api.php           # API routes
-└── config/
-    ├── menus.php         # Menu configuration
-    └── services.php      # Third-party services
+├── app/          → Models, Services, Http/Controllers, Jobs, Providers
+├── config/       → app.php, menus.php, services.php
+├── database/     → migrations/, factories/, seeders/
+├── resources/    → views/ (Blade), css/, js/
+├── routes/       → web.php, api.php, console.php
+├── storage/      → app/, logs/, framework/
+├── tests/        → Feature/, Unit/
+├── public/       → index.php, assets/, build/
 ```
 
 ---
 
 ## 🆘 Troubleshooting
 
-| Masalah | Solusi |
-|---------|--------|
-| AI tidak merespons | Cek `OPENROUTER_API_KEY` di .env |
-| Email OTA tidak masuk | Cek IMAP credentials & firewall |
-| Permission denied | Clear cache: `php artisan cache:clear` |
-| Deploy gagal | Cek `DEPLOY_SECRET` sama |
+| # | Masalah | Solusi |
+|---|---------|--------|
+| 1 | **Halaman putih/500** | `php artisan cache:clear` + `php artisan config:clear` |
+| 2 | **Login gagal** | Reset password di DB |
+| 3 | **AI tidak merespon** | Cek `OPENROUTER_API_KEY` di .env |
+| 4 | **Email OTA tidak masuk** | Cek IMAP di Hotel Settings |
+| 5 | **Permission denied** | `php artisan cache:clear` |
+| 6 | **Kamar tidak muncul** | `php artisan db:seed --class=RoomSeeder` |
+| 7 | **Menu tidak lengkap** | Login sebagai `owner` |
+| 8 | **Chart tidak tampil** | `npm run build` atau refresh |
+
+**Common Mistakes:**
+- ❌ Lupa `migrate` → data tidak muncul
+- ❌ Salah paham back-to-back → dianggap konflik padahal aman
+- ❌ Tidak pakai `with()` → N+1 query (lambat)
+- ❌ Lupa filter status `cancelled` di query
+- ❌ Tidak backup sebelum migrasi → data hilang
+
+**Debugging flow:** Error → Cek `storage/logs/laravel.log` → SQL error? → `migrate:fresh --seed` | PHP error? → `composer update` | JS error? → F12 console → Refresh & clear cache.
 
 ---
 
-## 📞 Support
+## 📖 Glossary
 
-Untuk pertanyaan atau bug, buka issue di GitHub repository.
+| Istilah | Arti |
+|---------|------|
+| **OTA** | Online Travel Agent (Tiket.com, Traveloka) |
+| **PMS** | Property Management System |
+| **Back-to-back** | Tamu baru check-in di hari tamu lama check-out |
+| **Night Audit** | Penutupan akhir hari |
+| **MHS** | Magic Hotel System (pembuat kartu kamar) |
+| **IMAP** | Protokol baca email |
+| **OpenRouter** | Gateway API untuk AI (LLM) |
+| **Eloquent** | ORM Laravel |
+| **Blade** | Template engine Laravel |
+| **Eager Loading** | Load relasi DB sekaligus (`with()`) |
+
+---
+
+## 🧪 Latihan Mandiri
+
+### 🟢 Pemula
+**A.** Login `frontoffice` → buat reservasi "Siti Rahma" Deluxe → check-in → service charge Rp 50.000 → check-out → verifikasi kamar jadi `cleaning`.  
+**B.** Login `owner` → buka semua menu, catat fiturnya. Bandingkan dengan login `frontoffice`.
+
+### 🟡 Menengah
+**C.** Bulk create 5 tugas cleaning → assign 2 ke staff A, 3 ke staff B → selesaikan 3 tugas → cek workload & chart.  
+**D.** Buka Occupancy Report bulan ini → filter Deluxe → export CSV → buka di Excel.
+
+### 🔵 Mahir
+**E.** Buat promo Standard Room diskon 25% (besok-3hari) → reservasi di tanggal promo (harga promo) & di luar (harga normal).  
+**F.** Login owner → buat user `frontoffice` baru → login sbg user itu → catat menu → edit permission-nya → refresh.
+
+### ⚫ Expert
+**G.** Dapatkan API Key → coba `curl -H "X-API-Key: key" http://localhost:8000/api/rooms` → buat reservasi via API.  
+**H.** `php artisan cache:clear` → hapus isi `storage/logs/` → akses URL salah → cek log → identifikasi error.
+
+---
+
+## 🚀 Deployment & Support
+
+### Deployment
+```mermaid
+flowchart LR
+    A[Push main] --> B[GitHub Actions] --> C[Webhook] --> D[deploy.php]
+    D --> E[git pull] --> F[composer install] --> G[migrate] --> H[optimize]
+```
+
+**Setup:** Generate secret (`php -r "echo bin2hex(random_bytes(32));"`) → Set `DEPLOY_SECRET` & `DEPLOY_URL` di .env & GitHub Secrets → Konfigurasi webhook (URL: `https://domain.com/deploy.php`, events: Push main).
+
+### Support
+1. Baca **Troubleshooting** di atas
+2. Cek `storage/logs/laravel.log`
+3. Buka **GitHub Issues**
+4. `php artisan db:monitor` untuk debug query
+
+---
+
+> **💡 Tip:** Praktek adalah cara terbaik belajar. Kerjakan latihan A→H berurutan. Selamat belajar! 🎉
