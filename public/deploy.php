@@ -21,10 +21,10 @@ $projectDir  = '/www/wwwroot/icon.cloudnod.my.id';
 $logFile     = $projectDir . '/storage/logs/deploy.log';
 $branch      = 'refs/heads/main';
 
-// Read DEPLOY_SECRET from .env file directly (web server doesn't load .env into getenv)
-$secret = null;
+// Read DEPLOY_SECRET from environment first, then fallback to .env if necessary.
+$secret = getenv('DEPLOY_SECRET') ?: null;
 $envFile = $projectDir . '/.env';
-if (is_readable($envFile)) {
+if (!$secret && is_readable($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         $line = trim($line);
@@ -78,24 +78,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// --- Read payload (support both JSON and form-encoded) ---
+// --- Read raw payload ---
 $rawBody     = file_get_contents('php://input');
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
-// GitHub sends form-encoded: payload=<url_encoded_json>
-if (str_contains($contentType, 'application/x-www-form-urlencoded')) {
-    parse_str($rawBody, $formData);
-    $payload = $formData['payload'] ?? $rawBody;
-} else {
-    $payload = $rawBody;
-}
-
-// --- Verify HMAC signature ---
+// --- Verify HMAC signature (MUST use raw body before any parsing) ---
 $sigHeader = $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '';
 
 if ($sigHeader) {
     [$algo, $sig] = explode('=', $sigHeader, 2);
-    $expected = hash_hmac('sha256', $payload, $secret);
+    $expected = hash_hmac('sha256', $rawBody, $secret);
     if (!hash_equals($expected, $sig)) {
         writeLog('ERROR: Invalid HMAC signature');
         http_response_code(403);
@@ -107,6 +99,14 @@ if ($sigHeader) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Missing signature']);
     exit;
+}
+
+// --- Parse payload (after signature verification) ---
+if (str_contains($contentType, 'application/x-www-form-urlencoded')) {
+    parse_str($rawBody, $formData);
+    $payload = $formData['payload'] ?? $rawBody;
+} else {
+    $payload = $rawBody;
 }
 
 // --- Parse event ---
