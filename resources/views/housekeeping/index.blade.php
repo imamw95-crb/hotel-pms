@@ -193,7 +193,8 @@
     </div>
     <div class="flex flex-wrap gap-2" id="roomGrid">
         @php
-            $allRooms = \App\Models\Room::with(['housekeepingTasks' => function($q) {
+            use App\Models\Room;
+            $allRooms = Room::with(['housekeepingTasks' => function($q) {
                 $q->whereIn('status', ['pending', 'in_progress'])->latest();
             }])->orderBy('room_number')->get();
         @endphp
@@ -585,9 +586,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Completion chart (7 days)
     var completionCtx = document.getElementById('completionChart');
-    if (completionCtx && typeof Chart !== 'undefined') {
+    if (completionCtx && typeof window.Chart !== 'undefined') {
         var chartData = @json($chartData ?? []);
-        new Chart(completionCtx, {
+        new window.Chart(completionCtx, {
             type: 'bar',
             data: {
                 labels: chartData.map(function(d) { return d.label; }),
@@ -620,9 +621,9 @@ document.addEventListener('DOMContentLoaded', function() {
     fetch('{{ route("housekeeping.distribution") }}')
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            if (data.success && document.getElementById('distributionChart') && typeof Chart !== 'undefined') {
+            if (data.success && document.getElementById('distributionChart') && typeof window.Chart !== 'undefined') {
                 var distCtx = document.getElementById('distributionChart');
-                new Chart(distCtx, {
+                new window.Chart(distCtx, {
                     type: 'doughnut',
                     data: {
                         labels: data.data.map(function(d) { return d.type; }),
@@ -671,7 +672,7 @@ function startStatsPolling() {
                             avgEl.textContent = h + 'j ' + m + 'm';
                         }
                     }
-                    document.getElementById('lastUpdate').textContent = '⏱ Terakhir: ' + new Date().toLocaleTimeString('id-ID');
+                    document.getElementById('lastUpdate').textContent = '⏱ Terakhir: ' + new window.Date().toLocaleTimeString('id-ID');
                 }
             });
     }, 15000);
