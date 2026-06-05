@@ -39,3 +39,4 @@ function initAsyncForms() {
 }
 
 document.addEventListener('DOMContentLoaded', initAsyncForms);
+document.addEventListener('turbo:load', initAsyncForms);

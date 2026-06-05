@@ -491,8 +491,9 @@ function toggleSubmenu(itemId) {
 }
 
 // ========== GLOBAL INIT ==========
-document.addEventListener('DOMContentLoaded', function() {
+function initGlobals() {
     initDeleteForms();
+    initAsyncForms();
     DarkMode.init();
     KeyboardShortcuts.init();
     initMenuModalTriggers();
@@ -507,7 +508,10 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.classList.add('hidden');
         }
     });
-});
+}
+
+document.addEventListener('DOMContentLoaded', initGlobals);
+document.addEventListener('turbo:load', initGlobals);
 
 // ========== EXPORTS ==========
 window.Toast = Toast;
