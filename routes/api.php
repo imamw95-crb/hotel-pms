@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\PromoPriceApiController;
 use App\Http\Controllers\Api\ReservationApiController;
+use App\Http\Controllers\Api\RoomTypePriceApiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,6 +66,11 @@ Route::middleware(['api', 'api.key'])->group(function () {
 
     // Cek kamar available
     Route::get('/rooms/available', [ReservationApiController::class, 'availableRooms']);
+
+    // ========== ROOM TYPE PRICES ==========
+
+    // List room types with effective prices (from room-level pricing)
+    Route::get('/room-types/prices', [RoomTypePriceApiController::class, 'index']);
 
     // ========== PROMO PRICES ==========
 
