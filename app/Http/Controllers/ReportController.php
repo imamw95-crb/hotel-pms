@@ -678,4 +678,423 @@ class ReportController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Laporan Bulanan Hotel — rekap semua pendapatan & kepatuhan
+     */
+    public function complianceReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $month = Carbon::parse($startDate)->format('Y-m');
+        $prevMonth = Carbon::parse($startDate)->subMonth()->format('Y-m');
+        $prevStart = Carbon::parse($startDate)->subMonth()->format('Y-m-d');
+        $prevEnd = Carbon::parse($startDate)->subMonth()->endOfMonth()->format('Y-m-d');
+
+        // ─── Statistik Kamar ──────────────────────────────────────────
+        $totalRooms = Room::count();
+        $avgOccupancy = 0;
+        $occupiedCount = 0;
+        $daysInMonth = Carbon::parse($startDate)->daysInMonth;
+        $current = Carbon::parse($startDate);
+        $occupancyDays = [];
+        while ($current <= Carbon::parse($endDate)) {
+            $date = $current->format('Y-m-d');
+            $occupied = Reservation::whereDate('check_in', '<=', $date)
+                ->whereDate('check_out', '>=', $date)
+                ->whereIn('status', ['checked_in', 'checked_out'])
+                ->count();
+            $occupancyDays[$date] = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100, 2) : 0;
+            $occupiedCount += $occupied;
+            $current->addDay();
+        }
+        $avgOccupancy = $totalRooms > 0 && $daysInMonth > 0
+            ? round(($occupiedCount / ($totalRooms * $daysInMonth)) * 100, 2)
+            : 0;
+
+        // ─── Pendapatan Kamar ─────────────────────────────────────────
+        $roomRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->sum('amount');
+        $roomRevenuePrev = Transaction::whereBetween('created_at', [$prevStart.' 00:00:00', $prevEnd.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->sum('amount');
+
+        // ─── Pendapatan Resto ─────────────────────────────────────────
+        $restoRevenue = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->sum('total_amount');
+        $restoRevenuePrev = RestoTransaction::whereBetween('created_at', [$prevStart.' 00:00:00', $prevEnd.' 23:59:59'])->sum('total_amount');
+        $restoCount = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
+
+        // ─── Service Charge ──────────────────────────────────────────
+        $scRevenue = ServiceCharge::whereBetween('charge_date', [$startDate, $endDate])->sum('total_amount');
+        $scRevenuePrev = ServiceCharge::whereBetween('charge_date', [$prevStart, $prevEnd])->sum('total_amount');
+
+        // ─── Pengeluaran ────────────────────────────────────────────
+        $totalExpenses = Expense::whereBetween('expense_date', [$startDate, $endDate])->sum('amount');
+        $totalExpensesPrev = Expense::whereBetween('expense_date', [$prevStart, $prevEnd])->sum('amount');
+        $expensesByDesc = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->selectRaw('description, SUM(amount) as total')
+            ->groupBy('description')
+            ->orderByDesc('total')
+            ->get();
+
+        // ─── Grand Totals ───────────────────────────────────────────
+        $grandRevenue = $roomRevenue + $restoRevenue + $scRevenue;
+        $grandRevenuePrev = $roomRevenuePrev + $restoRevenuePrev + $scRevenuePrev;
+        $netRevenue = $grandRevenue - $totalExpenses;
+        $netRevenuePrev = $grandRevenuePrev - $totalExpensesPrev;
+
+        // ─── Revenue by Payment Method ──────────────────────────────
+        $revenueByMethod = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        // ─── Cash vs Transfer Breakdown ────────────────────────────
+        $cashRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->where('payment_method', 'cash')
+            ->sum('amount');
+        $transferRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->where('payment_method', 'bank_transfer')
+            ->sum('amount');
+        $otherRevenue = $roomRevenue - $cashRevenue - $transferRevenue;
+
+        $cashResto = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('payment_method', 'cash')
+            ->sum('total_amount');
+        $transferResto = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('payment_method', 'bank_transfer')
+            ->sum('total_amount');
+        $otherResto = $restoRevenue - $cashResto - $transferResto;
+
+        $grandCash = $cashRevenue + $cashResto;
+        $grandTransfer = $transferRevenue + $transferResto;
+        $grandOther = $otherRevenue + $otherResto;
+
+        // ─── Reservasi Stats ────────────────────────────────────────
+        $totalReservations = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
+        $checkins = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->where('status', 'checked_in')
+            ->count();
+        $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])
+            ->where('status', 'checked_out')
+            ->count();
+        $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('status', 'cancelled')
+            ->count();
+
+        // ─── OTA Bookings ──────────────────────────────────────────
+        $otaBySource = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->whereNotNull('ota_source')
+            ->selectRaw('ota_source, COUNT(*) as total_bookings, SUM(total_amount) as total_revenue')
+            ->groupBy('ota_source')
+            ->get();
+        $otaBookings = $otaBySource->sum('total_bookings');
+        $otaRevenue = $otaBySource->sum('total_revenue');
+
+        // ─── Pajak (estimasi PPN 11%) ──────────────────────────────
+        $ppnEstimate = round($grandRevenue * 0.11 / 1.11, 2);
+        $ppnRoom = round($roomRevenue * 0.11 / 1.11, 2);
+        $ppnResto = round($restoRevenue * 0.11 / 1.11, 2);
+
+        // ─── Growth ────────────────────────────────────────────────
+        $revenueGrowth = $grandRevenuePrev > 0
+            ? round((($grandRevenue - $grandRevenuePrev) / $grandRevenuePrev) * 100, 2)
+            : 0;
+        $expenseGrowth = $totalExpensesPrev > 0
+            ? round((($totalExpenses - $totalExpensesPrev) / $totalExpensesPrev) * 100, 2)
+            : 0;
+
+        // ─── Transaksi Resto Detail ────────────────────────────────
+        $restoByMethod = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->selectRaw('payment_method, SUM(total_amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        // ─── Revenue per Day (Chart) ───────────────────────────────
+        $dailyRevenue = [];
+        $current = Carbon::parse($startDate);
+        while ($current <= Carbon::parse($endDate)) {
+            $date = $current->format('Y-m-d');
+            $dayRoom = Transaction::whereDate('created_at', $date)
+                ->where('type', '!=', 'refund')
+                ->sum('amount');
+            $dayResto = RestoTransaction::whereDate('created_at', $date)->sum('total_amount');
+            $dailyRevenue[] = [
+                'date' => $current->format('d M'),
+                'room' => (float) $dayRoom,
+                'resto' => (float) $dayResto,
+            ];
+            $current->addDay();
+        }
+
+        // ─── Guest Compliance ──────────────────────────────────────
+        $totalGuests = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->whereHas('guest')
+            ->count();
+        $guestsWithId = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->whereHas('guest', fn ($q) => $q->whereNotNull('id_number')->where('id_number', '!=', ''))
+            ->count();
+        $guestCompliancePct = $totalGuests > 0 ? round(($guestsWithId / $totalGuests) * 100, 1) : 0;
+
+        return view('reports.compliance', compact(
+            'month', 'startDate', 'endDate', 'prevMonth',
+            'totalRooms', 'avgOccupancy', 'occupancyDays',
+            'roomRevenue', 'roomRevenuePrev',
+            'restoRevenue', 'restoRevenuePrev', 'restoCount',
+            'scRevenue', 'scRevenuePrev',
+            'totalExpenses', 'totalExpensesPrev', 'expensesByDesc',
+            'grandRevenue', 'grandRevenuePrev',
+            'netRevenue', 'netRevenuePrev',
+            'revenueByMethod', 'restoByMethod',
+            'cashRevenue', 'transferRevenue', 'otherRevenue',
+            'cashResto', 'transferResto', 'otherResto',
+            'grandCash', 'grandTransfer', 'grandOther',
+            'totalReservations', 'checkins', 'checkouts', 'cancelled',
+            'otaBookings', 'otaRevenue', 'otaBySource',
+            'ppnEstimate', 'ppnRoom', 'ppnResto',
+            'revenueGrowth', 'expenseGrowth',
+            'dailyRevenue',
+            'totalGuests', 'guestsWithId', 'guestCompliancePct',
+        ));
+    }
+
+    /**
+     * Export Laporan Bulanan Hotel ke CSV
+     */
+    public function exportComplianceReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $monthLabel = Carbon::parse($startDate)->format('Y-m');
+        $filename = 'laporan-bulanan-'.$monthLabel.'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $totalRooms = Room::count();
+
+        $callback = function () use ($startDate, $endDate, $totalRooms) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['LAPORAN BULANAN HOTEL']);
+            fputcsv($file, ['Periode', Carbon::parse($startDate)->format('F Y')]);
+            fputcsv($file, []);
+
+            // ─── Ringkasan ──────────────────────────────────────────
+            fputcsv($file, ['A. RINGKASAN PENDAPATAN']);
+            $roomRev = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                ->where('type', '!=', 'refund')->sum('amount');
+            $restoRev = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->sum('total_amount');
+            $scRev = ServiceCharge::whereBetween('charge_date', [$startDate, $endDate])->sum('total_amount');
+            $expenses = Expense::whereBetween('expense_date', [$startDate, $endDate])->sum('amount');
+            $grandTotal = $roomRev + $restoRev + $scRev;
+            fputcsv($file, ['Pendapatan Kamar', $roomRev]);
+            fputcsv($file, ['Pendapatan Resto/F&B', $restoRev]);
+            fputcsv($file, ['Service Charge', $scRev]);
+            fputcsv($file, ['Total Pendapatan', $grandTotal]);
+            fputcsv($file, ['Total Pengeluaran', $expenses]);
+            fputcsv($file, ['Pendapatan Bersih', $grandTotal - $expenses]);
+            fputcsv($file, []);
+
+            // ─── Okupansi ──────────────────────────────────────────
+            fputcsv($file, ['B. OKUPANSI']);
+            fputcsv($file, ['Total Kamar', $totalRooms]);
+            $occupiedCount = 0;
+            $daysInMonth = Carbon::parse($startDate)->daysInMonth;
+            $current = Carbon::parse($startDate);
+            while ($current <= Carbon::parse($endDate)) {
+                $occupied = Reservation::whereDate('check_in', '<=', $current->format('Y-m-d'))
+                    ->whereDate('check_out', '>=', $current->format('Y-m-d'))
+                    ->whereIn('status', ['checked_in', 'checked_out'])
+                    ->count();
+                $occupiedCount += $occupied;
+                $current->addDay();
+            }
+            $avgOcc = $totalRooms > 0 && $daysInMonth > 0
+                ? round(($occupiedCount / ($totalRooms * $daysInMonth)) * 100, 2)
+                : 0;
+            fputcsv($file, ['Rata-rata Okupansi', $avgOcc.'%']);
+            fputcsv($file, []);
+
+            // ─── Reservasi ─────────────────────────────────────────
+            fputcsv($file, ['C. RESERVASI']);
+            $totalRes = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
+            $checkins = Reservation::whereBetween('check_in', [$startDate, $endDate])->where('status', 'checked_in')->count();
+            $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])->where('status', 'checked_out')->count();
+            $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->where('status', 'cancelled')->count();
+            $otaBySrc = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                ->whereNotNull('ota_source')
+                ->selectRaw('ota_source, COUNT(*) as total_bookings, SUM(total_amount) as total_revenue')
+                ->groupBy('ota_source')
+                ->get();
+            fputcsv($file, ['Total Reservasi', $totalRes]);
+            fputcsv($file, ['Check-in', $checkins]);
+            fputcsv($file, ['Check-out', $checkouts]);
+            fputcsv($file, ['Dibatalkan', $cancelled]);
+            fputcsv($file, ['Total Booking OTA', $otaBySrc->sum('total_bookings')]);
+            foreach ($otaBySrc as $ota) {
+                fputcsv($file, ['  - '.$ota->ota_source, $ota->total_bookings.' booking', 'Rp '.number_format($ota->total_revenue, 0, ',', '.')]);
+            }
+            fputcsv($file, []);
+
+            // ─── Metode Pembayaran ─────────────────────────────────
+            fputcsv($file, ['D. PENDAPATAN PER METODE PEMBAYARAN']);
+            $byMethod = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                ->where('type', '!=', 'refund')
+                ->selectRaw('payment_method, SUM(amount) as total')
+                ->groupBy('payment_method')
+                ->pluck('total', 'payment_method');
+            foreach ($byMethod as $method => $amount) {
+                fputcsv($file, [ucwords(str_replace('_', ' ', $method)), $amount]);
+            }
+            fputcsv($file, []);
+
+            // ─── Estimasi Pajak ────────────────────────────────────
+            fputcsv($file, ['E. ESTIMASI PAJAK (PPN 11%)']);
+            $ppnTotal = round($grandTotal * 0.11 / 1.11, 2);
+            fputcsv($file, ['Estimasi PPN', $ppnTotal]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Print Laporan Bulanan Hotel — clean layout tanpa sidebar
+     */
+    public function printComplianceReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $month = Carbon::parse($startDate)->format('Y-m');
+        $prevStart = Carbon::parse($startDate)->subMonth()->format('Y-m-d');
+        $prevEnd = Carbon::parse($startDate)->subMonth()->endOfMonth()->format('Y-m-d');
+
+        // ─── Statistik Kamar ──────────────────────────────────────────
+        $totalRooms = Room::count();
+        $avgOccupancy = 0;
+        $occupiedCount = 0;
+        $daysInMonth = Carbon::parse($startDate)->daysInMonth;
+        $current = Carbon::parse($startDate);
+        $occupancyDays = [];
+        while ($current <= Carbon::parse($endDate)) {
+            $date = $current->format('Y-m-d');
+            $occupied = Reservation::whereDate('check_in', '<=', $date)
+                ->whereDate('check_out', '>=', $date)
+                ->whereIn('status', ['checked_in', 'checked_out'])
+                ->count();
+            $occupancyDays[$date] = $totalRooms > 0 ? round(($occupied / $totalRooms) * 100, 2) : 0;
+            $occupiedCount += $occupied;
+            $current->addDay();
+        }
+        $avgOccupancy = $totalRooms > 0 && $daysInMonth > 0
+            ? round(($occupiedCount / ($totalRooms * $daysInMonth)) * 100, 2)
+            : 0;
+
+        // ─── Pendapatan ──────────────────────────────────────────────
+        $roomRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')->sum('amount');
+        $restoRevenue = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->sum('total_amount');
+        $scRevenue = ServiceCharge::whereBetween('charge_date', [$startDate, $endDate])->sum('total_amount');
+        $totalExpenses = Expense::whereBetween('expense_date', [$startDate, $endDate])->sum('amount');
+        $grandRevenue = $roomRevenue + $restoRevenue + $scRevenue;
+        $netRevenue = $grandRevenue - $totalExpenses;
+
+        // ─── Metode Pembayaran ──────────────────────────────────────
+        $revenueByMethod = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        $restoByMethod = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->selectRaw('payment_method, SUM(total_amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        // ─── Cash vs Transfer Breakdown ────────────────────────────
+        $cashRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')->where('payment_method', 'cash')->sum('amount');
+        $transferRevenue = Transaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('type', '!=', 'refund')->where('payment_method', 'bank_transfer')->sum('amount');
+        $otherRevenue = $roomRevenue - $cashRevenue - $transferRevenue;
+
+        $cashResto = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('payment_method', 'cash')->sum('total_amount');
+        $transferResto = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->where('payment_method', 'bank_transfer')->sum('total_amount');
+        $otherResto = $restoRevenue - $cashResto - $transferResto;
+
+        $grandCash = $cashRevenue + $cashResto;
+        $grandTransfer = $transferRevenue + $transferResto;
+        $grandOther = $otherRevenue + $otherResto;
+
+        // ─── Pengeluaran per Kategori ───────────────────────────────
+        $expensesByDesc = Expense::whereBetween('expense_date', [$startDate, $endDate])
+            ->selectRaw('description, SUM(amount) as total')
+            ->groupBy('description')
+            ->orderByDesc('total')
+            ->get();
+
+        // ─── Reservasi ──────────────────────────────────────────────
+        $totalReservations = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
+        $checkins = Reservation::whereBetween('check_in', [$startDate, $endDate])->where('status', 'checked_in')->count();
+        $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])->where('status', 'checked_out')->count();
+        $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->where('status', 'cancelled')->count();
+        $otaBySource = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+            ->whereNotNull('ota_source')
+            ->selectRaw('ota_source, COUNT(*) as total_bookings, SUM(total_amount) as total_revenue')
+            ->groupBy('ota_source')
+            ->get();
+        $otaBookings = $otaBySource->sum('total_bookings');
+        $otaRevenue = $otaBySource->sum('total_revenue');
+
+        // ─── Pajak ──────────────────────────────────────────────────
+        $ppnEstimate = round($grandRevenue * 0.11 / 1.11, 2);
+
+        // ─── Growth ─────────────────────────────────────────────────
+        $roomRevenuePrev = Transaction::whereBetween('created_at', [$prevStart.' 00:00:00', $prevEnd.' 23:59:59'])
+            ->where('type', '!=', 'refund')->sum('amount');
+        $restoRevenuePrev = RestoTransaction::whereBetween('created_at', [$prevStart.' 00:00:00', $prevEnd.' 23:59:59'])->sum('total_amount');
+        $scRevenuePrev = ServiceCharge::whereBetween('charge_date', [$prevStart, $prevEnd])->sum('total_amount');
+        $totalExpensesPrev = Expense::whereBetween('expense_date', [$prevStart, $prevEnd])->sum('amount');
+        $grandRevenuePrev = $roomRevenuePrev + $restoRevenuePrev + $scRevenuePrev;
+        $revenueGrowth = $grandRevenuePrev > 0 ? round((($grandRevenue - $grandRevenuePrev) / $grandRevenuePrev) * 100, 2) : 0;
+        $expenseGrowth = $totalExpensesPrev > 0 ? round((($totalExpenses - $totalExpensesPrev) / $totalExpensesPrev) * 100, 2) : 0;
+
+        // ─── Guest Compliance ──────────────────────────────────────
+        $totalGuests = Reservation::whereBetween('check_in', [$startDate, $endDate])->whereHas('guest')->count();
+        $guestsWithId = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->whereHas('guest', fn ($q) => $q->whereNotNull('id_number')->where('id_number', '!=', ''))
+            ->count();
+        $guestCompliancePct = $totalGuests > 0 ? round(($guestsWithId / $totalGuests) * 100, 1) : 0;
+
+        $hotel = HotelSetting::get();
+
+        return view('reports.print-compliance', compact(
+            'month', 'startDate', 'endDate', 'hotel',
+            'totalRooms', 'avgOccupancy', 'occupancyDays',
+            'roomRevenue', 'restoRevenue', 'scRevenue',
+            'totalExpenses', 'expensesByDesc',
+            'grandRevenue', 'netRevenue',
+            'revenueByMethod', 'restoByMethod',
+            'cashRevenue', 'transferRevenue', 'otherRevenue',
+            'cashResto', 'transferResto', 'otherResto',
+            'grandCash', 'grandTransfer', 'grandOther',
+            'totalReservations', 'checkins', 'checkouts', 'cancelled',
+            'otaBookings', 'otaRevenue', 'otaBySource',
+            'ppnEstimate',
+            'revenueGrowth', 'expenseGrowth',
+            'totalGuests', 'guestsWithId', 'guestCompliancePct',
+            'roomRevenuePrev', 'restoRevenuePrev', 'scRevenuePrev',
+            'totalExpensesPrev', 'grandRevenuePrev',
+        ));
+    }
 }

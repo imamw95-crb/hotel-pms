@@ -171,6 +171,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/expenses/export', [ReportController::class, 'exportExpenses'])->name('reports.expenses.export');
         Route::get('/reports/expenses/print', [ReportController::class, 'printExpenses'])->name('reports.expenses.print');
 
+        // Laporan Bulanan Hotel (Monthly Compliance Report)
+        Route::get('/reports/compliance', [ReportController::class, 'complianceReport'])->name('reports.compliance');
+        Route::get('/reports/compliance/export', [ReportController::class, 'exportComplianceReport'])->name('reports.compliance.export');
+        Route::get('/reports/compliance/print', [ReportController::class, 'printComplianceReport'])->name('reports.compliance.print');
+
         // Export routes
         Route::get('/reports/night-audit/export', [ReportController::class, 'exportNightAudit'])->name('reports.night-audit.export');
         Route::get('/reports/guest-list/export', [ReportController::class, 'exportGuestList'])->name('reports.guest-list.export');
