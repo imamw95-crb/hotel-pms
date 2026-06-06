@@ -264,6 +264,12 @@ return [
                     'permission' => 'view_reports',
                     'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
+                [
+                    'label' => 'Laporan Bulanan Hotel',
+                    'route' => 'reports.compliance',
+                    'permission' => 'view_reports',
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
+                ],
             ],
         ],
 
