@@ -559,11 +559,11 @@ class ReservationApiController extends Controller
 
     /**
      * GET /api/rooms
-     * List semua kamar
+     * List semua kamar with room type info
      */
     public function roomsIndex(Request $request)
     {
-        $query = Room::query();
+        $query = Room::with('roomType');
 
         if ($request->get('status')) {
             $query->where('status', $request->get('status'));
@@ -575,9 +575,17 @@ class ReservationApiController extends Controller
 
         $rooms = $query->orderBy('room_number')->get();
 
+        // Attach room type description and other metadata
+        $data = $rooms->map(function ($room) {
+            return array_merge($room->toArray(), [
+                'description' => $room->roomType?->description ?? '',
+                'room_type_code' => $room->roomType?->code ?? '',
+            ]);
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $rooms,
+            'data' => $data,
         ]);
     }
 
@@ -597,7 +605,8 @@ class ReservationApiController extends Controller
         $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0)->format('Y-m-d H:i:s');
         $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0)->format('Y-m-d H:i:s');
 
-        $availableRooms = Room::where('status', '!=', 'maintenance')
+        $availableRooms = Room::with('roomType')
+            ->where('status', '!=', 'maintenance')
             ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                 $q->select('room_id')
                     ->from('reservations')
@@ -608,9 +617,19 @@ class ReservationApiController extends Controller
             ->orderBy('room_number')
             ->get();
 
+        // Attach room type description
+        $data = $availableRooms->map(function ($room) {
+            $roomType = $room->roomType;
+
+            return array_merge($room->toArray(), [
+                'description' => $roomType?->description ?? '',
+                'room_type_code' => $roomType?->code ?? '',
+            ]);
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $availableRooms,
+            'data' => $data,
             'meta' => [
                 'check_in' => $validated['check_in'],
                 'check_out' => $validated['check_out'],

@@ -26,12 +26,16 @@ class RoomTypePriceApiController extends Controller
             $weekendPrices = $rooms->pluck('price_weekend')->filter(fn ($v) => $v > 0);
             $regularPrices = $rooms->pluck('price_per_night')->filter(fn ($v) => $v > 0);
 
+            $maxOccupancy = $rooms->max('max_occupancy') ?? 2;
+
             return [
                 'id' => $roomType->id,
                 'code' => $roomType->code,
                 'name' => $roomType->name,
                 'description' => $roomType->description,
                 'total_rooms' => $rooms->count(),
+                'max_occupancy' => (int) $maxOccupancy,
+                'available_rooms_count' => $rooms->where('status', 'available')->count(),
                 'prices' => [
                     'min_weekday' => $weekdayPrices->min() ?? 0,
                     'min_weekend' => $weekendPrices->min() ?? 0,
