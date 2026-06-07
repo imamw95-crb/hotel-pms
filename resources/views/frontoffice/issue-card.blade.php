@@ -35,6 +35,7 @@
                         data-status="{{ $res->status }}"
                         data-room-id="{{ $res->room_id }}"
                         data-room-number="{{ $res->room->room_number ?? '' }}"
+                        data-room-type="{{ $res->room->roomType->name ?? $res->room->room_type_name ?? 'Standard' }}"
                         data-guest-name="{{ $res->guest->guest_name ?? '' }}"
                         data-id-number="{{ $res->guest->id_number ?? '' }}"
                         data-phone="{{ $res->guest->phone ?? '' }}"
