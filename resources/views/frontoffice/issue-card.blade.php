@@ -360,20 +360,20 @@
             cancelBtn.textContent = cancelText;
             confirmBtn.textContent = confirmText;
             confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
-            confirmBtn.onclick = () => { closeModal(); onConfirm(); };
-            cancelBtn.onclick = closeModal;
+            confirmBtn.onclick = () => { closeCustomModal(); onConfirm(); };
+            cancelBtn.onclick = closeCustomModal;
         } else {
             cancelBtn.classList.add('hidden');
             confirmBtn.textContent = 'OK';
             confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
-            confirmBtn.onclick = closeModal;
+            confirmBtn.onclick = closeCustomModal;
         }
 
         overlay.classList.remove('hidden');
         overlay.classList.add('flex');
     }
 
-    function closeModal() {
+    function closeCustomModal() {
         const overlay = document.getElementById('customModal');
         overlay.classList.add('hidden');
         overlay.classList.remove('flex');
@@ -381,12 +381,12 @@
 
     // Close modal on overlay click
     document.getElementById('customModal').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
+        if (e.target === this) closeCustomModal();
     });
 
     // Close modal on Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeModal();
+        if (e.key === 'Escape') closeCustomModal();
     });
 
     // ========== CHECKOUT ==========
@@ -449,7 +449,7 @@
         fetch('{{ route("issue-card.read") }}')
             .then(r => r.json())
             .then(d => {
-                closeModal();
+                closeCustomModal();
                 if (d.success && d.card_data) {
                     const c = d.card_data;
                     showModal({
@@ -462,7 +462,7 @@
                 }
             })
             .catch(e => {
-                closeModal();
+                closeCustomModal();
                 showModal({ title: 'Error', message: 'Gagal membaca kartu: ' + e.message, type: 'error' });
             });
     }

@@ -113,12 +113,12 @@ class IssueCardController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}",
-                'redirect_url' => route('checkin.success', $reservation->id),
+                'redirect_url' => route('issue-card.index'),
                 'reservation' => $reservation,
             ]);
         }
 
-        return redirect()->route('checkin.success', $reservation->id)
+        return redirect()->route('issue-card.index')
             ->with('success', "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}");
     }
 
