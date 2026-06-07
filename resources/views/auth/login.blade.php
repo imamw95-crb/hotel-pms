@@ -283,7 +283,7 @@
         @endif
 
         {{-- Form --}}
-        <form method="POST" action="{{ route('login') }}" class="animate-in animate-in-d2">
+        <form method="POST" action="{{ route('login') }}" class="animate-in animate-in-d2" data-turbo="false">
             @csrf
 
             {{-- Username / Email --}}

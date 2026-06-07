@@ -141,7 +141,7 @@
                         <span class="text-sm font-medium text-slate-700">{{ auth()->user()->name ?? 'User' }}</span>
                     </div>
                     <div class="w-px h-6 bg-slate-200"></div>
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                    <form method="POST" action="{{ route('logout') }}" class="inline" data-turbo="false">
                         @csrf
                         <button type="submit" class="text-slate-400 hover:text-red-500 text-sm transition flex items-center gap-1.5">
                             <i class="fas fa-sign-out-alt"></i>

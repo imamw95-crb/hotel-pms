@@ -97,6 +97,7 @@ class TvSettingController extends Controller
         }
 
         $setting->save();
+        HotelSetting::forgetCache();
 
         if ($request->expectsJson()) {
             return response()->json([

@@ -32,9 +32,9 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        // Share night audit status with all views
-        View::composer('*', function ($view) {
-            $nightAudit = NightAuditLog::latest()->first();
+        // Share night audit status only with authenticated views (skip login/logout)
+        View::composer(['layouts.app', 'housekeeping.*', 'dashboard.*', 'reservations.*', 'reports.*'], function ($view) {
+            $nightAudit = NightAuditLog::latest()->first(['audit_date', 'status']);
             $view->with('nightAuditClosed', $nightAudit && $nightAudit->status === 'completed' && $nightAudit->audit_date === now()->subDay()->toDateString());
             $view->with('nightAuditPending', ! $nightAudit || $nightAudit->audit_date->toDateString() !== now()->toDateString() || $nightAudit->status !== 'locked');
         });

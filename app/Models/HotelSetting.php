@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class HotelSetting extends Model
 {
@@ -14,10 +15,31 @@ class HotelSetting extends Model
     ];
 
     /**
-     * Get the singleton setting instance.
+     * Get the singleton setting instance (cached for 24 hours).
      */
     public static function get(): self
     {
-        return self::first() ?? self::create(['hotel_name' => 'Dynamic PMS V.2']);
+        $value = Cache::get('hotel_settings');
+
+        // If cache is corrupted (e.g. stale serialized class), re-fetch fresh
+        if ($value !== null && (! $value instanceof self)) {
+            Cache::forget('hotel_settings');
+            $value = null;
+        }
+
+        if ($value === null) {
+            $value = self::first() ?? self::create(['hotel_name' => 'Dynamic PMS V.2']);
+            Cache::put('hotel_settings', $value, 86400);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Clear the cached settings (call after updating settings).
+     */
+    public static function forgetCache(): void
+    {
+        Cache::forget('hotel_settings');
     }
 }

@@ -85,6 +85,9 @@ class SettingController extends Controller
         }
         $setting->save();
 
+        // Clear cached settings so dashboard picks up changes immediately
+        HotelSetting::forgetCache();
+
         // Check if request is AJAX
         if (request()->expectsJson()) {
             return response()->json([
