@@ -29,6 +29,11 @@
     text-align: center;
     margin-bottom: 3px;
   }
+  .hotel-logo {
+    max-height: 55px;
+    max-width: 220px;
+    object-fit: contain;
+  }
   .header h1 {
     font-size: 13pt;
     font-weight: bold;
