@@ -19,7 +19,11 @@
             <div>
                 <span class="text-gray-500 text-sm">Status</span>
                 <p>
-                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">CHECKED IN</span>
+                    @if($reservation->status === 'checked_in')
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-bold">CHECKED IN</span>
+                    @else
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-bold">PENDING</span>
+                    @endif
                 </p>
             </div>
             <div>
@@ -227,7 +231,9 @@
         const roomNumber = selectedRoom.dataset.number;
         const roomType = selectedRoom.dataset.type;
 
-        if (!confirm('Pindah kamar ke Kamar ' + roomNumber + ' (' + roomType + ')?\n\nKamar lama akan diubah statusnya menjadi Cleaning.')) {
+        var isCheckedIn = {{ $reservation->status === 'checked_in' ? 'true' : 'false' }};
+        var roomStatusMsg = isCheckedIn ? 'Kamar lama akan diubah statusnya menjadi Cleaning.' : 'Kamar lama akan dikembalikan ke Available.';
+        if (!confirm('Pindah kamar ke Kamar ' + roomNumber + ' (' + roomType + ')?\n\n' + roomStatusMsg)) {
             e.preventDefault();
         }
     });

@@ -557,7 +557,7 @@ class AiActionService
             ];
         }
 
-        if ($reservation->status !== 'checked_in') {
+        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
             return ['success' => false, 'message' => "Status {$reservation->status_label}, tidak bisa pindah kamar."];
         }
 
@@ -584,8 +584,13 @@ class AiActionService
             return DB::transaction(function () use ($reservation, $newRoom) {
                 $oldRoom = $reservation->room;
                 $reservation->update(['room_id' => $newRoom->id]);
-                $oldRoom->update(['status' => 'cleaning']);
-                $newRoom->update(['status' => 'occupied']);
+
+                if ($reservation->status === 'checked_in') {
+                    $oldRoom->update(['status' => 'cleaning']);
+                    $newRoom->update(['status' => 'occupied']);
+                } else {
+                    $oldRoom->update(['status' => 'available']);
+                }
 
                 return ['success' => true, 'message' => "✅ Pindah: {$reservation->guest->guest_name} {$oldRoom->room_number} → **{$newRoom->room_number}**"];
             });

@@ -288,19 +288,19 @@
                         @endif
                     </td>
                     <td class="px-4 py-3">
-                        <div class="flex items-center justify-center gap-1">
+                        <div class="flex items-center flex-wrap gap-1.5">
                             {{-- Detail --}}
                             <a href="{{ route('reservations.show', $res) }}"
-                               class="w-7 h-7 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-100 transition" title="Detail">
-                                <i class="fas fa-eye text-[10px]"></i>
+                               class="bg-blue-50 text-blue-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-blue-100 transition text-xs font-medium whitespace-nowrap" title="Detail Reservasi">
+                                <i class="fas fa-eye text-[10px]"></i> <span>Detail</span>
                             </a>
 
                             {{-- Check-in (pending) --}}
                             @if($res->status === 'pending')
                                 <form action="{{ route('reservations.checkin', $res) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="w-7 h-7 bg-green-50 text-green-600 rounded-lg flex items-center justify-center hover:bg-green-100 transition" title="Check-in">
-                                        <i class="fas fa-sign-in-alt text-[10px]"></i>
+                                    <button type="submit" class="bg-green-50 text-green-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-green-100 transition text-xs font-medium whitespace-nowrap" title="Check-in">
+                                        <i class="fas fa-sign-in-alt text-[10px]"></i> <span>Check-in</span>
                                     </button>
                                 </form>
                             @endif
@@ -310,13 +310,17 @@
                                 <form action="{{ route('reservations.checkout', $res) }}" method="POST" class="inline"
                                     onsubmit="return confirm('Check-out kamar {{ $res->room->room_number ?? '' }}? Status kamar akan berubah menjadi Available.')">
                                     @csrf
-                                    <button type="submit" class="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center hover:bg-amber-100 transition" title="Check-out">
-                                        <i class="fas fa-sign-out-alt text-[10px]"></i>
+                                    <button type="submit" class="bg-amber-50 text-amber-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-amber-100 transition text-xs font-medium whitespace-nowrap" title="Check-out">
+                                        <i class="fas fa-sign-out-alt text-[10px]"></i> <span>Checkout</span>
                                     </button>
                                 </form>
+                            @endif
+
+                            {{-- Pindah Kamar (pending & checked_in) --}}
+                            @if(in_array($res->status, ['pending', 'checked_in']))
                                 <a href="{{ route('reservations.room-change', $res) }}"
-                                   class="w-7 h-7 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center hover:bg-purple-100 transition" title="Pindah Kamar">
-                                    <i class="fas fa-exchange-alt text-[10px]"></i>
+                                   class="bg-purple-50 text-purple-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-purple-100 transition text-xs font-medium whitespace-nowrap" title="Pindah Kamar">
+                                    <i class="fas fa-exchange-alt text-[10px]"></i> <span>Pindah Kamar</span>
                                 </a>
                             @endif
 
@@ -324,9 +328,9 @@
                             @if($res->status === 'pending')
                                 <form action="{{ route('reservations.cancel', $res) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="w-7 h-7 bg-red-50 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-100 transition" title="Cancel"
+                                    <button type="submit" class="bg-red-50 text-red-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-red-100 transition text-xs font-medium whitespace-nowrap" title="Cancel"
                                         onclick="return confirm('Batalkan reservasi ini?')">
-                                        <i class="fas fa-times text-[10px]"></i>
+                                        <i class="fas fa-times text-[10px]"></i> <span>Cancel</span>
                                     </button>
                                 </form>
                             @endif
@@ -334,25 +338,25 @@
                             {{-- Print (checked_out) --}}
                             @if($res->status === 'checked_out')
                                 <a href="{{ route('reservations.print-invoice', $res) }}" target="_blank"
-                                   class="w-7 h-7 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-100 transition" title="Print Invoice">
-                                    <i class="fas fa-file-invoice text-[10px]"></i>
+                                   class="bg-slate-50 text-slate-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-slate-100 transition text-xs font-medium whitespace-nowrap" title="Print Invoice">
+                                    <i class="fas fa-file-invoice text-[10px]"></i> <span>Invoice</span>
                                 </a>
                                 <a href="{{ route('reservations.print-kwitansi', $res) }}" target="_blank"
-                                   class="w-7 h-7 bg-slate-50 text-slate-600 rounded-lg flex items-center justify-center hover:bg-slate-100 transition" title="Print Kwitansi">
-                                    <i class="fas fa-receipt text-[10px]"></i>
+                                   class="bg-slate-50 text-slate-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-slate-100 transition text-xs font-medium whitespace-nowrap" title="Print Kwitansi">
+                                    <i class="fas fa-receipt text-[10px]"></i> <span>Kwitansi</span>
                                 </a>
                             @endif
 
                             {{-- Edit Total --}}
                             <button type="button" onclick="openEditTotalModal({{ $res->id }}, '{{ $res->reservation_number }}', {{ $res->total_amount }})"
-                                class="w-7 h-7 bg-gray-50 text-gray-500 rounded-lg flex items-center justify-center hover:bg-gray-100 transition" title="Edit Total">
-                                <i class="fas fa-edit text-[10px]"></i>
+                                class="bg-gray-50 text-gray-500 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-gray-100 transition text-xs font-medium whitespace-nowrap" title="Edit Total">
+                                <i class="fas fa-edit text-[10px]"></i> <span>Edit Total</span>
                             </button>
 
                             {{-- Edit Harga Kamar --}}
                             <button type="button" onclick="openEditRateModal({{ $res->id }}, '{{ $res->reservation_number }}', {{ $res->room->price_per_night ?? 0 }}, {{ $res->custom_room_rate ?? 'null' }})"
-                                class="w-7 h-7 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center hover:bg-teal-100 transition" title="Edit Harga Kamar">
-                                <i class="fas fa-bed text-[10px]"></i>
+                                class="bg-teal-50 text-teal-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-teal-100 transition text-xs font-medium whitespace-nowrap" title="Edit Harga Kamar">
+                                <i class="fas fa-bed text-[10px]"></i> <span>Edit Rate</span>
                             </button>
                         </div>
                     </td>

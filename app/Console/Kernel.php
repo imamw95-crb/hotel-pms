@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
         Commands\TestReadOneEmailCommand::class,
         Commands\TestOtaEmailCommand::class,
         Commands\AiReservationCommand::class,
+        Commands\AutoCancelPendingBookingCommand::class,
         Commands\BlockMigrateFreshCommand::class,
         Commands\BlockMigrateResetCommand::class,
     ];
@@ -54,6 +55,15 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(30) // lock expires after 30 minutes as fallback
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
+
+        // ─── Auto-Cancel Pending Web Bookings ─────────────────────
+        // Cancel website bookings that haven't confirmed payment
+        // within the configured time window (default: 3 hours)
+        $schedule->command('hotel:auto-cancel-pending')
+            ->everyTenMinutes()
+            ->withoutOverlapping(15)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
     }
 
     /**

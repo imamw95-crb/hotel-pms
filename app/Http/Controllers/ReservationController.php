@@ -311,7 +311,7 @@ class ReservationController extends Controller
     public function roomChangeList()
     {
         $reservations = Reservation::with(['guest', 'room'])
-            ->where('status', 'checked_in')
+            ->whereIn('status', ['pending', 'checked_in'])
             ->orderBy('check_out', 'asc')
             ->get();
 
@@ -360,8 +360,8 @@ class ReservationController extends Controller
      */
     public function showRoomChange(Reservation $reservation)
     {
-        if ($reservation->status !== 'checked_in') {
-            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi yang sudah check-in.');
+        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.');
         }
 
         $reservation->load(['guest', 'room']);
@@ -395,8 +395,8 @@ class ReservationController extends Controller
      */
     public function changeRoom(Request $request, Reservation $reservation)
     {
-        if ($reservation->status !== 'checked_in') {
-            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi yang sudah check-in.');
+        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.');
         }
 
         $validated = $request->validate([
@@ -441,11 +441,16 @@ class ReservationController extends Controller
         }
         $reservation->save();
 
-        // Update status kamar lama menjadi available
-        $oldRoom->update(['status' => 'cleaning']);
-
-        // Update status kamar baru menjadi occupied
-        $newRoom->update(['status' => 'occupied']);
+        // Update status kamar berdasarkan status reservasi
+        if ($reservation->status === 'checked_in') {
+            // Jika sudah check-in: kamar lama perlu dibersihkan, kamar baru diisi
+            $oldRoom->update(['status' => 'cleaning']);
+            $newRoom->update(['status' => 'occupied']);
+        } else {
+            // Jika masih pending: kamar belum digunakan, cukup update reservasi saja
+            $oldRoom->update(['status' => 'available']);
+            // Kamar baru tetap available karena tamu belum check-in
+        }
 
         // Log aktivitas
         MHSLog::create([

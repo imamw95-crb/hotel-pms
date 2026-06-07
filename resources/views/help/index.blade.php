@@ -118,6 +118,9 @@
             <a href="#admin" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-cog mr-1.5 w-4 text-center"></i> Administrasi (Owner)</a>
             <a href="#api" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-plug mr-1.5 w-4 text-center"></i> API Eksternal</a>
             <a href="#ota-email" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-envelope-open-text mr-1.5 w-4 text-center"></i> Log Email OTA</a>
+            <a href="#notifications" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-bell mr-1.5 w-4 text-center"></i> Notifikasi</a>
+            <a href="#tv-welcome" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-tv mr-1.5 w-4 text-center"></i> TV Welcome Screen</a>
+            <a href="#expenses" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-money-bill-wave mr-1.5 w-4 text-center"></i> Pengeluaran</a>
             <a href="#faq" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-question-circle mr-1.5 w-4 text-center"></i> FAQ — Tanya Jawab</a>
             <a href="#glossary" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-book mr-1.5 w-4 text-center"></i> Glosarium Istilah</a>
             <a href="#tips" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-lightbulb mr-1.5 w-4 text-center"></i> Tips & Trik</a>
@@ -154,6 +157,10 @@
                     <div class="bg-white rounded p-3 border border-blue-100">
                         <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold text-xs">Front Office</span>
                         <p class="mt-1 text-gray-600">Akses terbatas pada front desk (reservasi, check-in/out, pembayaran)</p>
+                    </div>
+                    <div class="bg-white rounded p-3 border border-blue-100">
+                        <span class="bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-bold text-xs">User Manager</span>
+                        <p class="mt-1 text-gray-600">Akses khusus untuk mengelola user dan permission tanpa admin panel penuh</p>
                     </div>
                 </div>
             </div>
@@ -465,12 +472,32 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 13. HOUSEKEEPING --}}
+    {{-- 13. PENGELUARAN --}}
+    {{-- ================================================================ --}}
+    <div id="expenses" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-money-bill-wave text-red-500"></i> 13. Pengeluaran (Expenses)
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Mencatat biaya operasional hotel (listrik, air, gaji, supplies, dll).</p>
+            <ul class="space-y-1.5 text-sm text-gray-700 ml-2">
+                <li><i class="fas fa-circle text-red-400 text-[6px] mr-2 align-middle"></i><strong>Tambah Pengeluaran</strong> — pilih kategori, isi deskripsi, nominal, dan tanggal</li>
+                <li><i class="fas fa-circle text-red-400 text-[6px] mr-2 align-middle"></i>Filter berdasarkan periode tanggal</li>
+                <li><i class="fas fa-circle text-red-400 text-[6px] mr-2 align-middle"></i>Data otomatis masuk ke <strong>Laporan Pengeluaran</strong> di menu Reports</li>
+            </ul>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 14. HOUSEKEEPING --}}
     {{-- ================================================================ --}}
     <div id="housekeeping" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="housekeeping">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-broom text-yellow-600"></i> 13. Housekeeping
+                <i class="fas fa-broom text-yellow-600"></i> 14. Housekeeping
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -478,25 +505,35 @@
             <p class="text-sm text-gray-600 mb-3">Manajemen tugas pembersihan dan perawatan kamar.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
                 <div>
-                    <p class="font-semibold mb-2">📊 Statistik:</p>
-                    <div class="flex flex-wrap gap-2">
+                    <p class="font-semibold mb-2">📊 Dashboard:</p>
+                    <div class="flex flex-wrap gap-2 mb-2">
                         <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">Menunggu</span>
                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">Sedang Dikerjakan</span>
                         <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Selesai Hari Ini</span>
-                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Urgent</span>
+                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">Overdue</span>
                     </div>
+                    <p class="text-xs text-gray-500 mt-1">Filter by status/tipe/prioritas/kamar/tanggal.</p>
                 </div>
                 <div>
-                    <p class="font-semibold mb-2">⚙️ Fitur:</p>
+                    <p class="font-semibold mb-2">🧹 Menu Housekeeping:</p>
                     <ul class="space-y-1 text-xs text-gray-600 ml-2 list-disc">
-                        <li>Buat Tugas — untuk satu kamar</li>
-                        <li>Bulk Create — buat tugas untuk banyak kamar sekaligus</li>
-                        <li>Assign petugas housekeeping</li>
-                        <li>Update status: Pending → In Progress → Completed</li>
-                        <li>Print laporan housekeeping</li>
-                        <li>Lihat semua tugas per kamar (Room Tasks)</li>
+                        <li><strong>Dashboard</strong> — Semua tugas + statistik + chart</li>
+                        <li><strong>Tugas Saya</strong> — Tugas yg diassign ke staff yg sedang login</li>
+                        <li><strong>Ambil Tugas</strong> — Self-assign kamar yang perlu dibersihkan</li>
                     </ul>
                 </div>
+            </div>
+            <div class="text-sm">
+                <p class="font-semibold mb-2">⚙️ Fitur:</p>
+                <ul class="space-y-1.5 text-sm text-gray-700 ml-2">
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Buat Tugas</strong> — Pilih kamar, tipe (cleaning/deep_clean/maintenance/inspection/turndown), prioritas (low/normal/high/urgent), assign staff</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Bulk Create</strong> — Buat tugas untuk banyak kamar sekaligus</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Assign</strong> — Manual (👤) pilih staff atau Auto-Assign (✨) otomatis ke staff dengan beban paling ringan</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Kerjakan</strong> — ▶️ (Mulai) → timer berjalan → ✅ (Selesai) → upload foto, isi checklist → durasi tercatat</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Room Tasks</strong> — Lihat semua tugas per kamar</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Room History</strong> — Riwayat housekeeping per kamar</li>
+                    <li><i class="fas fa-circle text-yellow-500 text-[6px] mr-2 align-middle"></i><strong>Print</strong> — Cetak laporan housekeeping</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -507,7 +544,7 @@
     <div id="night-audit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-moon text-indigo-500"></i> 14. Night Audit
+                <i class="fas fa-moon text-indigo-500"></i> 15. Night Audit
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -539,7 +576,7 @@
     <div id="reports" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="report">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-chart-bar text-purple-500"></i> 15. Laporan (Reports)
+                <i class="fas fa-chart-bar text-purple-500"></i> 16. Laporan (Reports)
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -565,6 +602,14 @@
                     <p class="font-bold mb-1"><i class="fas fa-users text-indigo-400 mr-1"></i> Group Report</p>
                     <p class="text-xs text-gray-600">Laporan khusus untuk reservasi grup/rombongan.</p>
                 </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold mb-1"><i class="fas fa-receipt text-rose-400 mr-1"></i> Laporan Pengeluaran</p>
+                    <p class="text-xs text-gray-600">Rekap biaya operasional hotel per periode — bisa export CSV & print.</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <p class="font-bold mb-1"><i class="fas fa-file-contract text-teal-400 mr-1"></i> Laporan Bulanan Hotel</p>
+                    <p class="text-xs text-gray-600">Compliance report bulanan lengkap dengan ringkasan okupansi, revenue, dan pengeluaran.</p>
+                </div>
             </div>
             <p class="text-sm text-gray-500 mt-3"><i class="fas fa-download mr-1"></i> Semua laporan bisa di-<strong>Export CSV</strong> dan <strong>Print</strong>.</p>
         </div>
@@ -576,7 +621,7 @@
     <div id="guests" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-users text-blue-500"></i> 16. Manajemen Tamu
+                <i class="fas fa-users text-blue-500"></i> 17. Manajemen Tamu
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -597,7 +642,7 @@
     <div id="rooms" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-door-open text-emerald-500"></i> 17. Kamar & Tipe Kamar
+                <i class="fas fa-door-open text-emerald-500"></i> 18. Kamar & Tipe Kamar
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -625,7 +670,7 @@
     <div id="promo-prices" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-tag text-amber-500"></i> 18. Promo Harga
+                <i class="fas fa-tag text-amber-500"></i> 19. Promo Harga
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -698,7 +743,7 @@
     <div id="ai-chat" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-robot text-purple-500"></i> 19. AI Chat Assistant
+                <i class="fas fa-robot text-purple-500"></i> 20. AI Chat Assistant
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -719,7 +764,7 @@
     <div id="admin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-cog text-gray-600"></i> 20. Administrasi (Owner Only)
+                <i class="fas fa-cog text-gray-600"></i> 21. Administrasi (Owner Only)
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -759,7 +804,7 @@
     <div id="api" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-plug text-cyan-500"></i> 21. API Eksternal
+                <i class="fas fa-plug text-cyan-500"></i> 22. API Eksternal
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -804,7 +849,7 @@
     <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-envelope-open-text text-teal-500"></i> 22. Log Email OTA
+                <i class="fas fa-envelope-open-text text-teal-500"></i> 23. Log Email OTA
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -835,12 +880,53 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 23. FAQ --}}
+    {{-- 23. NOTIFIKASI --}}
+    {{-- ================================================================ --}}
+    <div id="notifications" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-bell text-yellow-500"></i> 23. Notifikasi
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Ikon lonceng 🔔 di pojok kanan atas halaman — menampilkan notifikasi real-time.</p>
+            <ul class="space-y-1.5 text-sm text-gray-700 ml-2">
+                <li><i class="fas fa-circle text-yellow-400 text-[6px] mr-2 align-middle"></i>Notifikasi OTA dan housekeeping muncul otomatis</li>
+                <li><i class="fas fa-circle text-yellow-400 text-[6px] mr-2 align-middle"></i><strong>Mark as Read</strong> — Klik notifikasi untuk menandai dibaca</li>
+                <li><i class="fas fa-circle text-yellow-400 text-[6px] mr-2 align-middle"></i><strong>Mark All as Read</strong> — Tandai semua notifikasi sudah dibaca</li>
+                <li><i class="fas fa-circle text-yellow-400 text-[6px] mr-2 align-middle"></i>Jumlah notifikasi belum dibaca tampil sebagai badge merah</li>
+            </ul>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 24. TV WELCOME SCREEN --}}
+    {{-- ================================================================ --}}
+    <div id="tv-welcome" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-tv text-blue-500"></i> 24. TV Welcome Screen
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Halaman sambungan untuk ditampilkan di TV lobby atau smart TV kamar — bisa diakses tanpa login.</p>
+            <div class="bg-gray-800 text-gray-200 rounded-lg p-3 text-xs font-mono mb-3">
+                <p><span class="text-green-400">GET</span> /tv/{room} <span class="text-gray-500">— Welcome screen untuk kamar</span></p>
+                <p><span class="text-green-400">GET</span> /tv/{room}/status <span class="text-gray-500">— Status kamar (JSON)</span></p>
+            </div>
+            <p class="text-xs text-gray-500">Atur tampilan (message, logo, background) di <strong>Administrasi → TV Welcome Settings</strong>.</p>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 25. FAQ --}}
     {{-- ================================================================ --}}
     <div id="faq" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-question-circle text-pink-500"></i> 23. FAQ — Pertanyaan yang Sering Diajukan
+                <i class="fas fa-question-circle text-pink-500"></i> 26. FAQ — Pertanyaan yang Sering Diajukan
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -964,7 +1050,7 @@
     <div id="glossary" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-book text-amber-500"></i> 24. Glosarium — Istilah Penting
+                <i class="fas fa-book text-amber-500"></i> 27. Glosarium — Istilah Penting
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -1052,7 +1138,7 @@
     <div id="tips" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-lightbulb text-yellow-500"></i> 25. Tips & Trik Penggunaan
+                <i class="fas fa-lightbulb text-yellow-500"></i> 28. Tips & Trik Penggunaan
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>

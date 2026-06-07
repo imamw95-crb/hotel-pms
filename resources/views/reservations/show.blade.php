@@ -399,10 +399,12 @@
                     </button>
                 </form>
             @endif
-            @if($reservation->status === 'checked_in')
+            @if(in_array($reservation->status, ['pending', 'checked_in']))
                 <a href="{{ route('reservations.room-change', $reservation) }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     <i class="fas fa-exchange-alt mr-1"></i> Pindah Kamar
                 </a>
+            @endif
+            @if($reservation->status === 'checked_in')
                 <form action="{{ route('reservations.checkout', $reservation) }}" method="POST" data-ajax="true" data-refresh="true">
                     @csrf
                     <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">

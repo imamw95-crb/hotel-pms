@@ -134,4 +134,58 @@ class DashboardController extends Controller
             'dueOutRooms', 'trulyOccupiedRooms'
         ));
     }
+
+    /**
+     * Auto-cancel pending bookings from website/web (via AJAX).
+     */
+    public function autoCancelPending()
+    {
+        $hours = 3;
+        $threshold = Carbon::now()->subHours($hours);
+
+        $pendingBookings = Reservation::whereIn('status', ['menunggu_pembayaran', 'pending'])
+            ->where(function ($q) {
+                $q->where('ota_source', 'website')
+                    ->orWhereNull('ota_source')
+                    ->orWhere('ota_source', '');
+            })
+            ->where('created_at', '<', $threshold)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $total = $pendingBookings->count();
+        $cancelled = 0;
+
+        foreach ($pendingBookings as $reservation) {
+            try {
+                $reservation->update([
+                    'status' => 'cancelled',
+                    'notes' => ($reservation->notes ? $reservation->notes."\n" : '')
+                        .'[Auto-cancel] Dibatalkan manual dari PMS (pending >'.$hours.' jam pada '.now()->format('d/m/Y H:i').')',
+                ]);
+
+                if ($reservation->room) {
+                    $reservation->room->update(['status' => 'available']);
+                }
+
+                $cancelled++;
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Auto-cancel gagal untuk reservasi {$reservation->id}: {$e->getMessage()}");
+            }
+        }
+
+        if ($total === 0) {
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Tidak ada booking pending yang perlu dibatalkan.',
+                'total' => 0,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "✅ {$cancelled} booking pending dibatalkan (dari {$total}).",
+            'total' => $cancelled,
+        ]);
+    }
 }

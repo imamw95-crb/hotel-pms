@@ -8,6 +8,7 @@ use App\Models\MHSLog;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
+use App\Services\BookingNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -164,6 +165,20 @@ class ReservationApiController extends Controller
             });
 
             $reservation->load(['guest', 'room']);
+
+            // Trigger notification
+            if (! empty($validated['ota_source']) && ! in_array($validated['ota_source'], ['website', 'api'])) {
+                app(BookingNotificationService::class)->otaBookingCreated(
+                    $reservation,
+                    [
+                        'guest_name' => $validated['guest_name'],
+                        'reservation_id' => $validated['ota_reservation_number'] ?? '',
+                    ],
+                    $validated['ota_source']
+                );
+            } else {
+                app(BookingNotificationService::class)->webBookingCreated($reservation);
+            }
 
             return response()->json([
                 'success' => true,
@@ -336,10 +351,10 @@ class ReservationApiController extends Controller
      */
     public function changeRoom(Request $request, Reservation $reservation)
     {
-        if ($reservation->status !== 'checked_in') {
+        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pindah kamar hanya bisa dilakukan untuk reservasi yang sudah check-in.',
+                'message' => 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.',
             ], 422);
         }
 
@@ -381,8 +396,13 @@ class ReservationApiController extends Controller
         }
         $reservation->save();
 
-        $oldRoom->update(['status' => 'cleaning']);
-        $newRoom->update(['status' => 'occupied']);
+        // Update status kamar berdasarkan status reservasi
+        if ($reservation->status === 'checked_in') {
+            $oldRoom->update(['status' => 'cleaning']);
+            $newRoom->update(['status' => 'occupied']);
+        } else {
+            $oldRoom->update(['status' => 'available']);
+        }
 
         MHSLog::create([
             'command' => 'room_change',

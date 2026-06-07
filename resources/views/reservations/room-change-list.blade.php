@@ -7,7 +7,7 @@
 <!-- Stats -->
 <div class="stats-grid mb-6">
     <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <p class="text-xs text-red-600 font-medium">Kamar Occupied</p>
+        <p class="text-xs text-red-600 font-medium">Reservasi Aktif</p>
         <p class="text-2xl font-bold text-red-600">{{ $reservations->count() }}</p>
     </div>
     <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">

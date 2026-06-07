@@ -56,12 +56,14 @@ Route::get('/tv/{room}/status', [TvController::class, 'status'])->name('tv.statu
 
 // Dashboard shortcut
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard');
+Route::post('/dashboard/auto-cancel-pending', [DashboardController::class, 'autoCancelPending'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard.auto-cancel-pending');
 
 Route::middleware(['auth'])->group(function () {
     // Dashboard routes — all use the same controller method which adapts to role
     Route::get('/owner/dashboard', [DashboardController::class, 'index'])->middleware('role:owner')->name('owner.dashboard');
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->middleware('role:admin')->name('admin.dashboard');
     Route::get('/frontoffice/dashboard', [DashboardController::class, 'index'])->middleware('role:frontoffice')->name('frontoffice.dashboard');
+    Route::post('/auto-cancel-pending', [DashboardController::class, 'autoCancelPending'])->middleware('role:owner,admin,user_manager,frontoffice')->name('auto-cancel-pending');
 
     // Room Dashboard
     Route::get('/rooms-dashboard', [RoomDashboardController::class, 'index'])->middleware('permission:view_room_dashboard')->name('rooms.dashboard');

@@ -54,6 +54,13 @@
             </div>
         </div>
 
+        {{-- Auto-Cancel Button --}}
+        <div class="flex justify-end mb-2">
+            <button onclick="autoCancelPending(this)" data-url="{{ route('dashboard.auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam
+            </button>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-bold text-lg mb-4">Okupansi 7 Hari Terakhir</h3>
@@ -256,7 +263,13 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <div class="flex justify-end mt-6 mb-2">
+            <button onclick="autoCancelPending(this)" data-url="{{ route('auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
             <h3 class="font-bold text-lg mb-4"><i class="fas fa-history text-blue-500 mr-2"></i>Reservasi Terbaru</h3>
             @php
                 $recentReservations = \App\Models\Reservation::with(['guest', 'room'])
@@ -412,13 +425,19 @@
             @endif
         </div>
 
-        <div class="mt-6">
+        <div class="flex items-center gap-2 mt-6">
             <a href="{{ route('checkin.index') }}" class="bg-blue-600 text-white px-4 py-2 rounded inline-block">
                 <i class="fas fa-plus"></i> Check-in Baru
             </a>
-            <a href="{{ route('rooms.dashboard') }}" class="bg-green-600 text-white px-4 py-2 rounded inline-block ml-2">
+            <a href="{{ route('rooms.dashboard') }}" class="bg-green-600 text-white px-4 py-2 rounded inline-block">
                 <i class="fas fa-th-large"></i> Dashboard Kamar
             </a>
+        </div>
+
+        <div class="mt-4">
+            <button onclick="autoCancelPending(this)" data-url="{{ route('auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam
+            </button>
         </div>
     @endif
 @endsection
@@ -460,4 +479,44 @@
     })();
 </script>
 @endif
+<script>
+    function autoCancelPending(btn) {
+        if (!btn) btn = event && event.currentTarget;
+        if (!btn) return;
+
+        var url = btn.getAttribute('data-url');
+        if (!url) return;
+
+        if (!confirm('⚠️ Batalkan semua booking pending dari website yang sudah >3 jam?\n\nTindakan ini tidak bisa dibatalkan.')) {
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Memproses...';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Gagal: ' + data.message);
+            }
+        })
+        .catch(function(err) {
+            alert('Error: ' + err.message);
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam';
+        });
+    }
+</script>
 @endsection

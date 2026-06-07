@@ -156,7 +156,7 @@ class BookingController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        // Trigger notification — OTA or web
+        // Trigger notification — only for OTA bookings, not direct PMS bookings
         if (! empty($validated['ota_source'])) {
             app(BookingNotificationService::class)->otaBookingCreated(
                 $reservation,
@@ -166,8 +166,6 @@ class BookingController extends Controller
                 ],
                 $validated['ota_source']
             );
-        } else {
-            app(BookingNotificationService::class)->webBookingCreated($reservation);
         }
 
         if (request()->expectsJson()) {
