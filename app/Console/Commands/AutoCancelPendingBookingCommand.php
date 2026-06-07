@@ -19,7 +19,7 @@ class AutoCancelPendingBookingCommand extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Batalkan otomatis booking dari website yang masih pending melebihi batas waktu';
+    protected $description = 'Batalkan otomatis booking pending (website + OTA) yang melebihi batas waktu';
 
     /**
      * Execute the console command.
@@ -33,13 +33,13 @@ class AutoCancelPendingBookingCommand extends Command
         $this->info("⏰ Auto-Cancel Pending Bookings (threshold: {$hours} jam)");
         $this->newLine();
 
-        // Cari booking dari website yang masih menunggu pembayaran / pending
+        // Cari booking dari api/web yang masih menunggu pembayaran / pending
         // dan sudah melebihi batas waktu sejak dibuat (created_at)
+        // Booking langsung dari PMS (ota_source IS NULL) dan OTA lain TIDAK ikut dibatalkan
         $pendingBookings = Reservation::whereIn('status', ['menunggu_pembayaran', 'pending'])
             ->where(function ($q) {
                 $q->where('ota_source', 'website')
-                    ->orWhereNull('ota_source')
-                    ->orWhere('ota_source', '');
+                    ->orWhere('ota_source', 'api');
             })
             ->where('created_at', '<', $threshold)
             ->orderBy('created_at', 'asc')

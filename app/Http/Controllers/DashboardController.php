@@ -146,8 +146,7 @@ class DashboardController extends Controller
         $pendingBookings = Reservation::whereIn('status', ['menunggu_pembayaran', 'pending'])
             ->where(function ($q) {
                 $q->where('ota_source', 'website')
-                    ->orWhereNull('ota_source')
-                    ->orWhere('ota_source', '');
+                    ->orWhere('ota_source', 'api');
             })
             ->where('created_at', '<', $threshold)
             ->orderBy('created_at', 'asc')
