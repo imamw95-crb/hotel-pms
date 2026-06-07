@@ -52,6 +52,39 @@ function writeLog(string $msg): void
     @file_put_contents($logFile, "[$time] {$msg}\n", FILE_APPEND);
 }
 
+
+function runManualDeploy(string $projectDir): array
+{
+    $results = [];
+
+    // 1. Git pull
+    writeLog('Step 1/3: git pull origin main');
+    $result = runCmd("cd {$projectDir} && git pull origin main 2>&1");
+    $results['git_pull'] = $result;
+    writeLog('Git pull exit='.$result['exitCode']);
+    if ($result['exitCode'] !== 0) {
+        writeLog('ERROR: Git pull failed');
+        return array_merge($results, ['error' => 'Git pull failed']);
+    }
+
+    // 2. Clear cache
+    $cacheSteps = ['view:clear', 'config:clear', 'route:clear', 'cache:clear'];
+    foreach ($cacheSteps as $step) {
+        writeLog("Cache clear: {$step}");
+        $r = runCmd("cd {$projectDir} && php artisan {$step} 2>&1");
+        $results['cache_'.$step] = $r;
+    }
+
+    // 3. Optimize
+    writeLog('Step 3/3: artisan optimize');
+    $result = runCmd("cd {$projectDir} && php artisan optimize:clear 2>&1");
+    $results['optimize'] = $result;
+
+    writeLog('=== MANUAL DEPLOY COMPLETED ===');
+
+    return $results;
+}
+
 function runCmd(string $cmd): array
 {
     $output = [];
@@ -71,8 +104,31 @@ if (! $secret) {
 
 writeLog('=== DEPLOY TRIGGERED ===');
 writeLog('IP: '.($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+writeLog('Method: '.$_SERVER['REQUEST_METHOD']);
 
-// --- Only accept POST ---
+// --- Validasi token untuk manual trigger via GET ---
+$token = $_GET['token'] ?? '';
+if ($token !== '') {
+    if (! hash_equals($secret, $token)) {
+        writeLog('ERROR: Invalid manual token');
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Invalid token']);
+        exit;
+    }
+    writeLog('Manual deploy via token');
+    $ref = 'manual';
+    $data = [];
+    $results = runManualDeploy($projectDir);
+    echo json_encode([
+        'success' => true,
+        'message' => 'Manual deploy completed',
+        'branch' => 'main',
+        'results' => $results,
+    ]);
+    exit;
+}
+
+// --- Only accept POST for GitHub webhook ---
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     writeLog('ERROR: Invalid method '.$_SERVER['REQUEST_METHOD']);
     http_response_code(405);
