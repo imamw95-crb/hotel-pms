@@ -94,7 +94,14 @@ class RoomDashboardController extends Controller
                 ->pluck('room_id')
                 ->unique()
                 ->toArray();
-            $availableRoomsCount = $rooms->whereNotIn('id', $bookedRoomIds)->count();
+
+            // Room IDs yang tidak tersedia karena status (out_of_order, maintenance)
+            $unavailableStatusIds = Room::whereIn('status', ['out_of_order', 'maintenance'])
+                ->pluck('id')
+                ->toArray();
+
+            $excludeIds = array_unique(array_merge($bookedRoomIds, $unavailableStatusIds));
+            $availableRoomsCount = $rooms->whereNotIn('id', $excludeIds)->count();
         } else {
             $availableRoomsCount = $rooms->where('status', 'available')->count();
         }
@@ -149,7 +156,14 @@ class RoomDashboardController extends Controller
                     $q->where('check_in', '<', $dateTo)->where('check_out', '>', $dateFrom);
                 })
                 ->pluck('room_id')->unique()->toArray();
-            $availableCount = $rooms->whereNotIn('id', $bookedRoomIds)->count();
+
+            // Room IDs yang tidak tersedia karena status (out_of_order, maintenance)
+            $unavailableStatusIds = Room::whereIn('status', ['out_of_order', 'maintenance'])
+                ->pluck('id')
+                ->toArray();
+
+            $excludeIds = array_unique(array_merge($bookedRoomIds, $unavailableStatusIds));
+            $availableCount = $rooms->whereNotIn('id', $excludeIds)->count();
         } else {
             $availableCount = $rooms->where('status', 'available')->count();
         }
