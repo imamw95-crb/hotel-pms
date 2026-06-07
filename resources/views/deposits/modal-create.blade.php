@@ -95,7 +95,7 @@
             <select name="payment_method" id="payment_method" required
                     class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 @foreach($paymentMethods as $pm)
-                    <option value="{{ $pm->slug }}" {{ old('payment_method') == $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
+                    <option value="{{ $pm->slug }}" {{ old('payment_method', 'cash') == $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
                 @endforeach
             </select>
             @error('payment_method')

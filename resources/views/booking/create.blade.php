@@ -72,6 +72,39 @@
             </div>
         </div>
 
+        <!-- Row 4: Metode Bayar, Tipe Pembayaran -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Metode Pembayaran</label>
+                <select name="payment_method" class="w-full border rounded px-3 py-2">
+                    <option value="">-- Pilih --</option>
+                    @php $pms = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                    @foreach($pms as $pm)
+                        <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tipe Pembayaran</label>
+                <div class="flex space-x-4 mt-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="full" checked onchange="toggleDpFields()">
+                        <span>Lunas</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="payment_type" value="dp" onchange="toggleDpFields()">
+                        <span>DP</span>
+                    </label>
+                </div>
+                {{-- DP Amount Section (hidden by default) --}}
+                <div id="dpAmountSection" class="hidden mt-3 p-3 border border-amber-200 rounded-lg bg-amber-50">
+                    <label class="block text-gray-700 font-bold mb-1 text-sm">Jumlah DP (Rp)</label>
+                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan jumlah DP">
+                    <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar" class="font-bold text-blue-600">Rp 0</span></p>
+                </div>
+            </div>
+        </div>
+
         <!-- Sarapan -->
         <div class="mb-4">
             <label class="flex items-center gap-2 cursor-pointer">

@@ -20,6 +20,7 @@ use App\Http\Controllers\LostFoundController;
 use App\Http\Controllers\NightAuditController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OtaEmailLogController;
+use App\Http\Controllers\OutOfOrderController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PromoPriceController;
 use App\Http\Controllers\ReportController;
@@ -119,7 +120,17 @@ Route::middleware(['auth'])->group(function () {
 
     // AI Auto-Reservation
     Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');
-
+    // ─── Out of Order ─────────────────────────────────────────────
+    Route::middleware(['permission:manage_out_of_order'])->group(function () {
+        Route::get('/out-of-orders', [OutOfOrderController::class, 'index'])->name('out-of-orders.index');
+        Route::get('/out-of-orders/create', [OutOfOrderController::class, 'create'])->name('out-of-orders.create');
+        Route::post('/out-of-orders', [OutOfOrderController::class, 'store'])->name('out-of-orders.store');
+        Route::get('/out-of-orders/{outOfOrder}', [OutOfOrderController::class, 'show'])->name('out-of-orders.show');
+        Route::get('/out-of-orders/{outOfOrder}/edit', [OutOfOrderController::class, 'edit'])->name('out-of-orders.edit');
+        Route::put('/out-of-orders/{outOfOrder}', [OutOfOrderController::class, 'update'])->name('out-of-orders.update');
+        Route::post('/out-of-orders/{outOfOrder}/complete', [OutOfOrderController::class, 'complete'])->name('out-of-orders.complete');
+        Route::delete('/out-of-orders/{outOfOrder}', [OutOfOrderController::class, 'destroy'])->name('out-of-orders.destroy');
+    });
     // Room Rack & Availability
     Route::get('/room-rack', [RoomRackController::class, 'index'])->name('room-rack.index');
     Route::get('/room-rack/check-availability', [RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');

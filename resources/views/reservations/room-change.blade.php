@@ -74,7 +74,7 @@
                 <p class="text-yellow-600 text-sm mt-1">Semua kamar sudah terbooking untuk tanggal {{ $reservation->check_in->format('d/m/Y') }} - {{ $reservation->check_out->format('d/m/Y') }}.</p>
             </div>
         @else
-            <form action="{{ route('reservations.room-change.store', $reservation) }}" method="POST" id="roomChangeForm" data-ajax="true">
+            <form action="{{ route('reservations.room-change.store', $reservation) }}" method="POST" id="roomChangeForm" data-ajax="true" data-refresh="true">
                 @csrf
 
                 <div class="mb-4">

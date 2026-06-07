@@ -38,6 +38,10 @@
             <p class="text-xs text-purple-700 font-medium">Maintenance</p>
             <p class="text-2xl font-bold text-purple-600">{{ $maintCount }}</p>
         </div>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+            <p class="text-xs text-red-700 font-medium">Out of Order</p>
+            <p class="text-2xl font-bold text-red-600"><span id="oooCount">{{ $rooms->where('status', 'out_of_order')->count() }}</span></p>
+        </div>
         <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
             <p class="text-xs text-slate-700 font-medium">Okupansi</p>
             <p class="text-2xl font-bold text-slate-600">{{ $occupancyPct }}%</p>
@@ -84,6 +88,7 @@
                         <option value="due_out" {{ $statusFilter === 'due_out' ? 'selected' : '' }}>Due Out</option>
                         <option value="cleaning" {{ $statusFilter === 'cleaning' ? 'selected' : '' }}>Cleaning</option>
                         <option value="maintenance" {{ $statusFilter === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                        <option value="out_of_order" {{ $statusFilter === 'out_of_order' ? 'selected' : '' }}>Out of Order</option>
                     </select>
                     <select data-filter-type class="border rounded px-2 py-1 text-sm flex-shrink-0">
                         <option value="all" {{ $roomTypeFilter === 'all' ? 'selected' : '' }}>Semua Tipe</option>

@@ -65,6 +65,11 @@ return [
                     'route' => 'service-charge.index',
                     'permission' => 'checkin',
                 ],
+                [
+                    'label' => 'Out of Order',
+                    'route' => 'out-of-orders.index',
+                    'permission' => 'manage_out_of_order',
+                ],
             ],
         ],
 

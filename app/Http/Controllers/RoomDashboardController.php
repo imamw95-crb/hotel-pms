@@ -169,7 +169,7 @@ class RoomDashboardController extends Controller
     public function updateStatus(Request $request, Room $room)
     {
         $validated = $request->validate([
-            'status' => 'required|in:available,occupied,maintenance,cleaning',
+            'status' => 'required|in:available,occupied,maintenance,cleaning,out_of_order',
         ]);
 
         $room->update(['status' => $validated['status']]);
@@ -192,7 +192,7 @@ class RoomDashboardController extends Controller
         $validated = $request->validate([
             'room_ids' => 'required|array|min:1',
             'room_ids.*' => 'exists:rooms,id',
-            'status' => 'required|in:available,occupied,maintenance,cleaning',
+            'status' => 'required|in:available,occupied,maintenance,cleaning,out_of_order',
         ]);
 
         Room::whereIn('id', $validated['room_ids'])->update(['status' => $validated['status']]);

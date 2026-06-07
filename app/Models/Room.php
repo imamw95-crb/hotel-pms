@@ -94,6 +94,29 @@ class Room extends Model
         return $this->hasMany(HousekeepingTask::class);
     }
 
+    public function outOfOrders(): HasMany
+    {
+        return $this->hasMany(OutOfOrder::class);
+    }
+
+    /**
+     * Check if room has active Out of Order for a given date range.
+     */
+    public function isOutOfOrder($checkIn, $checkOut): bool
+    {
+        $checkInDate = $checkIn instanceof Carbon ? $checkIn->format('Y-m-d') : $checkIn;
+        $checkOutDate = $checkOut instanceof Carbon ? $checkOut->format('Y-m-d') : $checkOut;
+
+        return OutOfOrder::where('room_id', $this->id)
+            ->where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOutDate)
+            ->where(function ($q) use ($checkInDate) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkInDate);
+            })
+            ->exists();
+    }
+
     public function isAvailable($checkIn, $checkOut, $excludeReservationId = null)
     {
         // Back-to-Back Booking: check-out jam 12:00 dan check-in jam 14:00
@@ -110,6 +133,11 @@ class Room extends Model
 
         if ($excludeReservationId) {
             $query->where('id', '!=', $excludeReservationId);
+        }
+
+        // Also check if room is Out of Order
+        if ($this->isOutOfOrder($checkIn, $checkOut)) {
+            return false;
         }
 
         return ! $query->exists();

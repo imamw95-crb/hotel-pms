@@ -107,7 +107,7 @@
                     class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
                 @php $pms = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
                 @foreach($pms as $pm)
-                    <option value="{{ $pm->slug }}" {{ old('payment_method') == $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
+                    <option value="{{ $pm->slug }}" {{ old('payment_method', 'cash') == $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
                 @endforeach
             </select>
             @error('payment_method')

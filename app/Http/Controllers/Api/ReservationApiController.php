@@ -389,7 +389,6 @@ class ReservationApiController extends Controller
         $newTotalAmount = $newRoom->calculateTotalForRange($reservation->check_in, $reservation->check_out);
 
         $reservation->room_id = $newRoom->id;
-        $reservation->room_type_name = $newRoom->room_type_name;
         $reservation->total_amount = $newTotalAmount;
         if ($validated['reason']) {
             $reservation->notes = ($reservation->notes ? $reservation->notes."\n" : '').'['.now()->format('d/m/Y H:i').'] Pindah kamar dari '.$oldRoomNumber.' ke '.$newRoomNumber.': '.$validated['reason'];
@@ -728,7 +727,7 @@ class ReservationApiController extends Controller
                 'reservation_number' => $reservation->reservation_number,
                 'guest_name' => $reservation->guest->guest_name ?? null,
                 'room_number' => $reservation->room->room_number ?? null,
-                'room_type_name' => $reservation->room_type_name,
+                'room_type_name' => $reservation->room->room_type_name ?? null,
                 'check_in' => optional($reservation->check_in)->format('Y-m-d H:i:s'),
                 'check_out' => optional($reservation->check_out)->format('Y-m-d H:i:s'),
                 'status' => $reservation->status,

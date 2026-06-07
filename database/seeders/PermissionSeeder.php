@@ -75,6 +75,9 @@ class PermissionSeeder extends Seeder
 
             // Promo Pricing Permissions
             ['name' => 'Manage Promo Prices', 'slug' => 'manage_promo_prices', 'group' => 'pricing', 'description' => 'Dapat mengelola harga promo per tanggal'],
+
+            // Out of Order Permissions
+            ['name' => 'Manage Out of Order', 'slug' => 'manage_out_of_order', 'group' => 'room', 'description' => 'Dapat mengelola Out of Order kamar'],
         ];
 
         foreach ($permissions as $permission) {
@@ -96,6 +99,7 @@ class PermissionSeeder extends Seeder
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
             'manage_lost_found', 'manage_hk_inventory',
             'manage_promo_prices',
+            'manage_out_of_order',
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
@@ -108,6 +112,7 @@ class PermissionSeeder extends Seeder
             'view_service_charges', 'create_service_charge',
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status',
             'manage_promo_prices',
+            'manage_out_of_order',
         ]);
 
         $this->assignPermissionToRole('housekeeping', [
@@ -129,6 +134,7 @@ class PermissionSeeder extends Seeder
             'view_reports', 'export_reports',
             'manage_promo_prices',
             'manage_users', 'create_user', 'edit_user', 'delete_user',
+            'manage_out_of_order',
         ]);
     }
 

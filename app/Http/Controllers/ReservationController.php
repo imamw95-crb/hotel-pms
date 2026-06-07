@@ -448,9 +448,6 @@ class ReservationController extends Controller
         $oldRoomNumber = $oldRoom->room_number;
         $newRoomNumber = $newRoom->room_number;
 
-        // Simpan room_type_name baru jika berbeda tipe
-        $newRoomTypeName = $newRoom->room_type_name;
-
         // Simpan total lama sebelum dihitung ulang
         $oldTotalAmount = $reservation->total_amount;
 
@@ -459,7 +456,6 @@ class ReservationController extends Controller
 
         // Update reservasi
         $reservation->room_id = $newRoom->id;
-        $reservation->room_type_name = $newRoomTypeName;
         $reservation->total_amount = $newTotalAmount;
         if ($validated['reason']) {
             $reservation->notes = ($reservation->notes ? $reservation->notes."\n" : '').'['.now()->format('d/m/Y H:i').'] Pindah kamar dari '.$oldRoomNumber.' ke '.$newRoomNumber.': '.$validated['reason'];
