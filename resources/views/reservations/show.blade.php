@@ -385,6 +385,11 @@
             <a href="{{ route('reservations.print-invoice', $reservation) }}" target="_blank" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
                 <i class="fas fa-file-invoice mr-1"></i> Print Invoice
             </a>
+            <a href="{{ route('reservations.print-registration-card', $reservation) }}"
+               onclick="window.open(this.href, 'printRegCard', 'width=900,height=700,scrollbars=1'); return false;"
+               class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
+                <i class="fas fa-id-card mr-1"></i> Registration Card
+            </a>
             @if($reservation->status === 'pending')
                 <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" data-ajax="true">
                     @csrf

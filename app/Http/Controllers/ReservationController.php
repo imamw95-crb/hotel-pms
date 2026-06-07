@@ -706,6 +706,16 @@ class ReservationController extends Controller
     }
 
     /**
+     * Print Registration Card
+     */
+    public function printRegistrationCard(Reservation $reservation)
+    {
+        $reservation->load(['guest', 'room', 'createdBy']);
+
+        return view('reservations.print-registration-card', compact('reservation'));
+    }
+
+    /**
      * Update total amount reservasi
      */
     public function updateTotal(Request $request, Reservation $reservation)

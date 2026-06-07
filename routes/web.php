@@ -115,6 +115,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/room-change', [ReservationController::class, 'changeRoom'])->middleware('permission:change_room')->name('reservations.room-change.store');
     Route::get('/reservations/{reservation}/print-kwitansi', [ReservationController::class, 'printKwitansi'])->name('reservations.print-kwitansi');
     Route::get('/reservations/{reservation}/print-invoice', [ReservationController::class, 'printInvoice'])->name('reservations.print-invoice');
+    Route::get('/reservations/{reservation}/print-registration-card', [ReservationController::class, 'printRegistrationCard'])->name('reservations.print-registration-card');
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
 
