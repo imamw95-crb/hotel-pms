@@ -782,8 +782,11 @@ class ReportController extends Controller
         $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])
             ->where('status', 'checked_out')
             ->count();
-        $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
-            ->where('status', 'cancelled')
+        $cancelled = Reservation::where('status', 'cancelled')
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                  ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+            })
             ->count();
 
         // ─── OTA Bookings ──────────────────────────────────────────
@@ -928,7 +931,12 @@ class ReportController extends Controller
             $totalRes = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
             $checkins = Reservation::whereBetween('check_in', [$startDate, $endDate])->where('status', 'checked_in')->count();
             $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])->where('status', 'checked_out')->count();
-            $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->where('status', 'cancelled')->count();
+            $cancelled = Reservation::where('status', 'cancelled')
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                      ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+                })
+                ->count();
             $otaBySrc = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
                 ->whereNotNull('ota_source')
                 ->selectRaw('ota_source, COUNT(*) as total_bookings, SUM(total_amount) as total_revenue')
@@ -1047,7 +1055,12 @@ class ReportController extends Controller
         $totalReservations = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
         $checkins = Reservation::whereBetween('check_in', [$startDate, $endDate])->where('status', 'checked_in')->count();
         $checkouts = Reservation::whereBetween('check_out', [$startDate, $endDate])->where('status', 'checked_out')->count();
-        $cancelled = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->where('status', 'cancelled')->count();
+        $cancelled = Reservation::where('status', 'cancelled')
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
+                  ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+            })
+            ->count();
         $otaBySource = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
             ->whereNotNull('ota_source')
             ->selectRaw('ota_source, COUNT(*) as total_bookings, SUM(total_amount) as total_revenue')
