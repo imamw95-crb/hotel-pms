@@ -84,6 +84,31 @@ class ReservationController extends Controller
         return view('reservations.index', compact('reservations', 'search', 'status', 'sumber', 'dateFrom', 'dateTo', 'stats'));
     }
 
+    /**
+     * Cek apakah ada reservasi baru sejak timestamp tertentu (auto-refresh)
+     */
+    public function checkNew(Request $request)
+    {
+        $since = $request->get('since');
+
+        if (!$since) {
+            return response()->json(['has_new' => false, 'count' => 0]);
+        }
+
+        try {
+            $sinceTime = Carbon::parse($since);
+        } catch (\Exception $e) {
+            return response()->json(['has_new' => false, 'count' => 0]);
+        }
+
+        $newCount = Reservation::where('created_at', '>', $sinceTime)->count();
+
+        return response()->json([
+            'has_new' => $newCount > 0,
+            'count' => $newCount,
+        ]);
+    }
+
     public function show(Reservation $reservation)
     {
         $reservation->load(['guest', 'room', 'createdBy']);
