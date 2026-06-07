@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm" data-ajax="true">
+            <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm">
                 @csrf
                 <input type="hidden" name="reservation_id" id="reservationId" value="">
 
@@ -292,14 +292,12 @@
         });
     }
 
-    document.getElementById('roomSelect').addEventListener('change', updatePreview);
     document.getElementById('guestName').addEventListener('input', updatePreview);
     document.getElementById('checkIn').addEventListener('change', updatePreview);
     document.getElementById('checkOut').addEventListener('change', updatePreview);
 
     function updatePreview() {
-        const rs = document.getElementById('roomSelect');
-        document.getElementById('previewRoom').textContent = rs.options[rs.selectedIndex]?.dataset.number || '-';
+        document.getElementById('previewRoom').textContent = document.getElementById('roomDisplay').value || '-';
         document.getElementById('previewGuest').textContent = document.getElementById('guestName').value || '-';
         const ci = document.getElementById('checkIn').value;
         const co = document.getElementById('checkOut').value;

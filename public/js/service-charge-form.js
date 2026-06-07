@@ -23,7 +23,17 @@ var ServiceChargeForm = {
 
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
-                var html = ServiceChargeForm._extractForm(xhr.responseText);
+                var responseText = xhr.responseText;
+                // Coba parse JSON (server returns JSON when expectsJson)
+                try {
+                    var json = JSON.parse(responseText);
+                    if (json.success && json.view) {
+                        responseText = json.view;
+                    }
+                } catch(e) {
+                    // Not JSON, treat as raw HTML
+                }
+                var html = ServiceChargeForm._extractForm(responseText);
                 body.innerHTML = html;
                 ServiceChargeForm._init();
             } else {

@@ -13,7 +13,7 @@ class MHSBridgeService
 
     public function __construct()
     {
-        $this->bridgeUrl = env('MHS_BRIDGE_URL', 'http://100.98.230.92/bridge_api.php');
+        $this->bridgeUrl = env('MHS_BRIDGE_URL', 'http://192.168.88.2:8080/bridge_api.php');
         $this->timeout = 30;
     }
 
@@ -64,21 +64,51 @@ class MHSBridgeService
 
     public function readCard()
     {
-        $response = Http::timeout($this->timeout)
-            ->get($this->bridgeUrl, [
-                'action' => 'read',
-            ]);
+        try {
+            $response = Http::timeout($this->timeout)
+                ->get($this->bridgeUrl, [
+                    'action' => 'read',
+                ]);
 
-        return $response->json();
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Server MHS merespon dengan kode: ' . $response->status(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal terhubung ke server MHS: ' . $e->getMessage(),
+            ];
+        }
     }
 
     public function testConnection()
     {
-        $response = Http::timeout($this->timeout)
-            ->get($this->bridgeUrl, [
-                'action' => 'test',
-            ]);
+        try {
+            $response = Http::timeout($this->timeout)
+                ->get($this->bridgeUrl, [
+                    'action' => 'test',
+                ]);
 
-        return $response->json();
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'success' => false,
+                'connected' => false,
+                'message' => 'Server MHS merespon dengan kode: ' . $response->status(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'connected' => false,
+                'message' => 'Gagal terhubung ke server MHS: ' . $e->getMessage(),
+            ];
+        }
     }
 }
