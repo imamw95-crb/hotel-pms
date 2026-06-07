@@ -747,16 +747,15 @@
         });
     }
 
-    // ─── Auto-Refresh: Deteksi Booking Baru ──────────────────────
+    {{-- ─── Auto-Refresh: Deteksi Booking Baru (DINONAKTIFKAN) ───
     (function() {
         var pageLoadedAt = new window.Date().toISOString();
-        var refreshInterval = 20000; // 20 detik
+        var refreshInterval = 20000;
         var refreshTimer = null;
         var isRefreshing = false;
 
         function checkNewBookings() {
             if (isRefreshing) return;
-
             fetch('{{ route("reservations.check-new") }}?since=' + encodeURIComponent(pageLoadedAt), {
                 headers: { 'Accept': 'application/json' }
             })
@@ -767,18 +766,12 @@
                     if (typeof Toast !== 'undefined') {
                         Toast.info(data.count + ' booking baru ditemukan. Memperbarui halaman...');
                     }
-                    // Auto-reload setelah 1.5 detik biar toast kebaca
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
+                    setTimeout(function() { location.reload(); }, 1500);
                 }
             })
-            .catch(function() {
-                // Silent fail — jangan ganggu user
-            });
+            .catch(function() {});
         }
 
-        // Mulai polling setelah halaman siap
         if (document.readyState === 'complete') {
             refreshTimer = setInterval(checkNewBookings, refreshInterval);
         } else {
@@ -787,10 +780,10 @@
             });
         }
 
-        // Hentikan polling saat halaman di-unload (Turbo SPA)
         document.addEventListener('turbo:before-visit', function() {
             if (refreshTimer) clearInterval(refreshTimer);
         });
     })();
+    --}}
 </script>
 @endsection
