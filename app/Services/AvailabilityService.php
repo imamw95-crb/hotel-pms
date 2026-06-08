@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
 use Carbon\Carbon;
@@ -23,6 +24,20 @@ class AvailabilityService
      */
     public function isRoomAvailable(int $roomId, Carbon $checkIn, Carbon $checkOut, ?int $excludeReservationId = null): bool
     {
+        // Check Out of Order first
+        $oooExists = OutOfOrder::where('room_id', $roomId)
+            ->where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOut->format('Y-m-d'))
+            ->where(function ($q) use ($checkIn) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkIn->format('Y-m-d'));
+            })
+            ->exists();
+
+        if ($oooExists) {
+            return false;
+        }
+
         $query = Reservation::where('room_id', $roomId)
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
@@ -50,7 +65,18 @@ class AvailabilityService
             ->pluck('room_id')
             ->unique();
 
+        // Exclude rooms with active Out of Order for the requested period
+        $oooRoomIds = OutOfOrder::where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOut->format('Y-m-d'))
+            ->where(function ($q) use ($checkIn) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkIn->format('Y-m-d'));
+            })
+            ->pluck('room_id')
+            ->unique();
+
         $query = Room::whereNotIn('id', $bookedIds)
+            ->whereNotIn('id', $oooRoomIds)
             ->where('status', '!=', 'maintenance');
 
         if ($roomType) {

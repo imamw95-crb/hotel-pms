@@ -159,6 +159,8 @@ class RoomRackController extends Controller
     {
         $today = Carbon::today();
 
+        $totalActive = Room::whereNotIn('status', ['out_of_order'])->count();
+
         return [
             'available_now' => Room::where('status', 'available')->count(),
             'occupied_now' => Room::where('status', 'occupied')->count(),
@@ -168,6 +170,7 @@ class RoomRackController extends Controller
                 ->where('status', 'checked_in')->count(),
             'maintenance' => Room::where('status', 'maintenance')->count(),
             'dirty' => Room::where('status', 'cleaning')->count(),
+            'out_of_order' => Room::where('status', 'out_of_order')->count(),
             'occupancy_pct' => 0,
         ];
     }

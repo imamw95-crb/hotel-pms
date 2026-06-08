@@ -241,6 +241,7 @@
                     $roomStatsCleaning = \App\Models\Room::where('status', 'cleaning')->count();
                     $roomStatsOccupied = \App\Models\Room::where('status', 'occupied')->count();
                     $roomStatsMaint = \App\Models\Room::where('status', 'maintenance')->count();
+                    $roomStatsOoo = \App\Models\Room::where('status', 'out_of_order')->count();
                 @endphp
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-green-50 p-3 rounded text-center">
@@ -258,6 +259,10 @@
                     <div class="bg-gray-50 p-3 rounded text-center">
                         <p class="text-2xl font-bold text-gray-600">{{ $roomStatsMaint }}</p>
                         <p class="text-xs text-gray-500">Maintenance</p>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded text-center">
+                        <p class="text-2xl font-bold text-purple-600">{{ $roomStatsOoo }}</p>
+                        <p class="text-xs text-gray-500">Out of Order</p>
                     </div>
                 </div>
             </div>

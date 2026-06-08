@@ -77,6 +77,7 @@
                     'occupied' => 'bg-red-100 border-red-400 text-red-800',
                     'maintenance' => 'bg-gray-100 border-gray-400 text-gray-800',
                     'cleaning' => 'bg-yellow-100 border-yellow-400 text-yellow-800',
+                    'out_of_order' => 'bg-purple-100 border-purple-400 text-purple-800',
                 ][$room->status] ?? 'bg-gray-100 border-gray-400';
                 $activeRes = $room->reservations->first();
                 $guestName = $activeRes && $activeRes->guest ? $activeRes->guest->guest_name : null;
@@ -94,6 +95,7 @@
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-100 border border-red-400"></span> Occupied</span>
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-100 border border-yellow-400"></span> Cleaning</span>
         <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gray-100 border border-gray-400"></span> Maintenance</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-purple-100 border border-purple-400"></span> Out of Order</span>
     </div>
 </div>
 

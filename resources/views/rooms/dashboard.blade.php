@@ -11,7 +11,9 @@
         $occupiedNow = $rooms->where('status', 'occupied')->count();
         $dirtyCount = $rooms->where('status', 'cleaning')->count();
         $maintCount = $rooms->where('status', 'maintenance')->count();
-        $occupancyPct = $totalRooms > 0 ? round(($occupiedNow / $totalRooms) * 100) : 0;
+        $oooCount = $rooms->where('status', 'out_of_order')->count();
+        $effectiveTotal = $totalRooms - $oooCount;
+        $occupancyPct = $effectiveTotal > 0 ? round(($occupiedNow / $effectiveTotal) * 100) : 0;
     @endphp
     <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">

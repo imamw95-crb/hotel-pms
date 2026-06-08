@@ -37,7 +37,7 @@ class DashboardController extends Controller
      */
     private function ownerData()
     {
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $occupiedRooms = Room::where('status', 'occupied')->count();
         $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100) : 0;
 
@@ -92,7 +92,7 @@ class DashboardController extends Controller
     private function adminData()
     {
         $totalUsers = User::count();
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $totalReservations = Reservation::count();
         $totalRevenue = Transaction::sum('amount');
 

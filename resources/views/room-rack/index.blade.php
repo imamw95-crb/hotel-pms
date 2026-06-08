@@ -31,6 +31,10 @@
             <p class="text-xs text-purple-700 font-medium">Maintenance</p>
             <p class="text-2xl font-bold text-purple-600">{{ $stats['maintenance'] }}</p>
         </div>
+        <div class="bg-pink-50 border border-pink-200 rounded-lg p-3 text-center">
+            <p class="text-xs text-pink-700 font-medium">Out of Order</p>
+            <p class="text-2xl font-bold text-pink-600">{{ $stats['out_of_order'] }}</p>
+        </div>
         <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
             <p class="text-xs text-slate-700 font-medium">Okupansi</p>
             <p class="text-2xl font-bold text-slate-600" id="statOccupancy">—</p>

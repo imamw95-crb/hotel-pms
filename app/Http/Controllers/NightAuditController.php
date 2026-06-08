@@ -333,7 +333,7 @@ class NightAuditController extends Controller
      */
     public function buildSnapshotData(string $date): array
     {
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $occupiedRooms = Room::where('status', 'occupied')->count();
         $availableRooms = Room::where('status', 'available')->count();
         $maintenanceRooms = Room::where('status', 'maintenance')->count();

@@ -237,7 +237,7 @@ PROMPT;
     private function buildSystemContext(Carbon $today): string
     {
         $stats = [
-            'total' => Room::count(),
+            'total' => Room::whereNotIn('status', ['out_of_order'])->count(),
             'occupied' => Room::where('status', 'occupied')->count(),
             'available' => Room::where('status', 'available')->count(),
             'cleaning' => Room::where('status', 'cleaning')->count(),

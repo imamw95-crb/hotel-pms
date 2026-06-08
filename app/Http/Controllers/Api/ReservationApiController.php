@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
 use App\Models\MHSLog;
+use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
@@ -624,8 +625,19 @@ class ReservationApiController extends Controller
         $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0)->format('Y-m-d H:i:s');
         $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0)->format('Y-m-d H:i:s');
 
+        // Exclude rooms with active Out of Order for the requested period
+        $oooRoomIds = OutOfOrder::where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOut)
+            ->where(function ($q) use ($checkIn) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkIn);
+            })
+            ->pluck('room_id')
+            ->unique();
+
         $availableRooms = Room::with('roomType')
             ->where('status', '!=', 'maintenance')
+            ->whereNotIn('id', $oooRoomIds)
             ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                 $q->select('room_id')
                     ->from('reservations')
@@ -758,7 +770,7 @@ class ReservationApiController extends Controller
                 'cancelled' => Reservation::where('status', 'cancelled')->count(),
             ],
             'rooms' => [
-                'total' => Room::count(),
+                'total' => Room::whereNotIn('status', ['out_of_order'])->count(),
                 'available' => Room::where('status', 'available')->count(),
                 'occupied' => Room::where('status', 'occupied')->count(),
                 'cleaning' => Room::where('status', 'cleaning')->count(),

@@ -47,23 +47,19 @@ class Kernel extends ConsoleKernel
             }
         })->everyMinute();
 
-        // ─── OTA Email Autopilot ──────────────────────────────────
-        // Check for new OTA emails every 5 minutes
-        // and auto-sync to reservations
-        $schedule->command('hotel:read-emails --limit=5')
-            ->everyFiveMinutes()
-            ->withoutOverlapping(30) // lock expires after 30 minutes as fallback
-            ->runInBackground()
-            ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
+        // ─── OTA Email Autopilot — DISABLED ──────────────────────
+        // $schedule->command('hotel:read-emails --limit=5')
+        //     ->everyFiveMinutes()
+        //     ->withoutOverlapping(30)
+        //     ->runInBackground()
+        //     ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
 
-        // ─── Auto-Cancel Pending Web Bookings ─────────────────────
-        // Cancel website bookings that haven't confirmed payment
-        // within the configured time window (default: 3 hours)
-        $schedule->command('hotel:auto-cancel-pending')
-            ->everyTenMinutes()
-            ->withoutOverlapping(15)
-            ->runInBackground()
-            ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
+        // ─── Auto-Cancel Pending Web Bookings — DISABLED ──────────
+        // $schedule->command('hotel:auto-cancel-pending')
+        //     ->everyTenMinutes()
+        //     ->withoutOverlapping(15)
+        //     ->runInBackground()
+        //     ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
     }
 
     /**

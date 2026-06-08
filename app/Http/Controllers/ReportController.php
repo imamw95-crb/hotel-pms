@@ -21,7 +21,7 @@ class ReportController extends Controller
     {
         $date = $request->get('date', Carbon::today()->format('Y-m-d'));
 
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $occupiedRooms = Room::where('status', 'occupied')->count();
         $availableRooms = Room::where('status', 'available')->count();
         $maintenanceRooms = Room::where('status', 'maintenance')->count();
@@ -149,7 +149,7 @@ class ReportController extends Controller
         $current = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
 
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
 
         while ($current <= $end) {
             $date = $current->format('Y-m-d');
@@ -224,7 +224,7 @@ class ReportController extends Controller
 
             // Room status
             fputcsv($file, ['ROOM STATUS']);
-            fputcsv($file, ['Total Kamar', Room::count()]);
+            fputcsv($file, ['Total Kamar', Room::whereNotIn('status', ['out_of_order'])->count()]);
             fputcsv($file, ['Occupied', Room::where('status', 'occupied')->count()]);
             fputcsv($file, ['Available', Room::where('status', 'available')->count()]);
             fputcsv($file, ['Maintenance', Room::where('status', 'maintenance')->count()]);
@@ -350,7 +350,7 @@ class ReportController extends Controller
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $dates = [];
         $occupancyData = [];
         $current = Carbon::parse($startDate);
@@ -692,7 +692,7 @@ class ReportController extends Controller
         $prevEnd = Carbon::parse($startDate)->subMonth()->endOfMonth()->format('Y-m-d');
 
         // ─── Statistik Kamar ──────────────────────────────────────────
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $avgOccupancy = 0;
         $occupiedCount = 0;
         $daysInMonth = Carbon::parse($startDate)->daysInMonth;
@@ -880,7 +880,7 @@ class ReportController extends Controller
             'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
 
         $callback = function () use ($startDate, $endDate, $totalRooms) {
             $file = fopen('php://output', 'w');
@@ -986,7 +986,7 @@ class ReportController extends Controller
         $prevEnd = Carbon::parse($startDate)->subMonth()->endOfMonth()->format('Y-m-d');
 
         // ─── Statistik Kamar ──────────────────────────────────────────
-        $totalRooms = Room::count();
+        $totalRooms = Room::whereNotIn('status', ['out_of_order'])->count();
         $avgOccupancy = 0;
         $occupiedCount = 0;
         $daysInMonth = Carbon::parse($startDate)->daysInMonth;

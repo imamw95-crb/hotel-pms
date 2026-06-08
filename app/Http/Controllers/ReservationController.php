@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Guest;
 use App\Models\HousekeepingTask;
 use App\Models\MHSLog;
+use App\Models\OutOfOrder;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -409,6 +410,14 @@ class ReservationController extends Controller
                         ->where('id', '!=', $reservation->id);
                 });
             })
+            ->whereDoesntHave('outOfOrders', function ($q) use ($checkIn, $checkOut) {
+                $q->where('status', OutOfOrder::STATUS_ACTIVE)
+                    ->where('start_date', '<=', $checkOut)
+                    ->where(function ($sq) use ($checkIn) {
+                        $sq->whereNull('end_date')
+                            ->orWhere('end_date', '>=', $checkIn);
+                    });
+            })
             ->orderBy('room_number')
             ->get();
 
@@ -575,10 +584,21 @@ class ReservationController extends Controller
         $roomId = null;
         $roomTypeName = $aiData['room_type'] ?? null;
 
+        // Exclude rooms with active Out of Order for the requested period
+        $oooRoomIds = OutOfOrder::where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOut->format('Y-m-d'))
+            ->where(function ($q) use ($checkIn) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkIn->format('Y-m-d'));
+            })
+            ->pluck('room_id')
+            ->unique();
+
         if ($roomTypeName) {
             // Try to find by specific room type
             $availableRooms = Room::where('room_type_name', $roomTypeName)
                 ->where('status', '!=', 'maintenance')
+                ->whereNotIn('id', $oooRoomIds)
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
@@ -597,6 +617,7 @@ class ReservationController extends Controller
         // Fallback: any available room
         if (! $roomId) {
             $anyAvailable = Room::where('status', '!=', 'maintenance')
+                ->whereNotIn('id', $oooRoomIds)
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
