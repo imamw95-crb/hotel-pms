@@ -88,12 +88,39 @@
                         <i class="fas fa-keyboard"></i>
                     </button>
 
-                    {{-- BOOKING NOTIFICATION BELL — DISABLED --}}
-                    {{--
+                    {{-- Booking Notification Bell --}}
                     <div class="relative" id="notificationBellWrapper" data-turbo-permanent>
-                        ...
+                        <button id="notificationBellBtn" onclick="BookingNotifications.toggle()"
+                            class="relative w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition"
+                            title="Notifikasi Booking Baru">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="hidden absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">0</span>
+                        </button>
+
+                        {{-- Notification Dropdown --}}
+                        <div id="notificationDropdown" class="hidden absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 z-[200] overflow-hidden">
+                            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                <h3 class="text-sm font-semibold text-gray-800">Notifikasi Booking</h3>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="BookingNotifications.markAllRead()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                        <i class="fas fa-check-double mr-1"></i>Baca Semua
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="notificationList" class="max-h-96 overflow-y-auto">
+                                <div class="px-4 py-8 text-center text-gray-400 text-sm">
+                                    <i class="fas fa-bell-slash text-2xl mb-2 block"></i>
+                                    Tidak ada notifikasi
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-100 px-4 py-2 bg-gray-50 text-center">
+                                <a href="{{ route('reservations.index') }}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                    <i class="fas fa-external-link-alt mr-1"></i>Lihat Semua Reservasi
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    --}}
+
 
                     {{-- Night Audit v2 Notification --}}
                     @if($nightAuditPending)
@@ -220,12 +247,45 @@
 
     @yield('scripts')
 
-    {{-- PLAY NOTIFICATION SOUND — DISABLED --}}
-    {{--
+    {{-- Play notification sound using Web Audio API --}}
     <script>
-        function playNotificationSound() { ... }
+        function playNotificationSound() {
+            try {
+                var ctx = new (window.AudioContext ; window.webkitAudioContext)();
+                var now = ctx.currentTime;
+
+                // First tone (C5 - higher pitch)
+                var osc1 = ctx.createOscillator();
+                var gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.value = 523.25;
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.25);
+
+                // Second tone (E5 - higher, pleasant chime)
+                var osc2 = ctx.createOscillator();
+                var gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.value = 659.25;
+                gain2.gain.setValueAtTime(0.01, now);
+                gain2.gain.setValueAtTime(0.3, now + 0.1);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.1);
+                osc2.stop(now + 0.4);
+
+                // Auto-resume if suspended (needed for modern browsers)
+                if (ctx.state === 'suspended') ctx.resume();
+            } catch(e) {
+                // Audio not supported - silently ignore
+            }
+        }
     </script>
-    --}}
 
     {{-- Booking Notification Polling --}}
     <script data-turbo-permanent>

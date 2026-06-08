@@ -47,19 +47,19 @@ class Kernel extends ConsoleKernel
             }
         })->everyMinute();
 
-        // ─── OTA Email Autopilot — DISABLED ──────────────────────
-        // $schedule->command('hotel:read-emails --limit=5')
-        //     ->everyFiveMinutes()
-        //     ->withoutOverlapping(30)
-        //     ->runInBackground()
-        //     ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
+        // ─── OTA Email Autopilot ──────────────────────────────
+        $schedule->command('hotel:read-emails --limit=5')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(30)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
 
-        // ─── Auto-Cancel Pending Web Bookings — DISABLED ──────────
-        // $schedule->command('hotel:auto-cancel-pending')
-        //     ->everyTenMinutes()
-        //     ->withoutOverlapping(15)
-        //     ->runInBackground()
-        //     ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
+        // ─── Auto-Cancel Pending Web Bookings ────────────────
+        $schedule->command('hotel:auto-cancel-pending')
+            ->everyTenMinutes()
+            ->withoutOverlapping(15)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
     }
 
     /**
