@@ -60,9 +60,9 @@ class PermissionSeeder extends Seeder
             // Guest Permissions
             ['name' => 'Manage Guests', 'slug' => 'manage_guests', 'group' => 'guest', 'description' => 'Dapat mengelola data tamu'],
 
-            // Service Charge Permissions
-            ['name' => 'View Service Charges', 'slug' => 'view_service_charges', 'group' => 'service', 'description' => 'Dapat melihat service charge'],
-            ['name' => 'Create Service Charge', 'slug' => 'create_service_charge', 'group' => 'service', 'description' => 'Dapat membuat service charge'],
+            // Other Revenue Permissions
+            ['name' => 'View Other Revenues', 'slug' => 'view_service_charges', 'group' => 'service', 'description' => 'Dapat melihat other revenue'],
+            ['name' => 'Create Other Revenue', 'slug' => 'create_service_charge', 'group' => 'service', 'description' => 'Dapat membuat other revenue'],
 
             // Housekeeping Permissions
             ['name' => 'View Housekeeping', 'slug' => 'view_housekeeping', 'group' => 'housekeeping', 'description' => 'Dapat melihat tugas housekeeping'],

@@ -106,7 +106,7 @@
             <a href="#room-change" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-exchange-alt mr-1.5 w-4 text-center"></i> Pindah Kamar</a>
             <a href="#issue-card" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-id-card mr-1.5 w-4 text-center"></i> Issue Card MHS</a>
             <a href="#deposit" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-credit-card mr-1.5 w-4 text-center"></i> Deposit Kartu</a>
-            <a href="#service-charge" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-receipt mr-1.5 w-4 text-center"></i> Service Charge</a>
+            <a href="#other-revenue" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-receipt mr-1.5 w-4 text-center"></i> Other Revenue</a>
             <a href="#resto" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-utensils mr-1.5 w-4 text-center"></i> Pendapatan Resto</a>
             <a href="#housekeeping" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-broom mr-1.5 w-4 text-center"></i> Housekeeping</a>
             <a href="#night-audit" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-moon mr-1.5 w-4 text-center"></i> Night Audit</a>
@@ -315,7 +315,7 @@
                 <li>Konfirmasi — sistem mengubah status kamar menjadi <strong>Available</strong></li>
             </ol>
             <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> Sebelum check-out, pastikan semua <strong>Service Charge</strong> dan <strong>Deposit</strong> sudah terproses.</p>
+                <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> Sebelum check-out, pastikan semua <strong>Other Revenue</strong> dan <strong>Deposit</strong> sudah terproses.</p>
             </div>
         </div>
     </div>
@@ -432,17 +432,17 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 11. SERVICE CHARGE --}}
+    {{-- 11. OTHER REVENUE --}}
     {{-- ================================================================ --}}
-    <div id="service-charge" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
+    <div id="other-revenue" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="keuangan">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-receipt text-sky-500"></i> 11. Service Charge
+                <i class="fas fa-receipt text-sky-500"></i> 11. Other Revenue
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
         <div class="section-body">
-            <p class="text-sm text-gray-600 mb-3">Mencatat biaya layanan tambahan ke kamar (minibar, laundry, telepon, snack, dll).</p>
+            <p class="text-sm text-gray-600 mb-3">Mencatat pendapatan lain selain kamar dan resto (minibar, laundry, telepon, snack, dll).</p>
             <ol class="list-decimal ml-5 space-y-1.5 text-sm text-gray-700">
                 <li>Pilih reservasi tujuan</li>
                 <li>Masukkan deskripsi biaya dan nominal</li>
@@ -592,7 +592,7 @@
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-bold mb-1"><i class="fas fa-money-bill-wave text-yellow-400 mr-1"></i> Revenue</p>
-                    <p class="text-xs text-gray-600">Pendapatan hotel per periode, breakdown sumber (kamar, resto, service charge).</p>
+                    <p class="text-xs text-gray-600">Pendapatan hotel per periode, breakdown sumber (kamar, resto, other revenue).</p>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-bold mb-1"><i class="fas fa-calendar-check text-red-400 mr-1"></i> Reservation Report</p>
@@ -1101,8 +1101,8 @@
                     <p class="text-xs text-gray-600">Uang jaminan kartu akses kamar (dikembalikan saat check-out)</p>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <p class="font-bold text-gray-800">Service Charge</p>
-                    <p class="text-xs text-gray-600">Biaya tambahan (minibar, laundry, snack) yang dibebankan ke kamar</p>
+                    <p class="font-bold text-gray-800">Other Revenue</p>
+                    <p class="text-xs text-gray-600">Pendapatan lain selain kamar & resto (minibar, laundry, snack)</p>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-bold text-gray-800">OTA</p>
@@ -1162,7 +1162,7 @@
                     </h4>
                     <ul class="space-y-2 text-xs text-blue-700">
                         <li><i class="fas fa-check-circle mr-1"></i> Lakukan <strong>Night Audit</strong> setiap malam untuk menjaga akurasi data keuangan</li>
-                        <li><i class="fas fa-check-circle mr-1"></i> Catat <strong>Service Charge</strong> segera setelah tamu menggunakan layanan tambahan</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Catat <strong>Other Revenue</strong> segera setelah tamu menggunakan layanan tambahan</li>
                         <li><i class="fas fa-check-circle mr-1"></i> Selalu <strong>Return Deposit</strong> saat check-out untuk menghindari komplain</li>
                         <li><i class="fas fa-check-circle mr-1"></i> Backup database secara rutin melalui menu <strong>Administrasi → Backup Database</strong></li>
                         <li><i class="fas fa-check-circle mr-1"></i> Atur <strong>Promo Harga</strong> jauh-jauh hari untuk musim liburan</li>
@@ -1218,7 +1218,7 @@
                         <span class="bg-amber-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
                         <div>
                             <p class="font-semibold text-amber-800">💰 Kelola Keuangan Tamu</p>
-                            <p class="text-xs text-amber-600">Belajar mencatat deposit, service charge, dan pembayaran.</p>
+                            <p class="text-xs text-amber-600">Belajar mencatat deposit, other revenue, dan pembayaran.</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-100">

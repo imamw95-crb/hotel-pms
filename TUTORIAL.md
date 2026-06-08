@@ -22,7 +22,7 @@
 
 ## 🎯 Pendahuluan
 
-**Hotel PMS** — Aplikasi manajemen hotel berbasis web: room dashboard, reservasi, check-in/out, housekeeping, keuangan (deposit, service charge, resto, expense), OTA email integration, AI Chat, Night Audit, laporan lengkap, & manajemen role/permission.
+**Hotel PMS** — Aplikasi manajemen hotel berbasis web: room dashboard, reservasi, check-in/out, housekeeping, keuangan (deposit, other revenue, resto, expense), OTA email integration, AI Chat, Night Audit, laporan lengkap, & manajemen role/permission.
 
 **Prasyarat:** PHP 8.3+, Composer, Node.js/NPM, MySQL, Git, Web Browser.  
 💡 Pakai Laragon? Semua sudah include — download di [laragon.org](https://laragon.org).
@@ -48,7 +48,7 @@
 | Level | Waktu | Topik |
 |-------|-------|-------|
 | 🟢 **Pemula** | 1-2 jam | Login, Room Dashboard, Room Rack, Booking, Check-in/out |
-| 🟡 **Menengah** | 3-5 jam | Deposit, Service Charge, Housekeeping, Pendapatan Resto, Reports |
+| 🟡 **Menengah** | 3-5 jam | Deposit, Other Revenue, Housekeeping, Pendapatan Resto, Reports |
 | 🔵 **Mahir** | 5-8 jam | OTA Email Log, Night Audit v2, Promo Pricing, AI Chat, Expenses |
 | ⚫ **Expert** | 8+ jam | API Eksternal, Role & Permission, Backup, API Keys, Deployment |
 
@@ -66,7 +66,7 @@
 │   ├── Pindah Kamar           → Room change
 │   ├── Issue Card             → MHS card issuer
 │   ├── Deposit Kartu          → Deposit/return uang jaminan
-│   └── Service Charge         → Biaya tambahan kamar
+│   └── Other Revenue         → Pendapatan lain (laundry, minibar, dll)
 ├── 📊 Availability
 │   ├── Room Rack              → Traditional rack view
 │   └── Occupancy Calendar     → Kalender okupansi
@@ -229,7 +229,7 @@ Untuk reservasi beberapa kamar sekaligus (rombongan, wedding, dll).
 1. Buka **Front Desk → Checkout**
 2. Daftar kamar **Occupied**. Kamar **Due Out** (jadwal check-out hari ini) disorot merah
 3. Verifikasi tagihan tamu — klik **Detail** untuk lihat rincian
-4. Pastikan semua **Service Charge** & **Deposit** sudah terproses
+4. Pastikan semua **Other Revenue** & **Deposit** sudah terproses
 5. Klik **Checkout** → konfirmasi
 6. Status kamar → **Available**, tugas housekeeping otomatis terbuat
 
@@ -300,16 +300,16 @@ Filter berdasarkan tanggal atau cari no. receipt / nama tamu.
 
 ---
 
-### 9. 🧾 Service Charge
+### 9. 🧾 Other Revenue
 
-**Akses:** Front Desk → Service Charge
+**Akses:** Front Desk → Other Revenue
 
-Mencatat biaya layanan tambahan ke kamar (minibar, laundry, telepon, snack, dll).
+Mencatat pendapatan lain selain kamar dan resto (minibar, laundry, telepon, snack, dll).
 1. Pilih reservasi tujuan
 2. Masukkan deskripsi biaya dan nominal
 3. Simpan — total biaya otomatis masuk ke tagihan reservasi
 
-> 🧪 **Latihan 6:** Tambah service charge laundry Rp 75.000 ke reservasi check-in.
+> 🧪 **Latihan 6:** Tambah other revenue laundry Rp 75.000 ke reservasi check-in.
 
 ---
 
@@ -761,7 +761,7 @@ hotel-pms/
 | **OpenRouter** | Gateway API untuk AI (LLM) |
 | **DP / Down Payment** | Uang muka booking |
 | **Deposit Kartu** | Uang jaminan kartu akses kamar |
-| **Service Charge** | Biaya tambahan kamar (minibar, laundry, dll) |
+| **Other Revenue** | Pendapatan lain selain kamar & resto (minibar, laundry, dll) |
 | **Room Rack** | Tampilan rack tradisional status kamar |
 | **Okupansi / Occupancy** | Tingkat hunian kamar (%) |
 | **Walk-in Guest** | Tamu datang langsung tanpa reservasi |
@@ -774,7 +774,7 @@ hotel-pms/
 ## 🧪 Latihan Mandiri
 
 ### 🟢 Pemula
-**A.** Login `frontoffice` → buat booking "Siti Rahma" Deluxe 2 malam dengan DP → check-in → service charge Rp 50.000 → check-out → verifikasi kamar jadi `cleaning`.  
+**A.** Login `frontoffice` → buat booking "Siti Rahma" Deluxe 2 malam dengan DP → check-in → other revenue Rp 50.000 → check-out → verifikasi kamar jadi `cleaning`.  
 **B.** Login `owner` → buka semua menu, catat fiturnya. Bandingkan dengan login `frontoffice`.
 
 ### 🟡 Menengah

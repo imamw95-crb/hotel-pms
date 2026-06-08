@@ -321,7 +321,7 @@
                 <div class="card-sub">Bln lalu: Rp {{ number_format($restoRevenuePrev, 0, ',', '.') }}</div>
             </div>
             <div class="ringkasan-card" style="background:#faf5ff;">
-                <div class="card-label">Service Charge</div>
+                <div class="card-label">Other Revenue</div>
                 <div class="card-value">Rp {{ number_format($scRevenue, 0, ',', '.') }}</div>
                 <div class="card-sub">Bln lalu: Rp {{ number_format($scRevenuePrev, 0, ',', '.') }}</div>
             </div>
@@ -360,7 +360,7 @@
                     <td class="right">{{ $restoRevenuePrev > 0 ? round((($restoRevenue - $restoRevenuePrev) / $restoRevenuePrev) * 100, 1) : '-' }}%</td>
                 </tr>
                 <tr>
-                    <td>Service Charge</td>
+                    <td>Other Revenue</td>
                     <td class="right">Rp {{ number_format($scRevenue, 0, ',', '.') }}</td>
                     <td class="right">Rp {{ number_format($scRevenuePrev, 0, ',', '.') }}</td>
                     <td class="right">{{ $scRevenuePrev > 0 ? round((($scRevenue - $scRevenuePrev) / $scRevenuePrev) * 100, 1) : '-' }}%</td>

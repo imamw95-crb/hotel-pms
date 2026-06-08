@@ -328,7 +328,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/resto/{restoTransaction}', [RestoController::class, 'show'])->name('resto.show');
     });
 
-    // Service Charge
+    // Other Revenue
     Route::middleware(['auth', 'permission:checkin'])->group(function () {
         Route::get('/service-charge', [ServiceChargeController::class, 'index'])->name('service-charge.index');
         Route::get('/service-charge/create', [ServiceChargeController::class, 'create'])->name('service-charge.create');

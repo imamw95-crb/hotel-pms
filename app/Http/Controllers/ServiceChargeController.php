@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class ServiceChargeController extends Controller
 {
     /**
-     * List service charges.
+     * List other revenues.
      */
     public function index(Request $request)
     {
@@ -46,7 +46,7 @@ class ServiceChargeController extends Controller
     }
 
     /**
-     * Form tambah service charge.
+     * Form tambah other revenue.
      */
     public function create(Request $request)
     {
@@ -70,7 +70,7 @@ class ServiceChargeController extends Controller
     }
 
     /**
-     * Simpan service charge.
+     * Simpan other revenue.
      */
     public function store(Request $request)
     {
@@ -105,18 +105,18 @@ class ServiceChargeController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Service charge berhasil disimpan.',
+                'message' => 'Other revenue berhasil disimpan.',
                 'redirect_url' => route('service-charge.show', $charge),
                 'charge' => $charge,
             ]);
         }
 
         return redirect()->route('service-charge.show', $charge)
-            ->with('success', 'Service charge berhasil disimpan.');
+            ->with('success', 'Other revenue berhasil disimpan.');
     }
 
     /**
-     * Detail & print service charge.
+     * Detail & print other revenue.
      */
     public function show(ServiceCharge $serviceCharge)
     {

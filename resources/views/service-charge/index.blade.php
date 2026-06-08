@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Service Charge')
-@section('header', 'Service Charge')
+@section('title', 'Other Revenue')
+@section('header', 'Other Revenue')
 
 @section('content')
 <div class="max-w-6xl mx-auto">
@@ -9,12 +9,12 @@
     {{-- Header --}}
     <div class="flex justify-between items-center mb-6">
         <div>
-            <p class="text-sm text-gray-500">Kelola biaya layanan tambahan untuk tamu (laundry, extra bed, mini bar, dll).</p>
+            <p class="text-sm text-gray-500">Kelola pendapatan lain selain kamar dan resto (laundry, extra bed, mini bar, dll).</p>
         </div>
         <button type="button"
                 onclick="ServiceChargeForm.open('{{ route('service-charge.create') }}')"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition flex items-center gap-2">
-            <i class="fas fa-plus"></i> Service Charge Baru
+            <i class="fas fa-plus"></i> Other Revenue Baru
         </button>
     </div>
 
@@ -104,7 +104,7 @@
                 <tr>
                     <td colspan="7" class="p-8 text-center text-gray-400">
                         <i class="fas fa-receipt text-3xl mb-2 block"></i>
-                        Belum ada service charge.
+                        Belum ada other revenue.
                     </td>
                 </tr>
                 @endforelse

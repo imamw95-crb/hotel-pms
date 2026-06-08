@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Service Charge - {{ $charge->charge_number }}</title>
+    <title>Other Revenue - {{ $charge->charge_number }}</title>
     @vite('resources/css/app.css')
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <style>
@@ -49,7 +49,7 @@
         {{-- Title --}}
         <div style="text-align: center; margin-bottom: 12px;">
             <div style="font-size: 13px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid #999; display: inline-block; padding-bottom: 3px;">
-                Service Charge
+                Other Revenue
             </div>
             <div style="font-size: 10px; color: #666; margin-top: 3px;">No: {{ $charge->charge_number }}</div>
         </div>

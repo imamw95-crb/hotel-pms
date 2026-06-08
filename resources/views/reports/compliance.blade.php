@@ -76,7 +76,7 @@
             @endif
         </div>
         <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div class="text-purple-600 text-xs font-semibold uppercase tracking-wider">Service Charge</div>
+            <div class="text-purple-600 text-xs font-semibold uppercase tracking-wider">Other Revenue</div>
             <div class="text-2xl font-bold text-purple-700">Rp {{ number_format($scRevenue, 0, ',', '.') }}</div>
             @if($scRevenuePrev > 0)
                 <div class="text-xs {{ $scRevenue >= $scRevenuePrev ? 'text-green-600' : 'text-red-600' }}">
@@ -424,15 +424,15 @@
 </div>
 
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
-{{-- G. SERVICE CHARGE --}}
+{{-- G. OTHER REVENUE --}}
 {{-- ═══════════════════════════════════════════════════════════════════ --}}
 <div class="bg-white rounded shadow p-5 mb-6">
     <h3 class="text-lg font-bold border-b pb-2 mb-4 flex items-center gap-2">
-            <i class="fas fa-hand-holding-usd text-purple-600"></i> G. Service Charge
+            <i class="fas fa-hand-holding-usd text-purple-600"></i> G. Other Revenue
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div class="text-purple-600 text-xs font-semibold uppercase">Service Charge Bulan Ini</div>
+            <div class="text-purple-600 text-xs font-semibold uppercase">Other Revenue Bulan Ini</div>
             <div class="text-2xl font-bold text-purple-700">Rp {{ number_format($scRevenue, 0, ',', '.') }}</div>
         </div>
         <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
@@ -440,7 +440,7 @@
             <div class="text-2xl font-bold">Rp {{ number_format($scRevenuePrev, 0, ',', '.') }}</div>
         </div>
         <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
-            <div class="text-purple-600 text-xs font-semibold uppercase">% dari Total Pendapatan</div>
+            <div class="text-purple-600 text-xs font-semibold uppercase">% dari Total Revenue</div>
             <div class="text-2xl font-bold text-purple-700">
                 {{ $grandRevenue > 0 ? round(($scRevenue / $grandRevenue) * 100, 1) : 0 }}%
             </div>

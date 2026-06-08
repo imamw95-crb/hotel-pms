@@ -61,7 +61,7 @@ return [
                     'permission' => 'checkin',
                 ],
                 [
-                    'label' => 'Service Charge',
+                    'label' => 'Other Revenue',
                     'route' => 'service-charge.index',
                     'permission' => 'checkin',
                 ],

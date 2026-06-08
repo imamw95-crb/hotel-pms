@@ -52,7 +52,7 @@ class ReportController extends Controller
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
-        // Service Charge hari ini
+        // Other Revenue hari ini
         $serviceChargeRevenueToday = ServiceCharge::whereDate('charge_date', $date)->sum('total_amount');
         $serviceCharges = ServiceCharge::with(['guest', 'reservation.room', 'createdBy'])
             ->whereDate('charge_date', $date)
@@ -725,7 +725,7 @@ class ReportController extends Controller
         $restoRevenuePrev = RestoTransaction::whereBetween('created_at', [$prevStart.' 00:00:00', $prevEnd.' 23:59:59'])->sum('total_amount');
         $restoCount = RestoTransaction::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])->count();
 
-        // ─── Service Charge ──────────────────────────────────────────
+        // ─── Other Revenue ──────────────────────────────────────────
         $scRevenue = ServiceCharge::whereBetween('charge_date', [$startDate, $endDate])->sum('total_amount');
         $scRevenuePrev = ServiceCharge::whereBetween('charge_date', [$prevStart, $prevEnd])->sum('total_amount');
 
@@ -900,7 +900,7 @@ class ReportController extends Controller
             $grandTotal = $roomRev + $restoRev + $scRev;
             fputcsv($file, ['Pendapatan Kamar', $roomRev]);
             fputcsv($file, ['Pendapatan Resto/F&B', $restoRev]);
-            fputcsv($file, ['Service Charge', $scRev]);
+            fputcsv($file, ['Other Revenue', $scRev]);
             fputcsv($file, ['Total Pendapatan', $grandTotal]);
             fputcsv($file, ['Total Pengeluaran', $expenses]);
             fputcsv($file, ['Pendapatan Bersih', $grandTotal - $expenses]);

@@ -1,7 +1,7 @@
-{{-- Service Charge Create Modal Content — no layout, pure HTML for AJAX modal --}}
+{{-- Other Revenue Create Modal Content — no layout, pure HTML for AJAX modal --}}
 <div class="p-6">
-    <h2 class="text-2xl font-bold mb-2"><i class="fas fa-receipt text-blue-500 mr-2"></i>Service Charge Baru</h2>
-    <p class="text-sm text-gray-500 mb-6">Catat biaya layanan tambahan untuk tamu (laundry, extra bed, mini bar, room service, dll).</p>
+    <h2 class="text-2xl font-bold mb-2"><i class="fas fa-receipt text-blue-500 mr-2"></i>Other Revenue Baru</h2>
+    <p class="text-sm text-gray-500 mb-6">Catat pendapatan lain selain kamar dan resto (laundry, extra bed, mini bar, room service, dll).</p>
 
     <form method="POST" action="{{ route('service-charge.store') }}" class="space-y-5" id="serviceChargeForm" data-ajax="true" data-refresh="true">
         @csrf
@@ -136,7 +136,7 @@
             </button>
             <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition flex items-center gap-2">
-                <i class="fas fa-save"></i> Simpan Service Charge
+                <i class="fas fa-save"></i> Simpan Other Revenue
             </button>
         </div>
     </form>

@@ -214,7 +214,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['  - OTA', $data['otaRevenueToday'] ?? 0]);
             fputcsv($file, ['  - Web / Direct', $data['webRevenueToday'] ?? 0]);
             fputcsv($file, ['Pendapatan Resto', $data['restoRevenueToday'] ?? 0]);
-            fputcsv($file, ['Service Charge', $data['serviceChargeRevenueToday'] ?? 0]);
+            fputcsv($file, ['Other Revenue', $data['serviceChargeRevenueToday'] ?? 0]);
             fputcsv($file, ['Total', $data['totalRevenue'] ?? 0]);
             fputcsv($file, []);
 
@@ -439,7 +439,7 @@ class NightAuditController extends Controller
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
-        // Service charges
+        // Other revenues
         $serviceCharges = ServiceCharge::with(['guest', 'reservation.room'])
             ->whereDate('charge_date', $date)
             ->orderBy('created_at', 'desc')

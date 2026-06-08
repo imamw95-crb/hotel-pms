@@ -121,7 +121,6 @@
                         </div>
                     </div>
 
-
                     {{-- Night Audit v2 Notification --}}
                     @if($nightAuditPending)
                         <a href="{{ route('reports.night-audit-v2.index') }}"
@@ -251,7 +250,7 @@
     <script>
         function playNotificationSound() {
             try {
-                var ctx = new (window.AudioContext ; window.webkitAudioContext)();
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
                 var now = ctx.currentTime;
 
                 // First tone (C5 - higher pitch)

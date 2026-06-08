@@ -100,7 +100,7 @@
                 <span class="font-semibold text-orange-600">Rp {{ number_format($restoRevenueToday ?? 0, 0, ',', '.') }}</span>
             </div>
             <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-600">Service Charge:</span>
+                <span class="text-gray-600">Other Revenue:</span>
                 <span class="font-semibold text-blue-600">Rp {{ number_format($serviceChargeRevenueToday ?? 0, 0, ',', '.') }}</span>
             </div>
         </div>
@@ -285,10 +285,10 @@
     </div>
     @endif
 
-    {{-- Service Charge --}}
+    {{-- Other Revenue --}}
     @if(!empty($serviceCharges) && count($serviceCharges) > 0)
     <div class="mb-6">
-        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-gray-800 pb-1"><i class="fas fa-receipt text-blue-500 mr-2"></i>Service Charge</h2>
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-gray-800 pb-1"><i class="fas fa-receipt text-blue-500 mr-2"></i>Other Revenue</h2>
 
         @if(!empty($serviceChargeByMethod) && count($serviceChargeByMethod) > 0)
         <div class="grid grid-cols-4 gap-3 mb-4">
@@ -328,7 +328,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-blue-50 border-t-2 border-blue-300">
-                    <td colspan="6" class="p-2 text-right font-bold text-blue-800">TOTAL SERVICE CHARGE</td>
+                    <td colspan="6" class="p-2 text-right font-bold text-blue-800">TOTAL OTHER REVENUE</td>
                     <td class="p-2 text-right font-bold text-blue-700">Rp {{ number_format($serviceChargeRevenueToday ?? 0, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>

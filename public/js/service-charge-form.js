@@ -1,6 +1,6 @@
 /**
- * Service Charge Form Handler
- * Menangani form service charge via modal
+ * Other Revenue Form Handler
+ * Menangani form other revenue via modal
  */
 var ServiceChargeForm = {
     open: function(url) {

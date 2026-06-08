@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Service Charge Baru')
-@section('header', 'Service Charge Baru')
+@section('title', 'Other Revenue Baru')
+@section('header', 'Other Revenue Baru')
 
 @section('content')
 <div class="max-w-3xl mx-auto">
@@ -13,7 +13,7 @@
         <div class="bg-blue-50 border border-blue-200 rounded-t-lg p-4 flex items-start gap-3">
             <i class="fas fa-receipt text-blue-500 mt-0.5"></i>
             <div class="text-sm text-blue-700">
-                <p><strong>Service Charge</strong> — Catat biaya layanan tambahan untuk tamu (laundry, extra bed, mini bar, room service, dll).</p>
+                <p><strong>Other Revenue</strong> — Catat pendapatan lain selain kamar dan resto (laundry, extra bed, mini bar, room service, dll).</p>
             </div>
         </div>
 
@@ -151,7 +151,7 @@
             </button>
             <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition flex items-center gap-2">
-                <i class="fas fa-save"></i> Simpan Service Charge
+                <i class="fas fa-save"></i> Simpan Other Revenue
             </button>
         </div>
     </form>
