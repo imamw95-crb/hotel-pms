@@ -20,6 +20,45 @@
     </div>
 </div>
 
+<!-- Filter -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form method="GET" action="{{ route('checkout.index') }}" class="mb-2">
+        <div class="grid gap-4 lg:grid-cols-5">
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Cari (Nama / Kode / Kamar)</label>
+                <input type="text" name="search" value="{{ request('search') }}" class="w-full border rounded px-3 py-2" placeholder="Cari...">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Dari Tanggal</label>
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Sampai Tanggal</label>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Kamar</label>
+                <select name="room_id" class="w-full border rounded px-3 py-2">
+                    <option value="">Semua Kamar</option>
+                    @foreach($rooms as $room)
+                        <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
+                            {{ $room->room_number }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-search mr-1"></i> Filter
+                </button>
+                <a href="{{ route('checkout.index') }}" class="flex-1 text-center bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                    <i class="fas fa-redo mr-1"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
 <!-- Tabel Checkout -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="overflow-x-auto">

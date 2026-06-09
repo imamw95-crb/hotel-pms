@@ -355,14 +355,36 @@ class ReservationController extends Controller
     /**
      * Halaman daftar kamar untuk checkout
      */
-    public function checkoutList()
+    public function checkoutList(Request $request)
     {
+        $rooms = Room::orderBy('room_number')->get();
+
+        $dateFrom = $request->input('date_from', Carbon::yesterday()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
+
         $reservations = Reservation::with(['guest', 'room'])
             ->where('status', 'checked_in')
+            ->when($request->input('search'), function ($query, $search) {
+                $query->where(function ($sub) use ($search) {
+                    $sub->where('reservation_number', 'like', '%'.$search.'%')
+                        ->orWhereHas('guest', function ($guestQuery) use ($search) {
+                            $guestQuery->where('guest_name', 'like', '%'.$search.'%')
+                                ->orWhere('id_number', 'like', '%'.$search.'%');
+                        })
+                        ->orWhereHas('room', function ($roomQuery) use ($search) {
+                            $roomQuery->where('room_number', 'like', '%'.$search.'%');
+                        });
+                });
+            })
+            ->when($request->input('room_id'), function ($query, $roomId) {
+                $query->where('room_id', $roomId);
+            })
+            ->whereDate('check_out', '>=', $dateFrom)
+            ->whereDate('check_in', '<=', $dateTo)
             ->orderBy('check_out', 'asc')
             ->get();
 
-        return view('reservations.checkout-list', compact('reservations'));
+        return view('reservations.checkout-list', compact('reservations', 'rooms', 'dateFrom', 'dateTo'));
     }
 
     /**
