@@ -258,6 +258,12 @@ return [
                     'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
+                    'label' => 'Laporan OTA',
+                    'route' => 'reports.ota',
+                    'permission' => 'view_reports',
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
+                ],
+                [
                     'label' => 'Laporan Pengeluaran',
                     'route' => 'reports.expenses',
                     'permission' => 'view_reports',

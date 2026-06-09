@@ -171,6 +171,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');
         Route::get('/reports/mhs-audit', [ReportController::class, 'mhsAudit'])->name('reports.mhs-audit');
         Route::get('/reports/group', [ReportController::class, 'groupReport'])->name('reports.group');
+        Route::get('/reports/ota', [ReportController::class, 'otaReport'])->name('reports.ota');
+        Route::get('/reports/ota/export', [ReportController::class, 'exportOtaReport'])->name('reports.ota.export');
 
         // Night Audit v2 — Preview, Draft, Lock, History
         Route::get('/reports/night-audit-v2', [NightAuditController::class, 'index'])->middleware('permission:view_reports')->name('reports.night-audit-v2.index');

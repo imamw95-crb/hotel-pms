@@ -617,6 +617,117 @@ class ReportController extends Controller
     }
 
     /**
+     * Laporan OTA — rekap booking per platform OTA
+     */
+    public function otaReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $source = $request->get('source', 'all');
+
+        $query = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->whereNotNull('ota_source')
+            ->where('ota_source', '!=', '')
+            ->where('ota_source', '!=', 'website')
+            ->with(['guest', 'room']);
+
+        if ($source !== 'all') {
+            $query->where('ota_source', $source);
+        }
+
+        $reservations = $query->orderBy('check_in', 'desc')->get();
+
+        // Summary per OTA source
+        $bySource = $reservations->groupBy('ota_source')->map(function ($items, $source) {
+            return (object) [
+                'source' => $source,
+                'total' => $items->count(),
+                'checked_in' => $items->where('status', 'checked_in')->count(),
+                'checked_out' => $items->where('status', 'checked_out')->count(),
+                'pending' => $items->where('status', 'pending')->count(),
+                'cancelled' => $items->where('status', 'cancelled')->count(),
+                'total_amount' => $items->sum('total_amount'),
+                'paid_amount' => $items->sum('paid_amount'),
+            ];
+        })->sortByDesc('total');
+
+        // Daftar OTA source unik untuk filter dropdown
+        $otaSources = Reservation::whereNotNull('ota_source')
+            ->where('ota_source', '!=', '')
+            ->where('ota_source', '!=', 'website')
+            ->select('ota_source')
+            ->distinct()
+            ->orderBy('ota_source')
+            ->pluck('ota_source');
+
+        $totalBookings = $reservations->count();
+        $totalRevenue = $reservations->sum('total_amount');
+        $totalPaid = $reservations->sum('paid_amount');
+
+        return view('reports.ota', compact(
+            'startDate', 'endDate', 'source', 'reservations', 'bySource',
+            'otaSources', 'totalBookings', 'totalRevenue', 'totalPaid'
+        ));
+    }
+
+    /**
+     * Export Laporan OTA ke CSV
+     */
+    public function exportOtaReport(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::now()->endOfMonth()->format('Y-m-d'));
+        $source = $request->get('source', 'all');
+        $filename = 'ota-report-'.$startDate.'-to-'.$endDate.'.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ];
+
+        $query = Reservation::whereBetween('check_in', [$startDate, $endDate])
+            ->whereNotNull('ota_source')
+            ->where('ota_source', '!=', '')
+            ->where('ota_source', '!=', 'website')
+            ->with(['guest', 'room']);
+
+        if ($source !== 'all') {
+            $query->where('ota_source', $source);
+        }
+
+        $reservations = $query->orderBy('check_in', 'desc')->get();
+
+        $callback = function () use ($reservations, $startDate, $endDate) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, ['LAPORAN BOOKING OTA']);
+            fputcsv($file, ['Periode', $startDate.' s/d '.$endDate]);
+            fputcsv($file, []);
+            fputcsv($file, ['Platform OTA', 'No. Reservasi', 'No. OTA', 'Nama Tamu', 'Kamar', 'Check-in', 'Check-out', 'Status', 'Total', 'Terbayar', 'Sisa']);
+            foreach ($reservations as $r) {
+                fputcsv($file, [
+                    $r->ota_source,
+                    $r->reservation_number,
+                    $r->ota_reservation_number ?? '-',
+                    $r->guest?->guest_name ?? '-',
+                    $r->room?->room_number ?? '-',
+                    $r->check_in->format('d/m/Y H:i'),
+                    $r->check_out->format('d/m/Y H:i'),
+                    $r->status,
+                    $r->total_amount,
+                    $r->paid_amount,
+                    $r->remaining_payment,
+                ]);
+            }
+            fputcsv($file, []);
+            fputcsv($file, ['TOTAL', '', '', '', '', '', '', '', $reservations->sum('total_amount'), $reservations->sum('paid_amount'), $reservations->sum('total_amount') - $reservations->sum('paid_amount')]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Laporan Pengeluaran (Expenses Report)
      */
     public function expenses(Request $request)
