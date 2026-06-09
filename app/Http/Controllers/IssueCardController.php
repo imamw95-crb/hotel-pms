@@ -50,7 +50,7 @@ class IssueCardController extends Controller
             'email' => 'nullable|email|max:100',
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
-            'number_of_cards' => 'required|integer|min:1|max:5',
+            'number_of_cards' => 'required|integer|min:1|max:2',
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
@@ -106,7 +106,7 @@ class IssueCardController extends Controller
     public function reissue(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([
-            'number_of_cards' => 'required|integer|min:1|max:5',
+            'number_of_cards' => 'required|integer|min:1|max:2',
         ]);
 
         $room = $reservation->room;
@@ -253,5 +253,117 @@ class IssueCardController extends Controller
                 'message' => 'Gagal membaca kartu: '.$e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Daftarkan encoder ke MHS
+     */
+    public function registerEncoder(Request $request)
+    {
+        $encoderIp = $request->input('ip', '192.168.88.2');
+        $encoderId = $request->input('encoder_id', '01');
+
+        $result = $this->mhs->registerEncoder($encoderIp, $encoderId);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($result);
+        }
+
+        if ($result['success'] ?? false) {
+            return back()->with('success', 'Encoder berhasil didaftarkan!');
+        }
+
+        return back()->with('error', 'Gagal mendaftarkan encoder: '.($result['message'] ?? 'Unknown error'));
+    }
+
+    /**
+     * Ambil daftar kamar dari database (lengkap dengan status & tamu aktif)
+     */
+    public function getMhsRooms()
+    {
+        try {
+            $rooms = Room::with(['reservations' => function ($q) {
+                $q->whereIn('status', ['checked_in', 'pending'])
+                  ->with('guest')
+                  ->orderBy('created_at', 'desc');
+            }])->orderBy('room_number')->get();
+
+            $data = $rooms->map(function ($room) {
+                $activeReservation = $room->reservations->first();
+
+                return [
+                    'room_number' => $room->room_number,
+                    'room_type' => $room->room_type_name ?? 'Standard',
+                    'status' => $room->status,
+                    'guest_name' => $activeReservation?->guest?->guest_name ?? null,
+                    'check_in' => $activeReservation?->check_in?->format('Y-m-d H:i'),
+                    'check_out' => $activeReservation?->check_out?->format('Y-m-d H:i'),
+                    'reservation_status' => $activeReservation?->status ?? null,
+                ];
+            });
+
+            $byFloor = $data->groupBy(function ($room) {
+                return substr($room['room_number'], 0, 2);
+            });
+
+            return response()->json([
+                'success' => true,
+                'total_rooms' => $data->count(),
+                'rooms' => $data,
+                'by_floor' => $byFloor,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => 'Gagal mengambil daftar kamar: '.$e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * AJAX search reservasi
+     */
+    public function searchReservations(Request $request)
+    {
+        $q = $request->input('q', '');
+
+        $reservations = Reservation::with(['guest', 'room'])
+            ->where(function ($query) use ($q) {
+                $query->where('reservation_number', 'like', "%{$q}%")
+                    ->orWhereHas('guest', function ($q2) use ($q) {
+                        $q2->where('guest_name', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('room', function ($q3) use ($q) {
+                        $q3->where('room_number', 'like', "%{$q}%");
+                    });
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        $results = $reservations->map(function ($res) {
+            return [
+                'id' => $res->id,
+                'reservation_number' => $res->reservation_number,
+                'guest_name' => $res->guest->guest_name ?? '-',
+                'room_number' => $res->room->room_number ?? '-',
+                'room_type' => $res->room->roomType->name ?? $res->room->room_type_name ?? 'Standard',
+                'room_id' => $res->room_id,
+                'id_number' => $res->guest->id_number ?? '',
+                'phone' => $res->guest->phone ?? '',
+                'email' => $res->guest->email ?? '',
+                'check_in' => $res->check_in->format('Y-m-d\\TH:i'),
+                'check_out' => $res->check_out->format('Y-m-d\\TH:i'),
+                'status' => $res->status,
+                'number_of_cards' => $res->number_of_cards ?? 1,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'results' => $results,
+            'total' => $results->count(),
+        ]);
     }
 }

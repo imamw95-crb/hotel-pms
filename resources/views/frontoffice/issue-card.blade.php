@@ -4,209 +4,151 @@
 @section('header', 'Issue Card - MHS')
 
 @section('content')
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="max-w-5xl mx-auto">
     <!-- Form Issue Card -->
-    <div class="lg:col-span-2 space-y-6">
-        <!-- Pilih Reservasi -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-xl font-bold mb-4"><i class="fas fa-clipboard-list text-blue-500 mr-2"></i>Pilih Reservasi</h2>
-
-            <!-- Pencarian Reservasi -->
-            <div class="mb-4">
-                <div class="relative">
-                    <input type="text" id="searchReservation" placeholder="Cari no. reservasi, nama tamu, no. kamar..."
-                        class="w-full border rounded px-3 py-2 pl-10" onkeyup="filterReservations()">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                </div>
+    <div class="bg-white rounded-lg shadow p-5 mb-4">
+        <!-- Header dengan Status MHS -->
+        <div class="flex justify-between items-center mb-4 pb-3 border-b">
+            <div>
+                <h2 class="text-xl font-bold"><i class="fas fa-key text-blue-500 mr-2"></i>Issue Kartu Kamar</h2>
             </div>
-
-            <!-- Filter Status -->
-            <div class="flex space-x-2 mb-4">
-                <button onclick="filterByStatus('all')" class="filter-btn px-3 py-1 rounded text-sm bg-blue-600 text-white" data-status="all">Semua</button>
-                <button onclick="filterByStatus('pending')" class="filter-btn px-3 py-1 rounded text-sm bg-gray-200 text-gray-700 hover:bg-gray-300" data-status="pending">Pending</button>
-                <button onclick="filterByStatus('checked_in')" class="filter-btn px-3 py-1 rounded text-sm bg-gray-200 text-gray-700 hover:bg-gray-300" data-status="checked_in">Checked In</button>
-            </div>
-
-            <!-- Daftar Reservasi -->
-            <div class="border rounded max-h-64 overflow-y-auto" id="reservationList">
-                @forelse($reservations as $res)
-                    <div class="reservation-item p-3 border-b cursor-pointer hover:bg-blue-50 transition {{ $res->status === 'pending' ? '' : 'opacity-60' }}"
-                        data-id="{{ $res->id }}"
-                        data-status="{{ $res->status }}"
-                        data-room-id="{{ $res->room_id }}"
-                        data-room-number="{{ $res->room->room_number ?? '' }}"
-                        data-room-type="{{ $res->room->roomType->name ?? $res->room->room_type_name ?? 'Standard' }}"
-                        data-guest-name="{{ $res->guest->guest_name ?? '' }}"
-                        data-id-number="{{ $res->guest->id_number ?? '' }}"
-                        data-phone="{{ $res->guest->phone ?? '' }}"
-                        data-email="{{ $res->guest->email ?? '' }}"
-                        data-check-in="{{ $res->check_in->format('Y-m-d\TH:i') }}"
-                        data-check-out="{{ $res->check_out->format('Y-m-d\TH:i') }}"
-                        data-cards="{{ $res->number_of_cards ?? 1 }}"
-                        onclick="selectReservation(this)">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <span class="font-bold text-blue-600">{{ $res->reservation_number }}</span>
-                                <span class="ml-2 px-2 py-0.5 rounded text-xs font-bold
-                                    @if($res->status === 'pending') bg-yellow-100 text-yellow-800
-                                    @elseif($res->status === 'checked_in') bg-green-100 text-green-800
-                                    @elseif($res->status === 'checked_out') bg-blue-100 text-blue-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ strtoupper($res->status) }}
-                                </span>
-                            </div>
-                            <span class="text-xs text-gray-500">{{ $res->created_at->format('d/m/Y H:i') }}</span>
-                        </div>
-                        <div class="mt-1 text-sm">
-                            <i class="fas fa-user text-gray-400 mr-1"></i> {{ $res->guest->guest_name ?? '-' }}
-                            <span class="mx-2">|</span>
-                            <i class="fas fa-bed text-gray-400 mr-1"></i> {{ $res->room->room_number ?? '-' }}
-                        </div>
-                        <div class="mt-1 text-xs text-gray-500">
-                            <i class="fas fa-calendar mr-1"></i> {{ $res->check_in->format('d/m/Y H:i') }} - {{ $res->check_out->format('d/m/Y H:i') }}
-                        </div>
-                    </div>
-                @empty
-                    <div class="p-8 text-center text-gray-500">
-                        <i class="fas fa-inbox text-4xl mb-2"></i>
-                        <p>Tidak ada data reservasi</p>
-                    </div>
-                @endforelse
+            <div class="flex items-center space-x-3">
+                <span id="mhsStatus" class="px-3 py-1 rounded text-sm font-bold bg-gray-200 text-gray-600">
+                    <i class="fas fa-circle-notch fa-spin"></i> Checking...
+                </span>
+                <button onclick="testMHSConnection()" class="bg-gray-500 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-600">
+                    <i class="fas fa-sync-alt"></i> Test
+                </button>
             </div>
         </div>
 
-        <!-- Form Issue Card -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold"><i class="fas fa-key text-blue-500 mr-2"></i>Issue Kartu Kamar</h2>
-                <div class="flex items-center space-x-2">
-                    <span class="text-sm text-gray-500">Status MHS:</span>
-                    <span id="mhsStatus" class="px-2 py-1 rounded text-xs font-bold bg-gray-200 text-gray-600">
-                        <i class="fas fa-circle-notch fa-spin"></i> Checking...
-                    </span>
-                    <button onclick="testMHSConnection()" class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">
-                        <i class="fas fa-sync-alt"></i> Test
-                    </button>
+        <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm">
+            @csrf
+            <input type="hidden" name="reservation_id" id="reservationId" value="">
+            <input type="hidden" name="room_id" id="roomSelect" value="">
+
+            <!-- Baris 1: Pilih Reservasi + Kamar + Nama Tamu -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Cari & Pilih Reservasi</label>
+                    <div class="relative">
+                        <input type="text" id="searchReservation" placeholder="Ketik nama tamu, no. reservasi, atau no. kamar..."
+                            class="w-full border rounded px-3 py-2.5 pl-9 text-sm focus:border-blue-500 outline-none"
+                            autocomplete="off"
+                            oninput="searchReservationAjax(this.value)"
+                            onfocus="if(this.value.trim())showResults()"
+                            onblur="setTimeout(hideResults, 250)">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                        <button type="button" onclick="clearSearchAjax()" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 hidden text-sm" id="clearSearchBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <div id="searchSpinner" class="absolute right-2.5 top-2.5 hidden text-sm text-gray-400">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
+                    <div id="searchResults" class="hidden absolute z-50 bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style="width:100%"></div>
+                    <div id="selectedReservationInfo" class="hidden mt-1.5">
+                        <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded px-3 py-2">
+                            <div class="flex items-center space-x-2 text-sm">
+                                <i class="fas fa-check-circle text-green-500"></i>
+                                <span id="selectedResNumber" class="font-bold text-green-700"></span>
+                                <span id="selectedStatus" class="px-1.5 py-0.5 rounded text-xs font-bold"></span>
+                            </div>
+                            <button type="button" onclick="clearSearchAjax()" class="text-red-500 hover:text-red-700 text-xs font-bold">Ubah</button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Kamar</label>
+                    <input type="text" id="roomDisplay" class="w-full border rounded px-3 py-2.5 text-sm bg-gray-100" readonly placeholder="Otomatis terisi">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Nama Tamu</label>
+                    <input type="text" name="guest_name" id="guestName" class="w-full border rounded px-3 py-2.5 text-sm" required placeholder="Otomatis terisi">
                 </div>
             </div>
 
-            <form method="POST" action="{{ route('issue-card.issue') }}" id="issueCardForm">
-                @csrf
-                <input type="hidden" name="reservation_id" id="reservationId" value="">
+            <!-- Hidden fields -->
+            <input type="hidden" name="id_number" id="idNumber" value="">
+            <input type="hidden" name="phone" id="phone" value="">
+            <input type="hidden" name="email" id="email" value="">
 
-                <!-- Info Reservasi Terpilih -->
-                <div id="selectedInfo" class="hidden bg-green-50 border border-green-200 rounded p-4 mb-4">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-sm text-green-600 font-bold"><i class="fas fa-check-circle mr-1"></i>Reservasi Terpilih:</span>
-                            <span id="selectedResNumber" class="font-bold text-green-800 ml-2"></span>
-                            <span id="selectedStatus" class="ml-2 px-2 py-0.5 rounded text-xs font-bold"></span>
-                        </div>
-                        <button type="button" onclick="clearSelection()" class="text-red-500 hover:text-red-700 text-sm">
-                            <i class="fas fa-times"></i> Clear
-                        </button>
-                    </div>
+            <!-- Baris 2: Check-in, Check-out, Jumlah Kartu -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Check-in</label>
+                    <input type="datetime-local" name="check_in" id="checkIn" class="w-full border rounded px-3 py-2.5 text-sm" required>
                 </div>
-
-                <!-- Pilih Kamar (auto-fill dari reservasi) -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-bold mb-2">Kamar</label>
-                    <input type="text" id="roomDisplay" class="w-full border rounded px-3 py-2 bg-gray-100" readonly placeholder="Otomatis terisi dari reservasi">
-                    <input type="hidden" name="room_id" id="roomSelect" value="">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Check-out</label>
+                    <input type="datetime-local" name="check_out" id="checkOut" class="w-full border rounded px-3 py-2.5 text-sm" required>
                 </div>
-
-                <!-- Nama Tamu -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
-                    <input type="text" name="guest_name" id="guestName" class="w-full border rounded px-3 py-2" required placeholder="Otomatis terisi dari reservasi">
-                </div>
-
-                <!-- Hidden fields: Identitas, Telepon, Email (auto-fill dari reservasi) -->
-                <input type="hidden" name="id_number" id="idNumber" value="">
-                <input type="hidden" name="phone" id="phone" value="">
-                <input type="hidden" name="email" id="email" value="">
-
-                <!-- Check-in & Check-out -->
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="block text-gray-700 font-bold mb-2">Check-in</label>
-                        <input type="datetime-local" name="check_in" id="checkIn" class="w-full border rounded px-3 py-2" required>
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 font-bold mb-2">Check-out</label>
-                        <input type="datetime-local" name="check_out" id="checkOut" class="w-full border rounded px-3 py-2" required>
-                    </div>
-                </div>
-
-                <!-- Jumlah Kartu -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 font-bold mb-2">Jumlah Kartu</label>
-                    <div class="flex space-x-3">
-                        @for($i = 1; $i <= 5; $i++)
-                            <label class="flex items-center space-x-1 cursor-pointer">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Jumlah Kartu</label>
+                    <div class="flex space-x-4 pt-1">
+                        @for($i = 1; $i <= 2; $i++)
+                            <label class="flex items-center space-x-1.5 cursor-pointer text-sm">
                                 <input type="radio" name="number_of_cards" value="{{ $i }}" class="rounded" {{ $i == 1 ? 'checked' : '' }}>
                                 <span>{{ $i }}</span>
                             </label>
                         @endfor
                     </div>
                 </div>
-
-                <!-- Preview MHS -->
-                <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-4">
-                    <h4 class="font-bold text-blue-700 mb-2"><i class="fas fa-info-circle mr-1"></i>Preview Perintah MHS</h4>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <div><span class="text-gray-500">Room:</span> <span id="previewRoom" class="font-bold">-</span></div>
-                        <div><span class="text-gray-500">Guest:</span> <span id="previewGuest" class="font-bold">-</span></div>
-                        <div><span class="text-gray-500">Check-in:</span> <span id="previewCheckin" class="font-bold">-</span></div>
-                        <div><span class="text-gray-500">Check-out:</span> <span id="previewCheckout" class="font-bold">-</span></div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1.5">Koneksi MHS</label>
+                    <div class="pt-1">
+                        <span id="connectionStatus" class="text-sm text-gray-500">Checking...</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Tombol Aksi -->
-                <div class="flex justify-between items-center">
-                    <div>
-                        <button type="button" onclick="readCard()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
-                            <i class="fas fa-id-card mr-1"></i> Baca Kartu
-                        </button>
-                    </div>
-                    <div class="flex space-x-2">
-                        <!-- Tombol Checkout (hanya tampil untuk checked_in) -->
-                        <button type="button" id="btnCheckout" onclick="doCheckout()" class="hidden bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
-                            <i class="fas fa-sign-out-alt mr-1"></i> Checkout & Available
-                        </button>
-                        <!-- Tombol Erase Card (hanya tampil untuk checked_in) -->
-                        <button type="button" id="btnEraseCard" onclick="doEraseCard()" class="hidden bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                            <i class="fas fa-times-circle mr-1"></i> Erase Card
-                        </button>
-                        <!-- Tombol Issue Card -->
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-                            <i class="fas fa-key mr-1"></i> Issue Card
-                        </button>
-                    </div>
+            <!-- Preview MHS -->
+            <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                <div class="grid grid-cols-4 gap-3 text-sm">
+                    <div><span class="text-gray-500">Room:</span> <span id="previewRoom" class="font-bold ml-1">-</span></div>
+                    <div><span class="text-gray-500">Guest:</span> <span id="previewGuest" class="font-bold ml-1">-</span></div>
+                    <div><span class="text-gray-500">Check-in:</span> <span id="previewCheckin" class="font-bold ml-1">-</span></div>
+                    <div><span class="text-gray-500">Check-out:</span> <span id="previewCheckout" class="font-bold ml-1">-</span></div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="flex justify-between items-center bg-gray-50 border rounded-lg p-4">
+                <button type="button" onclick="readCard()" class="bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 font-semibold">
+                    <i class="fas fa-id-card mr-1.5"></i> Baca Kartu
+                </button>
+                <div class="flex space-x-3">
+                    <button type="button" id="btnCheckout" onclick="doCheckout()" class="bg-yellow-600 text-white px-4 py-2.5 rounded-lg hover:bg-yellow-700 font-semibold">
+                        <i class="fas fa-sign-out-alt mr-1.5"></i> Checkout
+                    </button>
+                    <button type="button" id="btnEraseCard" onclick="doEraseCard()" class="bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-semibold">
+                        <i class="fas fa-times-circle mr-1.5"></i> Erase
+                    </button>
+                    <button type="submit" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold">
+                        <i class="fas fa-key mr-1.5"></i> Issue
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 
-    <!-- Panel Status & Log -->
-    <div class="space-y-6">
+    <!-- Baris Bawah: Status & Log -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="font-bold text-lg mb-3"><i class="fas fa-server text-green-500 mr-2"></i>Status MHS</h3>
-            <div class="space-y-2 text-sm">
+            <h3 class="font-bold mb-3"><i class="fas fa-server text-green-500 mr-2"></i>Status MHS</h3>
+            <div class="space-y-3">
                 <div class="flex justify-between">
-                    <span class="text-gray-500">Server</span>
-                    <span class="font-medium text-xs">{{ env('MHS_BRIDGE_URL', 'http://127.0.0.1:8080/bridge_api.php') }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Koneksi</span>
-                    <span id="connectionStatus" class="font-medium text-gray-500">Checking...</span>
+                    <span class="text-gray-500">Total Kamar</span>
+                    <button type="button" onclick="showMhsRooms()" class="text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fas fa-list mr-1"></i> Lihat
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow p-4">
-            <h3 class="font-bold text-lg mb-3"><i class="fas fa-history text-blue-500 mr-2"></i>Log MHS Terbaru</h3>
-            <div class="space-y-2 max-h-96 overflow-y-auto">
+        <div class="md:col-span-2 bg-white rounded-lg shadow p-4">
+            <h3 class="font-bold mb-3"><i class="fas fa-history text-blue-500 mr-2"></i>Log MHS</h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
                 @forelse($recentLogs as $log)
                     <div class="border rounded p-2 text-sm {{ ($log->success ?? false) ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50' }}">
                         <div class="flex justify-between items-center">
@@ -220,7 +162,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500 text-center py-4 text-sm">Belum ada log</p>
+                    <p class="text-gray-500 text-center py-4">Belum ada log</p>
                 @endforelse
             </div>
         </div>
@@ -235,69 +177,104 @@
         document.addEventListener('DOMContentLoaded', function() { testMHSConnection(); });
     }
 
-    var selectedReservationStatus = '';
+    let searchTimeout;
 
-    function selectReservation(el) {
-        const d = el.dataset;
-        selectedReservationStatus = d.status;
-        document.querySelectorAll('.reservation-item').forEach(i => i.classList.remove('bg-blue-100'));
-        el.classList.add('bg-blue-100');
-        document.getElementById('reservationId').value = d.id;
-        document.getElementById('roomSelect').value = d.roomId;
-        document.getElementById('roomDisplay').value = (d.roomNumber || '') + ' - ' + (d.roomType || 'Standard');
-        document.getElementById('guestName').value = d.guestName;
-        document.getElementById('idNumber').value = d.idNumber;
-        document.getElementById('phone').value = d.phone;
-        document.getElementById('email').value = d.email;
-        document.getElementById('checkIn').value = d.checkIn;
-        document.getElementById('checkOut').value = d.checkOut;
-        const cards = parseInt(d.cards) || 1;
-        document.querySelectorAll('input[name="number_of_cards"]').forEach(r => { r.checked = (parseInt(r.value) === cards); });
-        document.getElementById('selectedInfo').classList.remove('hidden');
-        document.getElementById('selectedResNumber').textContent = el.querySelector('.font-bold.text-blue-600').textContent;
+    function searchReservationAjax(query) {
+        clearTimeout(searchTimeout);
+        const q = query.trim();
 
-        // Tampilkan status badge
-        const statusEl = document.getElementById('selectedStatus');
-        const statusLabels = { pending: 'PENDING', checked_in: 'CHECKED IN', checked_out: 'CHECKED OUT', cancelled: 'CANCELLED' };
-        const statusColors = { pending: 'bg-yellow-100 text-yellow-800', checked_in: 'bg-green-100 text-green-800', checked_out: 'bg-blue-100 text-blue-800', cancelled: 'bg-red-100 text-red-800' };
-        statusEl.textContent = statusLabels[d.status] || d.status.toUpperCase();
-        statusEl.className = 'ml-2 px-2 py-0.5 rounded text-xs font-bold ' + (statusColors[d.status] || 'bg-gray-100 text-gray-800');
-
-        // Tampilkan tombol Checkout & Erase hanya untuk checked_in
-        if (d.status === 'checked_in') {
-            document.getElementById('btnCheckout').classList.remove('hidden');
-            document.getElementById('btnEraseCard').classList.remove('hidden');
-        } else {
-            document.getElementById('btnCheckout').classList.add('hidden');
-            document.getElementById('btnEraseCard').classList.add('hidden');
+        if (q.length === 0) {
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            return;
         }
 
+        document.getElementById('searchSpinner').classList.remove('hidden');
+        document.getElementById('clearSearchBtn').classList.remove('hidden');
+
+        searchTimeout = setTimeout(() => {
+            fetch('{{ route("issue-card.search-reservations") }}?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('searchSpinner').classList.add('hidden');
+                    if (data.success && data.results.length > 0) {
+                        let html = '';
+                        data.results.forEach(r => {
+                            const statusBadge = r.status === 'checked_in' ? 'CHECKED IN' : r.status.toUpperCase();
+                            const guest = r.guest_name.replace(/'/g,"\\'");
+                            const type = (r.room_type || 'Standard').replace(/'/g,"\\'");
+                            html += '<div class="px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-blue-50 text-sm"';
+                            html += ` onmousedown="selectReservationAjax(${r.id},'${r.reservation_number}','${guest}','${r.room_number}','${type}',${r.room_id || 0},'${r.id_number || ''}','${r.phone || ''}','${r.email || ''}','${r.check_in}','${r.check_out}',${r.number_of_cards || 1},'${r.status}')">`;
+                            html += '<div class="font-semibold text-blue-600">' + r.reservation_number + ' <span class="text-gray-500 font-normal">- ' + r.guest_name + '</span></div>';
+                            html += '<div class="text-xs text-gray-500">Kamar ' + r.room_number + ' (' + r.room_type + ') | ' + statusBadge + '</div>';
+                            html += '</div>';
+                        });
+                        document.getElementById('searchResults').innerHTML = html;
+                        document.getElementById('searchResults').classList.remove('hidden');
+                    } else {
+                        document.getElementById('searchResults').innerHTML = '<div class="px-3 py-3 text-sm text-gray-400 text-center">Reservasi tidak ditemukan</div>';
+                        document.getElementById('searchResults').classList.remove('hidden');
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('searchSpinner').classList.add('hidden');
+                });
+        }, 300);
+    }
+
+    function showResults() {
+        const el = document.getElementById('searchResults');
+        if (el.innerHTML.trim()) el.classList.remove('hidden');
+    }
+
+    function hideResults() {
+        document.getElementById('searchResults').classList.add('hidden');
+    }
+
+    function clearSearchAjax() {
+        document.getElementById('searchReservation').value = '';
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('clearSearchBtn').classList.add('hidden');
+        document.getElementById('selectedReservationInfo').classList.add('hidden');
+        document.getElementById('reservationId').value = '';
+        document.getElementById('roomSelect').value = '';
+        document.getElementById('roomDisplay').value = '';
+        document.getElementById('guestName').value = '';
+        document.getElementById('idNumber').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('checkIn').value = '';
+        document.getElementById('checkOut').value = '';
         updatePreview();
     }
 
-    function clearSelection() {
-        document.getElementById('reservationId').value = '';
-        document.getElementById('selectedInfo').classList.add('hidden');
-        document.querySelectorAll('.reservation-item').forEach(i => i.classList.remove('bg-blue-100'));
-    }
+    function selectReservationAjax(id, resNumber, guestName, roomNumber, roomType, roomId, idNumber, phone, email, checkIn, checkOut, cards, status) {
+        document.getElementById('reservationId').value = id;
+        document.getElementById('roomSelect').value = roomId;
+        document.getElementById('roomDisplay').value = roomNumber + ' - ' + (roomType || 'Standard');
+        document.getElementById('guestName').value = guestName;
+        document.getElementById('idNumber').value = idNumber || '';
+        document.getElementById('phone').value = phone || '';
+        document.getElementById('email').value = email || '';
+        document.getElementById('checkIn').value = checkIn;
+        document.getElementById('checkOut').value = checkOut;
+        document.querySelectorAll('input[name="number_of_cards"]').forEach(r => { r.checked = (parseInt(r.value) === (parseInt(cards) || 1)); });
 
-    function filterByStatus(status) {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.remove('bg-blue-600', 'text-white');
-            b.classList.add('bg-gray-200', 'text-gray-700');
-        });
-        document.querySelector(`[data-status="${status}"]`).classList.remove('bg-gray-200', 'text-gray-700');
-        document.querySelector(`[data-status="${status}"]`).classList.add('bg-blue-600', 'text-white');
-        document.querySelectorAll('.reservation-item').forEach(i => {
-            i.style.display = (status === 'all' || i.dataset.status === status) ? 'block' : 'none';
-        });
-    }
+        const info = document.getElementById('selectedReservationInfo');
+        document.getElementById('selectedResNumber').textContent = resNumber || '#' + id;
+        const statusEl = document.getElementById('selectedStatus');
+        const labels = { pending: 'PENDING', checked_in: 'CHECKED IN', checked_out: 'CHECKED OUT', cancelled: 'CANCELLED' };
+        const colors = { pending: 'bg-yellow-100 text-yellow-800', checked_in: 'bg-green-100 text-green-800', checked_out: 'bg-blue-100 text-blue-800', cancelled: 'bg-red-100 text-red-800' };
+        statusEl.textContent = labels[status] || status.toUpperCase();
+        statusEl.className = 'px-1.5 py-0.5 rounded text-xs font-bold ' + (colors[status] || 'bg-gray-100 text-gray-800');
+        info.classList.remove('hidden');
 
-    function filterReservations() {
-        const q = document.getElementById('searchReservation').value.toLowerCase();
-        document.querySelectorAll('.reservation-item').forEach(i => {
-            i.style.display = i.textContent.toLowerCase().includes(q) ? 'block' : 'none';
-        });
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('searchReservation').value = guestName;
+
+        updatePreview();
     }
 
     document.getElementById('guestName').addEventListener('input', updatePreview);
@@ -526,6 +503,116 @@
                 closeCustomModal();
                 showModal({ title: 'Error', message: 'Gagal membaca kartu: ' + e.message, type: 'error' });
             });
+    }
+
+    // ========== MHS ROOMS ==========
+    function showMhsRooms() {
+        fetch('{{ route("issue-card.mhs-rooms") }}')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.rooms) {
+                    let html = '<div class="text-left" style="min-width:500px">';
+                    html += '<div class="flex justify-between items-center mb-3 px-1"><span class="text-gray-500 text-sm">Total <strong>' + data.total_rooms + '</strong> kamar</span></div>';
+                    if (data.by_floor) {
+                        Object.keys(data.by_floor).sort().forEach(floor => {
+                            html += '<div class="mb-4">';
+                            html += '<div class="flex items-center mb-1"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">Lantai ' + floor + '</span></div>';
+                            html += '<table class="w-full text-sm border-collapse rounded overflow-hidden" style="border:1px solid #e5e7eb">';
+                            html += '<thead><tr style="background:#f3f4f6;border-bottom:2px solid #d1d5db">';
+                            html += '<th style="padding:6px 10px;text-align:left;font-weight:600;color:#374151;font-size:12px">Kamar</th>';
+                            html += '<th style="padding:6px 10px;text-align:left;font-weight:600;color:#374151;font-size:12px">Tipe</th>';
+                            html += '<th style="padding:6px 10px;text-align:left;font-weight:600;color:#374151;font-size:12px">Status</th>';
+                            html += '<th style="padding:6px 10px;text-align:left;font-weight:600;color:#374151;font-size:12px">Tamu</th>';
+                            html += '<th style="padding:6px 10px;text-align:left;font-weight:600;color:#374151;font-size:12px">Check In/Out</th>';
+                            html += '</tr></thead><tbody>';
+                            data.by_floor[floor].forEach(r => {
+                                const isOccupied = r.status === 'occupied';
+                                const isMaintenance = r.status === 'maintenance';
+                                const bgRow = isOccupied ? 'style="background:#fef2f2"' : isMaintenance ? 'style="background:#fffbeb"' : '';
+                                let badge, badgeStyle;
+                                if (isOccupied) { badge = 'Terisi'; badgeStyle = 'background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600'; }
+                                else if (isMaintenance) { badge = 'Maintenance'; badgeStyle = 'background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600'; }
+                                else if (r.status === 'cleaning') { badge = 'Cleaning'; badgeStyle = 'background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600'; }
+                                else { badge = 'Available'; badgeStyle = 'background:#dcfce7;color:#166534;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600'; }
+                                const guestName = r.guest_name || '-';
+                                const dates = r.check_in ? r.check_in + ' - ' + r.check_out : '-';
+                                html += '<tr ' + bgRow + ' style="border-bottom:1px solid #e5e7eb">';
+                                html += '<td style="padding:6px 10px;font-weight:600;font-size:13px">' + r.room_number + '</td>';
+                                html += '<td style="padding:6px 10px;color:#6b7280;font-size:12px">' + (r.room_type || '-') + '</td>';
+                                html += '<td style="padding:6px 10px"><span style="' + badgeStyle + '">' + badge + '</span></td>';
+                                html += '<td style="padding:6px 10px;color:#374151;font-size:12px">' + guestName + '</td>';
+                                html += '<td style="padding:6px 10px;color:#6b7280;font-size:11px">' + dates + '</td>';
+                                html += '</tr>';
+                            });
+                            html += '</tbody></table></div>';
+                        });
+                    }
+                    html += '</div>';
+
+                    // Tampilkan dalam overlay khusus yang lebih lebar
+                    showRoomsModal(html);
+                } else {
+                    showModal({ title: 'Gagal', message: data.message || 'Tidak dapat mengambil daftar kamar.', type: 'error' });
+                }
+            })
+            .catch(err => {
+                showModal({ title: 'Error', message: err.message, type: 'error' });
+            });
+    }
+
+    function showRoomsModal(contentHtml) {
+        const overlay = document.getElementById('roomsModal');
+        if (!overlay) {
+            // Buat elemen modal rooms jika belum ada
+            const div = document.createElement('div');
+            div.id = 'roomsModal';
+            div.className = 'fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50';
+            div.innerHTML = '<div class="bg-white rounded-2xl shadow-2xl mx-4 overflow-hidden transform transition-all" style="max-width:750px;width:100%;max-height:90vh">' +
+                '<div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">' +
+                '<h3 class="text-lg font-bold text-gray-800">Daftar Kamar</h3>' +
+                '<button onclick="document.getElementById(\'roomsModal\').classList.add(\'hidden\');document.getElementById(\'roomsModal\').classList.remove(\'flex\')" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>' +
+                '</div>' +
+                '<div id="roomsModalBody" class="px-6 py-4 overflow-y-auto" style="max-height:calc(90vh - 80px)"></div>' +
+                '</div>';
+            document.body.appendChild(div);
+            div.addEventListener('click', function(e) { if (e.target === this) { this.classList.add('hidden'); this.classList.remove('flex'); } });
+        }
+        document.getElementById('roomsModalBody').innerHTML = contentHtml;
+        const modal = document.getElementById('roomsModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    // ========== REGISTER ENCODER ==========
+    function doRegisterEncoder() {
+        showModal({
+            title: 'Konfirmasi Register Encoder',
+            message: 'Daftarkan encoder ke sistem MHS?<br><br>IP Encoder: <strong>192.168.88.2</strong><br>ID Encoder: <strong>01</strong><br><br>Cukup dilakukan <strong>sekali saja</strong> atau saat error "Client end not connected".',
+            type: 'confirm',
+            confirmText: 'Ya, Register',
+            cancelText: 'Batal',
+            onConfirm: function() {
+                fetch('{{ route("issue-card.register-encoder") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value
+                    },
+                    body: JSON.stringify({ ip: '192.168.88.2', encoder_id: '01' })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showModal({ title: 'Berhasil!', message: 'Encoder berhasil didaftarkan ke MHS.', type: 'success' });
+                    } else {
+                        showModal({ title: 'Gagal', message: data.message || 'Gagal mendaftarkan encoder.', type: 'error' });
+                    }
+                })
+                .catch(err => {
+                    showModal({ title: 'Error', message: err.message, type: 'error' });
+                });
+            }
+        });
     }
 
     // ========== ISSUE CARD CONFIRM ==========

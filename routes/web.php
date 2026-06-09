@@ -99,6 +99,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/issue-card/{reservation}/erase-card', [IssueCardController::class, 'eraseCard'])->middleware('permission:issue_card')->name('issue-card.erase');
     Route::get('/issue-card/test', [IssueCardController::class, 'testConnection'])->middleware('permission:issue_card')->name('issue-card.test');
     Route::get('/issue-card/read', [IssueCardController::class, 'readCard'])->middleware('permission:issue_card')->name('issue-card.read');
+    Route::post('/issue-card/register-encoder', [IssueCardController::class, 'registerEncoder'])->middleware('permission:issue_card')->name('issue-card.register-encoder');
+    Route::get('/issue-card/mhs-rooms', [IssueCardController::class, 'getMhsRooms'])->middleware('permission:issue_card')->name('issue-card.mhs-rooms');
+    Route::get('/issue-card/search-reservations', [IssueCardController::class, 'searchReservations'])->middleware('permission:issue_card')->name('issue-card.search-reservations');
 
     // Reservasi
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');

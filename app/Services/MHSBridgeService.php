@@ -135,4 +135,60 @@ class MHSBridgeService
             ];
         }
     }
+
+    /**
+     * Daftarkan encoder ke sistem MHS
+     */
+    public function registerEncoder($encoderIp = null, $encoderId = '01')
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->get($this->bridgeUrl, [
+                    'action' => 'register_encoder',
+                    'ip' => $encoderIp ?? '192.168.88.2',
+                    'encoder_id' => $encoderId,
+                ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Server MHS merespon dengan kode: '.$response->status(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Ambil daftar kamar dari MHS
+     */
+    public function getRooms()
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->get($this->bridgeUrl, [
+                    'action' => 'rooms',
+                ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Server MHS merespon dengan kode: '.$response->status(),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
+            ];
+        }
+    }
 }
