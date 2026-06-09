@@ -33,7 +33,7 @@
 
 {{-- ─── Print Header ──────────────────────────────────────────────── --}}
 <div class="hidden print:block mb-6 text-center">
-    @php $hotel = \App\Models\HotelSetting::get(); @endphp
+    @php $hotel = \App\Models\HotelSetting::first(); @endphp
     @if($hotel->logo_path)
         <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" class="h-12 mx-auto mb-2">
     @endif

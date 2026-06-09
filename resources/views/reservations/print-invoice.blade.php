@@ -56,7 +56,7 @@
     <!-- Header -->
     <div class="header">
         <div class="hotel-info">
-            @php $hotel = \App\Models\HotelSetting::get(); @endphp
+            @php $hotel = \App\Models\HotelSetting::first(); @endphp
             @if($hotel->logo_path)
                 <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height:50px; margin-bottom:8px;">
             @endif
@@ -124,12 +124,100 @@
         </tbody>
     </table>
 
+    @if($reservation->serviceCharges->count() > 0)
+    <!-- Other Revenue Table -->
+    <table class="items-table" style="margin-top:15px;">
+        <thead>
+            <tr>
+                <th>Other Revenue</th>
+                <th>Tanggal</th>
+                <th>Layanan</th>
+                <th>Qty</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($reservation->serviceCharges as $sc)
+            <tr>
+                <td>{{ $sc->charge_number }}</td>
+                <td>{{ $sc->charge_date->format('d/m/Y') }}</td>
+                <td>{{ $sc->service_name }}</td>
+                <td>{{ $sc->quantity }} × Rp {{ number_format($sc->amount, 0, ',', '.') }}</td>
+                <td class="text-right">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr style="background:#f0f7ff; font-weight:bold;">
+                <td colspan="4" style="text-align:right; padding:6px 8px;">Subtotal Other Revenue</td>
+                <td class="text-right" style="padding:6px 8px; color:#1a365d;">Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    @endif
+
+    @if($reservation->restoTransactions->count() > 0)
+    <!-- Resto Table -->
+    <table class="items-table" style="margin-top:15px;">
+        <thead>
+            <tr>
+                <th>Resto</th>
+                <th>No. Transaksi</th>
+                <th>Tanggal</th>
+                <th>Items</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($reservation->restoTransactions as $rt)
+            <tr>
+                <td></td>
+                <td>{{ $rt->transaction_number }}</td>
+                <td>{{ $rt->created_at->format('d/m/Y H:i') }}</td>
+                <td>
+                    @if(is_array($rt->items))
+                        @foreach($rt->items as $item)
+                            {{ $item['name'] ?? $item['menu_name'] ?? 'Item' }} × {{ $item['quantity'] ?? 1 }}@if(!$loop->last), @endif
+                        @endforeach
+                    @else
+                        -
+                    @endif
+                </td>
+                <td class="text-right">Rp {{ number_format($rt->total_amount, 0, ',', '.') }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr style="background:#fff5f0; font-weight:bold;">
+                <td colspan="4" style="text-align:right; padding:6px 8px;">Subtotal Resto</td>
+                <td class="text-right" style="padding:6px 8px; color:#c05621;">Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    @endif
+
     <!-- Summary -->
     <div class="summary">
         <table>
             <tr>
-                <td>Subtotal:</td>
+                <td>Subtotal Kamar:</td>
                 <td>Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
+            </tr>
+            @if($totalServiceCharge > 0)
+            <tr>
+                <td>Other Revenue:</td>
+                <td>Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
+            </tr>
+            @endif
+            @if($totalResto > 0)
+            <tr>
+                <td>Resto:</td>
+                <td>Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
+            </tr>
+            @endif
+            <tr style="border-top:1px solid #333;">
+                <td style="font-weight:bold;">Grand Total:</td>
+                <td style="font-weight:bold;">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
             </tr>
             <tr>
                 <td>Total Dibayar:</td>
@@ -137,7 +225,7 @@
             </tr>
             <tr class="grand-total">
                 <td>SISA BAYAR:</td>
-                <td>Rp {{ number_format(max(0, $reservation->total_amount - $reservation->paid_amount), 0, ',', '.') }}</td>
+                <td>Rp {{ number_format(max(0, $grandTotal - $reservation->paid_amount), 0, ',', '.') }}</td>
             </tr>
         </table>
     </div>

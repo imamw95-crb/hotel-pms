@@ -1,4 +1,4 @@
-@php $hotelSetting = \App\Models\HotelSetting::get(); @endphp
+@php $hotelSetting = \App\Models\HotelSetting::first(); @endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>

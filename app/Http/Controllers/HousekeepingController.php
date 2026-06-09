@@ -207,7 +207,7 @@ class HousekeepingController extends Controller
 
         $report = $this->hkService->generateReport($dateFrom, $dateTo, $request->all());
 
-        $hotel = HotelSetting::get();
+        $hotel = HotelSetting::first();
 
         return view('housekeeping.print', array_merge($report, [
             'hotel' => $hotel,

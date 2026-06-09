@@ -76,12 +76,12 @@ class MHSBridgeService
 
             return [
                 'success' => false,
-                'message' => 'Server MHS merespon dengan kode: ' . $response->status(),
+                'message' => 'Server MHS merespon dengan kode: '.$response->status(),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Gagal terhubung ke server MHS: ' . $e->getMessage(),
+                'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
             ];
         }
     }
@@ -101,13 +101,13 @@ class MHSBridgeService
             return [
                 'success' => false,
                 'connected' => false,
-                'message' => 'Server MHS merespon dengan kode: ' . $response->status(),
+                'message' => 'Server MHS merespon dengan kode: '.$response->status(),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'connected' => false,
-                'message' => 'Gagal terhubung ke server MHS: ' . $e->getMessage(),
+                'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
             ];
         }
     }

@@ -111,9 +111,9 @@ class AutoCancelPendingBookingCommand extends Command
         }
 
         $this->newLine();
-        $this->info("═══════════════════════════════════════");
+        $this->info('═══════════════════════════════════════');
         $this->info("  ✅ Selesai — {$cancelled} dibatalkan, {$failed} gagal");
-        $this->info("═══════════════════════════════════════");
+        $this->info('═══════════════════════════════════════');
 
         Log::info("Auto-cancel pending bookings: {$cancelled} cancelled, {$failed} failed (threshold: {$hours} jam)");
 

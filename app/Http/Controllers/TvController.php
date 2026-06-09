@@ -20,7 +20,7 @@ class TvController extends Controller
             ->where('status', 'checked_in')
             ->first();
 
-        $hotelSetting = HotelSetting::get();
+        $hotelSetting = HotelSetting::first();
 
         return view('tv.welcome', compact('room', 'reservation', 'hotelSetting'));
     }
@@ -41,7 +41,7 @@ class TvController extends Controller
             ->where('status', 'checked_in')
             ->first();
 
-        $hotelSetting = HotelSetting::get();
+        $hotelSetting = HotelSetting::first();
 
         return response()->json([
             'room_number' => $room->room_number,

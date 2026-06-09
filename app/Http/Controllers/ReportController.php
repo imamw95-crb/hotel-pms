@@ -627,7 +627,7 @@ class ReportController extends Controller
         $totalExpenses = $expenses->sum('amount');
         $byMethod = $expenses->groupBy('payment_method')->map->sum('amount');
         $byDescription = $expenses->groupBy('description')->map->sum('amount')->sortDesc();
-        $hotel = HotelSetting::get();
+        $hotel = HotelSetting::first();
 
         return view('reports.print-expenses', compact(
             'startDate', 'endDate', 'expenses', 'totalExpenses', 'byMethod', 'byDescription', 'hotel'
@@ -785,7 +785,7 @@ class ReportController extends Controller
         $cancelled = Reservation::where('status', 'cancelled')
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
-                  ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+                    ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
             })
             ->count();
 
@@ -934,7 +934,7 @@ class ReportController extends Controller
             $cancelled = Reservation::where('status', 'cancelled')
                 ->where(function ($q) use ($startDate, $endDate) {
                     $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
-                      ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+                        ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
                 })
                 ->count();
             $otaBySrc = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
@@ -1058,7 +1058,7 @@ class ReportController extends Controller
         $cancelled = Reservation::where('status', 'cancelled')
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
-                  ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
+                    ->orWhereBetween('updated_at', [$startDate.' 00:00:00', $endDate.' 23:59:59']);
             })
             ->count();
         $otaBySource = Reservation::whereBetween('created_at', [$startDate.' 00:00:00', $endDate.' 23:59:59'])
@@ -1089,7 +1089,7 @@ class ReportController extends Controller
             ->count();
         $guestCompliancePct = $totalGuests > 0 ? round(($guestsWithId / $totalGuests) * 100, 1) : 0;
 
-        $hotel = HotelSetting::get();
+        $hotel = HotelSetting::first();
 
         return view('reports.print-compliance', compact(
             'month', 'startDate', 'endDate', 'hotel',

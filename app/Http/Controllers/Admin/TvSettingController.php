@@ -15,7 +15,7 @@ class TvSettingController extends Controller
      */
     public function index()
     {
-        $setting = HotelSetting::get();
+        $setting = HotelSetting::first();
 
         // Ambil semua room beserta guest yang sedang check-in
         $rooms = Room::with(['reservations' => function ($q) {
@@ -39,7 +39,7 @@ class TvSettingController extends Controller
             'company_video' => 'nullable|mimes:mp4,webm,ogg|max:51200',
         ]);
 
-        $setting = HotelSetting::get();
+        $setting = HotelSetting::first();
 
         // Handle video upload
         if ($request->hasFile('company_video')) {

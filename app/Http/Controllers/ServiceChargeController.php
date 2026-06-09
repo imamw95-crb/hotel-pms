@@ -51,14 +51,20 @@ class ServiceChargeController extends Controller
     public function create(Request $request)
     {
         $guests = Guest::orderBy('guest_name')->get();
+
+        $selectedReservationId = $request->get('reservation_id');
+
         $reservations = Reservation::with(['guest', 'room'])
             ->whereIn('status', ['checked_in', 'pending'])
+            ->when($selectedReservationId, function ($q) use ($selectedReservationId) {
+                $q->orWhere('id', $selectedReservationId);
+            })
             ->orderBy('check_in', 'desc')
             ->get();
 
         // AJAX via modal: return JSON with rendered modal view (no layout)
         if ($request->expectsJson()) {
-            $view = view('service-charge.modal-create', compact('guests', 'reservations'))->render();
+            $view = view('service-charge.modal-create', compact('guests', 'reservations', 'selectedReservationId'))->render();
 
             return response()->json([
                 'success' => true,
@@ -66,7 +72,7 @@ class ServiceChargeController extends Controller
             ]);
         }
 
-        return view('service-charge.create', compact('guests', 'reservations'));
+        return view('service-charge.create', compact('guests', 'reservations', 'selectedReservationId'));
     }
 
     /**

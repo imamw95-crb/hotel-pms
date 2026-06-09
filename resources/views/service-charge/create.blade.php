@@ -28,7 +28,7 @@
                 @foreach($reservations as $res)
                     <option value="{{ $res->id }}"
                             data-guest="{{ $res->guest_id }}"
-                            {{ old('reservation_id') == $res->id ? 'selected' : '' }}>
+                            {{ old('reservation_id', $selectedReservationId ?? '') == $res->id ? 'selected' : '' }}>
                         {{ $res->reservation_number }} — {{ $res->guest->guest_name ?? '-' }} ({{ $res->room->room_number ?? '-' }})
                     </option>
                 @endforeach
@@ -160,14 +160,10 @@
 
 @section('scripts')
 <script>
-window.SCForm = {
-    _calculate: function() {
-        var amount = parseInt(document.getElementById('amount').value) || 0;
-        var qty = parseInt(document.getElementById('quantity').value) || 0;
-        var total = amount * qty;
-        document.getElementById('totalDisplay').textContent = 'Rp ' + total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    }
-};
+// SCForm already defined in service-charge-form.js, just extend
+if (typeof SCForm === 'undefined') {
+    window.SCForm = {};
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-select guest from reservation
@@ -180,6 +176,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('guest_id').value = guestId;
             }
         });
+    }
+
+    // Auto-fill guest on load (when pre-selected via reservation_id)
+    if (typeof SCForm._autoFillGuest === 'function') {
+        SCForm._autoFillGuest();
+    }
+
+    // Trigger initial calculation
+    if (typeof SCForm._calculate === 'function') {
+        SCForm._calculate();
     }
 });
 </script>

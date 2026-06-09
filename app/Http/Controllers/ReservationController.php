@@ -92,7 +92,7 @@ class ReservationController extends Controller
     {
         $since = $request->get('since');
 
-        if (!$since) {
+        if (! $since) {
             return response()->json(['has_new' => false, 'count' => 0]);
         }
 
@@ -112,7 +112,11 @@ class ReservationController extends Controller
 
     public function show(Reservation $reservation)
     {
-        $reservation->load(['guest', 'room', 'createdBy']);
+        $reservation->load([
+            'guest', 'room', 'createdBy',
+            'serviceCharges', 'serviceCharges.createdBy',
+            'restoTransactions', 'restoTransactions.createdBy',
+        ]);
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -714,16 +718,27 @@ class ReservationController extends Controller
     }
 
     /**
-     * Print Invoice
+     * Print Invoice — gabung kamar + service charge + resto dalam 1 invoice
      */
     public function printInvoice(Reservation $reservation)
     {
-        $reservation->load(['guest', 'room', 'createdBy']);
+        $reservation->load([
+            'guest', 'room', 'createdBy',
+            'serviceCharges', 'serviceCharges.createdBy',
+            'restoTransactions', 'restoTransactions.createdBy',
+        ]);
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('reservations.print-invoice', compact('reservation', 'transactions'));
+        $totalServiceCharge = $reservation->serviceCharges->sum('total_amount');
+        $totalResto = $reservation->restoTransactions->sum('total_amount');
+        $grandTotal = $reservation->total_amount + $totalServiceCharge + $totalResto;
+
+        return view('reservations.print-invoice', compact(
+            'reservation', 'transactions',
+            'totalServiceCharge', 'totalResto', 'grandTotal'
+        ));
     }
 
     /**

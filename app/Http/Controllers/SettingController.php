@@ -14,7 +14,7 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $setting = HotelSetting::get();
+        $setting = HotelSetting::first();
 
         return view('admin.settings', compact('setting'));
     }
@@ -34,7 +34,7 @@ class SettingController extends Controller
             'theme' => 'nullable|in:light,dark,system',
         ]);
 
-        $setting = HotelSetting::get();
+        $setting = HotelSetting::first();
 
         // Handle logo upload
         if ($request->hasFile('logo')) {

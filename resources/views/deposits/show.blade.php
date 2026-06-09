@@ -34,7 +34,7 @@
 
         {{-- Header Hotel --}}
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 12px;">
-            @php $hotel = \App\Models\HotelSetting::get(); @endphp
+            @php $hotel = \App\Models\HotelSetting::first(); @endphp
             @if($hotel->logo_path)
                 <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" style="height: 40px; margin-bottom: 4px;">
             @endif

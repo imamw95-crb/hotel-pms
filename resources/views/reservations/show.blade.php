@@ -372,6 +372,110 @@
     </div>
     @endif
 
+    <!-- Other Revenue (Service Charge) -->
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg border-b pb-2 flex-1"><i class="fas fa-receipt text-blue-500 mr-2"></i>Other Revenue</h3>
+            @if($reservation->status !== 'cancelled' && $reservation->status !== 'checked_out')
+            <button type="button"
+                    onclick="ServiceChargeForm.open('{{ route('service-charge.create', ['reservation_id' => $reservation->id]) }}')"
+                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 no-print">
+                <i class="fas fa-plus"></i> Tambah Other Revenue
+            </button>
+            @endif
+        </div>
+
+        @if($reservation->serviceCharges->count() > 0)
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b">
+                            <th class="text-left p-2 font-bold">No. Charge</th>
+                            <th class="text-left p-2 font-bold">Tanggal</th>
+                            <th class="text-left p-2 font-bold">Layanan</th>
+                            <th class="text-center p-2 font-bold">Qty</th>
+                            <th class="text-right p-2 font-bold">Total</th>
+                            <th class="text-center p-2 font-bold">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($reservation->serviceCharges as $sc)
+                        <tr class="border-b border-gray-100">
+                            <td class="p-2 font-mono text-blue-600 font-bold">{{ $sc->charge_number }}</td>
+                            <td class="p-2 text-gray-600">{{ $sc->charge_date->format('d/m/Y') }}</td>
+                            <td class="p-2">{{ $sc->service_name }}</td>
+                            <td class="p-2 text-center">{{ $sc->quantity }} × Rp {{ number_format($sc->amount, 0, ',', '.') }}</td>
+                            <td class="p-2 text-right font-bold">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
+                            <td class="p-2 text-center">
+                                <a href="{{ route('service-charge.show', $sc) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm" title="Lihat / Print">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-blue-50 border-t-2 font-bold">
+                            <td colspan="4" class="p-2 text-right">TOTAL OTHER REVENUE</td>
+                            <td class="p-2 text-right text-blue-700">Rp {{ number_format($reservation->serviceCharges->sum('total_amount'), 0, ',', '.') }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @else
+            <p class="text-gray-400 text-sm italic">Belum ada other revenue untuk reservasi ini.</p>
+        @endif
+    </div>
+
+    <!-- Resto Transactions -->
+    <div class="bg-white rounded-lg shadow p-6 mt-6">
+        <h3 class="font-bold text-lg mb-4 border-b pb-2"><i class="fas fa-utensils text-orange-500 mr-2"></i>Resto Transactions</h3>
+
+        @if($reservation->restoTransactions->count() > 0)
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 border-b">
+                            <th class="text-left p-2 font-bold">No. Transaksi</th>
+                            <th class="text-left p-2 font-bold">Tanggal</th>
+                            <th class="text-left p-2 font-bold">Items</th>
+                            <th class="text-right p-2 font-bold">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($reservation->restoTransactions as $rt)
+                        <tr class="border-b border-gray-100">
+                            <td class="p-2 font-mono text-orange-600 font-bold">{{ $rt->transaction_number }}</td>
+                            <td class="p-2 text-gray-600">{{ $rt->created_at->format('d/m/Y H:i') }}</td>
+                            <td class="p-2">
+                                @if(is_array($rt->items))
+                                    @foreach($rt->items as $item)
+                                        <span class="inline-block bg-gray-100 rounded px-2 py-0.5 text-xs mr-1 mb-1">
+                                            {{ $item['name'] ?? $item['menu_name'] ?? 'Item' }} × {{ $item['quantity'] ?? 1 }}
+                                        </span>
+                                    @endforeach
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                            <td class="p-2 text-right font-bold">Rp {{ number_format($rt->total_amount, 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-orange-50 border-t-2 font-bold">
+                            <td colspan="3" class="p-2 text-right">TOTAL RESTO</td>
+                            <td class="p-2 text-right text-orange-700">Rp {{ number_format($reservation->restoTransactions->sum('total_amount'), 0, ',', '.') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @else
+            <p class="text-gray-400 text-sm italic">Belum ada transaksi resto untuk reservasi ini.</p>
+        @endif
+    </div>
+
     <!-- Tombol Aksi -->
     <div class="flex justify-between items-center mt-6 no-print">
         <a href="{{ route('reservations.index') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">

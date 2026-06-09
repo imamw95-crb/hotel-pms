@@ -1,4 +1,28 @@
 /**
+ * SCForm — Other Revenue form helpers (didefinisikan global agar bisa dipanggil dari event inline)
+ */
+window.SCForm = {
+    _calculate: function() {
+        var amount = parseInt(document.getElementById('amount')?.value) || 0;
+        var qty = parseInt(document.getElementById('quantity')?.value) || 0;
+        var total = amount * qty;
+        var el = document.getElementById('totalDisplay');
+        if (el) el.textContent = 'Rp ' + total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    },
+
+    _autoFillGuest: function() {
+        var el = document.getElementById('reservation_id');
+        if (!el) return;
+        var selected = el.options[el.selectedIndex];
+        var guestId = selected ? selected.getAttribute('data-guest') : null;
+        var guestEl = document.getElementById('guest_id');
+        if (guestId && guestEl) {
+            guestEl.value = guestId;
+        }
+    }
+};
+
+/**
  * Other Revenue Form Handler
  * Menangani form other revenue via modal
  */
@@ -20,6 +44,7 @@ var ServiceChargeForm = {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
 
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300) {
@@ -79,6 +104,12 @@ var ServiceChargeForm = {
                 }
             });
         }
+
+        // Auto-fill guest on load (pre-selected via reservation_id)
+        SCForm._autoFillGuest();
+
+        // Trigger initial calculation
+        SCForm._calculate();
 
         // Init async forms
         if (typeof initAsyncForms === 'function') initAsyncForms();

@@ -10,7 +10,7 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        $setting = HotelSetting::get();
+        $setting = HotelSetting::first();
 
         return view('auth.login', compact('setting'));
     }

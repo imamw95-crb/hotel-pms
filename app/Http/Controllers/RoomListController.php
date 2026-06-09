@@ -87,7 +87,7 @@ class RoomListController extends Controller
             ->orderBy('room_id', 'asc')
             ->get();
 
-        $hotel = HotelSetting::get();
+        $hotel = HotelSetting::first();
 
         return view('room-list.print', compact(
             'checkInToday', 'dueOutToday', 'upcoming', 'currentlyStaying', 'today', 'hotel'

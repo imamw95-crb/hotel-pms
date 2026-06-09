@@ -1,6 +1,6 @@
 @php
     use DateTime as Date;
-    $hotelSetting = \App\Models\HotelSetting::get();
+    $hotelSetting = \App\Models\HotelSetting::first();
 @endphp
 <!DOCTYPE html>
 <html lang="id">

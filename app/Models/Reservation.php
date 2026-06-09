@@ -59,6 +59,16 @@ class Reservation extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function serviceCharges(): HasMany
+    {
+        return $this->hasMany(ServiceCharge::class);
+    }
+
+    public function restoTransactions(): HasMany
+    {
+        return $this->hasMany(RestoTransaction::class);
+    }
+
     public function getRemainingPaymentAttribute()
     {
         return $this->total_amount - $this->paid_amount;

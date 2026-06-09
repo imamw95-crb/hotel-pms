@@ -216,13 +216,14 @@ class IssueCardController extends Controller
     {
         try {
             $result = $this->mhs->testConnection();
+
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'connected' => false,
                 'error' => $e->getMessage(),
-                'message' => 'Gagal terhubung ke server MHS: ' . $e->getMessage(),
+                'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
             ]);
         }
     }
@@ -234,12 +235,13 @@ class IssueCardController extends Controller
     {
         try {
             $result = $this->mhs->readCard();
+
             return response()->json($result);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
-                'message' => 'Gagal membaca kartu: ' . $e->getMessage(),
+                'message' => 'Gagal membaca kartu: '.$e->getMessage(),
             ]);
         }
     }

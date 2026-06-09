@@ -30,7 +30,7 @@
 
     <!-- Header -->
     <div class="text-center mb-6">
-        @php $hotel = \App\Models\HotelSetting::get(); @endphp
+        @php $hotel = \App\Models\HotelSetting::first(); @endphp
         <div class="flex flex-col items-center mb-2">
             @if($hotel->logo_path)
                 <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" class="h-12 mb-2">

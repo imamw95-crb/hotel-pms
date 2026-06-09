@@ -30,6 +30,7 @@ class OutOfOrder extends Model
     // ─── Status Constants ────────────────────────────────────────────
 
     const STATUS_ACTIVE = 'active';
+
     const STATUS_COMPLETED = 'completed';
 
     const STATUSES = [

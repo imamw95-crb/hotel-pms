@@ -7,6 +7,7 @@ use App\Models\Room;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -169,7 +170,7 @@ class DashboardController extends Controller
 
                 $cancelled++;
             } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Auto-cancel gagal untuk reservasi {$reservation->id}: {$e->getMessage()}");
+                Log::error("Auto-cancel gagal untuk reservasi {$reservation->id}: {$e->getMessage()}");
             }
         }
 

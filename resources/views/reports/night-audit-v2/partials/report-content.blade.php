@@ -1,5 +1,5 @@
 @php
-    $hotel = \App\Models\HotelSetting::get();
+    $hotel = \App\Models\HotelSetting::first();
     $statusLabels = [
         'pending' => 'Pending',
         'menunggu_pembayaran' => 'Menunggu Transfer',
@@ -103,10 +103,28 @@
                 <span class="text-gray-600">Other Revenue:</span>
                 <span class="font-semibold text-blue-600">Rp {{ number_format($serviceChargeRevenueToday ?? 0, 0, ',', '.') }}</span>
             </div>
+            @if(($depositRevenueToday ?? 0) > 0)
+            <div class="flex justify-between items-center mt-2 pt-2 border-t border-green-200 text-sm">
+                <span class="text-gray-600"><i class="fas fa-id-card text-teal-500 mr-1"></i>Deposit Key Card:</span>
+                <span class="font-semibold text-teal-600">Rp {{ number_format($depositRevenueToday ?? 0, 0, ',', '.') }}</span>
+            </div>
+            @endif
         </div>
 
         @if(!empty($revenueByMethod) && count($revenueByMethod) > 0)
         <h3 class="text-sm font-bold text-gray-600 mb-2 uppercase">Detail per Metode Pembayaran</h3>
+        @php
+            $typeLabels = [
+                'dp' => 'DP',
+                'pelunasan' => 'Pelunasan',
+                'checkin_payment' => 'Check-in Payment',
+                'additional' => 'Additional',
+                'checkout_payment' => 'Check-out Payment',
+                'refund' => 'Refund',
+                'tambahan' => 'Tambahan',
+                'ota_payment' => 'OTA Payment',
+            ];
+        @endphp
         @foreach($transactionsByMethod ?? [] as $method => $transactions)
         <div class="mb-4">
             <div class="bg-gray-100 border border-gray-300 rounded p-2 mb-1 flex justify-between items-center">
@@ -119,6 +137,7 @@
                         <th class="text-left p-1 font-bold">No. Transaksi</th>
                         <th class="text-left p-1 font-bold">Nama Tamu</th>
                         <th class="text-center p-1 font-bold">Kamar</th>
+                        <th class="text-left p-1 font-bold">Tipe / Item</th>
                         <th class="text-center p-1 font-bold">Sumber</th>
                         <th class="text-center p-1 font-bold">Status</th>
                         <th class="text-right p-1 font-bold">Nominal (Rp)</th>
@@ -130,6 +149,22 @@
                         <td class="p-1 font-medium">{{ $txn['transaction_number'] ?? '-' }}</td>
                         <td class="p-1">{{ $txn['guest_name'] ?? '-' }}</td>
                         <td class="p-1 text-center">{{ $txn['room_number'] ?? '-' }}</td>
+                        <td class="p-1">
+                            <span class="px-1 py-0.5 rounded text-xs font-bold
+                                @if(($txn['type'] ?? '') === 'dp') bg-amber-100 text-amber-800
+                                @elseif(($txn['type'] ?? '') === 'pelunasan') bg-emerald-100 text-emerald-800
+                                @elseif(($txn['type'] ?? '') === 'checkin_payment') bg-sky-100 text-sky-800
+                                @elseif(($txn['type'] ?? '') === 'checkout_payment') bg-indigo-100 text-indigo-800
+                                @elseif(($txn['type'] ?? '') === 'additional' || ($txn['type'] ?? '') === 'tambahan') bg-orange-100 text-orange-800
+                                @elseif(($txn['type'] ?? '') === 'refund') bg-rose-100 text-rose-800
+                                @elseif(($txn['type'] ?? '') === 'ota_payment') bg-purple-100 text-purple-800
+                                @else bg-gray-100 text-gray-800 @endif">
+                                {{ $typeLabels[$txn['type'] ?? ''] ?? ucwords(str_replace('_', ' ', $txn['type'] ?? '-')) }}
+                            </span>
+                            @if(!empty($txn['notes']))
+                                <br><small class="text-gray-400 italic">{{ $txn['notes'] }}</small>
+                            @endif
+                        </td>
                         <td class="p-1 text-center">
                             @php
                                 $srcColors = [
@@ -336,6 +371,70 @@
     </div>
     @endif
 
+    {{-- Deposit Key Card --}}
+    @if(($depositRevenueToday ?? 0) > 0 || (isset($depositList) && count($depositList) > 0))
+    <div class="mb-6">
+        <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-teal-700 pb-1 text-teal-700">
+            <i class="fas fa-id-card text-teal-500 mr-2"></i>Deposit Key Card
+        </h2>
+
+        <div class="bg-teal-50 border-2 border-teal-400 rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-bold text-teal-800">TOTAL DEPOSIT KEY CARD HARI INI</span>
+                <span class="text-3xl font-bold text-teal-700">Rp {{ number_format($depositRevenueToday ?? 0, 0, ',', '.') }}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 italic">* Deposit key card (jaminan kartu akses kamar)</p>
+        </div>
+
+        @if(!empty($depositByMethod) && count($depositByMethod) > 0)
+        <h3 class="text-sm font-bold text-gray-600 mb-2 uppercase">Detail per Metode Pembayaran</h3>
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            @foreach($depositByMethod as $method => $total)
+            <div class="bg-teal-50 border border-teal-200 rounded-lg p-3 text-center">
+                <div class="text-xs text-gray-500 uppercase font-bold">{{ ucwords(str_replace('_', ' ', $method)) }}</div>
+                <div class="text-lg font-bold text-teal-700">Rp {{ number_format($total, 0, ',', '.') }}</div>
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <table class="w-full text-xs mb-2">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-1 font-bold">No. Receipt</th>
+                    <th class="text-left p-1 font-bold">Waktu</th>
+                    <th class="text-left p-1 font-bold">Tamu</th>
+                    <th class="text-center p-1 font-bold">Kamar</th>
+                    <th class="text-center p-1 font-bold">Kartu</th>
+                    <th class="text-right p-1 font-bold">Per Kartu</th>
+                    <th class="text-center p-1 font-bold">Metode</th>
+                    <th class="text-right p-1 font-bold">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($depositList ?? [] as $d)
+                <tr class="border-b border-gray-100">
+                    <td class="p-1 font-medium">{{ $d['receipt_number'] ?? '-' }}</td>
+                    <td class="p-1">{{ $d['created_at'] ?? '-' }}</td>
+                    <td class="p-1">{{ $d['guest_name'] ?? '-' }}</td>
+                    <td class="p-1 text-center">{{ $d['room_number'] ?? '-' }}</td>
+                    <td class="p-1 text-center">{{ $d['number_of_cards'] ?? 0 }}</td>
+                    <td class="p-1 text-right">Rp {{ number_format($d['nominal_per_card'] ?? 0, 0, ',', '.') }}</td>
+                    <td class="p-1 text-center capitalize">{{ str_replace('_', ' ', $d['payment_method'] ?? '-') }}</td>
+                    <td class="p-1 text-right font-bold text-teal-600">Rp {{ number_format($d['total_amount'] ?? 0, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-teal-50 border-t-2 border-teal-300">
+                    <td colspan="7" class="p-2 text-right font-bold text-teal-800">TOTAL DEPOSIT KEY CARD</td>
+                    <td class="p-2 text-right font-bold text-teal-700">Rp {{ number_format($depositRevenueToday ?? 0, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+
     {{-- Ringkasan Kas (Cash Flow) --}}
     <div class="mb-6">
         <h2 class="text-lg font-bold uppercase mb-3 border-b-2 border-yellow-700 pb-1 text-yellow-700">
@@ -345,8 +444,8 @@
         <div class="grid grid-cols-3 gap-4">
             <div class="bg-green-50 border-2 border-green-400 rounded-lg p-4 text-center">
                 <div class="text-xs uppercase text-gray-500 font-bold">Total Pemasukan Tunai</div>
-                <div class="text-2xl font-bold text-green-700">Rp {{ number_format($cashRevenue ?? 0, 0, ',', '.') }}</div>
-                <div class="text-xs text-gray-400 mt-1">Pembayaran tunai (Reservasi, Resto, SC)</div>
+                <div class="text-2xl font-bold text-green-700">Rp {{ number_format(($cashRevenue ?? 0) + ($cashDeposits ?? 0), 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Pembayaran tunai (Reservasi, Resto, SC, Deposit)</div>
             </div>
             <div class="bg-red-50 border-2 border-red-400 rounded-lg p-4 text-center">
                 <div class="text-xs uppercase text-gray-500 font-bold">Total Pengeluaran Tunai</div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Deposit;
 use App\Models\Expense;
 use App\Models\NightAuditLog;
 use App\Models\Reservation;
@@ -215,6 +216,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['  - Web / Direct', $data['webRevenueToday'] ?? 0]);
             fputcsv($file, ['Pendapatan Resto', $data['restoRevenueToday'] ?? 0]);
             fputcsv($file, ['Other Revenue', $data['serviceChargeRevenueToday'] ?? 0]);
+            fputcsv($file, ['Deposit Key Card', $data['depositRevenueToday'] ?? 0]);
             fputcsv($file, ['Total', $data['totalRevenue'] ?? 0]);
             fputcsv($file, []);
 
@@ -222,14 +224,20 @@ class NightAuditController extends Controller
             $txByMethod = $data['transactionsByMethod'] ?? [];
             foreach ($txByMethod as $method => $txns) {
                 fputcsv($file, [strtoupper(str_replace('_', ' ', $method))]);
-                fputcsv($file, ['No.', 'No. Transaksi', 'Tamu', 'Kamar', 'Sumber', 'Status', 'Nominal']);
+                fputcsv($file, ['No.', 'No. Transaksi', 'Tamu', 'Kamar', 'Tipe/Item', 'Sumber', 'Status', 'Nominal']);
                 $i = 1;
                 foreach ($txns as $txn) {
                     $source = $txn['source'] ?? '-';
                     if (! empty($txn['ota_source'])) {
                         $source .= ' ('.$txn['ota_source'].')';
                     }
-                    fputcsv($file, [$i++, $txn['transaction_number'] ?? '-', $txn['guest_name'] ?? '-', $txn['room_number'] ?? '-', $source, $txn['status'] ?? '-', $txn['amount'] ?? 0]);
+                    $typeLabel = $txn['type'] ?? '-';
+                    $notes = $txn['notes'] ?? '';
+                    $itemInfo = ucwords(str_replace('_', ' ', $typeLabel));
+                    if (! empty($notes)) {
+                        $itemInfo .= ' - '.$notes;
+                    }
+                    fputcsv($file, [$i++, $txn['transaction_number'] ?? '-', $txn['guest_name'] ?? '-', $txn['room_number'] ?? '-', $itemInfo, $source, $txn['status'] ?? '-', $txn['amount'] ?? 0]);
                 }
                 fputcsv($file, []);
             }
@@ -255,9 +263,31 @@ class NightAuditController extends Controller
                 }
             }
 
+            // ── Deposits ──
+            $depositList = $data['depositList'] ?? [];
+            $depositByMethod = $data['depositByMethod'] ?? [];
+            if (count($depositList) > 0) {
+                fputcsv($file, ['DEPOSIT KEY CARD']);
+                fputcsv($file, ['Total Deposit Key Card', $data['depositRevenueToday'] ?? 0]);
+                fputcsv($file, []);
+
+                foreach ($depositByMethod as $method => $total) {
+                    fputcsv($file, [strtoupper(str_replace('_', ' ', $method))]);
+                    fputcsv($file, ['No.', 'No. Receipt', 'Tamu', 'Kamar', 'Kartu', 'Per Kartu', 'Nominal']);
+                    $i = 1;
+                    foreach ($depositList as $d) {
+                        if (($d['payment_method'] ?? '') === $method) {
+                            fputcsv($file, [$i++, $d['receipt_number'] ?? '-', $d['guest_name'] ?? '-', $d['room_number'] ?? '-', $d['number_of_cards'] ?? 0, $d['nominal_per_card'] ?? 0, $d['total_amount'] ?? 0]);
+                        }
+                    }
+                    fputcsv($file, []);
+                }
+            }
+
             // ── Cash Flow ──
             fputcsv($file, ['RINGKASAN KAS (CASH FLOW)']);
-            fputcsv($file, ['Total Pemasukan Tunai', $data['cashRevenue'] ?? 0]);
+            fputcsv($file, ['Total Pemasukan Tunai', ($data['cashRevenue'] ?? 0) + ($data['cashDeposits'] ?? 0)]);
+            fputcsv($file, ['  - Deposits (Key Card)', $data['cashDeposits'] ?? 0]);
             fputcsv($file, ['Total Pengeluaran Tunai', $data['cashExpenses'] ?? 0]);
             fputcsv($file, ['Sisa Kas (Cash Balance)', $data['cashFlowBalance'] ?? 0]);
             fputcsv($file, []);
@@ -392,6 +422,8 @@ class NightAuditController extends Controller
                     'transaction_number' => $t->transaction_number,
                     'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
                     'room_number' => $t->reservation?->room?->room_number ?? '-',
+                    'type' => $t->type,
+                    'notes' => $t->notes,
                     'status' => $t->reservation?->status ?? '-',
                     'amount' => $t->amount,
                     'source' => $t->payment_method === 'cash' ? 'Cash' : ($isOta ? 'OTA' : 'Web'),
@@ -460,6 +492,35 @@ class NightAuditController extends Controller
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
+        // ─── Deposits (Key Card Deposit) ─────────────────────────────
+        $depositRevenueToday = Deposit::whereDate('created_at', $date)->sum('total_amount');
+
+        $depositList = Deposit::with(['guest', 'reservation.room', 'createdBy'])
+            ->whereDate('created_at', $date)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn ($d) => [
+                'receipt_number' => $d->receipt_number,
+                'guest_name' => $d->guest->guest_name ?? '-',
+                'room_number' => $d->reservation?->room?->room_number ?? '-',
+                'number_of_cards' => $d->number_of_cards,
+                'nominal_per_card' => $d->nominal_per_card,
+                'total_amount' => $d->total_amount,
+                'payment_method' => $d->payment_method,
+                'notes' => $d->notes,
+                'created_by' => $d->createdBy?->name ?? '-',
+                'created_at' => $d->created_at->format('H:i'),
+            ]);
+
+        $depositByMethod = Deposit::whereDate('created_at', $date)
+            ->selectRaw('payment_method, SUM(total_amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method');
+
+        $cashDeposits = Deposit::whereDate('created_at', $date)
+            ->where('payment_method', 'cash')
+            ->sum('total_amount');
+
         // ─── Expenses (Pengeluaran) ─────────────────────────────────
         $expensesToday = Expense::whereDate('expense_date', $date)->sum('amount');
 
@@ -490,7 +551,7 @@ class NightAuditController extends Controller
             ->where('payment_method', 'cash')
             ->sum('amount');
 
-        $cashFlowBalance = $cashRevenue - $cashExpenses;
+        $cashFlowBalance = ($cashRevenue + $cashDeposits) - $cashExpenses;
 
         // In-house guests
         $inHouseGuests = Reservation::where(function ($q) use ($date) {
@@ -544,6 +605,7 @@ class NightAuditController extends Controller
             'restoTransactions', 'restoRevenueByMethod',
             'serviceCharges', 'serviceChargeByMethod',
             'expensesToday', 'expensesList', 'expensesByMethod',
+            'depositRevenueToday', 'depositList', 'depositByMethod', 'cashDeposits',
             'cashRevenue', 'cashExpenses', 'cashFlowBalance',
             'checkinsToday', 'checkoutsToday', 'inHouseGuests',
             'otaBookings', 'webBookings', 'directBookings'

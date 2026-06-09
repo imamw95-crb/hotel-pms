@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>@yield('title', 'Welcome') - {{ \App\Models\HotelSetting::get()->hotel_name }}</title>
+    <title>@yield('title', 'Welcome') - {{ \App\Models\HotelSetting::first()->hotel_name }}</title>
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     @vite(['resources/css/app.css'])
     <style>
