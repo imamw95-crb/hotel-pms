@@ -32,16 +32,9 @@
     </form>
 </div>
 
-<!-- Print Header -->
+<!-- Print Header (minimal — hanya judul & periode) -->
 <div class="hidden print:block mb-6 text-center">
-    @php $hotel = \App\Models\HotelSetting::first(); @endphp
-    @if($hotel->logo_path)
-        <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" class="h-12 mx-auto mb-2">
-    @endif
-    <h2 class="text-lg font-bold uppercase tracking-wider">{{ $hotel->hotel_name ?? 'Dynamic PMS V.2' }}</h2>
-    @if($hotel->address)<p class="text-xs text-gray-500">{{ $hotel->address }}</p>@endif
-    @if($hotel->phone)<p class="text-xs text-gray-500">Telp: {{ $hotel->phone }}</p>@endif
-    <h1 class="text-2xl font-bold uppercase tracking-wider mt-2">LAPORAN BOOKING OTA</h1>
+    <h1 class="text-2xl font-bold uppercase tracking-wider">LAPORAN BOOKING OTA</h1>
     <p class="text-gray-600">Periode: {{ \Carbon\Carbon::parse($startDate)->format('d F Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d F Y') }}</p>
     <p class="text-xs text-gray-400">Dicetak: {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
     <hr class="my-4 border-t-2 border-gray-800">
@@ -190,4 +183,82 @@
         </table>
     </div>
 </div>
+<style>
+    @media print {
+        /* Sembunyikan semua elemen non-data */
+        .no-print,
+        aside,
+        nav,
+        header,
+        .app-header,
+        .app-sidebar,
+        .sidebar-spacer,
+        .sidebar-overlay,
+        form,
+        button,
+        .bg-blue-800,
+        #ai-chat-widget,
+        [data-turbo-permanent] { display: none !important; }
+
+        /* Reset layout */
+        body {
+            background: white !important;
+            margin: 0 !important;
+            padding: 10px !important;
+            font-size: 11px !important;
+        }
+
+        #app-layout,
+        .main-wrapper,
+        .page-content {
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        /* Tampilkan print header */
+        .print\:block { display: block !important; }
+
+        /* Reset shadow dan border */
+        .shadow { box-shadow: none !important; }
+        .rounded { border: 1px solid #ccc !important; border-radius: 0 !important; }
+
+        /* Summary cards */
+        .grid-cols-1.md\:grid-cols-4 {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 6px !important;
+        }
+        .grid-cols-1.md\:grid-cols-4 > div {
+            border: 1px solid #ccc !important;
+            padding: 8px !important;
+        }
+
+        /* Tabel */
+        table { width: 100% !important; border-collapse: collapse !important; font-size: 10px !important; }
+        th, td { padding: 3px 5px !important; border: 1px solid #999 !important; }
+        th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* Font size */
+        h1 { font-size: 16px !important; }
+        .text-3xl { font-size: 16px !important; }
+        .text-lg { font-size: 11px !important; }
+        .text-sm { font-size: 9px !important; }
+        .text-xs { font-size: 8px !important; }
+
+        /* Warna background print */
+        .bg-blue-50 { background: #eff6ff !important; -webkit-print-color-adjust: exact; }
+        .bg-green-100 { background: #dcfce7 !important; -webkit-print-color-adjust: exact; }
+        .bg-red-100 { background: #fee2e2 !important; -webkit-print-color-adjust: exact; }
+        .bg-indigo-100 { background: #e0e7ff !important; -webkit-print-color-adjust: exact; }
+        .bg-purple-100 { background: #f3e8ff !important; -webkit-print-color-adjust: exact; }
+        .bg-gray-100 { background: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+
+        /* Hindari page break di tengah tabel */
+        .overflow-hidden { page-break-inside: avoid; }
+    }
+</style>
 @endsection
