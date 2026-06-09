@@ -11,18 +11,34 @@ class MHSBridgeService
 
     protected $timeout;
 
+    protected $roomMapping = [
+        '0106' => '0401',
+        '0107' => '0402',
+        '0108' => '0403',
+    ];
+
     public function __construct()
     {
         $this->bridgeUrl = env('MHS_BRIDGE_URL', 'http://192.168.88.2:8080/bridge_api.php');
         $this->timeout = 30;
     }
 
+    /**
+     * Mapping nomor kamar PMS ke kode encoder MHS (PMSNo)
+     */
+    public function mapRoom($room)
+    {
+        $roomPadded = str_pad((string)$room, 4, '0', STR_PAD_LEFT);
+        return $this->roomMapping[$roomPadded] ?? $roomPadded;
+    }
+
     public function checkin($room, $name, $checkin, $checkout, $reservationId = null)
     {
+        $mappedRoom = $this->mapRoom($room);
         $response = Http::timeout($this->timeout)
             ->get($this->bridgeUrl, [
                 'action' => 'checkin',
-                'room' => $room,
+                'room' => $mappedRoom,
                 'name' => $name,
                 'checkin' => $checkin,
                 'checkout' => $checkout,
@@ -44,10 +60,11 @@ class MHSBridgeService
 
     public function checkout($room, $reservationId = null)
     {
+        $mappedRoom = $this->mapRoom($room);
         $response = Http::timeout($this->timeout)
             ->get($this->bridgeUrl, [
                 'action' => 'checkout',
-                'room' => $room,
+                'room' => $mappedRoom,
             ]);
 
         $result = $response->json();
@@ -66,10 +83,11 @@ class MHSBridgeService
 
     public function eraseCard($room, $reservationId = null)
     {
+        $mappedRoom = $this->mapRoom($room);
         $response = Http::timeout($this->timeout)
             ->get($this->bridgeUrl, [
                 'action' => 'erase_card',
-                'room' => $room,
+                'room' => $mappedRoom,
             ]);
 
         $result = $response->json();
