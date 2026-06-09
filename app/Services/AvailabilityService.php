@@ -6,6 +6,7 @@ use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * AvailabilityService — Centralized availability engine for Hotel PMS.
@@ -84,6 +85,24 @@ class AvailabilityService
         }
 
         return $query->orderBy('room_number')->get();
+    }
+
+    /**
+     * Limit available rooms to 25% per room type (floor, minimum 1).
+     * Used by public API to show limited inventory for marketing purposes.
+     * Internal services should use getAvailableRooms() directly for full list.
+     *
+     * @param  Collection  $rooms  Full available rooms collection
+     * @return Collection Limited rooms (max 25% per type, min 1)
+     */
+    public function limitAvailablePerType($rooms)
+    {
+        return $rooms->groupBy('room_type_name')->flatMap(function ($typeRooms) {
+            $totalAvailable = $typeRooms->count();
+            $limit = max(1, (int) floor(0.25 * $totalAvailable));
+
+            return $typeRooms->take($limit);
+        })->values();
     }
 
     /**

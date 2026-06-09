@@ -9,6 +9,7 @@ use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
+use App\Services\AvailabilityService;
 use App\Services\BookingNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -648,8 +649,11 @@ class ReservationApiController extends Controller
             ->orderBy('room_number')
             ->get();
 
+        // Apply 25% limit per room type (floor, min 1) for public display
+        $limitedRooms = app(AvailabilityService::class)->limitAvailablePerType($availableRooms);
+
         // Attach room type description
-        $data = $availableRooms->map(function ($room) {
+        $data = $limitedRooms->map(function ($room) {
             $roomType = $room->roomType;
 
             return array_merge($room->toArray(), [
@@ -664,7 +668,8 @@ class ReservationApiController extends Controller
             'meta' => [
                 'check_in' => $validated['check_in'],
                 'check_out' => $validated['check_out'],
-                'total' => $availableRooms->count(),
+                'total_available' => $availableRooms->count(),
+                'total_displayed' => $limitedRooms->count(),
             ],
         ]);
     }
