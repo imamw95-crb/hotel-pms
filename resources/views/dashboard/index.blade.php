@@ -57,7 +57,7 @@
         {{-- Auto-Cancel Button --}}
         <div class="flex justify-end mb-2">
             <button onclick="autoCancelPending(this)" data-url="{{ route('dashboard.auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
-                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (Theicon.id)
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (From WEB)
             </button>
         </div>
 
@@ -270,7 +270,7 @@
 
         <div class="flex justify-end mt-6 mb-2">
             <button onclick="autoCancelPending(this)" data-url="{{ route('auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
-                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (Theicon.id)
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (From WEB)
             </button>
         </div>
 
@@ -441,7 +441,7 @@
 
         <div class="mt-4">
             <button onclick="autoCancelPending(this)" data-url="{{ route('auto-cancel-pending') }}" class="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition">
-                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (Theicon.id)
+                <i class="fas fa-times-circle mr-1"></i> Batalkan Booking Pending >3 Jam (From WEB)
             </button>
         </div>
     @endif
