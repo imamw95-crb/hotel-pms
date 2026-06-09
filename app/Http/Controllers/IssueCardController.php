@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Guest;
 use App\Models\MHSLog;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -38,11 +37,12 @@ class IssueCardController extends Controller
     }
 
     /**
-     * Issue card baru via API HMS
+     * Issue card via MHS — HANYA untuk reservasi yang sudah ada, TIDAK membuat booking baru.
      */
     public function issue(Request $request)
     {
         $validated = $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
             'room_id' => 'required|exists:rooms,id',
             'guest_name' => 'required|string|max:100',
             'id_number' => 'nullable|string|max:50',
@@ -55,6 +55,16 @@ class IssueCardController extends Controller
 
         $room = Room::findOrFail($validated['room_id']);
 
+        // Ambil reservasi yang sudah ada — tidak membuat reservasi baru
+        $reservation = Reservation::findOrFail($validated['reservation_id']);
+        $reservationId = $reservation->id;
+        $guest = $reservation->guest;
+
+        // Update jumlah kartu
+        $reservation->update([
+            'number_of_cards' => $validated['number_of_cards'],
+        ]);
+
         // Format tanggal untuk MHS: YmdHi (contoh: 202605241400)
         $checkIn = Carbon::parse($validated['check_in'])->format('YmdHi');
         $checkOut = Carbon::parse($validated['check_out'])->format('YmdHi');
@@ -64,7 +74,8 @@ class IssueCardController extends Controller
             $room->room_number,
             $validated['guest_name'],
             $checkIn,
-            $checkOut
+            $checkOut,
+            $reservationId
         );
 
         if (! ($mhsResult['success'] ?? false)) {
@@ -72,62 +83,21 @@ class IssueCardController extends Controller
                 ->withInput();
         }
 
-        // Simpan data guest
-        $guest = Guest::updateOrCreate(
-            ['id_number' => $validated['id_number'] ?? null],
-            [
-                'guest_name' => $validated['guest_name'],
-                'phone' => $validated['phone'] ?? null,
-                'email' => $validated['email'] ?? null,
-            ]
-        );
-
-        // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
-        $checkInDate = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
-        $checkOutDate = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
-
-        // Hitung total
-        $days = $checkInDate->diffInDays($checkOutDate);
-        $totalAmount = $room->price_per_night * $days;
-
-        // Buat reservasi
-        $reservation = Reservation::create([
-            'reservation_number' => 'RES-'.strtoupper(uniqid()),
-            'room_id' => $room->id,
-            'guest_id' => $guest->id,
-            'check_in' => $checkInDate,
-            'check_out' => $checkOutDate,
-            'number_of_cards' => $validated['number_of_cards'],
-            'status' => 'checked_in',
-            'total_amount' => $totalAmount,
-            'paid_amount' => 0,
-            'notes' => 'Issue Card via MHS',
-            'created_by' => auth()->id(),
-        ]);
-
-        // Update MHS log terakhir dengan reservation_id (log dibuat sebelum reservasi)
-        MHSLog::whereNull('reservation_id')
-            ->where('command', 'checkin')
-            ->where('created_by', auth()->id())
-            ->latest()
-            ->limit(1)
-            ->update(['reservation_id' => $reservation->id]);
-
         // Update status kamar
         $room->update(['status' => 'occupied']);
 
-        // Check if request is AJAX
+        $message = "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}";
+
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}",
+                'message' => $message,
                 'redirect_url' => route('issue-card.index'),
-                'reservation' => $reservation,
             ]);
         }
 
         return redirect()->route('issue-card.index')
-            ->with('success', "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}");
+            ->with('success', $message);
     }
 
     /**
