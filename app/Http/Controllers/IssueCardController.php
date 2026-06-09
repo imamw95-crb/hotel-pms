@@ -105,6 +105,14 @@ class IssueCardController extends Controller
             'created_by' => auth()->id(),
         ]);
 
+        // Update MHS log terakhir dengan reservation_id (log dibuat sebelum reservasi)
+        MHSLog::whereNull('reservation_id')
+            ->where('command', 'checkin')
+            ->where('created_by', auth()->id())
+            ->latest()
+            ->limit(1)
+            ->update(['reservation_id' => $reservation->id]);
+
         // Update status kamar
         $room->update(['status' => 'occupied']);
 
@@ -145,7 +153,8 @@ class IssueCardController extends Controller
             $room->room_number,
             $guest->guest_name,
             $checkIn,
-            $checkOut
+            $checkOut,
+            $reservation->id
         );
 
         if (! ($mhsResult['success'] ?? false)) {
