@@ -174,6 +174,10 @@
                         <button type="button" id="btnCheckout" onclick="doCheckout()" class="hidden bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
                             <i class="fas fa-sign-out-alt mr-1"></i> Checkout & Available
                         </button>
+                        <!-- Tombol Erase Card (hanya tampil untuk checked_in) -->
+                        <button type="button" id="btnEraseCard" onclick="doEraseCard()" class="hidden bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                            <i class="fas fa-times-circle mr-1"></i> Erase Card
+                        </button>
                         <!-- Tombol Issue Card -->
                         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                             <i class="fas fa-key mr-1"></i> Issue Card
@@ -210,6 +214,7 @@
                             <span class="text-xs text-gray-500">{{ $log->created_at->format('H:i:s') }}</span>
                         </div>
                         <div class="text-gray-600 text-xs mt-1">Room: {{ $log->reservation?->room?->room_number ?? '-' }}</div>
+                        <div class="text-gray-600 text-xs">Oleh: {{ $log->creator?->name ?? $log->creator?->username ?? 'System' }}</div>
                         <div class="text-xs {{ ($log->success ?? false) ? 'text-green-600' : 'text-red-600' }}">
                             {{ ($log->success ?? false) ? '✓ Success' : '✗ Failed' }}
                         </div>
@@ -258,11 +263,13 @@
         statusEl.textContent = statusLabels[d.status] || d.status.toUpperCase();
         statusEl.className = 'ml-2 px-2 py-0.5 rounded text-xs font-bold ' + (statusColors[d.status] || 'bg-gray-100 text-gray-800');
 
-        // Tampilkan tombol Checkout hanya untuk checked_in
+        // Tampilkan tombol Checkout & Erase hanya untuk checked_in
         if (d.status === 'checked_in') {
             document.getElementById('btnCheckout').classList.remove('hidden');
+            document.getElementById('btnEraseCard').classList.remove('hidden');
         } else {
             document.getElementById('btnCheckout').classList.add('hidden');
+            document.getElementById('btnEraseCard').classList.add('hidden');
         }
 
         updatePreview();
@@ -437,6 +444,59 @@
                 .catch(err => {
                     showModal({ title: 'Error', message: err.message, type: 'error' });
                     btn.innerHTML = '<i class="fas fa-sign-out-alt mr-1"></i> Checkout & Available';
+                    btn.disabled = false;
+                });
+            }
+        });
+    }
+
+    // ========== ERASE CARD ==========
+    function doEraseCard() {
+        const resId = document.getElementById('reservationId').value;
+        const roomDisplay = document.getElementById('roomDisplay').value;
+        const guestName = document.getElementById('guestName').value;
+
+        if (!resId) {
+            showModal({ title: 'Peringatan', message: 'Pilih reservasi terlebih dahulu!', type: 'warning' });
+            return;
+        }
+
+        showModal({
+            title: 'Konfirmasi Erase Card',
+            message: '<strong>Kamar:</strong> ' + roomDisplay + '<br><strong>Tamu:</strong> ' + guestName + '<br><br>Kartu akan di-<strong>erase</strong> dari encoder.<br><br>Silakan tap kartu di reader!<br><br>Lanjutkan?',
+            type: 'confirm',
+            confirmText: 'Ya, Erase Card',
+            cancelText: 'Batal',
+            onConfirm: function() {
+                const btn = document.getElementById('btnEraseCard');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Processing...';
+                btn.disabled = true;
+
+                fetch('/issue-card/' + resId + '/erase-card', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showModal({
+                            title: 'Erase Card Berhasil!',
+                            message: '<i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i><br>Kartu kamar <strong>' + roomDisplay + '</strong> berhasil di-erase.',
+                            type: 'success',
+                            onConfirm: function() { location.reload(); }
+                        });
+                    } else {
+                        showModal({ title: 'Erase Card Gagal', message: data.message || 'Unknown error', type: 'error' });
+                        btn.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Erase Card';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    showModal({ title: 'Error', message: err.message, type: 'error' });
+                    btn.innerHTML = '<i class="fas fa-times-circle mr-1"></i> Erase Card';
                     btn.disabled = false;
                 });
             }

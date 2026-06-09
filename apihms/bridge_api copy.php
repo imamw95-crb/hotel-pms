@@ -38,12 +38,7 @@ function send_to_mhs($command)
 
 function build_command($cmd_code, $fields = [])
 {
-    // Khusus command B (checkout): pakai destination 00 (database only, no card cancel)
-    if ($cmd_code === 'B') {
-        $header = '00'.'00'.$cmd_code;
-    } else {
-        $header = '01'.'03'.$cmd_code;
-    }
+    $header = '01'.'03'.$cmd_code;
     $parts = [$header];
 
     foreach ($fields as $id => $val) {
@@ -84,37 +79,6 @@ switch ($action) {
             'command_sent' => bin2hex($cmd),
             'command_text' => $cmd,
             'room_formatted' => str_pad($room, 4, '0', STR_PAD_LEFT),
-            'response_code' => $responseCode,
-            'response_message' => $responseMsg,
-            'raw_response' => bin2hex($resp),
-        ]);
-        break;
-
-    case 'new_checkin':
-        $room = $_GET['room'] ?? '';
-        $name = $_GET['name'] ?? '';
-        $checkin = $_GET['checkin'] ?? '';
-        $checkout = $_GET['checkout'] ?? '';
-
-        $cmd = build_command('I', ['R' => $room, 'N' => $name, 'D' => $checkin, 'O' => $checkout]);
-        [$ok, $resp] = send_to_mhs($cmd);
-
-        $responseCode = '';
-        $responseMsg = '';
-        if ($ok && strlen($resp) >= 6) {
-            $content = substr($resp, 1, -1);
-            $responseCode = strlen($content) >= 5 ? substr($content, 4, 1) : '?';
-            $responseMsg = getResponseMessage($responseCode);
-        }
-
-        echo json_encode([
-            'success' => $ok && $responseCode == '0',
-            'action' => 'new_checkin',
-            'command_sent' => bin2hex($cmd),
-            'room_formatted' => str_pad($room, 4, '0', STR_PAD_LEFT),
-            'guest_name' => $name,
-            'checkin_date' => $checkin,
-            'checkout_date' => $checkout,
             'response_code' => $responseCode,
             'response_message' => $responseMsg,
             'raw_response' => bin2hex($resp),
@@ -191,10 +155,9 @@ switch ($action) {
     default:
         echo json_encode([
             'error' => 'Unknown action',
-            'available' => ['checkin', 'new_checkin', 'checkout', 'read', 'test'],
+            'available' => ['checkin', 'checkout', 'read', 'test'],
             'example' => [
                 'checkin' => '?action=checkin&room=101&name=John&checkin=202405221400&checkout=202405251200',
-                'new_checkin' => '?action=new_checkin&room=101&name=John&checkin=202405221400&checkout=202405251200',
                 'checkout' => '?action=checkout&room=101',
                 'read' => '?action=read',
                 'test' => '?action=test',

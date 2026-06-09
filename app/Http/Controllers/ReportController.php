@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\HotelSetting;
+use App\Models\MHSLog;
 use App\Models\Reservation;
 use App\Models\RestoTransaction;
 use App\Models\Room;
@@ -198,6 +199,34 @@ class ReportController extends Controller
             ->get();
 
         return view('reports.reservations', compact('startDate', 'endDate', 'reservations'));
+    }
+
+    /**
+     * MHS Audit Log
+     */
+    public function mhsAudit(Request $request)
+    {
+        $startDate = $request->get('start_date', Carbon::today()->format('Y-m-d'));
+        $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
+        $command = $request->get('command', 'all');
+
+        $query = MHSLog::with(['reservation.room', 'creator'])
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate);
+
+        if ($command !== 'all') {
+            $query->where('command', $command);
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->paginate(50);
+
+        $summary = MHSLog::whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->selectRaw("command, COUNT(*) as total, SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as success_count, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as fail_count")
+            ->groupBy('command')
+            ->get();
+
+        return view('reports.mhs-audit', compact('startDate', 'endDate', 'command', 'logs', 'summary'));
     }
 
     /**

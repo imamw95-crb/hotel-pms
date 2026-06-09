@@ -264,6 +264,12 @@ return [
                     'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
                 ],
                 [
+                    'label' => 'MHS Audit',
+                    'route' => 'reports.mhs-audit',
+                    'permission' => 'view_reports',
+                    'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
+                ],
+                [
                     'label' => 'Log Email OTA',
                     'route' => 'ota-email-logs.index',
                     'permission' => 'view_reports',

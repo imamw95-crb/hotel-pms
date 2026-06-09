@@ -29,7 +29,7 @@ class IssueCardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get();
-        $recentLogs = MHSLog::with('reservation.room')
+        $recentLogs = MHSLog::with(['reservation.room', 'creator'])
             ->orderBy('created_at', 'desc')
             ->limit(20)
             ->get();
@@ -226,6 +226,36 @@ class IssueCardController extends Controller
                 'message' => 'Gagal terhubung ke server MHS: '.$e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Erase card / cancel kartu fisik via encoder
+     */
+    public function eraseCard(Request $request, Reservation $reservation)
+    {
+        $room = $reservation->room;
+
+        if (! $room) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Data kamar tidak ditemukan.']);
+            }
+            return back()->with('error', 'Data kamar tidak ditemukan.');
+        }
+
+        $mhsResult = $this->mhs->eraseCard($room->room_number, $reservation->id);
+
+        if (! ($mhsResult['success'] ?? false)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Gagal erase card: '.($mhsResult['response_message'] ?? 'Unknown error')]);
+            }
+            return back()->with('error', 'Gagal erase card: '.($mhsResult['response_message'] ?? 'Unknown error'));
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => "Erase card berhasil untuk kamar {$room->room_number}! Silakan tap kartu di encoder."]);
+        }
+
+        return back()->with('success', "Erase card berhasil untuk kamar {$room->room_number}! Silakan tap kartu di encoder.");
     }
 
     /**

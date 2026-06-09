@@ -6,19 +6,11 @@ use App\Models\Guest;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
-use App\Services\MHSBridgeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CheckinController extends Controller
 {
-    protected $mhs;
-
-    public function __construct(MHSBridgeService $mhs)
-    {
-        $this->mhs = $mhs;
-    }
-
     public function index(Request $request)
     {
         $rooms = Room::orderBy('room_number')->get();
@@ -80,20 +72,6 @@ class CheckinController extends Controller
         $checkInDate = Carbon::parse($request->check_in)->setTime(12, 0, 0);
         $checkOutDate = Carbon::parse($request->check_out)->setTime(12, 0, 0);
 
-        $checkIn = $checkInDate->format('YmdHi');
-        $checkOut = $checkOutDate->format('YmdHi');
-
-        $mhsResult = $this->mhs->checkin(
-            $room->room_number,
-            $request->guest_name,
-            $checkIn,
-            $checkOut
-        );
-
-        if (! $mhsResult['success']) {
-            return back()->with('error', 'Gagal issue card: '.($mhsResult['response_message'] ?? 'Unknown error'));
-        }
-
         $guest = Guest::updateOrCreate(
             ['id_number' => $request->id_number ?? null],
             [
@@ -137,14 +115,14 @@ class CheckinController extends Controller
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Check-in berhasil! Kartu sudah di-issue.',
+                'message' => 'Check-in berhasil!',
                 'redirect_url' => route('checkin.success', $reservation->id),
                 'reservation' => $reservation,
             ]);
         }
 
         return redirect()->route('checkin.success', $reservation->id)
-            ->with('success', 'Check-in berhasil! Kartu sudah di-issue.');
+            ->with('success', 'Check-in berhasil!');
     }
 
     public function success($id)

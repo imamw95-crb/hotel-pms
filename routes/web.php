@@ -96,6 +96,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/issue-card/issue', [IssueCardController::class, 'issue'])->middleware('permission:issue_card')->name('issue-card.issue');
     Route::post('/issue-card/{reservation}/reissue', [IssueCardController::class, 'reissue'])->middleware('permission:reissue_card')->name('issue-card.reissue');
     Route::post('/issue-card/{reservation}/checkout', [IssueCardController::class, 'checkout'])->middleware('permission:checkout')->name('issue-card.checkout');
+    Route::post('/issue-card/{reservation}/erase-card', [IssueCardController::class, 'eraseCard'])->middleware('permission:issue_card')->name('issue-card.erase');
     Route::get('/issue-card/test', [IssueCardController::class, 'testConnection'])->middleware('permission:issue_card')->name('issue-card.test');
     Route::get('/issue-card/read', [IssueCardController::class, 'readCard'])->middleware('permission:issue_card')->name('issue-card.read');
 
@@ -165,6 +166,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/occupancy', [ReportController::class, 'occupancy'])->name('reports.occupancy');
         Route::get('/reports/revenue', [ReportController::class, 'revenue'])->name('reports.revenue');
         Route::get('/reports/reservations', [ReportController::class, 'reservations'])->name('reports.reservations');
+        Route::get('/reports/mhs-audit', [ReportController::class, 'mhsAudit'])->name('reports.mhs-audit');
         Route::get('/reports/group', [ReportController::class, 'groupReport'])->name('reports.group');
 
         // Night Audit v2 — Preview, Draft, Lock, History

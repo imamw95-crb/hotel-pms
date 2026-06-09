@@ -33,6 +33,7 @@ class MHSBridgeService
         MHSLog::create([
             'command' => 'checkin',
             'reservation_id' => $reservationId,
+            'created_by' => auth()->id(),
             'request_data' => compact('room', 'name', 'checkin', 'checkout'),
             'response_data' => $result,
             'success' => $result['success'] ?? false,
@@ -54,6 +55,29 @@ class MHSBridgeService
         MHSLog::create([
             'command' => 'checkout',
             'reservation_id' => $reservationId,
+            'created_by' => auth()->id(),
+            'request_data' => compact('room'),
+            'response_data' => $result,
+            'success' => $result['success'] ?? false,
+        ]);
+
+        return $result;
+    }
+
+    public function eraseCard($room, $reservationId = null)
+    {
+        $response = Http::timeout($this->timeout)
+            ->get($this->bridgeUrl, [
+                'action' => 'erase_card',
+                'room' => $room,
+            ]);
+
+        $result = $response->json();
+
+        MHSLog::create([
+            'command' => 'erase_card',
+            'reservation_id' => $reservationId,
+            'created_by' => auth()->id(),
             'request_data' => compact('room'),
             'response_data' => $result,
             'success' => $result['success'] ?? false,
