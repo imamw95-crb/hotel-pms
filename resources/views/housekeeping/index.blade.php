@@ -991,37 +991,6 @@ function toggleChecklist(itemId, isChecked) {
     .catch(function() {});
 }
 
-
-                    '<p><span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full border ' + (task.status_color || 'bg-gray-100') + '">' + (statusLabels[task.status] || task.status) + '</span></p>' +
-                '</div>' +
-                '<div>' +
-                    '<p class="text-sm text-gray-500">Ditugaskan Ke</p>' +
-                    '<p class="font-medium">' + assignedToName + '</p>' +
-                '</div>' +
-                '<div>' +
-                    '<p class="text-sm text-gray-500">Dibuat Oleh</p>' +
-                    '<p class="font-medium">' + createdByName + '</p>' +
-                '</div>' +
-            '</div>' +
-            (task.description
-                ? '<div><p class="text-sm text-gray-500">Deskripsi</p><p class="text-sm mt-1">' + task.description + '</p></div>'
-                : '') +
-            (task.notes
-                ? '<div><p class="text-sm text-gray-500">Catatan</p><p class="text-sm mt-1">' + task.notes + '</p></div>'
-                : '') +
-            '<div class="grid grid-cols-2 gap-4 text-sm text-gray-500 pt-2 border-t">' +
-                '<div><p>Dibuat: ' + task.created_at.replace('T',' ').substring(0,19).replace(/-/g,'/') + '</p></div>' +
-                (task.completed_at
-                    ? '<div><p>Selesai: ' + task.completed_at.replace('T',' ').substring(0,19).replace(/-/g,'/') + '</p></div>'
-                    : '') +
-            '</div>' +
-        '</div>';
-}
-
-function closeDetailModal() {
-    document.getElementById('detailModal').classList.add('hidden');
-}
-
 // ─── Close modals on overlay click ───────────────────────────────────
 // Tutup modal saat mengklik latar belakang gelap
 document.addEventListener('click', function(e) {
