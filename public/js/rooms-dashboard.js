@@ -108,6 +108,9 @@ var RoomsDashboard = {
 
         var bulkAvail = document.querySelector('[data-bulk-available]');
         if (bulkAvail) bulkAvail.addEventListener('click', function() { self.bulkAvailable(); });
+
+        var bulkOoo = document.querySelector('[data-bulk-out-of-order]');
+        if (bulkOoo) bulkOoo.addEventListener('click', function() { self.bulkOutOfOrder(); });
     },
 
     // ========== REALTIME REFRESH ==========
@@ -278,6 +281,7 @@ var RoomsDashboard = {
             actions.push({ label: 'Booking OTA', icon: 'fa-globe', fn: 'openOtaBooking' });
             actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
             actions.push({ label: 'Set Maintenance', icon: 'fa-tools', fn: 'setMaintenance' });
+            actions.push({ label: 'Set Out of Order', icon: 'fa-plug', fn: 'setOutOfOrder' });
         }
         if (status === 'occupied' || status === 'due_out') {
             actions.push({ label: 'Check-out', icon: 'fa-sign-out-alt', fn: 'checkoutRoom' });
@@ -303,6 +307,7 @@ var RoomsDashboard = {
 
     // ========== ROOM ACTIONS ==========
     setMaintenance: function(roomId) { this._updateRoomStatus(roomId, 'maintenance'); },
+    setOutOfOrder: function(roomId) { this._updateRoomStatus(roomId, 'out_of_order'); },
     setAvailable: function(roomId) { this._updateRoomStatus(roomId, 'available'); },
 
     _updateRoomStatus: function(roomId, status) {
@@ -537,6 +542,42 @@ var RoomsDashboard = {
             }
         };
         xhr.send(JSON.stringify({ room_ids: roomIds, status: 'maintenance' }));
+    },
+
+    bulkOutOfOrder: function() {
+        var count = this._selectedCount();
+        if (count === 0) return;
+        if (!window.confirm('Set ' + count + ' kamar ke Out of Order?')) return;
+
+        var self = this;
+        var roomIds = [];
+        for (var k in this.state.selectedRooms) {
+            if (this.state.selectedRooms.hasOwnProperty(k)) roomIds.push(k);
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('PATCH', '/rooms/bulk-status', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
+        var token = document.querySelector('meta[name="csrf-token"]');
+        if (token) xhr.setRequestHeader('X-CSRF-TOKEN', token.getAttribute('content'));
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        Toast.success(data.message);
+                        self.state.selectedRooms = {};
+                        self.toggleBulkMode();
+                        self.refresh();
+                    } else {
+                        Toast.error(data.message || 'Gagal');
+                    }
+                } catch(e) { Toast.error('Response tidak valid'); }
+            }
+        };
+        xhr.send(JSON.stringify({ room_ids: roomIds, status: 'out_of_order' }));
     },
 
     _selectedCount: function() {

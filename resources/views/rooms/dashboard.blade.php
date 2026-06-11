@@ -75,6 +75,7 @@
                 <button data-bulk-action data-bulk-checkout class="px-3 py-1 bg-yellow-500 text-white rounded text-sm opacity-50" disabled><i class="fas fa-sign-out-alt mr-1"></i> Check-out</button>
                 <button data-bulk-action data-bulk-available class="px-3 py-1 bg-emerald-500 text-white rounded text-sm opacity-50" disabled><i class="fas fa-check mr-1"></i> Available</button>
                 <button data-bulk-action data-bulk-maintenance class="px-3 py-1 bg-gray-500 text-white rounded text-sm opacity-50" disabled><i class="fas fa-tools mr-1"></i> Maintenance</button>
+                <button data-bulk-action data-bulk-out-of-order class="px-3 py-1 bg-pink-500 text-white rounded text-sm opacity-50" disabled><i class="fas fa-plug mr-1"></i> Out of Order</button>
             </div>
             <button onclick="RoomsDashboard.toggleBulkMode()" class="text-sm text-blue-600 hover:text-blue-800"><i class="fas fa-times"></i> Tutup</button>
         </div>

@@ -33,7 +33,7 @@ return [
         [
             'label' => 'Front Desk',
             'icon' => 'concierge-bell',
-            'roles' => ['owner', 'admin', 'frontoffice'],
+            'roles' => ['owner', 'admin', 'frontoffice', 'user_manager'],
             'children' => [
                 [
                     'label' => 'Check-in',

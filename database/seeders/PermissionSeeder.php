@@ -128,6 +128,7 @@ class PermissionSeeder extends Seeder
             'delete_user',
             'view_reports',
             'manage_promo_prices',
+            'manage_out_of_order',
         ]);
 
         $this->assignPermissionToRole('owner', [
