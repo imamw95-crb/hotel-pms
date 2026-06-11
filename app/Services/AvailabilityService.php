@@ -219,10 +219,13 @@ class AvailabilityService
                     'start_date' => $blockStart,
                     'end_date' => $blockEnd,
                     'nights' => $nights,
-                    'width_pct' => ($nights / $days) * 100,
-                    'offset_pct' => (max(0, $blockStart->diffInDays($startDate)) / $days) * 100,
                 ];
             }
+
+            // Sort blocks by check_in descending so back-to-back check-in (14:00) appears after checkout (12:00)
+            usort($blocks, function ($a, $b) {
+                return $b['check_in']->timestamp - $a['check_in']->timestamp;
+            });
 
             $rack[] = [
                 'room' => $room,

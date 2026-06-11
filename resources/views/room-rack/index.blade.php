@@ -6,7 +6,7 @@
 @section('content')
 <div class="max-w-full">
     {{-- Stats Bar --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6" id="statsBar">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6" id="statsBar">
         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
             <p class="text-xs text-emerald-700 font-medium">Available</p>
             <p class="text-2xl font-bold text-emerald-600"><span id="availableCount">{{ $stats['available_now'] }}</span></p>
@@ -117,6 +117,7 @@
                         <span class="inline-block w-3 h-3 rounded bg-amber-400 align-middle mx-1"></span>Due Out
                         <span class="inline-block w-3 h-3 rounded bg-gray-300 align-middle mx-1"></span>Dirty
                         <span class="inline-block w-3 h-3 rounded bg-purple-300 align-middle mx-1"></span>Maint
+                        <span class="inline-block w-3 h-3 rounded bg-pink-300 align-middle mx-1"></span>OO
                     </span>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
@@ -179,7 +180,7 @@ function loadRack() {
     if (!container) return;
     container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl"></i><p class="mt-2">Memuat...</p></div>';
 
-    fetch('/room-rack?start_date=' + startDate + '&days=' + days, {
+    fetch('{{ route('room-rack.index') }}?start_date=' + startDate + '&days=' + days, {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(function(res) { return res.json(); })

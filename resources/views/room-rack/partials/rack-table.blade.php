@@ -2,7 +2,7 @@
     <table class="w-full text-sm">
         <thead class="bg-gray-50 sticky top-0 z-10">
             <tr>
-                <th class="text-left px-3 py-2 border-r border-b w-[120px] sticky left-0 bg-gray-50 z-20">Room</th>
+                <th class="text-left px-3 py-2 border-r border-b w-[120px] sticky left-0 bg-gray-50 z-30">Room</th>
                 @foreach($rack['period'] as $day)
                     @php
                         $isToday = $day->isToday();
@@ -27,11 +27,12 @@
                         'occupied' => 'bg-red-400',
                         'cleaning' => 'bg-amber-300',
                         'maintenance' => 'bg-purple-300',
+                        'out_of_order' => 'bg-pink-400',
                         default => 'bg-gray-300',
                     };
                 @endphp
                 <tr class="border-b hover:bg-gray-50 transition">
-                    <td class="px-3 py-2 border-r sticky left-0 bg-white z-10">
+                    <td class="px-3 py-2 border-r sticky left-0 bg-white z-20">
                         <div class="flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full {{ $statusDot }} flex-shrink-0"></span>
                             <div>
@@ -77,6 +78,9 @@
                             @elseif($room->status === 'cleaning')
                                 <div class="absolute inset-0 bg-amber-200/60"></div>
                                 <span class="text-[8px] text-amber-500 relative z-10">D</span>
+                            @elseif($room->status === 'out_of_order')
+                                <div class="absolute inset-0 bg-pink-200/60"></div>
+                                <span class="text-[8px] text-pink-500 relative z-10">OO</span>
                             @else
                                 <span class="text-[10px] text-emerald-500 relative z-10">✓</span>
                             @endif

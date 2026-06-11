@@ -227,6 +227,7 @@ var RoomsDashboard = {
         if (status === 'occupied' && isDueOut) return { bgClass: 'bg-amber-50', borderClass: 'border-amber-400', icon: 'fa-clock text-amber-500', badgeClass: 'bg-amber-100 text-amber-700', label: 'Due Out' };
         if (status === 'occupied') return { bgClass: 'bg-red-50', borderClass: 'border-red-400', icon: 'fa-ban text-red-500', badgeClass: 'bg-red-100 text-red-700', label: 'Occupied' };
         if (status === 'maintenance') return { bgClass: 'bg-gray-50', borderClass: 'border-gray-400', icon: 'fa-tools text-gray-500', badgeClass: 'bg-gray-100 text-gray-700', label: 'Maintenance' };
+        if (status === 'out_of_order') return { bgClass: 'bg-pink-50', borderClass: 'border-pink-400', icon: 'fa-plug text-pink-500', badgeClass: 'bg-pink-100 text-pink-700', label: 'Out of Order' };
         return { bgClass: 'bg-yellow-50', borderClass: 'border-yellow-400', icon: 'fa-broom text-yellow-500', badgeClass: 'bg-yellow-100 text-yellow-700', label: 'Cleaning' };
     },
 
@@ -282,7 +283,7 @@ var RoomsDashboard = {
             actions.push({ label: 'Check-out', icon: 'fa-sign-out-alt', fn: 'checkoutRoom' });
             actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
         }
-        if (status === 'maintenance' || status === 'cleaning') {
+        if (status === 'maintenance' || status === 'cleaning' || status === 'out_of_order') {
             actions.push({ label: 'Set Available', icon: 'fa-check', fn: 'setAvailable' });
         }
 

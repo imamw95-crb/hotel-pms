@@ -6,6 +6,7 @@
             'occupied' => $isDueOut ? 'bg-orange-100 border-orange-500 text-orange-800' : 'bg-red-100 border-red-500 text-red-800',
             'maintenance' => 'bg-gray-100 border-gray-500 text-gray-800',
             'cleaning' => 'bg-yellow-100 border-yellow-500 text-yellow-800',
+            'out_of_order' => 'bg-pink-100 border-pink-500 text-pink-800',
         ][$room->status] ?? 'bg-gray-100 border-gray-400';
         
         $statusIcon = [
@@ -13,9 +14,10 @@
             'occupied' => $isDueOut ? 'fa-clock' : 'fa-ban',
             'maintenance' => 'fa-tools',
             'cleaning' => 'fa-broom',
+            'out_of_order' => 'fa-plug',
         ][$room->status] ?? 'fa-bed';
 
-        $statusLabel = $isDueOut ? 'Due Out' : ucfirst($room->status);
+        $statusLabel = $isDueOut ? 'Due Out' : ($room->status === 'out_of_order' ? 'Out of Order' : ucfirst($room->status));
         $activeReservation = $room->reservations->first();
         $guestName = $activeReservation && $activeReservation->guest ? $activeReservation->guest->guest_name : null;
     @endphp
