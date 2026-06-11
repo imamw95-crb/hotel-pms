@@ -637,7 +637,7 @@ class ReservationApiController extends Controller
             ->unique();
 
         $availableRooms = Room::with('roomType')
-            ->where('status', '!=', 'maintenance')
+            ->whereNotIn('status', ['maintenance', 'out_of_order'])
             ->whereNotIn('id', $oooRoomIds)
             ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                 $q->select('room_id')
