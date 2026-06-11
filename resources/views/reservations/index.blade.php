@@ -487,7 +487,7 @@
         });
     }
 
-    {{-- ─── Auto-Refresh: Muat Booking Baru Tanpa Reload Halaman ───}}
+    // Auto-Refresh: Muat Booking Baru Tanpa Reload Halaman
     (function() {
         var pageLoadedAt = new window.Date().toISOString();
         var refreshInterval = 20000; // 20 detik
