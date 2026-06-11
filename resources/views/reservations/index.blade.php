@@ -25,84 +25,8 @@
 @section('content')
 
 <!-- Statistik Ringkasan -->
-<div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Total</p>
-                <p class="text-xl font-bold text-gray-800 mt-0.5">{{ $reservations->total() }}</p>
-            </div>
-            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-calendar-alt text-blue-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Pending</p>
-                <p class="text-xl font-bold text-yellow-600 mt-0.5">{{ $stats['pending'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-yellow-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-clock text-yellow-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Website</p>
-                <p class="text-xl font-bold text-sky-600 mt-0.5">{{ $stats['website'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-sky-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-globe text-sky-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">OTA</p>
-                <p class="text-xl font-bold text-purple-600 mt-0.5">{{ $stats['ota'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-link text-purple-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Checked In</p>
-                <p class="text-xl font-bold text-green-600 mt-0.5">{{ $stats['checked_in'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-door-open text-green-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Checked Out</p>
-                <p class="text-xl font-bold text-blue-600 mt-0.5">{{ $stats['checked_out'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-check-circle text-blue-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">Cancelled</p>
-                <p class="text-xl font-bold text-red-500 mt-0.5">{{ $stats['cancelled'] ?? 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-                <i class="fas fa-ban text-red-400"></i>
-            </div>
-        </div>
-    </div>
+<div id="stats-container" class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+    @include('reservations.partials._stats')
 </div>
 
 <!-- Filter & Pencarian -->
@@ -190,200 +114,16 @@
                     <th class="text-center px-4 py-3 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-                @php $today = \Carbon\Carbon::today(); @endphp
-                @forelse($reservations as $res)
-                @php
-                    $isDueOut = $res->status === 'checked_in' && $res->check_out && \Carbon\Carbon::parse($res->check_out)->toDateString() === $today->toDateString();
-                @endphp
-                <tr class="hover:bg-blue-50/30 transition-colors {{ $isDueOut ? 'bg-amber-50/60' : '' }}">
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('reservations.show', $res) }}" class="font-semibold text-blue-600 text-sm hover:text-blue-800 hover:underline">
-                                {{ $res->reservation_number }}
-                            </a>
-                            @if($res->ota_source === 'website')
-                                <span class="inline-flex items-center gap-0.5 bg-sky-100 text-sky-700 border border-sky-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" title="Booking dari Website">
-                                    <i class="fas fa-globe text-[8px]"></i> Web
-                                </span>
-                            @endif
-                            @if($res->ota_reservation_number)
-                                <span class="inline-flex items-center gap-0.5 bg-purple-100 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase" title="OTA: {{ $res->ota_reservation_number }}">
-                                    <i class="fas fa-globe text-[8px]"></i> OTA
-                                </span>
-                            @endif
-                            @if($isDueOut)
-                                <span class="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase">
-                                    <i class="fas fa-exclamation-triangle text-[8px]"></i> Due Out
-                                </span>
-                            @endif
-                        </div>
-                        @if($res->ota_reservation_number)
-                            <p class="text-[10px] text-purple-500 mt-0.5"><i class="fas fa-globe mr-0.5"></i>{{ $res->ota_reservation_number }}</p>
-                        @endif
-                        @if($res->status === 'cancelled')
-                            <p class="text-[10px] text-red-400 mt-0.5"><i class="fas fa-ban mr-0.5"></i>Dibatalkan</p>
-                        @endif
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="font-medium text-gray-800 text-sm">{{ $res->guest->guest_name ?? '-' }}</div>
-                        <div class="text-xs text-gray-400 mt-0.5">{{ $res->guest->phone ?? '' }}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg inline-flex items-center justify-center text-xs font-bold">{{ $res->room->room_number ?? '-' }}</span>
-                        <div class="text-xs text-gray-400 mt-0.5">{{ $res->room->room_type_name ?? '' }}</div>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-600">
-                        {{ $res->check_in ? \Carbon\Carbon::parse($res->check_in)->format('d/m/Y') : '-' }}
-                        <div class="text-xs text-gray-400 mt-0.5">{{ $res->check_in ? \Carbon\Carbon::parse($res->check_in)->format('H:i') : '' }}</div>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-600">
-                        {{ $res->check_out ? \Carbon\Carbon::parse($res->check_out)->format('d/m/Y') : '-' }}
-                        <div class="text-xs text-gray-400 mt-0.5">{{ $res->check_out ? \Carbon\Carbon::parse($res->check_out)->format('H:i') : '' }}</div>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <button type="button"
-                            onclick="toggleBreakfast({{ $res->id }}, this)"
-                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-all duration-150 cursor-pointer hover:shadow-sm
-                                @if($res->include_breakfast) bg-amber-100 text-amber-700 border-amber-300
-                                @else bg-gray-50 text-gray-400 border-gray-200 hover:text-amber-600 hover:border-amber-300 @endif"
-                            title="Klik untuk toggle sarapan">
-                            @if($res->include_breakfast)
-                                <i class="fas fa-coffee"></i>
-                            @else
-                                <i class="fas fa-coffee text-[8px] opacity-40"></i>
-                            @endif
-                        </button>
-                    </td>
-                    <td class="px-4 py-3 text-sm font-semibold text-gray-800 text-right">
-                        Rp {{ number_format($res->total_amount, 0, ',', '.') }}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        @if($res->status === 'pending')
-                            @if($res->ota_source === 'website')
-                                <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span> Menunggu Pembayaran
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Pending
-                                </span>
-                            @endif
-                        @elseif($res->status === 'checked_in')
-                            <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Checked In
-                            </span>
-                        @elseif($res->status === 'checked_out')
-                            <span class="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> Checked Out
-                            </span>
-                        @elseif($res->status === 'cancelled')
-                            <span class="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Cancelled
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 bg-gray-50 text-gray-700 border border-gray-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                {{ strtoupper($res->status) }}
-                            </span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center flex-wrap gap-1.5">
-                            {{-- Detail --}}
-                            <a href="{{ route('reservations.show', $res) }}"
-                               class="bg-blue-50 text-blue-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-blue-100 transition text-xs font-medium whitespace-nowrap" title="Detail Reservasi">
-                                <i class="fas fa-eye text-[10px]"></i> <span>Detail</span>
-                            </a>
-
-                            {{-- Check-in (pending) --}}
-                            @if($res->status === 'pending')
-                                <form action="{{ route('reservations.checkin', $res) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="bg-green-50 text-green-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-green-100 transition text-xs font-medium whitespace-nowrap" title="Check-in">
-                                        <i class="fas fa-sign-in-alt text-[10px]"></i> <span>Check-in</span>
-                                    </button>
-                                </form>
-                            @endif
-
-                            {{-- Checkout (checked_in) --}}
-                            @if($res->status === 'checked_in')
-                                <form action="{{ route('reservations.checkout', $res) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('Check-out kamar {{ $res->room->room_number ?? '' }}? Status kamar akan berubah menjadi Available.')">
-                                    @csrf
-                                    <button type="submit" class="bg-amber-50 text-amber-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-amber-100 transition text-xs font-medium whitespace-nowrap" title="Check-out">
-                                        <i class="fas fa-sign-out-alt text-[10px]"></i> <span>Checkout</span>
-                                    </button>
-                                </form>
-                            @endif
-
-                            {{-- Pindah Kamar (pending & checked_in) --}}
-                            @if(in_array($res->status, ['pending', 'checked_in']))
-                                <a href="{{ route('reservations.room-change', $res) }}"
-                                   class="bg-purple-50 text-purple-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-purple-100 transition text-xs font-medium whitespace-nowrap" title="Pindah Kamar">
-                                    <i class="fas fa-exchange-alt text-[10px]"></i> <span>Pindah Kamar</span>
-                                </a>
-                            @endif
-
-                            {{-- Cancel (pending) --}}
-                            @if($res->status === 'pending')
-                                <form action="{{ route('reservations.cancel', $res) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="bg-red-50 text-red-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-red-100 transition text-xs font-medium whitespace-nowrap" title="Cancel"
-                                        onclick="return confirm('Batalkan reservasi ini?')">
-                                        <i class="fas fa-times text-[10px]"></i> <span>Cancel</span>
-                                    </button>
-                                </form>
-                            @endif
-
-                            {{-- Print (checked_out) --}}
-                            @if($res->status === 'checked_out')
-                                <a href="{{ route('reservations.print-invoice', $res) }}" target="_blank"
-                                   class="bg-slate-50 text-slate-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-slate-100 transition text-xs font-medium whitespace-nowrap" title="Print Invoice">
-                                    <i class="fas fa-file-invoice text-[10px]"></i> <span>Invoice</span>
-                                </a>
-                                <a href="{{ route('reservations.print-kwitansi', $res) }}" target="_blank"
-                                   class="bg-slate-50 text-slate-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-slate-100 transition text-xs font-medium whitespace-nowrap" title="Print Kwitansi">
-                                    <i class="fas fa-receipt text-[10px]"></i> <span>Kwitansi</span>
-                                </a>
-                            @endif
-
-                            {{-- Edit Total --}}
-                            <button type="button" onclick="openEditTotalModal({{ $res->id }}, '{{ $res->reservation_number }}', {{ $res->total_amount }})"
-                                class="bg-gray-50 text-gray-500 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-gray-100 transition text-xs font-medium whitespace-nowrap" title="Edit Total">
-                                <i class="fas fa-edit text-[10px]"></i> <span>Edit Total</span>
-                            </button>
-
-                            {{-- Edit Harga Kamar --}}
-                            <button type="button" onclick="openEditRateModal({{ $res->id }}, '{{ $res->reservation_number }}', {{ $res->room->price_per_night ?? 0 }}, {{ $res->custom_room_rate ?? 'null' }})"
-                                class="bg-teal-50 text-teal-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-teal-100 transition text-xs font-medium whitespace-nowrap" title="Edit Harga Kamar">
-                                <i class="fas fa-bed text-[10px]"></i> <span>Edit Rate</span>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="px-4 py-16 text-center">
-                        <div class="flex flex-col items-center">
-                            <div class="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-                                <i class="fas fa-inbox text-xl text-gray-300"></i>
-                            </div>
-                            <p class="text-gray-400 font-medium text-sm">Tidak ada data reservasi ditemukan</p>
-                            <p class="text-gray-300 text-xs mt-1">Coba ubah filter atau tambah reservasi baru</p>
-                        </div>
-                    </td>
-                </tr>
-                @endforelse
+            <tbody id="table-body" class="divide-y divide-gray-100">
+                @include('reservations.partials._table')
             </tbody>
         </table>
     </div>
 
     <!-- Pagination -->
-    @if($reservations->hasPages())
-    <div class="px-4 py-3 border-t border-gray-100 bg-gray-50/50">
-        {{ $reservations->appends(request()->query())->links() }}
+    <div id="pagination-container">
+        @include('reservations.partials._pagination')
     </div>
-    @endif
 </div>
 
 <!-- Tombol Floating: Aksi Cepat -->
@@ -747,15 +487,39 @@
         });
     }
 
-    {{-- ─── Auto-Refresh: Deteksi Booking Baru (DINONAKTIFKAN) ───
+    {{-- ─── Auto-Refresh: Muat Booking Baru Tanpa Reload Halaman ───}}
     (function() {
         var pageLoadedAt = new window.Date().toISOString();
-        var refreshInterval = 20000;
+        var refreshInterval = 20000; // 20 detik
         var refreshTimer = null;
         var isRefreshing = false;
+        var notificationEl = null;
+
+        function showNotification(count) {
+            // Hapus notifikasi lama jika ada
+            hideNotification();
+
+            notificationEl = document.createElement('div');
+            notificationEl.id = 'auto-refresh-notif';
+            notificationEl.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[999]';
+            notificationEl.style.animation = 'slideDown 0.3s ease-out';
+            notificationEl.innerHTML = '<div class="bg-blue-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-medium">' +
+                '<i class="fas fa-sync-alt fa-spin text-blue-200"></i>' +
+                '<span>' + count + ' booking baru ditemukan — memperbarui data...</span>' +
+                '</div>';
+            document.body.appendChild(notificationEl);
+        }
+
+        function hideNotification() {
+            if (notificationEl) {
+                notificationEl.remove();
+                notificationEl = null;
+            }
+        }
 
         function checkNewBookings() {
             if (isRefreshing) return;
+
             fetch('{{ route("reservations.check-new") }}?since=' + encodeURIComponent(pageLoadedAt), {
                 headers: { 'Accept': 'application/json' }
             })
@@ -763,10 +527,35 @@
             .then(function(data) {
                 if (data.has_new) {
                     isRefreshing = true;
-                    if (typeof Toast !== 'undefined') {
-                        Toast.info(data.count + ' booking baru ditemukan. Memperbarui halaman...');
-                    }
-                    setTimeout(function() { location.reload(); }, 1500);
+                    showNotification(data.count);
+
+                    // Ambil parameter filter dari URL saat ini
+                    var params = new window.URLSearchParams(window.location.search);
+                    var refreshUrl = '{{ route("reservations.refresh") }}?' + params.toString();
+
+                    // Fetch data terbaru via AJAX
+                    fetch(refreshUrl, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success) {
+                            // Update tabel
+                            document.getElementById('table-body').innerHTML = data.table_html;
+                            // Update statistik
+                            document.getElementById('stats-container').innerHTML = data.stats_html;
+                            // Update pagination
+                            document.getElementById('pagination-container').innerHTML = data.pagination_html;
+                            // Reset timer pendeteksi (gunakan waktu baru)
+                            pageLoadedAt = new window.Date().toISOString();
+                        }
+                        hideNotification();
+                        isRefreshing = false;
+                    })
+                    .catch(function() {
+                        hideNotification();
+                        isRefreshing = false;
+                    });
                 }
             })
             .catch(function() {});
@@ -784,6 +573,12 @@
             if (refreshTimer) clearInterval(refreshTimer);
         });
     })();
-    --}}
 </script>
+
+<style>
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
 @endsection

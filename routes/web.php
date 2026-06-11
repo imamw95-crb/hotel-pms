@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
     // Reservasi
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/check-new', [ReservationController::class, 'checkNew'])->name('reservations.check-new');
+    Route::get('/reservations/refresh', [ReservationController::class, 'refreshTable'])->name('reservations.refresh');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/toggle-breakfast', [ReservationController::class, 'toggleBreakfast'])->name('reservations.toggle-breakfast');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');

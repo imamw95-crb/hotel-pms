@@ -31,11 +31,14 @@
                     @php
                         $isModal = isset($item['modal']) && $item['modal'];
                     @endphp
-                    <li class="menu-item {{ $isChildActive($item['route']) ? 'active' : '' }}">
+                    @php
+                        $isActive = $isChildActive($item['route']);
+                    @endphp
+                    <li class="menu-item {{ $isActive ? 'active' : '' }}">
                         @if($isModal)
                             <a href="javascript:void(0)" class="menu-link" onclick="Modal.open('{{ route($item['route']) }}'); return false;">
                         @else
-                            <a href="{{ route($item['route']) }}" class="menu-link">
+                            <a href="{{ route($item['route']) }}" class="menu-link" {{ $isActive ? 'data-turbo=false' : '' }}>
                         @endif
                             <span class="menu-icon">
                                 <i class="fas fa-{{ $item['icon'] ?? 'circle' }}"></i>
@@ -74,11 +77,14 @@
                                     @php
                                         $isChildModal = isset($child['modal']) && $child['modal'];
                                     @endphp
-                                    <li class="submenu-item {{ $isChildActive($child['route']) ? 'active' : '' }}">
+                                    @php
+                                        $isActive = $isChildActive($child['route']);
+                                    @endphp
+                                    <li class="submenu-item {{ $isActive ? 'active' : '' }}">
                                         @if($isChildModal)
                                             <a href="javascript:void(0)" class="submenu-link" onclick="Modal.open('{{ route($child['route']) }}'); return false;">
                                         @else
-                                            <a href="{{ route($child['route']) }}" class="submenu-link">
+                                            <a href="{{ route($child['route']) }}" class="submenu-link" {{ $isActive ? 'data-turbo=false' : '' }}>
                                         @endif
                                             <span class="submenu-dot"></span>
                                             <span class="submenu-label">{{ $child['label'] }}</span>

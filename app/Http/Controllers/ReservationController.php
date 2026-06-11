@@ -828,4 +828,81 @@ class ReservationController extends Controller
             'reservation' => $reservation,
         ]);
     }
+
+    /**
+     * Refresh partial tabel + statistik via AJAX (tanpa reload halaman)
+     */
+    public function refreshTable(Request $request)
+    {
+        $query = Reservation::with(['guest', 'room', 'createdBy']);
+
+        // Terapkan filter yang sama seperti index()
+        $search = $request->get('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reservation_number', 'like', "%{$search}%")
+                    ->orWhereHas('guest', function ($q) use ($search) {
+                        $q->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('id_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('room_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $status = $request->get('status');
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $sumber = $request->get('sumber');
+        if ($sumber === 'website') {
+            $query->where('ota_source', 'website');
+        } elseif ($sumber === 'ota') {
+            $query->whereNotNull('ota_source')
+                ->where('ota_source', '!=', '')
+                ->where('ota_source', '!=', 'website');
+        } elseif ($sumber === 'local') {
+            $query->where(function ($q) {
+                $q->whereNull('ota_source')->orWhere('ota_source', '');
+            });
+        }
+
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        if ($dateFrom) {
+            $query->whereDate('check_in', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('check_out', '<=', $dateTo);
+        }
+
+        $reservations = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Statistik
+        $stats = [
+            'pending' => Reservation::where('status', 'pending')->count(),
+            'checked_in' => Reservation::where('status', 'checked_in')->count(),
+            'checked_out' => Reservation::where('status', 'checked_out')->count(),
+            'cancelled' => Reservation::where('status', 'cancelled')->count(),
+            'website' => Reservation::where('ota_source', 'website')->count(),
+            'ota' => Reservation::whereNotNull('ota_source')
+                ->where('ota_source', '!=', '')
+                ->where('ota_source', '!=', 'website')->count(),
+        ];
+
+        $tableHtml = view('reservations.partials._table', compact('reservations'))->render();
+        $statsHtml = view('reservations.partials._stats', compact('reservations', 'stats'))->render();
+        $paginationHtml = view('reservations.partials._pagination', compact('reservations'))->render();
+
+        return response()->json([
+            'success' => true,
+            'table_html' => $tableHtml,
+            'stats_html' => $statsHtml,
+            'pagination_html' => $paginationHtml,
+            'total' => $reservations->total(),
+        ]);
+    }
 }
