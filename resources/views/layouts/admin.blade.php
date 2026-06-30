@@ -242,9 +242,9 @@
                             playNotificationSound();
                         }
 
-                        // Always show/hide AI Chat banner based on unread count (persists until read)
+                        // Only show notification banner on NEW notification (not every poll cycle)
                         if (typeof AiChat !== 'undefined') {
-                            if (newCount > 0 && data.notifications && data.notifications.length > 0) {
+                            if (hasNew && data.notifications && data.notifications.length > 0) {
                                 AiChat.showNotification(data.notifications[0]);
                             } else if (newCount === 0) {
                                 AiChat.hideNotification();

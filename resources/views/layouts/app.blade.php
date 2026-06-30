@@ -335,13 +335,11 @@
                             playNotificationSound();
                         }
 
-                        // Show/hide notification banner on every poll cycle
+                        // Only show notification banner on NEW notification (not every poll cycle)
                         if (typeof AiChat !== 'undefined') {
-                            if (newCount > 0 && data.notifications && data.notifications.length > 0) {
-                                // Show banner with latest notification — refreshes on every poll
+                            if (hasNew && data.notifications && data.notifications.length > 0) {
                                 AiChat.showNotification(data.notifications[0]);
-                            } else {
-                                // No unread notifications — hide banner
+                            } else if (newCount === 0) {
                                 AiChat.hideNotification();
                             }
                         }

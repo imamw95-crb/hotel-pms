@@ -78,21 +78,15 @@ window.AiChat = {
     },
 
     /**
-     * Show a booking notification popup automatically.
-     * Called by BookingNotifications polling every 15s while unread exists.
-     * Banner persists until all notifications are read (hideNotification called).
+     * Show a booking notification banner in chat.
+     * Called ONCE when a new notification arrives.
+     * Banner shown in chat panel — does NOT auto-open.
      */
     showNotification: function(notif) {
-        // Play notification sound only on first detection (not on every poll cycle)
-        // Sound is played once when notif banner doesn't already exist
+        // Play notification sound only on first detection
         var existingBanner = document.getElementById('notifBanner');
         if (!existingBanner && typeof playNotificationSound === 'function') {
             playNotificationSound();
-        }
-
-        // Auto-open panel ONLY if user hasn't interacted yet (no messages)
-        if (!this.open && this.messages.length === 0) {
-            this.toggle();
         }
 
         // Prepare notification details
@@ -130,7 +124,7 @@ window.AiChat = {
 
     /**
      * Hide the booking notification banner.
-     * Called by BookingNotifications polling when all notifications are read.
+     * Called when all notifications are read.
      */
     hideNotification: function() {
         var banner = document.getElementById('notifBanner');
