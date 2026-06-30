@@ -16,6 +16,30 @@
     </div>
 </div>
 
+<!-- Filter -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form method="GET" action="{{ route('room-change.index') }}">
+        <div class="grid gap-4 lg:grid-cols-4">
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Dari Tanggal</label>
+                <input type="date" name="date_from" value="{{ $dateFrom }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2 text-sm">Sampai Tanggal</label>
+                <input type="date" name="date_to" value="{{ $dateTo }}" class="w-full border rounded px-3 py-2">
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-search mr-1"></i> Filter
+                </button>
+                <a href="{{ route('room-change.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                    <i class="fas fa-redo mr-1"></i> Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
 <!-- Tabel Pindah Kamar -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="overflow-x-auto">

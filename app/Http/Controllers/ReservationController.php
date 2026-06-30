@@ -339,10 +339,15 @@ class ReservationController extends Controller
     /**
      * Halaman daftar kamar untuk pindah kamar
      */
-    public function roomChangeList()
+    public function roomChangeList(Request $request)
     {
+        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', Carbon::tomorrow()->format('Y-m-d'));
+
         $reservations = Reservation::with(['guest', 'room'])
             ->whereIn('status', ['pending', 'checked_in'])
+            ->whereDate('check_in', '<=', $dateTo)
+            ->whereDate('check_out', '>=', $dateFrom)
             ->orderBy('check_out', 'asc')
             ->get();
 
@@ -350,7 +355,7 @@ class ReservationController extends Controller
             ->orderBy('room_number')
             ->get();
 
-        return view('reservations.room-change-list', compact('reservations', 'availableRooms'));
+        return view('reservations.room-change-list', compact('reservations', 'availableRooms', 'dateFrom', 'dateTo'));
     }
 
     /**
