@@ -335,11 +335,11 @@
                             playNotificationSound();
                         }
 
-                        // Only show notification banner on NEW notification (not every poll cycle)
+                        // Show banner ONCE on new notif, auto-hide on next poll
                         if (typeof AiChat !== 'undefined') {
                             if (hasNew && data.notifications && data.notifications.length > 0) {
                                 AiChat.showNotification(data.notifications[0]);
-                            } else if (newCount === 0) {
+                            } else {
                                 AiChat.hideNotification();
                             }
                         }
