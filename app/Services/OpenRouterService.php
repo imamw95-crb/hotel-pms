@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OpenRouterService
 {
@@ -83,49 +84,25 @@ class OpenRouterService
 
     private function buildPrompt(string $emailBody, string $emailSubject, string $otaSource): string
     {
+        // Limit body length to control token usage
+        $emailBody = Str::limit($emailBody, 4000);
+
         return <<<PROMPT
-You are a hotel OTA booking parser.
+You are a hotel OTA booking parser. Extract booking info from the email below.
 
-Extract booking and payment information from the following OTA email.
+Return ONLY valid JSON — no markdown, no explanation.
 
-Return ONLY valid JSON. Do not explain anything. No markdown. No additional text.
-
-Format must EXACTLY follow this JSON structure:
-{
-  "reservation_id": "",
-  "guest_name": "",
-  "checkin_date": "",
-  "checkout_date": "",
-  "room_type": "",
-  "guest_count": 1,
-  "total_price": 0,
-  "payment_method": "",
-  "payment_date": "",
-  "status": "confirmed",
-  "ota_source": "{$otaSource}"
-}
+{"reservation_id":"","guest_name":"","checkin_date":"","checkout_date":"","room_type":"","guest_count":1,"total_price":0,"payment_method":"","payment_date":"","status":"confirmed","ota_source":"{$otaSource}"}
 
 Rules:
-- If booking cancelled: status = "cancelled"
-- If booking modified: status = "modified"
-- If new booking: status = "confirmed"
-- checkin_date and checkout_date must be in YYYY-MM-DD format
-- guest_count must be an integer (default 1)
-- reservation_id is the OTA booking reference number (booking confirmation number)
-- total_price: the TOTAL price/amount from the email (number only, no currency symbol). Search VERY carefully for: "total", "grand total", "amount", "harga total", "total bayar", "total harga", "room rate", "price", "harga", "Rp", "IDR", "Rp.", "biaya", "tagihan", "nilai". Look in tables, bullet points, and key-value pairs. Extract the FINAL total (not per-night rate). If the amount uses dots as thousand separators (e.g. "500.000" = 500000), convert correctly. If not found, set 0.
-- payment_method: how the guest/OTA pays. Use one of these exact values:
-  * "tiket.com" — if paid via tiket.com
-  * "traveloka.com" — if paid via traveloka.com
-  * "ota_payment" — if paid via OTA but specific method not mentioned
-  * "bank_transfer" — if bank transfer
-  * "credit_card" — if credit card
-  * "debit_card" — if debit card
-  * "cash" — if cash / bayar di hotel / pay at hotel
-  * "" — if not mentioned at all
-- payment_date: the date payment was made or will be made (YYYY-MM-DD format). If not found, use checkin_date.
-- IMPORTANT: If the email says "pay at hotel", "bayar di hotel", "payment at check-in", "unpaid", or similar — set payment_method to "cash" (guest pays at hotel)
-- IMPORTANT: If the email says the OTA already collected payment (e.g. "paid", "confirmed payment", "payment received") — set payment_method to the OTA source (tiket.com, traveloka.com, etc.)
-- Output only JSON, no markdown, no explanation, no additional text
+- status: cancelled|modified|confirmed
+- Dates: YYYY-MM-DD format
+- reservation_id = OTA booking reference number
+- total_price: find FINAL total (not per-night). Search: total, grand total, amount, total bayar/harga, Rp, IDR. Convert "500.000" to 500000. Default 0.
+- payment_method: tiket.com|traveloka.com|ota_payment|bank_transfer|credit_card|cash|"" (empty if unknown)
+  * "pay at hotel" / "bayar di hotel" / unpaid → cash
+  * OTA already collected (paid, confirmed payment) → OTA source name
+- payment_date: YYYY-MM-DD. Default = checkin_date.
 
 Email Subject: {$emailSubject}
 

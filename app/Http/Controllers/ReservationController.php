@@ -341,21 +341,41 @@ class ReservationController extends Controller
      */
     public function roomChangeList(Request $request)
     {
-        $dateFrom = $request->input('date_from', Carbon::today()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', Carbon::tomorrow()->format('Y-m-d'));
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
 
-        $reservations = Reservation::with(['guest', 'room'])
-            ->whereIn('status', ['pending', 'checked_in'])
-            ->whereDate('check_in', '<=', $dateTo)
-            ->whereDate('check_out', '>=', $dateFrom)
-            ->orderBy('check_out', 'asc')
-            ->get();
+        $query = Reservation::with(['guest', 'room'])
+            ->whereIn('status', ['pending', 'checked_in']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reservation_number', 'like', "%{$search}%")
+                    ->orWhereHas('guest', function ($g) use ($search) {
+                        $g->where('guest_name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($r) use ($search) {
+                        $r->where('room_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('check_in', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('check_in', '<=', $dateTo);
+        }
+
+        $reservations = $query->orderBy('check_out', 'asc')->get();
 
         $availableRooms = Room::where('status', 'available')
             ->orderBy('room_number')
             ->get();
 
-        return view('reservations.room-change-list', compact('reservations', 'availableRooms', 'dateFrom', 'dateTo'));
+        return view('reservations.room-change-list', compact('reservations', 'availableRooms', 'search', 'dateFrom', 'dateTo'));
     }
 
     /**
@@ -539,12 +559,12 @@ class ReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
-                'redirect_url' => route('reservations.show', $reservation),
+                'redirect_url' => route('room-change.index'),
                 'reservation' => $reservation,
             ]);
         }
 
-        return redirect()->route('reservations.show', $reservation)
+        return redirect()->route('room-change.index')
             ->with('success', "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.");
     }
 
