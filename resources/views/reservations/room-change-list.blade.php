@@ -45,7 +45,6 @@
     </div>
 
     <!-- Tabel Pindah Kamar -->
->>>>>>> Stashed changes
     <div class="overflow-x-auto">
         <table class="min-w-full" id="roomChangeTable">
             <thead class="bg-gray-100">
