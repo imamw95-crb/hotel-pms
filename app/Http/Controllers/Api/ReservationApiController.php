@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Guest;
-use App\Models\MHSLog;
 use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -404,25 +403,6 @@ class ReservationApiController extends Controller
         } else {
             $oldRoom->update(['status' => 'available']);
         }
-
-        MHSLog::create([
-            'command' => 'room_change',
-            'reservation_id' => $reservation->id,
-            'request_data' => [
-                'old_room_id' => $oldRoom->id,
-                'old_room_number' => $oldRoomNumber,
-                'new_room_id' => $newRoom->id,
-                'new_room_number' => $newRoomNumber,
-                'reason' => $validated['reason'] ?? null,
-                'old_total_amount' => $oldTotalAmount,
-                'new_total_amount' => $newTotalAmount,
-            ],
-            'response_data' => [
-                'success' => true,
-                'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
-            ],
-            'success' => true,
-        ]);
 
         return response()->json([
             'success' => true,

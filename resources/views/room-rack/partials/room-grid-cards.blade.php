@@ -26,6 +26,12 @@
          data-room-number="{{ $room->room_number }}"
          data-room-type="{{ $room->room_type_name ?? 'Standard' }}"
          data-status="{{ $room->status }}">
+        {{-- Quick action button (3 dots) — muncul saat hover --}}
+        <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <button onclick="event.stopPropagation(); if(window.RoomsDashboard) window.RoomsDashboard.quickAction({{ $room->id }},'{{ $room->room_number }}','{{ $room->status }}')" class="w-7 h-7 rounded-full bg-white shadow-md hover:bg-blue-50 flex items-center justify-center text-gray-500 hover:text-blue-600 transition">
+                <i class="fas fa-ellipsis-v text-xs"></i>
+            </button>
+        </div>
         <div class="rounded-lg p-2 {{ $statusColor }}">
             <i class="fas {{ $statusIcon }} text-lg"></i>
             <p class="font-bold text-lg">{{ $room->room_number }}</p>

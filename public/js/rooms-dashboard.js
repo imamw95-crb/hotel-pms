@@ -612,7 +612,11 @@ function initRoomsDashboard() {
         RoomsDashboard.init();
     }
 }
-document.addEventListener('DOMContentLoaded', initRoomsDashboard);
+
+// Call immediately — script is at bottom of page so DOM is ready
+initRoomsDashboard();
+
+// Also handle Turbo/navigation for subsequent visits
 document.addEventListener('turbo:load', initRoomsDashboard);
 
 window.RoomsDashboard = RoomsDashboard;

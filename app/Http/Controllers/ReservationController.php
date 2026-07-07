@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Guest;
 use App\Models\HousekeepingTask;
-use App\Models\MHSLog;
 use App\Models\OutOfOrder;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
@@ -533,26 +532,6 @@ class ReservationController extends Controller
             $oldRoom->update(['status' => 'available']);
             // Kamar baru tetap available karena tamu belum check-in
         }
-
-        // Log aktivitas
-        MHSLog::create([
-            'command' => 'room_change',
-            'reservation_id' => $reservation->id,
-            'request_data' => [
-                'old_room_id' => $oldRoom->id,
-                'old_room_number' => $oldRoomNumber,
-                'new_room_id' => $newRoom->id,
-                'new_room_number' => $newRoomNumber,
-                'reason' => $validated['reason'] ?? null,
-                'old_total_amount' => $oldTotalAmount,
-                'new_total_amount' => $newTotalAmount,
-            ],
-            'response_data' => [
-                'success' => true,
-                'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
-            ],
-            'success' => true,
-        ]);
 
         // Check if request is AJAX
         if (request()->expectsJson()) {
