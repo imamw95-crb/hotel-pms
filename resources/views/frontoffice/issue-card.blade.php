@@ -124,7 +124,7 @@
                     <button type="button" id="btnEraseCard" onclick="doEraseCard()" class="bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 font-semibold">
                         <i class="fas fa-times-circle mr-1.5"></i> Erase
                     </button>
-                    <button type="submit" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold">
+                    <button type="button" id="btnIssue" onclick="doIssueCard()" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-semibold">
                         <i class="fas fa-key mr-1.5"></i> Issue
                     </button>
                 </div>
@@ -615,20 +615,109 @@
         });
     }
 
-    // ========== ISSUE CARD CONFIRM ==========
-    document.getElementById('issueCardForm').addEventListener('submit', function(e) {
+    // ========== ISSUE CARD CONFIRM (AJAX) ==========
+    function doIssueCard() {
         const rn = document.getElementById('roomDisplay').value || '-';
         const guest = document.getElementById('guestName').value;
-        e.preventDefault();
+        const resId = document.getElementById('reservationId').value;
+
+        if (!resId) {
+            showModal({
+                title: 'Peringatan',
+                message: 'Pilih reservasi terlebih dahulu!',
+                type: 'warning',
+                confirmText: 'OK'
+            });
+            return;
+        }
+
         showModal({
             title: 'Konfirmasi Issue Card',
-            message: '<strong>Kamar:</strong> ' + rn + '<br><strong>Tamu:</strong> ' + guest + '<br><br>Card akan di-issue ke MHS.<br>Lanjutkan?',
+            message: '<i class="fas fa-id-card text-blue-500 text-3xl mb-3"></i><br>' +
+                     '<strong>Kamar:</strong> ' + rn + '<br>' +
+                     '<strong>Tamu:</strong> ' + guest + '<br><br>' +
+                     '<div class="bg-yellow-50 border border-yellow-300 rounded p-3 text-yellow-800 text-xs">' +
+                     '<i class="fas fa-exclamation-triangle mr-1"></i> ' +
+                     '<strong>Tap kartu di encoder SEKARANG</strong><br>' +
+                     'Tempelkan kartu pada reader, lalu klik "Issue" di bawah ini.<br>' +
+                     'Proses akan berjalan otomatis setelah kartu terdeteksi.' +
+                     '</div>',
             type: 'confirm',
-            confirmText: 'Ya, Issue Card',
+            confirmText: 'Mulai Issue',
             cancelText: 'Batal',
-            onConfirm: function() { document.getElementById('issueCardForm').submit(); }
+            onConfirm: function() {
+                // Show loading modal
+                showModal({
+                    title: 'Memproses...',
+                    message: '<i class="fas fa-spinner fa-spin text-blue-500 text-3xl mb-3"></i><br>' +
+                             '<strong>Menunggu kartu di-tap...</strong><br><br>' +
+                             '<span class="text-gray-500 text-xs">Silakan tap kartu pada reader sekarang.<br>' +
+                             'Proses akan selesai secara otomatis.</span>',
+                    type: 'info',
+                    confirmText: false,
+                    cancelText: false
+                });
+
+                // Disable button
+                const btn = document.getElementById('btnIssue');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menunggu kartu...';
+
+                // Send AJAX
+                const form = document.getElementById('issueCardForm');
+                const formData = new FormData(form);
+
+                fetch('{{ route("issue-card.issue") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value
+                    },
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(data => {
+                    closeCustomModal();
+                    if (data.success) {
+                        showModal({
+                            title: 'Issue Card Berhasil!',
+                            message: '<i class="fas fa-check-circle text-green-500 text-3xl mb-3"></i><br>' +
+                                     '<strong>Kamar ' + rn + '</strong><br>' +
+                                     guest,
+                            type: 'success',
+                            confirmText: 'OK',
+                            cancelText: false,
+                            onConfirm: function() { location.reload(); }
+                        });
+                    } else {
+                        showModal({
+                            title: 'Issue Card Gagal',
+                            message: '<i class="fas fa-times-circle text-red-500 text-3xl mb-3"></i><br>' +
+                                     data.message || 'Unknown error',
+                            type: 'error',
+                            confirmText: 'OK',
+                            cancelText: false
+                        });
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-key mr-1.5"></i> Issue';
+                    }
+                })
+                .catch(err => {
+                    closeCustomModal();
+                    showModal({
+                        title: 'Error',
+                        message: '<i class="fas fa-times-circle text-red-500 text-3xl mb-3"></i><br>' +
+                                 'Gagal terhubung ke server: ' + err.message,
+                        type: 'error',
+                        confirmText: 'OK',
+                        cancelText: false
+                    });
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-key mr-1.5"></i> Issue';
+                });
+            }
         });
-    });
+    }
 </script>
 
 <!-- Custom Modal -->

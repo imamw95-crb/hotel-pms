@@ -79,8 +79,17 @@ class IssueCardController extends Controller
         );
 
         if (! ($mhsResult['success'] ?? false)) {
-            return back()->with('error', 'Gagal issue card: '.($mhsResult['response_message'] ?? 'Unknown error'))
-                ->withInput();
+            $errorMsg = 'Gagal issue card: '.($mhsResult['response_message'] ?? 'Unknown error');
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMsg,
+                    'response_code' => $mhsResult['response_code'] ?? null,
+                ], 422);
+            }
+
+            return back()->with('error', $errorMsg)->withInput();
         }
 
         // Update status kamar
@@ -88,7 +97,7 @@ class IssueCardController extends Controller
 
         $message = "Issue card berhasil! Kamar {$room->room_number} - {$validated['guest_name']}";
 
-        if (request()->expectsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => $message,

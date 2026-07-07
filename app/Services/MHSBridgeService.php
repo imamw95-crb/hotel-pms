@@ -20,7 +20,7 @@ class MHSBridgeService
     public function __construct()
     {
         $this->bridgeUrl = env('MHS_BRIDGE_URL', 'http://192.168.88.2:8080/bridge_api.php');
-        $this->timeout = 30;
+        $this->timeout = 45;
     }
 
     /**
