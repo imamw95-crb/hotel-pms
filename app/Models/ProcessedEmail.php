@@ -296,12 +296,14 @@ class ProcessedEmail extends Model
 
     /**
      * Check if an email UID has already been processed by this sender.
+     * Once processed, duplicated, or failed — never re-process automatically.
+     * Manual retry via OTA Email Logs page still works (dispatches a new job).
      */
     public static function isProcessed(string $uid, string $sender): bool
     {
         return static::where('email_uid', $uid)
             ->where('sender', $sender)
-            ->whereIn('status', ['processed', 'duplicate'])
+            ->whereIn('status', ['processed', 'duplicate', 'failed'])
             ->exists();
     }
 
