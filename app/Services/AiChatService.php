@@ -23,6 +23,20 @@ class AiChatService
 
     private const REJECT_WORDS = ['tidak', 'no', 'nope', 'batal', 'cancel', 'jangan', 'gak', 'ga', 'nggak', 'enggak', 'batalkan'];
 
+    /** Booking intent keywords — detected without an API call */
+    private const BOOKING_KEYWORDS = [
+        'booking', 'pesan', 'reservasi', 'kamar', 'menginap', 'inap',
+        'check-in', 'checkin', 'ci', 'check out', 'checkout', 'co',
+        'malam', 'hari', 'orang',
+    ];
+
+    /** Action intent keywords — detected without an API call */
+    private const ACTION_KEYWORDS = [
+        'checkin', 'check-in', 'check-out', 'checkout', 'bayar', 'pindah',
+        'batal', 'cancel', 'cari', 'deposit', 'kembalikan', 'cleaning',
+        'perpanjang', 'rate', 'sarapan', 'extend',
+    ];
+
     public function __construct(AiActionService $actionService)
     {
         $this->actionService = $actionService;
@@ -64,8 +78,6 @@ class AiChatService
      */
     public function chat(string $message, ?string $currentRoute = null, array $history = []): array
     {
-        $today = Carbon::now()->startOfDay();
-
         // ─── Step 1: Check pending action (confirmation workflow) ───
         $pendingAction = session('ai_pending_action');
         if ($pendingAction) {
@@ -97,59 +109,132 @@ class AiChatService
             session()->forget('ai_pending_action');
         }
 
-        // ─── Step 2: Coba deteksi booking dari pesan user ───
+        // ─── Step 2: Deteksi intent (logika lokal, tanpa API call) ───
+        $intent = $this->detectIntent($message);
+
+        if ($intent === 'booking') {
+            // Hanya panggil OpenRouter jika benar-benar booking intent
+            return $this->handleBookingIntent($message, $currentRoute, $history);
+        }
+
+        if ($intent === 'action') {
+            return $this->handleActionIntent($message, $currentRoute, $history);
+        }
+
+        // Bukan booking atau action — langsung ke chat normal (1 API call saja)
+        return $this->chatFallback($message, null, $currentRoute, $history);
+    }
+
+    /**
+     * Detect message intent using keyword matching — NO API CALL.
+     *
+     * Returns 'booking', 'action', or 'chat' (default).
+     */
+    private function detectIntent(string $message): string
+    {
+        $msg = strtolower(trim($message));
+
+        // Short greeting → langsung chat
+        if (strlen($msg) < 5 || in_array($msg, ['halo', 'hai', 'hi', 'hey', 'hello', 'test', 'tes'], true)) {
+            return 'chat';
+        }
+
+        // Booking intent: harus ada kata kunci booking + angka atau kata terkait durasi/tamu
+        $hasBookingKeyword = \Illuminate\Support\Str::contains($msg, self::BOOKING_KEYWORDS);
+        $hasNumeric = preg_match('/\b\d+\b/', $msg);
+        $hasDurationWords = preg_match('/\b(orang|malam|hari|org|mlm|tamu)\b/', $msg);
+
+        if ($hasBookingKeyword && ($hasNumeric || $hasDurationWords)) {
+            return 'booking';
+        }
+
+        // Cek juga pola seperti "booking untuk [nama]" atau "pesan [nama]"
+        if ($hasBookingKeyword && preg_match('/\b(untuk|nama|an|a\.n|a/n)\b/i', $msg)) {
+            return 'booking';
+        }
+
+        // Action intent
+        if (\Illuminate\Support\Str::contains($msg, self::ACTION_KEYWORDS)) {
+            return 'action';
+        }
+
+        return 'chat';
+    }
+
+    /**
+     * Handle booking intent — calls OpenRouter parseNaturalLanguage.
+     */
+    private function handleBookingIntent(string $message, ?string $currentRoute = null, array $history = []): array
+    {
         $bookingData = $this->openRouter()->parseNaturalLanguage($message);
 
-        if ($bookingData && ! empty($bookingData['guest_name'])) {
-            $hasCheckin = ! empty($bookingData['checkin_date']);
-            $hasCheckout = ! empty($bookingData['checkout_date']);
-            $hasRoomType = ! empty($bookingData['room_type']);
-            $complete = $hasCheckin && $hasCheckout && $hasRoomType;
-
-            if ($complete) {
-                // Data lengkap (nama + tanggal + tipe kamar) — langsung buat booking
-                return $this->actionService->execute([
-                    'action' => 'create_booking',
-                    'data' => $bookingData,
-                ]);
-            }
-
-            // Data tidak lengkap — AI akan tanya sisanya, beri konteks
-            $missing = [];
-            if (! $hasRoomType) {
-                $missing[] = 'tipe kamar';
-            }
-            if (! $hasCheckin) {
-                $missing[] = 'tanggal check-in';
-            }
-            if (! $hasCheckout) {
-                $missing[] = 'tanggal check-out';
-            }
-            $missingText = implode(', ', $missing);
-
-            $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}".
-                ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '').
-                ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '').
-                ". Butuh info: {$missingText}. Jangan buat reservasi sampai semua info lengkap.";
+        if (! $bookingData || empty($bookingData['guest_name'])) {
+            // AI gagal parse — fallback ke chat biasa
+            return $this->chatFallback($message, null, $currentRoute, $history);
         }
 
-        // ─── Step 3: Coba deteksi front office action ───
+        $hasCheckin = ! empty($bookingData['checkin_date']);
+        $hasCheckout = ! empty($bookingData['checkout_date']);
+        $hasRoomType = ! empty($bookingData['room_type']);
+        $complete = $hasCheckin && $hasCheckout && $hasRoomType;
+
+        if ($complete) {
+            return $this->actionService->execute([
+                'action' => 'create_booking',
+                'data' => $bookingData,
+            ]);
+        }
+
+        // Data tidak lengkap — simpan partial info untuk context chat
+        $missing = [];
+        if (! $hasRoomType) {
+            $missing[] = 'tipe kamar';
+        }
+        if (! $hasCheckin) {
+            $missing[] = 'tanggal check-in';
+        }
+        if (! $hasCheckout) {
+            $missing[] = 'tanggal check-out';
+        }
+        $missingText = implode(', ', $missing);
+
+        $partialInfo = "User ingin booking untuk {$bookingData['guest_name']}".
+            ($bookingData['room_type'] ? ", tipe kamar {$bookingData['room_type']}" : '').
+            ($bookingData['guest_count'] > 1 ? ", {$bookingData['guest_count']} orang" : '').
+            ". Butuh info: {$missingText}. Jangan buat reservasi sampai semua info lengkap.";
+
+        return $this->chatFallback($message, $partialInfo, $currentRoute, $history);
+    }
+
+    /**
+     * Handle action intent — calls OpenRouter parseAction.
+     */
+    private function handleActionIntent(string $message, ?string $currentRoute = null, array $history = []): array
+    {
         $actionData = $this->openRouter()->parseAction($message);
 
-        if ($actionData && $actionData['action'] !== 'chat') {
-            $result = $this->actionService->execute($actionData);
-
-            // If action needs confirmation, store pending action in session
-            if (isset($result['needs_confirmation']) && $result['needs_confirmation']) {
-                session(['ai_pending_action' => $actionData]);
-            }
-
-            return $result;
+        if (! $actionData || ($actionData['action'] ?? '') === 'chat') {
+            // Bukan action valid — fallback ke chat
+            return $this->chatFallback($message, null, $currentRoute, $history);
         }
 
-        // ─── Step 4: Chat normal via AI ───
+        $result = $this->actionService->execute($actionData);
+
+        if (isset($result['needs_confirmation']) && $result['needs_confirmation']) {
+            session(['ai_pending_action' => $actionData]);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fallback to normal AI chat (single API call).
+     */
+    private function chatFallback(string $message, ?string $partialInfo = null, ?string $currentRoute = null, array $history = []): array
+    {
+        $today = Carbon::now()->startOfDay();
         $systemContext = $this->buildSystemContext($today);
-        $partialContext = isset($partialInfo) ? "\n\nPartial booking info: {$partialInfo}" : '';
+        $partialContext = $partialInfo ? "\n\nPartial booking info: {$partialInfo}" : '';
 
         // Build conversation history
         $historyText = '';
@@ -179,6 +264,14 @@ Jika di luar operasional hotel: tolak halus.
 Jangan sebut teknis internal.
 PROMPT;
 
+        return $this->callChatApi($prompt);
+    }
+
+    /**
+     * Call OpenRouter chat API — single HTTP call, reused everywhere.
+     */
+    private function callChatApi(string $prompt): array
+    {
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer '.config('services.openrouter.api_key'),
