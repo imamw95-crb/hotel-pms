@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AllotmentApiController;
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\PromoPriceApiController;
 use App\Http\Controllers\Api\ReservationApiController;
@@ -82,6 +83,26 @@ Route::middleware(['api', 'api.key'])->group(function () {
 
     // Check effective price for a room on specific date/range
     Route::get('/promo-prices/check', [PromoPriceApiController::class, 'checkPrice']);
+
+    // ========== ALLOTMENTS ==========
+
+    // List allotment
+    Route::get('/allotments', [AllotmentApiController::class, 'index']);
+
+    // Cek ketersediaan allotment untuk room type & range tanggal
+    Route::get('/allotments/check', [AllotmentApiController::class, 'check']);
+
+    // Ringkasan allotment per room type
+    Route::get('/allotments/summary', [AllotmentApiController::class, 'summary']);
+
+    // Buat allotment baru
+    Route::post('/allotments', [AllotmentApiController::class, 'store']);
+
+    // Update allotment
+    Route::put('/allotments/{allotment}', [AllotmentApiController::class, 'update']);
+
+    // Hapus allotment
+    Route::delete('/allotments/{allotment}', [AllotmentApiController::class, 'destroy']);
 
     // ========== GUESTS ==========
 

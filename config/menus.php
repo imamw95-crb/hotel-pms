@@ -141,6 +141,11 @@ return [
                     'route' => 'promo-prices.index',
                     'permission' => 'manage_promo_prices',
                 ],
+                [
+                    'label' => 'Allotment',
+                    'route' => 'allotments.index',
+                    'permission' => 'view_rooms',
+                ],
 
             ],
         ],

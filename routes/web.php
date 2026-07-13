@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\TvSettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AllotmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingGroupController;
@@ -158,6 +159,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/promo-prices/{roomTypeDatePrice}/edit', [PromoPriceController::class, 'edit'])->middleware('permission:manage_promo_prices')->name('promo-prices.edit');
     Route::put('/promo-prices/{roomTypeDatePrice}', [PromoPriceController::class, 'update'])->middleware('permission:manage_promo_prices')->name('promo-prices.update');
     Route::delete('/promo-prices/{roomTypeDatePrice}', [PromoPriceController::class, 'destroy'])->middleware('permission:manage_promo_prices')->name('promo-prices.destroy');
+
+    // Allotments
+    Route::get('/allotments', [AllotmentController::class, 'index'])->name('allotments.index');
+    Route::get('/allotments/create', [AllotmentController::class, 'create'])->name('allotments.create');
+    Route::post('/allotments', [AllotmentController::class, 'store'])->name('allotments.store');
+    Route::get('/allotments/{allotment}/edit', [AllotmentController::class, 'edit'])->name('allotments.edit');
+    Route::put('/allotments/{allotment}', [AllotmentController::class, 'update'])->name('allotments.update');
+    Route::delete('/allotments/{allotment}', [AllotmentController::class, 'destroy'])->name('allotments.destroy');
 
     // Guests
     Route::resource('guests', GuestController::class)->middleware('permission:manage_guests');
