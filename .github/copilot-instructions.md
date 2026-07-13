@@ -60,6 +60,13 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - Reservation statuses: `pending`, `checked_in`, `checked_out`, `cancelled`
 - Due Out = room is `occupied` but guest checks out TODAY
 
+## Allotment Logic (WAJIB — jangan diubah)
+- Hanya tipe kamar yang **punya allotment** (channel='api') yang tampil di website publik
+- Tipe kamar **tanpa allotment** → **tidak tampil** di `availableRooms()` API
+- Jumlah tampil = `min(allotment - booked)` di seluruh range tanggal kunjungan
+- `AvailabilityService::limitAvailablePerType()` sudah **tidak dipakai**
+- File kunci: `app/Http/Controllers/Api/ReservationApiController.php` — method `availableRooms()`
+
 ## Debugging
 - Find root cause first; don't rewrite unrelated code.
 - Suggest minimal safe fixes; explain performance impact if relevant.
