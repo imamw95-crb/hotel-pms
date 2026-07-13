@@ -67,8 +67,9 @@ class Allotment extends Model
     ): array {
         $unavailable = [];
         $current = $checkIn->copy()->startOfDay();
+        $checkoutDay = $checkOut->copy()->startOfDay();
 
-        while ($current->lt($checkOut)) {
+        while ($current->lt($checkoutDay)) {
             if (! static::isAvailable($roomTypeId, $current, $channel)) {
                 $unavailable[] = $current->format('Y-m-d');
             }
@@ -88,8 +89,9 @@ class Allotment extends Model
         ?string $channel = null
     ): void {
         $current = $checkIn->copy()->startOfDay();
+        $checkoutDay = $checkOut->copy()->startOfDay();
 
-        while ($current->lt($checkOut)) {
+        while ($current->lt($checkoutDay)) {
             $allotment = static::where('room_type_id', $roomTypeId)
                 ->where('date', $current->format('Y-m-d'))
                 ->where(function ($q) use ($channel) {
@@ -119,8 +121,9 @@ class Allotment extends Model
         ?string $channel = null
     ): void {
         $current = $checkIn->copy()->startOfDay();
+        $checkoutDay = $checkOut->copy()->startOfDay();
 
-        while ($current->lt($checkOut)) {
+        while ($current->lt($checkoutDay)) {
             $allotment = static::where('room_type_id', $roomTypeId)
                 ->where('date', $current->format('Y-m-d'))
                 ->where(function ($q) use ($channel) {
