@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Allotment;
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\RoomType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -89,5 +91,36 @@ class RoomApiTest extends TestCase
         $roomNumbers = collect($response->json('data'))->pluck('room_number');
         $this->assertContains('101', $roomNumbers);
         $this->assertNotContains('102', $roomNumbers);
+    }
+
+    public function test_api_available_rooms_respects_exhausted_allotment()
+    {
+        $roomType = RoomType::factory()->create();
+        Room::factory()->create([
+            'status' => 'available',
+            'room_number' => '201',
+            'room_type_id' => $roomType->id,
+            'room_type_name' => $roomType->name,
+        ]);
+
+        $checkIn = Carbon::tomorrow();
+        $checkOut = $checkIn->copy()->addDay();
+
+        Allotment::create([
+            'room_type_id' => $roomType->id,
+            'date' => $checkIn->format('Y-m-d'),
+            'allotment' => 1,
+            'booked' => 1,
+            'channel' => 'api',
+        ]);
+
+        $response = $this->getJson('/api/rooms/available?'.http_build_query([
+            'check_in' => $checkIn->format('Y-m-d'),
+            'check_out' => $checkOut->format('Y-m-d'),
+        ]), $this->headers);
+
+        $response->assertStatus(200);
+        $this->assertSame([], $response->json('data'));
+        $this->assertSame(0, $response->json('meta.total_displayed'));
     }
 }

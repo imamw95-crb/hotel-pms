@@ -673,6 +673,21 @@ class ReservationApiController extends Controller
             ->orderBy('room_number')
             ->get();
 
+        $availableRooms = $availableRooms->filter(function ($room) use ($validated) {
+            if (! $room->room_type_id) {
+                return true;
+            }
+
+            $unavailableDates = Allotment::checkAvailabilityInRange(
+                $room->room_type_id,
+                Carbon::parse($validated['check_in']),
+                Carbon::parse($validated['check_out']),
+                'api'
+            );
+
+            return empty($unavailableDates);
+        })->values();
+
         // Apply 25% limit per room type (floor, min 1) for public display
         $limitedRooms = app(AvailabilityService::class)->limitAvailablePerType($availableRooms);
 
