@@ -692,8 +692,8 @@ class ReservationApiController extends Controller
                 ->get();
 
             if ($allotments->isEmpty()) {
-                // Tidak ada allotment = tampilkan semua
-                return $rooms;
+                // Tidak ada allotment = jangan tampilkan tipe ini
+                return collect();
             }
 
             // Hitung sisa allotment minimal di seluruh tanggal
