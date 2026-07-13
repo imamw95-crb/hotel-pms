@@ -16,6 +16,7 @@ class Allotment extends Model
         'date',
         'allotment',
         'booked',
+        'price',
         'channel',
     ];
 
@@ -23,11 +24,30 @@ class Allotment extends Model
         'date' => 'date:Y-m-d',
         'allotment' => 'integer',
         'booked' => 'integer',
+        'price' => 'decimal:2',
     ];
 
     public function roomType(): BelongsTo
     {
         return $this->belongsTo(RoomType::class);
+    }
+
+    /**
+     * Dapatkan harga efektif: harga allotment jika di-set,
+     * otherwise harga master dari room type (harga minimum kamar).
+     */
+    public function getEffectivePrice(): float
+    {
+        if ($this->price !== null && $this->price > 0) {
+            return (float) $this->price;
+        }
+
+        // Fallback ke harga master dari kamar di tipe ini
+        $minPrice = $this->roomType?->rooms()
+            ->where('price_per_night', '>', 0)
+            ->min('price_per_night');
+
+        return (float) ($minPrice ?? 0);
     }
 
     /**

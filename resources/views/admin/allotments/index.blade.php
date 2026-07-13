@@ -76,6 +76,7 @@
                                 <th class="text-left p-2 font-medium">Allotment</th>
                                 <th class="text-left p-2 font-medium">Terbooking</th>
                                 <th class="text-left p-2 font-medium">Sisa</th>
+                                <th class="text-left p-2 font-medium">Harga</th>
                                 <th class="text-left p-2 font-medium">Status</th>
                                 <th class="text-left p-2 font-medium">Aksi</th>
                             </tr>
@@ -93,6 +94,14 @@
                                     <td class="p-2 text-sm">{{ $allotment->booked }}</td>
                                     <td class="p-2 text-sm font-semibold {{ $remaining <= 0 ? 'text-red-600' : ($remaining <= 3 ? 'text-yellow-600' : 'text-green-600') }}">
                                         {{ $remaining }}
+                                    </td>
+                                    <td class="p-2 text-sm">
+                                        @if($allotment->price)
+                                            <span class="font-semibold text-gray-800">Rp {{ number_format($allotment->price, 0, ',', '.') }}</span>
+                                        @else
+                                            <span class="text-gray-400">Rp {{ number_format($allotment->getEffectivePrice(), 0, ',', '.') }}</span>
+                                            <span class="text-xs text-gray-400 ml-1">(master)</span>
+                                        @endif
                                     </td>
                                     <td class="p-2">
                                         <span class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full {{ $statusClass }}">

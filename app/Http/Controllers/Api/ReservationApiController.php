@@ -689,6 +689,7 @@ class ReservationApiController extends Controller
                     $q->where('channel', 'api')
                         ->orWhereNull('channel');
                 })
+                ->orderBy('date')
                 ->get();
 
             if ($allotments->isEmpty()) {
@@ -703,7 +704,21 @@ class ReservationApiController extends Controller
 
             $limit = max(0, (int) $minAvailable);
 
-            return $rooms->take($limit);
+            // Hitung harga efektif per malam dari allotment
+            $allotmentPrices = $allotments->mapWithKeys(function ($a) {
+                return [$a->date->format('Y-m-d') => $a->getEffectivePrice()];
+            });
+
+            // Ambil harga rata-rata dari harga allotment (atau harga master)
+            $avgPrice = $allotmentPrices->count() > 0
+                ? round($allotmentPrices->sum() / $allotmentPrices->count())
+                : 0;
+
+            return $rooms->take($limit)->map(function ($room) use ($avgPrice) {
+                $room->price_per_night = $avgPrice > 0 ? $avgPrice : $room->price_per_night;
+
+                return $room;
+            });
         })->values();
 
         // Attach room type description

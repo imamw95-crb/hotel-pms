@@ -59,6 +59,7 @@ class AllotmentApiController extends Controller
             'date' => 'required|date_format:Y-m-d',
             'allotment' => 'required|integer|min:0',
             'booked' => 'nullable|integer|min:0',
+            'price' => 'nullable|numeric|min:0',
             'channel' => 'nullable|string|max:50',
         ]);
 
@@ -89,6 +90,7 @@ class AllotmentApiController extends Controller
             $existing->update([
                 'allotment' => $request->allotment,
                 'booked' => $request->booked ?? $existing->booked,
+                'price' => $request->has('price') && $request->price !== '' ? $request->price : $existing->price,
             ]);
 
             return response()->json([
@@ -103,6 +105,7 @@ class AllotmentApiController extends Controller
             'date' => $request->date,
             'allotment' => $request->allotment,
             'booked' => $request->booked ?? 0,
+            'price' => $request->has('price') && $request->price !== '' ? $request->price : null,
             'channel' => $request->channel,
         ]);
 
@@ -221,6 +224,8 @@ class AllotmentApiController extends Controller
                     'total_rooms' => $rt->rooms_count,
                     'allotment' => $allotment ? $allotment->allotment : null,
                     'booked' => $allotment ? $allotment->booked : 0,
+                    'price' => $allotment ? $allotment->price : null,
+                    'effective_price' => $allotment ? $allotment->getEffectivePrice() : 0,
                     'available' => $allotment ? ($allotment->allotment - $allotment->booked) : null,
                     'has_allotment' => $allotment !== null,
                 ];
@@ -250,6 +255,7 @@ class AllotmentApiController extends Controller
         $validator = Validator::make($request->all(), [
             'allotment' => 'required|integer|min:0',
             'booked' => 'nullable|integer|min:0',
+            'price' => 'nullable|numeric|min:0',
             'channel' => 'nullable|string|max:50',
         ]);
 
@@ -264,6 +270,7 @@ class AllotmentApiController extends Controller
         $allotment->update([
             'allotment' => $request->allotment,
             'booked' => $request->booked ?? $allotment->booked,
+            'price' => $request->has('price') && $request->price !== '' ? $request->price : $allotment->price,
             'channel' => $request->channel ?? $allotment->channel,
         ]);
 

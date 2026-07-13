@@ -71,6 +71,7 @@ class AllotmentController extends Controller
             'date_from' => 'required|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'allotment' => 'required|integer|min:0',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $roomType = RoomType::findOrFail($validated['room_type_id']);
@@ -88,7 +89,10 @@ class AllotmentController extends Controller
                 ->first();
 
             if ($existing) {
-                $existing->update(['allotment' => $validated['allotment']]);
+                $existing->update([
+                    'allotment' => $validated['allotment'],
+                    'price' => $validated['price'] ?? $existing->price,
+                ]);
                 $updated++;
             } else {
                 Allotment::create([
@@ -96,6 +100,7 @@ class AllotmentController extends Controller
                     'date' => $current->format('Y-m-d'),
                     'allotment' => $validated['allotment'],
                     'booked' => 0,
+                    'price' => $validated['price'] ?? null,
                     'channel' => 'api',
                 ]);
                 $created++;
@@ -109,18 +114,18 @@ class AllotmentController extends Controller
             $msg .= ": {$created} tanggal baru dibuat";
         }
         if ($updated > 0) {
-            $msg .= ($created > 0 ? ', ' : ': ') . "{$updated} tanggal diperbarui";
+            $msg .= ($created > 0 ? ', ' : ': ')."{$updated} tanggal diperbarui";
         }
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => $msg . '.',
+                'message' => $msg.'.',
                 'redirect_url' => route('allotments.index'),
             ]);
         }
 
-        return redirect()->route('allotments.index')->with('success', $msg . '.');
+        return redirect()->route('allotments.index')->with('success', $msg.'.');
     }
 
     /**
@@ -148,11 +153,15 @@ class AllotmentController extends Controller
         $validated = $request->validate([
             'allotment' => 'required|integer|min:0',
             'booked' => 'nullable|integer|min:0',
+            'price' => 'nullable|numeric|min:0',
         ]);
 
         $allotment->update([
             'allotment' => $validated['allotment'],
             'booked' => $validated['booked'] ?? $allotment->booked,
+            'price' => array_key_exists('price', $validated) && $validated['price'] !== '' && $validated['price'] !== null
+                ? $validated['price']
+                : $allotment->price,
             'channel' => 'api',
         ]);
 
