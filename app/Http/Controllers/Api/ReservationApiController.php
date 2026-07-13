@@ -124,13 +124,13 @@ class ReservationApiController extends Controller
             ], 422);
         }
 
-        // Cek allotment hanya untuk booking dari API (bukan OTA)
+        // Cek allotment untuk booking dari API & Website (bukan OTA eksternal)
         // OTA: traveloka, booking.com, agoda, dll — bebas booking tanpa allotment
         $otaSource = $validated['ota_source'] ?? 'api';
-        $isApiSource = in_array($otaSource, ['api', null, '']);
+        $trackAllotment = in_array($otaSource, ['api', 'website', null, '']);
         $roomTypeId = $room->room_type_id;
 
-        if ($roomTypeId && $isApiSource) {
+        if ($roomTypeId && $trackAllotment) {
             $unavailableDates = Allotment::checkAvailabilityInRange(
                 $roomTypeId,
                 $checkIn,
@@ -147,7 +147,7 @@ class ReservationApiController extends Controller
         }
 
         try {
-            $reservation = DB::transaction(function () use ($validated, $checkIn, $checkOut, $room, $isApiSource, $roomTypeId) {
+            $reservation = DB::transaction(function () use ($validated, $checkIn, $checkOut, $room, $trackAllotment, $roomTypeId) {
                 // Find or create guest
                 $guest = Guest::firstOrCreate(
                     ['guest_name' => $validated['guest_name']],
@@ -185,8 +185,8 @@ class ReservationApiController extends Controller
                     'created_by' => auth()->id(),
                 ]);
 
-                // Increment allotment booked count (hanya untuk API)
-                if ($roomTypeId && $isApiSource) {
+                // Increment allotment booked count (untuk API & Website)
+                if ($roomTypeId && $trackAllotment) {
                     Allotment::incrementBooked(
                         $roomTypeId,
                         $checkIn,
@@ -322,9 +322,9 @@ class ReservationApiController extends Controller
             ], 422);
         }
 
-        // Decrement allotment booked count (hanya untuk API)
-        $isApiSource = in_array($reservation->ota_source, ['api', null, '']);
-        if ($reservation->room->room_type_id && $isApiSource) {
+        // Decrement allotment booked count (untuk API & Website)
+        $trackAllotment = in_array($reservation->ota_source, ['api', 'website', null, '']);
+        if ($reservation->room->room_type_id && $trackAllotment) {
             Allotment::decrementBooked(
                 $reservation->room->room_type_id,
                 $reservation->check_in,
