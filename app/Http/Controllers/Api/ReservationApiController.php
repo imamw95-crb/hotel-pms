@@ -672,23 +672,42 @@ class ReservationApiController extends Controller
             ->orderBy('room_number')
             ->get();
 
-        $availableRooms = $availableRooms->filter(function ($room) use ($validated) {
-            if (! $room->room_type_id) {
-                return true;
+        // Group by room type and limit display to allotment (if set)
+        $checkInDate = Carbon::parse($validated['check_in']);
+        $checkOutDate = Carbon::parse($validated['check_out']);
+
+        $limitedRooms = $availableRooms->groupBy('room_type_id')->flatMap(function ($rooms, $roomTypeId) use ($checkInDate, $checkOutDate) {
+            if (! $roomTypeId) {
+                return $rooms;
             }
 
-            $unavailableDates = Allotment::checkAvailabilityInRange(
-                $room->room_type_id,
-                Carbon::parse($validated['check_in']),
-                Carbon::parse($validated['check_out']),
-                'api'
-            );
+            // Cari allotment untuk tipe kamar ini di range tanggal
+            $allotments = Allotment::where('room_type_id', $roomTypeId)
+                ->where('date', '>=', $checkInDate->format('Y-m-d'))
+                ->where('date', '<', $checkOutDate->format('Y-m-d'))
+                ->where(function ($q) {
+                    $q->where('channel', 'api')
+                        ->orWhereNull('channel');
+                })
+                ->get();
 
-            return empty($unavailableDates);
+            if ($allotments->isEmpty()) {
+                // Tidak ada allotment = tampilkan semua
+                return $rooms;
+            }
+
+            // Hitung sisa allotment minimal di seluruh tanggal
+            $minAvailable = $allotments->min(function ($a) {
+                return $a->allotment - $a->booked;
+            });
+
+            $limit = max(0, (int) $minAvailable);
+
+            return $rooms->take($limit);
         })->values();
 
         // Attach room type description
-        $data = $availableRooms->map(function ($room) {
+        $data = $limitedRooms->map(function ($room) {
             $roomType = $room->roomType;
 
             return array_merge($room->toArray(), [
@@ -704,7 +723,7 @@ class ReservationApiController extends Controller
                 'check_in' => $validated['check_in'],
                 'check_out' => $validated['check_out'],
                 'total_available' => $availableRooms->count(),
-                'total_displayed' => $availableRooms->count(),
+                'total_displayed' => $limitedRooms->count(),
             ],
         ]);
     }
