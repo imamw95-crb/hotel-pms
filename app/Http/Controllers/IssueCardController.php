@@ -227,6 +227,7 @@ class IssueCardController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Data kamar tidak ditemukan.']);
             }
+
             return back()->with('error', 'Data kamar tidak ditemukan.');
         }
 
@@ -236,6 +237,7 @@ class IssueCardController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Gagal erase card: '.($mhsResult['response_message'] ?? 'Unknown error')]);
             }
+
             return back()->with('error', 'Gagal erase card: '.($mhsResult['response_message'] ?? 'Unknown error'));
         }
 
@@ -293,8 +295,8 @@ class IssueCardController extends Controller
         try {
             $rooms = Room::with(['reservations' => function ($q) {
                 $q->whereIn('status', ['checked_in', 'pending'])
-                  ->with('guest')
-                  ->orderBy('created_at', 'desc');
+                    ->with('guest')
+                    ->orderBy('created_at', 'desc');
             }])->orderBy('room_number')->get();
 
             $data = $rooms->map(function ($room) {

@@ -124,6 +124,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations/{reservation}/print-registration-card', [ReservationController::class, 'printRegistrationCard'])->name('reservations.print-registration-card');
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
+    Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
 
     // AI Auto-Reservation
     Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');

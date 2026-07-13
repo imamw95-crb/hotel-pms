@@ -834,6 +834,29 @@ class ReservationController extends Controller
     }
 
     /**
+     * Simpan / perbarui catatan reservasi
+     */
+    public function updateNotes(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'notes' => 'nullable|string|max:5000',
+        ]);
+
+        $reservation->notes = $validated['notes'];
+        $reservation->save();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Catatan berhasil disimpan.',
+                'notes' => $reservation->notes,
+            ]);
+        }
+
+        return back()->with('success', 'Catatan berhasil disimpan.');
+    }
+
+    /**
      * Refresh partial tabel + statistik via AJAX (tanpa reload halaman)
      */
     public function refreshTable(Request $request)

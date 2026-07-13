@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AiChatService
 {
@@ -140,7 +141,7 @@ class AiChatService
         }
 
         // Booking intent: harus ada kata kunci booking + angka atau kata terkait durasi/tamu
-        $hasBookingKeyword = \Illuminate\Support\Str::contains($msg, self::BOOKING_KEYWORDS);
+        $hasBookingKeyword = Str::contains($msg, self::BOOKING_KEYWORDS);
         $hasNumeric = preg_match('/\b\d+\b/', $msg);
         $hasDurationWords = preg_match('/\b(orang|malam|hari|org|mlm|tamu)\b/', $msg);
 
@@ -154,7 +155,7 @@ class AiChatService
         }
 
         // Action intent
-        if (\Illuminate\Support\Str::contains($msg, self::ACTION_KEYWORDS)) {
+        if (Str::contains($msg, self::ACTION_KEYWORDS)) {
             return 'action';
         }
 

@@ -222,7 +222,7 @@ class ReportController extends Controller
 
         $summary = MHSLog::whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
-            ->selectRaw("command, COUNT(*) as total, SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as success_count, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as fail_count")
+            ->selectRaw('command, COUNT(*) as total, SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as success_count, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as fail_count')
             ->groupBy('command')
             ->get();
 

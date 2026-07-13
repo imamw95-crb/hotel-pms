@@ -365,12 +365,67 @@
     </div>
 
     <!-- Catatan -->
-    @if($reservation->notes)
     <div class="bg-white rounded-lg shadow p-6 mt-6">
         <h3 class="font-bold text-lg mb-2"><i class="fas fa-sticky-note text-purple-500 mr-2"></i>Catatan</h3>
-        <p class="text-gray-700">{{ $reservation->notes }}</p>
+        <form id="notesForm" onsubmit="saveNotes(event)" class="space-y-3">
+            @csrf
+            <textarea name="notes" id="notesInput" rows="3"
+                class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Tambahkan catatan untuk reservasi ini...">{{ $reservation->notes }}</textarea>
+            <div class="flex items-center gap-2">
+                <button type="submit"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition flex items-center gap-1.5">
+                    <i class="fas fa-save"></i> Simpan Catatan
+                </button>
+                <span id="notesStatus" class="text-xs text-gray-400"></span>
+            </div>
+        </form>
     </div>
-    @endif
+
+    <script>
+        function saveNotes(e) {
+            e.preventDefault();
+            var form = e.target;
+            var btn = form.querySelector('button[type="submit"]');
+            var status = document.getElementById('notesStatus');
+            var notes = document.getElementById('notesInput').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+            fetch('{{ route("reservations.update-notes", $reservation) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ notes: notes }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    status.textContent = '✓ Tersimpan';
+                    status.className = 'text-xs text-green-600';
+                    setTimeout(function() { status.textContent = ''; }, 3000);
+                    if (typeof Toast !== 'undefined') {
+                        Toast.success(data.message);
+                    }
+                } else {
+                    status.textContent = '✗ Gagal menyimpan';
+                    status.className = 'text-xs text-red-600';
+                }
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal menyimpan';
+                status.className = 'text-xs text-red-600';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Catatan';
+            });
+        }
+    </script>
 
     <!-- Other Revenue (Service Charge) -->
     <div class="bg-white rounded-lg shadow p-6 mt-6">
