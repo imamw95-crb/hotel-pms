@@ -73,16 +73,42 @@
             <!-- Tanggal Dari -->
             <div class="w-full sm:w-36">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Dari</label>
-                <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}"
+                <input type="date" name="date_from" id="date_from" value="{{ $dateFrom ?? '' }}"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
 
             <!-- Tanggal Sampai -->
             <div class="w-full sm:w-36">
                 <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sampai</label>
-                <input type="date" name="date_to" value="{{ $dateTo ?? '' }}"
+                <input type="date" name="date_to" id="date_to" value="{{ $dateTo ?? '' }}"
                     class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
             </div>
+
+            <!-- Quick Date: Hari Ini -->
+            <div class="flex-shrink-0 pt-5">
+                <button type="button" onclick="setTodayRange()"
+                    class="bg-teal-500 text-white px-3 py-2 rounded-lg text-xs font-medium hover:bg-teal-600 transition flex items-center gap-1.5 whitespace-nowrap">
+                    <i class="fas fa-calendar-day"></i> Hari Ini
+                </button>
+            </div>
+
+            <script>
+            function setTodayRange() {
+                var today = new Date();
+                var tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                var fmt = function(d) {
+                    var y = d.getFullYear();
+                    var m = String(d.getMonth() + 1).padStart(2, '0');
+                    var day = String(d.getDate()).padStart(2, '0');
+                    return y + '-' + m + '-' + day;
+                };
+
+                document.getElementById('date_from').value = fmt(today);
+                document.getElementById('date_to').value = fmt(tomorrow);
+            }
+            </script>
 
             <!-- Tombol -->
             <div class="flex gap-2 flex-shrink-0">
