@@ -11,12 +11,13 @@
 4. [Navigasi Menu](#-navigasi-menu)
 5. [Quick Start � Instalasi](#-quick-start)
 6. [Fitur Step-by-Step](#-fitur-lengkap)
-7. [Permission & Role](#-permission--role)
-8. [Model, API & Struktur Project](#-model--api--struktur)
-9. [Troubleshooting](#-troubleshooting)
-10. [Glossary](#-glossary)
-11. [Latihan Mandiri](#-latihan-mandiri)
-12. [Deployment & Support](#-deployment--support)
+7. [Allotment Kamar](#-allotment-kamar)
+8. [Permission & Role](#-permission--role)
+9. [Model, API & Struktur Project](#-model--api--struktur)
+10. [Troubleshooting](#-troubleshooting)
+11. [Glossary](#-glossary)
+12. [Latihan Mandiri](#-latihan-mandiri)
+13. [Deployment & Support](#-deployment--support)
 
 ---
 
@@ -228,72 +229,7 @@ Otomatis masuk tagihan kamar.
 
 ---
 
-### 15. ? Allotment System
-
-Mengatur kuota kamar yang tampil di website publik (`theicon.id`).
-
-**Aturan:** Hanya tipe kamar dengan allotment (`channel='api'`) yang tampil. Tipe tanpa allotment tidak tampil sama sekali.
-
-**Cara:** Allotment ? Tambah ? Pilih tipe kamar ? Isi tanggal, jumlah kuota, harga opsional ? **Simpan**.
-
-Alur di Website:
-```
-Admin set allotment ? Webhotel panggil /api/rooms/available 
-? Cek allotment per tipe kamar per range tanggal
-? Tampilkan min(allotment - booked) kamar
-```
-
-> ?? Harga efektif: harga allotment (jika di-set) ? fallback ke harga master kamar.
-> ?? **Latihan 11:** Set allotment 5 kamar Deluxe untuk 7 hari ke depan, verifikasi di website.
-
-#### ?? Cek "Allotment Ada Tidak" (Logika Inti)
-
-Saat website memanggil `GET /api/rooms/available`, sistem **wajib** mengecek apakah tipe kamar punya allotment di range tanggal yang diminta. Inilah inti aturan "ada tidak":
-
-**1. Query allotment per tipe kamar + range tanggal**
-```php
-$allotments = Allotment::where('room_type_id', $roomTypeId)
-    ->where('date', '>=', $checkInDate)
-    ->where('date', '<',  $checkOutDate)   // eksklusif check-out
-    ->where(function ($q) {
-        $q->where('channel', 'api')        // hanya channel api yg tampil di web
-          ->orWhereNull('channel');        // atau yg belum di-set channel
-    })
-    ->orderBy('date')
-    ->get();
-```
-
-**2. Keputusan "Ada" vs "Tidak Ada"**
-| Kondisi | Hasil | Tindakan |
-|---------|-------|----------|
-| `$allotments->isEmpty()` | **TIDAK ADA** allotment | Tipe kamar **tidak tampil sama sekali** (`return collect()`) |
-| `$allotments` terisi | **ADA** allotment | Lanjut hitung sisa kuota |
-
-```php
-if ($allotments->isEmpty()) {
-    // Tidak ada allotment = jangan tampilkan tipe ini
-    return collect();
-}
-```
-
-**3. Hitung sisa kuota minimal (jika ADA)**
-```php
-$minAvailable = $allotments->min(fn($a) => $a->allotment - $a->booked);
-$limit = max(0, (int) $minAvailable);   // jangan negatif
-```
-Tipe kamar hanya menampilkan `$limit` kamar = nilai terkecil dari `(allotment - booked)` di seluruh tanggal menginap.
-
-**4. Helper `Allotment::isAvailable()`**
-Model `Allotment` juga punya method cepat untuk cek 1 tanggal:
-```php
-Allotment::isAvailable($roomTypeId, $date, 'api'); // true = masih sisa
-```
-- Return `true` jika **tidak ada baris allotment** (dianggap unlimited).
-- Return `true`/`false` berdasarkan `booked < allotment` jika baris ada.
-
-> ?? **Ringkas:** Tidak ada allotment ? tipe kamar **hilang** dari website. Ada allotment ? tampil `min(allotment - booked)` kamar. Method `limitAvailablePerType()` **sudah tidak dipakai**.
-
-> ?? **Latihan 11b:** Hapus allotment sebuah tipe kamar ? panggil `/api/rooms/available` ? pastikan tipe tersebut tidak muncul. Lalu buat allotment 3 kamar ? pastikan hanya 3 yang tampil.
+> **?? Detail lengkap?** Lihat bagian [**?? Allotment Kamar**](#-allotment-kamar) di atas.
 
 ---
 
@@ -380,6 +316,89 @@ Booking dari OTA memiliki status pembayaran terpisah:
 | `unpaid_ota` | Belum dibayar OTA |
 
 Saat tambah pembayaran, jumlah OTA + hotel bisa diisi terpisah.
+
+---
+
+## ?? Allotment Kamar
+
+Mengatur kuota kamar yang tampil di website publik (`theicon.id`). Fitur ini penting agar tipe kamar yang stoknya terbatas atau sedang tidak aktif tidak muncul di website.
+
+### Aturan Dasar
+- Hanya tipe kamar yang **punya allotment** (`channel='api'`) yang tampil di website
+- Tipe kamar **tanpa allotment** → **tidak tampil sama sekali**
+- Jumlah kamar yang tampil = `min(allotment - booked)` di seluruh range tanggal
+- Harga efektif: harga allotment (jika di-set) → fallback ke harga master kamar
+
+### Cara Penggunaan
+
+**Admin Panel:** Allotment → **Tambah** → Pilih tipe kamar → Isi tanggal, jumlah kuota, harga opsional → **Simpan**.
+
+### Alur Sistem
+
+```mermaid
+flowchart LR
+    A[Admin set allotment<br/>channel=api] --> B[Webhotel panggil<br/>GET /api/rooms/available]
+    B --> C{Kamar dikelompokkan<br/>per room_type_id}
+    C --> D[Cek allotment di<br/>range tanggal kunjungan]
+    D -->|Tidak ada allotment| E[Tipe kamar<br/>TIDAK tampil]
+    D -->|Ada allotment| F[Hitung sisa kuota<br/>min(allotment - booked)]
+    F --> G[Tampilkan<br/>sisa kamar]
+```
+
+### Logika Cek Allotment
+
+Saat website memanggil `GET /api/rooms/available`, sistem **wajib** mengecek apakah tipe kamar punya allotment di range tanggal yang diminta. Berikut inti logikanya:
+
+**1. Query allotment per tipe kamar + range tanggal**
+```php
+$allotments = Allotment::where('room_type_id', $roomTypeId)
+    ->where('date', '>=', $checkInDate)
+    ->where('date', '<',  $checkOutDate)   // eksklusif check-out
+    ->where(function ($q) {
+        $q->where('channel', 'api')        // hanya channel api yg tampil di web
+          ->orWhereNull('channel');        // atau yg belum di-set channel
+    })
+    ->orderBy('date')
+    ->get();
+```
+
+**2. Keputusan "Ada" vs "Tidak Ada"**
+
+| Kondisi | Hasil | Tindakan |
+|---------|-------|----------|
+| `$allotments->isEmpty()` | **TIDAK ADA** allotment | Tipe kamar **tidak tampil sama sekali** (`return collect()`) |
+| `$allotments` terisi | **ADA** allotment | Lanjut hitung sisa kuota |
+
+```php
+if ($allotments->isEmpty()) {
+    // Tidak ada allotment = jangan tampilkan tipe ini
+    return collect();
+}
+```
+
+**3. Hitung sisa kuota minimal (jika ADA)**
+```php
+$minAvailable = $allotments->min(fn($a) => $a->allotment - $a->booked);
+$limit = max(0, (int) $minAvailable);   // jangan negatif
+```
+
+Tipe kamar hanya menampilkan `$limit` kamar = nilai terkecil dari `(allotment - booked)` di seluruh tanggal menginap.
+
+### Helper `Allotment::isAvailable()`
+
+Model `Allotment` juga punya method cepat untuk cek 1 tanggal:
+```php
+Allotment::isAvailable($roomTypeId, $date, 'api'); // true = masih sisa
+```
+- Return `true` jika **tidak ada baris allotment** (dianggap unlimited).
+- Return `true`/`false` berdasarkan `booked < allotment` jika baris ada.
+
+> **?? Ringkas:** Tidak ada allotment → tipe kamar **hilang** dari website. Ada allotment → tampil `min(allotment - booked)` kamar. Method `limitAvailablePerType()` **sudah tidak dipakai**.
+
+### Latihan
+
+> **?? Latihan A:** Set allotment 5 kamar Deluxe untuk 7 hari ke depan, lalu verifikasi di website bahwa hanya 5 kamar yang tampil.
+> **?? Latihan B:** Hapus allotment sebuah tipe kamar → panggil `/api/rooms/available` → pastikan tipe tersebut tidak muncul. Lalu buat allotment 3 kamar → pastikan hanya 3 yang tampil.
 
 ---
 
