@@ -113,6 +113,7 @@
             <a href="#reports" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-chart-bar mr-1.5 w-4 text-center"></i> Laporan (Reports)</a>
             <a href="#guests" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-users mr-1.5 w-4 text-center"></i> Manajemen Tamu</a>
             <a href="#rooms" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-door-open mr-1.5 w-4 text-center"></i> Kamar & Tipe Kamar</a>
+            <a href="#allotment" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-chart-pie mr-1.5 w-4 text-center"></i> Allotment Kamar</a>
             <a href="#promo-prices" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-tag mr-1.5 w-4 text-center"></i> Promo Harga</a>
             <a href="#ai-chat" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-robot mr-1.5 w-4 text-center"></i> AI Chat Assistant</a>
             <a href="#admin" class="text-blue-600 hover:text-blue-800 hover:underline py-1.5 px-2 rounded hover:bg-blue-50 transition"><i class="fas fa-cog mr-1.5 w-4 text-center"></i> Administrasi (Owner)</a>
@@ -665,12 +666,90 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 18. PROMO HARGA --}}
+    {{-- 18b. ALLOTMENT KAMAR --}}
+    {{-- ================================================================ --}}
+    <div id="allotment" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
+        <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fas fa-chart-pie text-purple-500"></i> 19. Allotment Kamar
+            </h3>
+            <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+        </div>
+        <div class="section-body">
+            <p class="text-sm text-gray-600 mb-3">Mengatur kuota kamar yang tampil di website publik (<code>theicon.id</code>). Fitur ini penting agar tipe kamar yang stoknya terbatas atau sedang tidak aktif tidak muncul di website.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <h4 class="font-bold text-purple-800 mb-2">📋 Aturan Dasar</h4>
+                    <ul class="space-y-1.5 text-xs text-purple-700">
+                        <li><i class="fas fa-check-circle mr-1"></i> Hanya tipe kamar yang <strong>punya allotment</strong> (<code>channel='api'</code>) yang tampil di website</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Tipe kamar <strong>tanpa allotment</strong> → <strong>tidak tampil sama sekali</strong></li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Jumlah tampil = <code>min(allotment - booked)</code> di seluruh range tanggal</li>
+                        <li><i class="fas fa-check-circle mr-1"></i> Harga efektif: harga allotment (jika di-set) → fallback ke harga master kamar</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 class="font-bold text-blue-800 mb-2">🎯 Cara Penggunaan</h4>
+                    <ul class="space-y-1.5 text-xs text-blue-700">
+                        <li><i class="fas fa-arrow-right mr-1"></i> Buka menu <strong>Allotment</strong> di sidebar</li>
+                        <li><i class="fas fa-arrow-right mr-1"></i> Klik <strong>Tambah</strong> → pilih tipe kamar</li>
+                        <li><i class="fas fa-arrow-right mr-1"></i> Isi tanggal, jumlah kuota, harga opsional</li>
+                        <li><i class="fas fa-arrow-right mr-1"></i> Klik <strong>Simpan</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-sm mb-3">
+                <h4 class="font-bold text-gray-800 mb-2">⚙️ Alur Sistem</h4>
+                <p class="text-xs text-gray-600 mb-2">Saat website memanggil <code>GET /api/rooms/available</code>, berikut logikanya:</p>
+                <ol class="space-y-1.5 text-sm text-gray-700 ml-2 list-decimal list-inside">
+                    <li>Kamar dikelompokkan per <code>room_type_id</code></li>
+                    <li>Cek allotment (<code>channel='api'</code> atau <code>null</code>) di range tanggal kunjungan</li>
+                    <li><strong>Tidak ada allotment</strong> → tipe kamar <strong>tidak tampil</strong></li>
+                    <li><strong>Ada allotment</strong> → hitung <code>min(allotment - booked)</code> di seluruh tanggal</li>
+                    <li>Tampilkan sisa kamar (minimal 0, tidak negatif)</li>
+                </ol>
+            </div>
+
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+                <div class="overflow-x-auto text-xs">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-300 p-2 text-left font-semibold">Kondisi</th>
+                                <th class="border border-gray-300 p-2 text-left font-semibold">Hasil</th>
+                                <th class="border border-gray-300 p-2 text-left font-semibold">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="hover:bg-gray-50">
+                                <td class="border border-gray-300 p-2"><code>allotments isEmpty()</code></td>
+                                <td class="border border-gray-300 p-2"><span class="text-red-600 font-semibold">TIDAK ADA</span> allotment</td>
+                                <td class="border border-gray-300 p-2">Tipe kamar tidak tampil</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="border border-gray-300 p-2"><code>allotments</code> terisi</td>
+                                <td class="border border-gray-300 p-2"><span class="text-green-600 font-semibold">ADA</span> allotment</td>
+                                <td class="border border-gray-300 p-2">Lanjut hitung sisa kuota</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <p><i class="fas fa-lightbulb text-yellow-600 mr-1"></i> <strong>Ringkas:</strong> Tidak ada allotment → tipe kamar hilang dari website. Ada allotment → tampil <code>min(allotment - booked)</code> kamar. Method <code>limitAvailablePerType()</code> sudah tidak dipakai.</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- ================================================================ --}}
+    {{-- 20. PROMO HARGA --}}
     {{-- ================================================================ --}}
     <div id="promo-prices" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-tag text-amber-500"></i> 19. Promo Harga
+                <i class="fas fa-tag text-amber-500"></i> 20. Promo Harga
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -743,7 +822,7 @@
     <div id="ai-chat" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-robot text-purple-500"></i> 20. AI Chat Assistant
+                <i class="fas fa-robot text-purple-500"></i> 21. AI Chat Assistant
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -764,7 +843,7 @@
     <div id="admin" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-cog text-gray-600"></i> 21. Administrasi (Owner Only)
+                <i class="fas fa-cog text-gray-600"></i> 22. Administrasi (Owner Only)
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -804,7 +883,7 @@
     <div id="api" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-plug text-cyan-500"></i> 22. API Eksternal
+                <i class="fas fa-plug text-cyan-500"></i> 23. API Eksternal
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -844,12 +923,12 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 22. LOG EMAIL OTA --}}
+    {{-- 24. LOG EMAIL OTA --}}
     {{-- ================================================================ --}}
     <div id="ota-email" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-envelope-open-text text-teal-500"></i> 23. Log Email OTA
+                <i class="fas fa-envelope-open-text text-teal-500"></i> 24. Log Email OTA
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -880,12 +959,12 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 23. NOTIFIKASI --}}
+    {{-- 25. NOTIFIKASI --}}
     {{-- ================================================================ --}}
     <div id="notifications" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="frontdesk">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-bell text-yellow-500"></i> 23. Notifikasi
+                <i class="fas fa-bell text-yellow-500"></i> 25. Notifikasi
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -901,12 +980,12 @@
     </div>
 
     {{-- ================================================================ --}}
-    {{-- 24. TV WELCOME SCREEN --}}
+    {{-- 26. TV WELCOME SCREEN --}}
     {{-- ================================================================ --}}
     <div id="tv-welcome" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="admin">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-tv text-blue-500"></i> 24. TV Welcome Screen
+                <i class="fas fa-tv text-blue-500"></i> 26. TV Welcome Screen
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
@@ -926,7 +1005,7 @@
     <div id="faq" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 section-card" data-category="all">
         <div class="flex items-center justify-between mb-3 cursor-pointer" onclick="toggleSection(this)">
             <h3 class="text-lg font-bold flex items-center gap-2">
-                <i class="fas fa-question-circle text-pink-500"></i> 26. FAQ — Pertanyaan yang Sering Diajukan
+                <i class="fas fa-question-circle text-pink-500"></i> 27. FAQ — Pertanyaan yang Sering Diajukan
             </h3>
             <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
         </div>
