@@ -86,3 +86,35 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 ## Test Credentials
 - **Username:** `owner`
 - **Password:** `password`
+
+## Server & Deployment
+- **Server IP:** `192.168.88.5` (Ubuntu 22.04 + BT Panel)
+- **SSH:** `ssh hotel@192.168.88.5` (password: `hotel`)
+- **Web Root:** `/www/wwwroot/`
+
+### Project Locations
+| Domain | Server Path |
+|--------|-------------|
+| `icon.cloudnod.my.id` | `/www/wwwroot/icon.cloudnod.my.id/` |
+| `embun.cloudnod.my.id` | `/www/wwwroot/embun.cloudnod.my.id/` |
+
+### GitHub
+- **Remote:** `origin` → `github.com/imamw95-crb/hotel-pms.git`
+- **Branch:** `main`
+- **Auto-deploy:** GitHub Actions → webhook `icon.cloudnod.my.id/deploy.php`
+
+### Manual Deploy (via SSH)
+```bash
+ssh hotel@192.168.88.5
+cd /www/wwwroot/icon.cloudnod.my.id   # atau embun.cloudnod.my.id
+git pull origin main
+php artisan migrate --force
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan queue:restart
+```
+
+### Logs
+- Deploy: `storage/logs/deploy.log`
+- Laravel: `storage/logs/laravel.log`
