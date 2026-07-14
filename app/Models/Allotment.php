@@ -20,6 +20,10 @@ class Allotment extends Model
         'channel',
     ];
 
+    // Channel constants
+    public const CHANNEL_API = 'api';
+    public const CHANNEL_WEBSITE = 'website';
+
     protected $casts = [
         'date' => 'date:Y-m-d',
         'allotment' => 'integer',
@@ -102,37 +106,46 @@ class Allotment extends Model
     /**
      * Increment booked count untuk room type pada range tanggal.
      */
+    /**
+     * Increment booked count for a room type over a date range.
+     * Uses a bulk update to reduce queries.
+     */
     public static function incrementBooked(
         int $roomTypeId,
         Carbon $checkIn,
         Carbon $checkOut,
         ?string $channel = null
     ): void {
+        $dates = [];
         $current = $checkIn->copy()->startOfDay();
         $checkoutDay = $checkOut->copy()->startOfDay();
-
         while ($current->lt($checkoutDay)) {
-            $allotment = static::where('room_type_id', $roomTypeId)
-                ->where('date', $current->format('Y-m-d'))
-                ->where(function ($q) use ($channel) {
-                    if ($channel) {
-                        $q->where('channel', $channel)
-                            ->orWhereNull('channel');
-                    }
-                })
-                ->orderBy('channel', 'desc')
-                ->first();
-
-            if ($allotment) {
-                $allotment->increment('booked');
-            }
-
+            $dates[] = $current->format('Y-m-d');
             $current->addDay();
         }
+
+        if (empty($dates)) {
+            return;
+        }
+
+        $query = static::where('room_type_id', $roomTypeId)
+            ->whereIn('date', $dates);
+        if ($channel) {
+            $query->where(function ($q) use ($channel) {
+                $q->where('channel', $channel)
+                    ->orWhereNull('channel');
+            });
+        }
+        // Increment booked for each matched row
+        $query->increment('booked');
     }
 
     /**
      * Decrement booked count untuk room type pada range tanggal.
+     */
+    /**
+     * Decrement booked count for a room type over a date range.
+     * Uses a bulk update.
      */
     public static function decrementBooked(
         int $roomTypeId,
@@ -140,26 +153,27 @@ class Allotment extends Model
         Carbon $checkOut,
         ?string $channel = null
     ): void {
+        $dates = [];
         $current = $checkIn->copy()->startOfDay();
         $checkoutDay = $checkOut->copy()->startOfDay();
-
         while ($current->lt($checkoutDay)) {
-            $allotment = static::where('room_type_id', $roomTypeId)
-                ->where('date', $current->format('Y-m-d'))
-                ->where(function ($q) use ($channel) {
-                    if ($channel) {
-                        $q->where('channel', $channel)
-                            ->orWhereNull('channel');
-                    }
-                })
-                ->orderBy('channel', 'desc')
-                ->first();
-
-            if ($allotment && $allotment->booked > 0) {
-                $allotment->decrement('booked');
-            }
-
+            $dates[] = $current->format('Y-m-d');
             $current->addDay();
         }
+
+        if (empty($dates)) {
+            return;
+        }
+
+        $query = static::where('room_type_id', $roomTypeId)
+            ->whereIn('date', $dates);
+        if ($channel) {
+            $query->where(function ($q) use ($channel) {
+                $q->where('channel', $channel)
+                    ->orWhereNull('channel');
+            });
+        }
+        // Decrement but ensure booked does not go below 0
+        $query->where('booked', '>', 0)->decrement('booked');
     }
 }

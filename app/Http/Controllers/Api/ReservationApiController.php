@@ -3,89 +3,59 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Allotment;
-use App\Models\Guest;
-use App\Models\OutOfOrder;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
-use App\Services\BookingNotificationService;
+use App\Models\OutOfOrder;
+use App\Models\Allotment;
+use App\Models\Guest;
+use App\Http\Requests\ReservationStoreRequest;
+use App\Services\ReservationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Exception;
 
 class ReservationApiController extends Controller
 {
-    // ========== RESERVATIONS ==========
-
     /**
      * GET /api/reservations
      * List semua reservasi dengan filter & pagination
-     *
-     * Query params: search, status, date_from, date_to, per_page, page
      */
     public function index(Request $request)
     {
         $query = Reservation::with(['guest', 'room', 'createdBy']);
 
         // Search
-        $search = $request->get('search');
-        if ($search) {
+        if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('reservation_number', 'like', "%{$search}%")
-                    ->orWhereHas('guest', function ($q) use ($search) {
-                        $q->where('guest_name', 'like', "%{$search}%")
-                            ->orWhere('id_number', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('room', function ($q) use ($search) {
-                        $q->where('room_number', 'like', "%{$search}%");
-                    });
+                    ->orWhereHas('guest', fn($q) => $q->where('guest_name', 'like', "%{$search}%"))
+                    ->orWhereHas('room', fn($q) => $q->where('room_number', 'like', "%{$search}%"));
             });
         }
 
         // Filter status
-        if ($request->get('status')) {
-            $query->where('status', $request->get('status'));
+        if ($status = $request->get('status')) {
+            $query->where('status', $status);
         }
 
-        // Filter tanggal
-        if ($request->get('date_from')) {
-            $query->whereDate('check_in', '>=', $request->get('date_from'));
+        // Date range filter
+        if ($from = $request->get('date_from')) {
+            $query->whereDate('check_in', '>=', $from);
         }
-        if ($request->get('date_to')) {
-            $query->whereDate('check_out', '<=', $request->get('date_to'));
+        if ($to = $request->get('date_to')) {
+            $query->whereDate('check_out', '<=', $to);
         }
 
         $perPage = $request->get('per_page', 15);
-        $reservations = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $reservations = $query->orderByDesc('created_at')->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data' => $reservations,
-        ]);
-    }
-
-    /**
-     * GET /api/reservations/{reservation}
-     * Detail reservasi
-     */
-    public function show(Reservation $reservation)
-    {
-        $reservation->load(['guest', 'room', 'createdBy']);
-        $transactions = Transaction::where('reservation_id', $reservation->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'reservation' => $reservation,
-                'transactions' => $transactions,
-                'remaining_payment' => $reservation->remaining_payment,
-                'nights' => $reservation->nights,
-            ],
+            'data'    => $reservations,
         ]);
     }
 
@@ -93,135 +63,33 @@ class ReservationApiController extends Controller
      * POST /api/reservations
      * Buat reservasi baru
      */
-    public function store(Request $request)
+    public function store(ReservationStoreRequest $request)
     {
-        $validated = $request->validate([
-            'guest_name' => 'required|string|max:255',
-            'guest_phone' => 'nullable|string|max:20',
-            'guest_email' => 'nullable|email|max:255',
-            'guest_id_number' => 'nullable|string|max:50',
-            'room_id' => 'required|exists:rooms,id',
-            'check_in' => 'required|date_format:Y-m-d',
-            'check_out' => 'required|date_format:Y-m-d|after:check_in',
-            'guest_count' => 'nullable|integer|min:1|max:10',
-            'total_amount' => 'nullable|numeric|min:0',
-            'payment_method' => 'nullable|string|max:50',
-            'notes' => 'nullable|string|max:1000',
-            'ota_source' => 'nullable|string|max:50',
-            'ota_reservation_number' => 'nullable|string|max:100',
-        ]);
-
-        $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0);
-        $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0);
-
-        // Cek kamar available (back-to-back allowed)
-        $room = Room::findOrFail($validated['room_id']);
-        if (! $room->isAvailable($checkIn->format('Y-m-d H:i:s'), $checkOut->format('Y-m-d H:i:s'))) {
-            return response()->json([
-                'success' => false,
-                'message' => "Kamar {$room->room_number} tidak tersedia untuk periode tersebut.",
-            ], 422);
-        }
-
-        // Cek allotment untuk booking dari API & Website (bukan OTA eksternal)
-        // OTA: traveloka, booking.com, agoda, dll — bebas booking tanpa allotment
-        $otaSource = $validated['ota_source'] ?? 'api';
-        $trackAllotment = in_array($otaSource, ['api', 'website', null, '']);
-        $roomTypeId = $room->room_type_id;
-
-        if ($roomTypeId && $trackAllotment) {
-            $unavailableDates = Allotment::checkAvailabilityInRange(
-                $roomTypeId,
-                $checkIn,
-                $checkOut,
-                'api'
-            );
-
-            if (! empty($unavailableDates)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Allotment untuk tipe kamar ini sudah penuh pada tanggal: '.implode(', ', $unavailableDates).'.',
-                ], 422);
-            }
-        }
-
         try {
-            $reservation = DB::transaction(function () use ($validated, $checkIn, $checkOut, $room, $trackAllotment, $roomTypeId) {
-                // Find or create guest
-                $guest = Guest::firstOrCreate(
-                    ['guest_name' => $validated['guest_name']],
-                    [
-                        'phone' => $validated['guest_phone'] ?? null,
-                        'email' => $validated['guest_email'] ?? null,
-                        'id_number' => $validated['guest_id_number'] ?? null,
-                    ]
-                );
-
-                // Calculate total if not provided
-                $totalAmount = $validated['total_amount'] ?? 0;
-                if ($totalAmount <= 0) {
-                    $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
-                }
-
-                $otaSource = $validated['ota_source'] ?? 'api';
-                $isWebsite = $otaSource === 'website';
-
-                $reservation = Reservation::create([
-                    'guest_id' => $guest->id,
-                    'room_id' => $room->id,
-                    'check_in' => $checkIn,
-                    'check_out' => $checkOut,
-                    'number_of_cards' => $validated['guest_count'] ?? 1,
-                    'total_amount' => $totalAmount,
-                    'payment_method' => $validated['payment_method'] ?? ($isWebsite ? 'transfer_bca' : 'cash'),
-                    'paid_amount' => 0,
-                    'status' => $isWebsite ? 'menunggu_pembayaran' : 'pending',
-                    'notes' => $validated['notes'] ?? null,
-                    'ota_source' => $otaSource,
-                    'ota_payment_status' => $isWebsite ? 'pending' : null,
-                    'ota_reservation_number' => $validated['ota_reservation_number'] ?? null,
-                    'room_type_name' => $room->room_type_name,
-                    'created_by' => auth()->id(),
-                ]);
-
-                // Increment allotment booked count (untuk API & Website)
-                if ($roomTypeId && $trackAllotment) {
-                    Allotment::incrementBooked(
-                        $roomTypeId,
-                        $checkIn,
-                        $checkOut,
-                        'api'
-                    );
-                }
-
-                return $reservation;
-            });
-
+            $reservation = app(ReservationService::class)->create($request->validated());
             $reservation->load(['guest', 'room']);
-
-            // Trigger notification
-            if (! empty($validated['ota_source']) && ! in_array($validated['ota_source'], ['website', 'api'])) {
-                app(BookingNotificationService::class)->otaBookingCreated(
-                    $reservation,
-                    [
-                        'guest_name' => $validated['guest_name'],
-                        'reservation_id' => $validated['ota_reservation_number'] ?? '',
-                    ],
-                    $validated['ota_source']
-                );
-            } else {
-                app(BookingNotificationService::class)->webBookingCreated($reservation);
-            }
-
             return response()->json([
                 'success' => true,
                 'message' => "Reservasi {$reservation->reservation_number} berhasil dibuat.",
-                'data' => $reservation,
+                'data'    => $reservation,
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            $isBusinessError = str_contains($e->getMessage(), 'tidak tersedia') 
+                || str_contains($e->getMessage(), 'Allotment');
+            if ($isBusinessError) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+            Log::error('System error creating reservation', [
+                'error' => $e->getMessage(),
+                'file'  => $e->getFile(),
+                'line'  => $e->getLine(),
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal membuat reservasi: '.$e->getMessage(),
+                'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',
             ], 500);
         }
     }
@@ -307,38 +175,21 @@ class ReservationApiController extends Controller
      */
     public function cancel(Reservation $reservation)
     {
-        if ($reservation->status === 'checked_in') {
+        try {
+            app(ReservationService::class)->cancel($reservation);
+            $reservation->load(['guest', 'room']);
+            return response()->json([
+                'success' => true,
+                'message' => "Reservasi {$reservation->reservation_number} berhasil dibatalkan.",
+                'data'    => $reservation,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to cancel reservation', ['error' => $e->getMessage(), 'reservation_id' => $reservation->id]);
             return response()->json([
                 'success' => false,
-                'message' => 'Reservasi yang sudah check-in tidak bisa dibatalkan.',
+                'message' => $e->getMessage(),
             ], 422);
         }
-
-        if ($reservation->status === 'cancelled') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Reservasi sudah dibatalkan.',
-            ], 422);
-        }
-
-        // Decrement allotment booked count (untuk API & Website)
-        $trackAllotment = in_array($reservation->ota_source, ['api', 'website', null, '']);
-        if ($reservation->room->room_type_id && $trackAllotment) {
-            Allotment::decrementBooked(
-                $reservation->room->room_type_id,
-                $reservation->check_in,
-                $reservation->check_out,
-                'api'
-            );
-        }
-
-        $reservation->update(['status' => 'cancelled']);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Reservasi {$reservation->reservation_number} berhasil dibatalkan.",
-            'data' => $reservation,
-        ]);
     }
 
     /**

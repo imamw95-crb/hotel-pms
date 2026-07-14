@@ -119,27 +119,27 @@ class Room extends Model
 
     public function isAvailable($checkIn, $checkOut, $excludeReservationId = null)
     {
-        // Back-to-Back Booking: check-out jam 12:00 dan check-in jam 14:00
-        // di hari yang sama TIDAK dianggap bentrok.
-        // Overlap hanya terjadi jika:
-        //   existing_check_in < new_check_out AND existing_check_out > new_check_in
-        // (strict less-than / greater-than, bukan inclusive)
-        $query = $this->reservations()
-            ->where(function ($q) use ($checkIn, $checkOut) {
-                $q->where('check_in', '<', $checkOut)
+        // Back-to-Back Booking: check-out 12:00, check-in 14:00 same day is allowed.
+        // Overlap occurs only when existing_check_in < new_check_out AND existing_check_out > new_check_in
+        // (strict, not inclusive).
+
+        // Eager‑load reservations and out‑of‑order to avoid N+1 queries when called repeatedly.
+        $this->loadMissing(['reservations' => function ($q) use ($checkIn, $checkOut, $excludeReservationId) {
+            $q->where(function ($sub) use ($checkIn, $checkOut) {
+                $sub->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);
             })
             ->whereIn('status', ['pending', 'checked_in']);
-
-        if ($excludeReservationId) {
-            $query->where('id', '!=', $excludeReservationId);
-        }
+            if ($excludeReservationId) {
+                $q->where('id', '!=', $excludeReservationId);
+            }
+        }]);
 
         // Also check if room is Out of Order
         if ($this->isOutOfOrder($checkIn, $checkOut)) {
             return false;
         }
 
-        return ! $query->exists();
+        return $this->reservations->isEmpty();
     }
 }
