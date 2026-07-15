@@ -7,16 +7,28 @@
     @vite('resources/css/app.css')
     <link href="{{ asset('assets/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <style>
-        /* ── Elegant black background ── */
+        /* ── Elegant white background ── */
         .login-bg {
-            background: #000000;
+            background: #f5f2ed;
             background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(212, 168, 83, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 80%, rgba(212, 168, 83, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 100% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+                radial-gradient(ellipse at 20% 40%, rgba(212, 168, 83, 0.07) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, rgba(212, 168, 83, 0.04) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.02) 0%, transparent 50%);
             position: relative;
             overflow: hidden;
+        }
+
+        /* ── Decorative top accent bar ── */
+        .login-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #c9a84c, #d4a853, #e8c66a, #d4a853, #c9a84c);
+            z-index: 3;
+            box-shadow: 0 2px 20px rgba(212, 168, 83, 0.3);
         }
 
         /* ── Network canvas ── */
@@ -29,55 +41,54 @@
             pointer-events: none;
         }
 
-        /* ── Gold shimmer overlay ── */
+        /* ── Subtle shimmer overlay ── */
         .mesh-overlay {
             position: absolute;
             inset: 0;
             z-index: 2;
             pointer-events: none;
             background:
-                radial-gradient(ellipse at 15% 30%, rgba(212, 168, 83, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 85% 70%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 30%, rgba(212, 168, 83, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 85% 70%, rgba(255, 255, 255, 0.5) 0%, transparent 50%);
         }
 
-        /* ── Login card — dark elegant glass ── */
+        /* ── Login card — white elegant ── */
         .login-card {
-            background: rgba(18, 18, 18, 0.92);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(212, 168, 83, 0.15);
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.06);
             box-shadow:
-                0 30px 60px -15px rgba(0, 0, 0, 0.8),
-                0 0 0 1px rgba(212, 168, 83, 0.05) inset,
-                0 0 40px rgba(212, 168, 83, 0.03);
+                0 20px 60px -15px rgba(0, 0, 0, 0.12),
+                0 4px 20px rgba(0, 0, 0, 0.04),
+                0 0 0 1px rgba(212, 168, 83, 0.04) inset;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .login-card:hover {
-            border-color: rgba(212, 168, 83, 0.35);
+            border-color: rgba(212, 168, 83, 0.15);
             box-shadow:
-                0 30px 60px -15px rgba(0, 0, 0, 0.8),
-                0 0 0 1px rgba(212, 168, 83, 0.15) inset,
-                0 0 60px rgba(212, 168, 83, 0.06);
-            transform: translateY(-2px);
+                0 25px 70px -15px rgba(0, 0, 0, 0.15),
+                0 4px 24px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(212, 168, 83, 0.08) inset;
+            transform: translateY(-3px);
         }
 
-        /* ── Form inputs — dark ── */
+        /* ── Form inputs — light elegant ── */
         .form-input-custom {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1.5px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.04);
-            color: #e2e8f0;
+            border: 1.5px solid #e2e8f0;
+            background: #fafafa;
+            color: #1e293b;
         }
         .form-input-custom::placeholder {
-            color: rgba(255, 255, 255, 0.25);
+            color: #94a3b8;
         }
         .form-input-custom:hover {
-            border-color: rgba(212, 168, 83, 0.25);
-            background: rgba(255, 255, 255, 0.06);
+            border-color: #cbd5e1;
+            background: #ffffff;
         }
         .form-input-custom:focus {
-            border-color: rgba(212, 168, 83, 0.5);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.08);
+            border-color: #d4a853;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.12);
             outline: none;
         }
         .form-input-custom.error {
@@ -99,7 +110,7 @@
         }
         .btn-login:hover {
             transform: translateY(-2px) scale(1.01);
-            box-shadow: 0 12px 35px -5px rgba(212, 168, 83, 0.5);
+            box-shadow: 0 12px 35px -5px rgba(212, 168, 83, 0.45);
         }
         .btn-login:active {
             transform: translateY(0) scale(0.98);
@@ -111,7 +122,7 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
             transition: left 0.6s ease;
         }
         .btn-login:hover::before {
@@ -152,7 +163,7 @@
             content: '';
             flex: 1;
             height: 1px;
-            background: linear-gradient(to right, transparent, rgba(212, 168, 83, 0.2), transparent);
+            background: linear-gradient(to right, transparent, rgba(212, 168, 83, 0.15), transparent);
         }
 
         /* ── Loading overlay ── */
@@ -160,8 +171,8 @@
             position: fixed;
             inset: 0;
             z-index: 999;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -188,7 +199,7 @@
 
         .loading-text {
             margin-top: 16px;
-            color: rgba(255, 255, 255, 0.7);
+            color: #6b7280;
             font-size: 0.875rem;
             letter-spacing: 1px;
             animation: pulseText 1.5s ease-in-out infinite;
@@ -263,19 +274,19 @@
                     <i class="fas fa-hotel text-white text-2xl"></i>
                 </div>
             @endif
-            <h2 class="text-2xl font-bold text-white transition-all duration-500 hover:text-amber-400">{{ $setting->hotel_name }}</h2>
-            <p class="text-amber-400/80 mt-1.5 text-sm tracking-wide">Silakan masuk ke akun Anda</p>
+            <h2 class="text-2xl font-bold text-gray-800 transition-all duration-500 hover:text-amber-600">{{ $setting->hotel_name }}</h2>
+            <p class="text-gray-500 mt-1.5 text-sm tracking-wide">Silakan masuk ke akun Anda</p>
         </div>
 
         {{-- Error Alert --}}
         @if($errors->any())
-            <div class="mb-6 p-4 bg-red-950/30 border border-red-800/30 rounded-xl animate-in animate-in-d1">
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl animate-in animate-in-d1">
                 <div class="flex items-start gap-3">
-                    <i class="fas fa-exclamation-circle text-red-400 mt-0.5"></i>
+                    <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
                     <div>
-                        <p class="text-sm font-medium text-red-300">Login gagal</p>
+                        <p class="text-sm font-medium text-red-700">Login gagal</p>
                         @foreach($errors->all() as $error)
-                            <p class="text-sm text-red-400 mt-1">{{ $error }}</p>
+                            <p class="text-sm text-red-600 mt-1">{{ $error }}</p>
                         @endforeach
                     </div>
                 </div>
@@ -288,11 +299,11 @@
 
             {{-- Username / Email --}}
             <div class="mb-5">
-                <label class="block text-sm font-medium text-gray-300 mb-1.5">
-                    <i class="fas fa-user text-amber-400/70 mr-1.5"></i>Username atau Email
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    <i class="fas fa-user text-amber-500 mr-1.5"></i>Username atau Email
                 </label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-400/50">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                         <i class="fas fa-envelope text-sm"></i>
                     </div>
                     <input type="text" name="login" value="{{ old('login') }}"
@@ -301,7 +312,7 @@
                            required autofocus autocomplete="username">
                 </div>
                 @error('login')
-                    <p class="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                    <p class="text-red-600 text-xs mt-1.5 flex items-center gap-1">
                         <i class="fas fa-exclamation-circle"></i>{{ $message }}
                     </p>
                 @enderror
@@ -309,11 +320,11 @@
 
             {{-- Password --}}
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-300 mb-1.5">
-                    <i class="fas fa-lock text-amber-400/70 mr-1.5"></i>Password
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                    <i class="fas fa-lock text-amber-500 mr-1.5"></i>Password
                 </label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-400/50">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
                         <i class="fas fa-key text-sm"></i>
                     </div>
                     <input type="password" name="password" id="password"
@@ -321,7 +332,7 @@
                            placeholder="Masukkan password"
                            required autocomplete="current-password">
                     <button type="button" onclick="togglePassword()"
-                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-500 hover:text-amber-400 transition">
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-amber-500 transition">
                         <i class="fas fa-eye text-sm" id="eyeIcon"></i>
                     </button>
                 </div>
@@ -343,7 +354,7 @@
 
         {{-- Footer --}}
         <div class="mt-8 text-center animate-in animate-in-d4">
-            <p class="text-xs text-gray-600">
+            <p class="text-xs text-gray-400">
                 &copy; 2026 Dynamic PMS v2. All rights reserved.
             </p>
         </div>
@@ -469,11 +480,11 @@
                         const dist = Math.sqrt(dx * dx + dy * dy);
 
                         if (dist < CONNECT_DIST) {
-                            const alpha = (1 - dist / CONNECT_DIST) * 0.25;
+                            const alpha = (1 - dist / CONNECT_DIST) * 0.12;
                             ctx.beginPath();
                             ctx.moveTo(nodes[i].x, nodes[i].y);
                             ctx.lineTo(nodes[j].x, nodes[j].y);
-                            ctx.strokeStyle = `rgba(212, 168, 83, ${alpha})`;
+                            ctx.strokeStyle = `rgba(180, 140, 60, ${alpha})`;
                             ctx.lineWidth = 0.6;
                             ctx.stroke();
                         }
@@ -488,11 +499,11 @@
                         const dist = Math.sqrt(dx * dx + dy * dy);
 
                         if (dist < MOUSE_CONNECT_DIST) {
-                            const alpha = (1 - dist / MOUSE_CONNECT_DIST) * 0.4;
+                            const alpha = (1 - dist / MOUSE_CONNECT_DIST) * 0.2;
                             ctx.beginPath();
                             ctx.moveTo(mouse.x, mouse.y);
                             ctx.lineTo(n.x, n.y);
-                            ctx.strokeStyle = `rgba(255, 215, 120, ${alpha})`;
+                            ctx.strokeStyle = `rgba(180, 140, 60, ${alpha})`;
                             ctx.lineWidth = 1;
                             ctx.stroke();
                         }
@@ -500,7 +511,7 @@
 
                     // ── Mouse glow ring ──
                     const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 80);
-                    grad.addColorStop(0, 'rgba(212, 168, 83, 0.12)');
+                    grad.addColorStop(0, 'rgba(212, 168, 83, 0.06)');
                     grad.addColorStop(1, 'rgba(212, 168, 83, 0)');
                     ctx.beginPath();
                     ctx.arc(mouse.x, mouse.y, 80, 0, Math.PI * 2);
@@ -510,7 +521,7 @@
                     // Mouse center dot
                     ctx.beginPath();
                     ctx.arc(mouse.x, mouse.y, 2.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(255, 215, 120, 0.7)';
+                    ctx.fillStyle = 'rgba(180, 140, 60, 0.4)';
                     ctx.fill();
                 }
 
@@ -518,7 +529,7 @@
                 for (const n of nodes) {
                     ctx.beginPath();
                     ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-                    ctx.fillStyle = 'rgba(212, 168, 83, 0.4)';
+                    ctx.fillStyle = 'rgba(180, 140, 60, 0.2)';
                     ctx.fill();
                 }
 
