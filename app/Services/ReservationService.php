@@ -40,7 +40,7 @@ class ReservationService
         if ($roomTypeId && $trackAllotment) {
             // Lock allotment rows for the date range
             Allotment::where('room_type_id', $roomTypeId)
-                ->whereBetween('date', [$checkIn->toDateString(), $checkOut->subDay()->toDateString()])
+                ->whereBetween('date', [$checkIn->toDateString(), $checkOut->copy()->subDay()->toDateString()])
                 ->lockForUpdate()
                 ->get();
 
