@@ -10,6 +10,7 @@ use App\Models\OutOfOrder;
 use App\Models\Allotment;
 use App\Models\Guest;
 use App\Http\Requests\ReservationStoreRequest;
+use App\Services\BookingNotificationService;
 use App\Services\ReservationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -56,6 +57,20 @@ class ReservationApiController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $reservations,
+        ]);
+    }
+
+    /**
+     * GET /api/reservations/{reservation}
+     * Detail reservasi
+     */
+    public function show(Reservation $reservation)
+    {
+        $reservation->load(['guest', 'room', 'transactions', 'createdBy']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $reservation,
         ]);
     }
 
@@ -378,6 +393,31 @@ class ReservationApiController extends Controller
             $reservation->save();
 
             DB::commit();
+
+            // Create notification for the payment
+            try {
+                $notificationService = app(BookingNotificationService::class);
+                $message = sprintf(
+                    '💰 Pembayaran Rp %s via %s — %s (%s)',
+                    number_format($validated['amount'], 0, ',', '.'),
+                    $validated['payment_method'],
+                    $reservation->guest?->guest_name ?? '-',
+                    $reservation->reservation_number
+                );
+                \App\Models\BookingNotification::create([
+                    'type' => 'payment',
+                    'action' => 'created',
+                    'reservation_id' => $reservation->id,
+                    'guest_name' => $reservation->guest?->guest_name ?? 'Unknown',
+                    'room_number' => $reservation->room?->room_number,
+                    'message' => $message,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create payment notification', [
+                    'reservation_id' => $reservation->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

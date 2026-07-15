@@ -96,7 +96,15 @@ class ReservationService
             if (! empty($otaSource) && ! in_array($otaSource, [Allotment::CHANNEL_WEBSITE, Allotment::CHANNEL_API])) {
                 WebBookingCreatedJob::dispatch($reservation, $otaSource);
             } else {
-                // For website / api bookings, you may have another job; omitted for brevity
+                // For API / website bookings, create notification directly
+                try {
+                    app(\App\Services\BookingNotificationService::class)->webBookingCreated($reservation);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create booking notification', [
+                        'reservation_id' => $reservation->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             Log::info('Reservation created', ['id' => $reservation->id, 'user_id' => auth()->id()]);
