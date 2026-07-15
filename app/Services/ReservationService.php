@@ -67,6 +67,10 @@ class ReservationService
                 $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
             }
 
+            if ($totalAmount <= 0) {
+                throw new Exception('Total reservasi tidak valid. Periksa tanggal check-in dan check-out.');
+            }
+
             $isWebsite = $otaSource === Allotment::CHANNEL_WEBSITE;
 
             $reservation = Reservation::create([

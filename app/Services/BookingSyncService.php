@@ -164,6 +164,13 @@ class BookingSyncService
                         }
                     }
 
+                    if (($reservationData['total_amount'] ?? 0) <= 0) {
+                        Log::error('BookingSync: total_amount tidak valid untuk update (0)', [
+                            'ota_reservation_number' => $mapped['ota_reservation_number'],
+                        ]);
+                        return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Total amount tidak valid (0). Periksa tanggal check-in/check-out.'];
+                    }
+
                     $existing->update($reservationData);
 
                     Log::info('BookingSync: Reservation updated', [
@@ -175,6 +182,14 @@ class BookingSyncService
                     ]);
 
                     return ['reservation' => $existing->fresh(), 'action' => 'updated', 'success' => true];
+                }
+
+                // Validasi total_amount tidak boleh 0 untuk reservasi baru
+                if (($reservationData['total_amount'] ?? 0) <= 0) {
+                    Log::error('BookingSync: total_amount tidak valid untuk reservasi baru (0)', [
+                        'ota_reservation_number' => $mapped['ota_reservation_number'],
+                    ]);
+                    return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Total amount tidak valid (0). Periksa tanggal check-in/check-out.'];
                 }
 
                 // New reservation — use updateOrCreate with unique OTA number
