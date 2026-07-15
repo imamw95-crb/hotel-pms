@@ -90,7 +90,8 @@ class ReservationApiController extends Controller
             ], 201);
         } catch (Exception $e) {
             $isBusinessError = str_contains($e->getMessage(), 'tidak tersedia') 
-                || str_contains($e->getMessage(), 'Allotment');
+                || str_contains($e->getMessage(), 'Allotment')
+                || str_contains($e->getMessage(), 'Total reservasi tidak valid');
             if ($isBusinessError) {
                 return response()->json([
                     'success' => false,
