@@ -180,7 +180,7 @@ class BookingController extends Controller
             'paid_amount' => $initialPaid,
             'payment_method' => $paymentMethod,
             'notes' => $validated['notes'],
-            'include_breakfast' => $request->boolean('include_breakfast', true),
+            'include_breakfast' => $request->boolean('include_breakfast'),
             'created_by' => auth()->id(),
         ]);
 

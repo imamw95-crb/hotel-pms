@@ -6,17 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::table('reservations', function (Blueprint $table) {
-            $table->boolean('include_breakfast')->default(false)->after('paid_date');
+            $table->boolean('include_breakfast')->default(true)->change();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::table('reservations', function (Blueprint $table) {
-            $table->dropColumn('include_breakfast');
+            $table->boolean('include_breakfast')->default(false)->change();
         });
     }
 };
