@@ -86,7 +86,7 @@ class RoomDashboardController extends Controller
 
         // Hitung kamar tersedia - optimasi: gunakan query batch bukan loop per kamar
         if ($statusFilter === 'available' || $statusFilter === 'all') {
-            $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
+            $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
                 ->where(function ($q) use ($dateFrom, $dateTo) {
                     $q->where('check_in', '<', $dateTo)
                         ->where('check_out', '>', $dateFrom);

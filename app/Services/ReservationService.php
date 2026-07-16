@@ -51,11 +51,13 @@ class ReservationService
         }
 
         return DB::transaction(function () use ($data, $checkIn, $checkOut, $room, $trackAllotment, $roomTypeId, $otaSource) {
-            // Guest handling
-            $guest = Guest::firstOrCreate(
-                ['guest_name' => $data['guest_name']],
+            // Guest handling — updateOrCreate with composite key (name + phone) to prevent collision
+            $guest = Guest::updateOrCreate(
                 [
-                    'phone'     => $data['guest_phone'] ?? null,
+                    'guest_name' => $data['guest_name'],
+                    'phone'      => $data['guest_phone'] ?? null,
+                ],
+                [
                     'email'     => $data['guest_email'] ?? null,
                     'id_number' => $data['guest_id_number'] ?? null,
                 ]

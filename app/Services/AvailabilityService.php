@@ -44,7 +44,7 @@ class AvailabilityService
                 $q->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);
             })
-            ->whereIn('status', ['pending', 'checked_in']);
+            ->whereIn('status', Reservation::ACTIVE_STATUSES);
 
         if ($excludeReservationId) {
             $query->where('id', '!=', $excludeReservationId);
@@ -58,7 +58,7 @@ class AvailabilityService
      */
     public function getAvailableRooms(Carbon $checkIn, Carbon $checkOut, ?string $roomType = null)
     {
-        $bookedIds = Reservation::whereIn('status', ['pending', 'checked_in'])
+        $bookedIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);
@@ -113,7 +113,7 @@ class AvailabilityService
     {
         $rooms = Room::with(['roomType'])->orderBy('room_number')->get();
         $reservations = Reservation::with(['guest'])
-            ->whereIn('status', ['pending', 'checked_in'])
+            ->whereIn('status', Reservation::ACTIVE_STATUSES)
             ->where('check_in', '<', $endDate->copy()->addDay())
             ->where('check_out', '>', $startDate)
             ->get()

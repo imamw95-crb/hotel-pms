@@ -63,7 +63,7 @@ class DepositController extends Controller
     {
         $guests = Guest::orderBy('guest_name')->get();
         $reservations = Reservation::with(['guest', 'room'])
-            ->whereIn('status', ['pending', 'checked_in'])
+            ->whereIn('status', Reservation::ACTIVE_STATUSES)
             ->orderBy('check_in', 'desc')
             ->get();
 

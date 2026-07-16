@@ -339,7 +339,7 @@ PROMPT;
         ];
         $stats['occupancy'] = $stats['total'] > 0 ? round(($stats['occupied'] / $stats['total']) * 100) : 0;
 
-        $checkIns = Reservation::whereDate('check_in', $today)->whereIn('status', ['pending', 'checked_in'])->count();
+        $checkIns = Reservation::whereDate('check_in', $today)->whereIn('status', Reservation::ACTIVE_STATUSES)->count();
         $checkOuts = Reservation::whereDate('check_out', $today)->where('status', 'checked_in')->count();
         $activeCount = Reservation::where('status', 'checked_in')->count();
 

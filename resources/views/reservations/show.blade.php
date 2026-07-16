@@ -14,7 +14,9 @@
                 <p class="text-gray-500 mt-1">Dibuat: {{ $reservation->created_at->format('d/m/Y H:i') }} oleh {{ $reservation->createdBy->name ?? '-' }}</p>
             </div>
             <div>
-                @if($reservation->status === 'pending')
+                @if($reservation->status === 'menunggu_pembayaran')
+                    <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded font-bold">MENUNGU PEMBAYARAN</span>
+                @elseif($reservation->status === 'pending')
                     <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded font-bold">PENDING</span>
                 @elseif($reservation->status === 'checked_in')
                     <span class="bg-green-100 text-green-800 px-3 py-1 rounded font-bold">CHECKED IN</span>
@@ -549,7 +551,7 @@
                class="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700">
                 <i class="fas fa-id-card mr-1"></i> Registration Card
             </a>
-            @if($reservation->status === 'pending')
+            @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran']))
                 <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" data-ajax="true">
                     @csrf
                     <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
@@ -563,7 +565,7 @@
                     </button>
                 </form>
             @endif
-            @if(in_array($reservation->status, ['pending', 'checked_in']))
+            @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran', 'checked_in']))
                 <a href="{{ route('reservations.room-change', $reservation) }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                     <i class="fas fa-exchange-alt mr-1"></i> Pindah Kamar
                 </a>

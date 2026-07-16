@@ -72,7 +72,7 @@ class AiActionService
         $room = Room::where('room_number', $query)->first();
         if ($room) {
             $reservation = Reservation::where('room_id', $room->id)
-                ->whereIn('status', ['pending', 'checked_in'])
+                ->whereIn('status', Reservation::ACTIVE_STATUSES)
                 ->with(['guest', 'room'])
                 ->latest()
                 ->first();
@@ -153,7 +153,7 @@ class AiActionService
 
         $roomTypeName = $data['room_type'] ?? null;
         $avail = Room::where('status', '!=', 'maintenance')
-            ->whereNotIn('id', fn ($q) => $q->select('room_id')->from('reservations')->whereIn('status', ['pending', 'checked_in'])->where('check_in', '<', $checkOut)->where('check_out', '>', $checkIn));
+            ->whereNotIn('id', fn ($q) => $q->select('room_id')->from('reservations')->whereIn('status', Reservation::ACTIVE_STATUSES)->where('check_in', '<', $checkOut)->where('check_out', '>', $checkIn));
 
         $room = null;
         if ($roomTypeName) {
@@ -557,7 +557,7 @@ class AiActionService
             ];
         }
 
-        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
             return ['success' => false, 'message' => "Status {$reservation->status_label}, tidak bisa pindah kamar."];
         }
 
@@ -755,7 +755,7 @@ class AiActionService
         if (! $reservation) {
             return ['success' => false, 'message' => "Reservasi '{$query}' tidak ditemukan."];
         }
-        if (! in_array($reservation->status, ['checked_in', 'pending'])) {
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
             return ['success' => false, 'message' => "{$reservation->status_label}, tidak bisa diperpanjang."];
         }
 

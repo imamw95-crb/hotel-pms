@@ -129,7 +129,7 @@ class Room extends Model
                 $sub->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);
             })
-            ->whereIn('status', ['pending', 'checked_in']);
+            ->whereIn('status', Reservation::ACTIVE_STATUSES);
             if ($excludeReservationId) {
                 $q->where('id', '!=', $excludeReservationId);
             }

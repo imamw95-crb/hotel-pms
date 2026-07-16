@@ -55,7 +55,7 @@ class ServiceChargeController extends Controller
         $selectedReservationId = $request->get('reservation_id');
 
         $reservations = Reservation::with(['guest', 'room'])
-            ->whereIn('status', ['checked_in', 'pending'])
+            ->whereIn('status', Reservation::ACTIVE_STATUSES)
             ->when($selectedReservationId, function ($q) use ($selectedReservationId) {
                 $q->orWhere('id', $selectedReservationId);
             })

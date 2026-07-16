@@ -50,7 +50,7 @@ class RoomRackController extends Controller
         $roomTypes = Room::select('room_type_name')->distinct()->orderBy('room_type_name')
             ->pluck('room_type_name')->filter()->values();
 
-        $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
+        $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
             ->where(function ($q) use ($dateFrom, $dateTo) {
                 $q->where('check_in', '<', $dateTo)->where('check_out', '>', $dateFrom);
             })->pluck('room_id')->unique()->toArray();

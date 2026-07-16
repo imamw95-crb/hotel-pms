@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\Allotment;
 use App\Models\HousekeepingTask;
 use App\Models\OutOfOrder;
 use App\Models\PaymentMethod;
@@ -229,6 +230,21 @@ class ReservationController extends Controller
             return back()->with('error', 'Reservasi yang sudah check-in tidak bisa dibatalkan.');
         }
 
+        // Decrement allotment booked count
+        try {
+            $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+            if ($reservation->room->room_type_id && $trackAllotment) {
+                Allotment::decrementBooked(
+                    $reservation->room->room_type_id,
+                    $reservation->check_in,
+                    $reservation->check_out,
+                    Allotment::CHANNEL_API
+                );
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to decrement allotment on cancel: '.$e->getMessage());
+        }
+
         $reservation->update(['status' => 'cancelled']);
 
         // Check if request is AJAX
@@ -246,8 +262,8 @@ class ReservationController extends Controller
 
     public function checkin(Reservation $reservation)
     {
-        if ($reservation->status !== 'pending') {
-            return back()->with('error', 'Hanya reservasi dengan status pending yang bisa di-check-in.');
+        if (! in_array($reservation->status, Reservation::PENDING_STATUSES)) {
+            return back()->with('error', 'Hanya reservasi dengan status pending/menunggu pembayaran yang bisa di-check-in.');
         }
 
         $reservation->update(['status' => 'checked_in']);
@@ -294,6 +310,21 @@ class ReservationController extends Controller
 
         // Set check-out ke jam 12:00 siang hari ini (standard hotel time)
         $checkoutTime = Carbon::today()->setTime(12, 0, 0);
+
+        // Decrement allotment booked count
+        try {
+            $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+            if ($reservation->room->room_type_id && $trackAllotment) {
+                Allotment::decrementBooked(
+                    $reservation->room->room_type_id,
+                    $reservation->check_in,
+                    $reservation->check_out,
+                    Allotment::CHANNEL_API
+                );
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to decrement allotment on checkout: '.$e->getMessage());
+        }
 
         $reservation->update([
             'status' => 'checked_out',
@@ -345,7 +376,7 @@ class ReservationController extends Controller
         $dateTo = $request->get('date_to');
 
         $query = Reservation::with(['guest', 'room'])
-            ->whereIn('status', ['pending', 'checked_in']);
+            ->whereIn('status', Reservation::CHANGEABLE_STATUSES);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -437,8 +468,8 @@ class ReservationController extends Controller
      */
     public function showRoomChange(Reservation $reservation)
     {
-        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
-            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.');
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending/menunggu pembayaran/check-in.');
         }
 
         $reservation->load(['guest', 'room']);
@@ -457,7 +488,7 @@ class ReservationController extends Controller
                         $sq->where('check_in', '<', $checkOut)
                             ->where('check_out', '>', $checkIn);
                     })
-                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->whereIn('status', Reservation::ACTIVE_STATUSES)
                         ->where('id', '!=', $reservation->id);
                 });
             })
@@ -480,8 +511,8 @@ class ReservationController extends Controller
      */
     public function changeRoom(Request $request, Reservation $reservation)
     {
-        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
-            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.');
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
+            return back()->with('error', 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending/menunggu pembayaran/check-in.');
         }
 
         $validated = $request->validate([
@@ -633,7 +664,7 @@ class ReservationController extends Controller
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
-                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->whereIn('status', Reservation::ACTIVE_STATUSES)
                         ->where('check_in', '<', $checkOut)
                         ->where('check_out', '>', $checkIn);
                 })
@@ -652,7 +683,7 @@ class ReservationController extends Controller
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
-                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->whereIn('status', Reservation::ACTIVE_STATUSES)
                         ->where('check_in', '<', $checkOut)
                         ->where('check_out', '>', $checkIn);
                 })

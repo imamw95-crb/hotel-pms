@@ -113,7 +113,7 @@ class AiReservationCommand extends Command
                 ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                     $q->select('room_id')
                         ->from('reservations')
-                        ->whereIn('status', ['pending', 'checked_in'])
+                        ->whereIn('status', Reservation::ACTIVE_STATUSES)
                         ->where('check_in', '<', $checkOut)
                         ->where('check_out', '>', $checkIn);
                 })

@@ -16,12 +16,12 @@ class ApiKeyMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $apiKey = $request->header('X-API-Key') ?? $request->query('api_key');
+        $apiKey = $request->header('X-API-Key');
 
         if (! $apiKey) {
             return response()->json([
                 'success' => false,
-                'message' => 'API Key tidak disertakan. Kirim via header X-API-Key atau query parameter ?api_key=',
+                'message' => 'API Key tidak disertakan. Kirim via header X-API-Key.',
             ], 401);
         }
 

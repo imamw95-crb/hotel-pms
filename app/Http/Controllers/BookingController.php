@@ -53,7 +53,7 @@ class BookingController extends Controller
         // Filter kamar yang sudah di-booking di tanggal tersebut
         // Back-to-Booking: check-out di hari yang sama dengan check-in baru
         // TIDAK dianggap bentrok (check-out 12:00, check-in 14:00)
-        $bookedRoomIds = Reservation::whereIn('status', ['pending', 'checked_in'])
+        $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
             ->where(function ($q) use ($checkIn, $checkOut) {
                 $q->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);

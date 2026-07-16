@@ -158,6 +158,33 @@ class ReservationApiController extends Controller
             if (isset($validated['check_in']) || isset($validated['check_out'])) {
                 $room = $reservation->room;
                 $reservation->total_amount = $room->calculateTotalForRange($reservation->check_in, $reservation->check_out);
+
+                // Adjust allotment if dates changed
+                if ($reservation->getOriginal('check_in') !== null) {
+                    try {
+                        $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+                        if ($reservation->room->room_type_id && $trackAllotment) {
+                            // Decrement old dates
+                            $oldCheckIn = Carbon::parse($reservation->getOriginal('check_in'));
+                            $oldCheckOut = Carbon::parse($reservation->getOriginal('check_out'));
+                            Allotment::decrementBooked(
+                                $reservation->room->room_type_id,
+                                $oldCheckIn,
+                                $oldCheckOut,
+                                Allotment::CHANNEL_API
+                            );
+                            // Increment new dates
+                            Allotment::incrementBooked(
+                                $reservation->room->room_type_id,
+                                $reservation->check_in,
+                                $reservation->check_out,
+                                Allotment::CHANNEL_API
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to adjust allotment on update: '.$e->getMessage());
+                    }
+                }
             }
 
             // Update field lain
@@ -213,10 +240,10 @@ class ReservationApiController extends Controller
      */
     public function checkin(Reservation $reservation)
     {
-        if ($reservation->status !== 'pending') {
+        if (! in_array($reservation->status, Reservation::PENDING_STATUSES)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya reservasi dengan status pending yang bisa di-check-in.',
+                'message' => 'Hanya reservasi dengan status pending/menunggu pembayaran yang bisa di-check-in.',
             ], 422);
         }
 
@@ -244,6 +271,21 @@ class ReservationApiController extends Controller
 
         $checkoutTime = Carbon::today()->setTime(12, 0, 0);
 
+        // Decrement allotment booked count
+        try {
+            $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+            if ($reservation->room->room_type_id && $trackAllotment) {
+                Allotment::decrementBooked(
+                    $reservation->room->room_type_id,
+                    $reservation->check_in,
+                    $reservation->check_out,
+                    Allotment::CHANNEL_API
+                );
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to decrement allotment on checkout: '.$e->getMessage());
+        }
+
         $reservation->update([
             'status' => 'checked_out',
             'check_out' => $checkoutTime,
@@ -262,10 +304,10 @@ class ReservationApiController extends Controller
      */
     public function changeRoom(Request $request, Reservation $reservation)
     {
-        if (! in_array($reservation->status, ['pending', 'checked_in'])) {
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending atau check-in.',
+                'message' => 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending/menunggu pembayaran/check-in.',
             ], 422);
         }
 
@@ -557,7 +599,7 @@ class ReservationApiController extends Controller
             ->whereNotIn('id', function ($q) use ($checkIn, $checkOut) {
                 $q->select('room_id')
                     ->from('reservations')
-                    ->whereIn('status', ['pending', 'checked_in'])
+                    ->whereIn('status', Reservation::ACTIVE_STATUSES)
                     ->where('check_in', '<', $checkOut)
                     ->where('check_out', '>', $checkIn);
             })

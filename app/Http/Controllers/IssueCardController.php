@@ -294,7 +294,7 @@ class IssueCardController extends Controller
     {
         try {
             $rooms = Room::with(['reservations' => function ($q) {
-                $q->whereIn('status', ['checked_in', 'pending'])
+                $q->whereIn('status', Reservation::ACTIVE_STATUSES)
                     ->with('guest')
                     ->orderBy('created_at', 'desc');
             }])->orderBy('room_number')->get();

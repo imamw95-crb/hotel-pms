@@ -66,16 +66,14 @@
         Rp {{ number_format($res->total_amount, 0, ',', '.') }}
     </td>
     <td class="px-4 py-3 text-center">
-        @if($res->status === 'pending')
-            @if($res->ota_source === 'website')
-                <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                    <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span> Menunggu Pembayaran
-                </span>
-            @else
-                <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Pending
-                </span>
-            @endif
+        @if($res->status === 'menunggu_pembayaran')
+            <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                <span class="w-1.5 h-1.5 bg-orange-500 rounded-full"></span> Menunggu Pembayaran
+            </span>
+        @elseif($res->status === 'pending')
+            <span class="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span> Pending
+            </span>
         @elseif($res->status === 'checked_in')
             <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-semibold">
                 <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Checked In
@@ -102,8 +100,8 @@
                 <i class="fas fa-eye text-[10px]"></i> <span>Detail</span>
             </a>
 
-            {{-- Check-in (pending) --}}
-            @if($res->status === 'pending')
+            {{-- Check-in (pending & menunggu_pembayaran) --}}
+            @if(in_array($res->status, ['pending', 'menunggu_pembayaran']))
                 <form action="{{ route('reservations.checkin', $res) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="bg-green-50 text-green-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-green-100 transition text-xs font-medium whitespace-nowrap" title="Check-in">
@@ -124,15 +122,15 @@
             @endif
 
             {{-- Pindah Kamar (pending & checked_in) --}}
-            @if(in_array($res->status, ['pending', 'checked_in']))
+            @if(in_array($res->status, ['pending', 'menunggu_pembayaran', 'checked_in']))
                 <a href="{{ route('reservations.room-change', $res) }}"
                    class="bg-purple-50 text-purple-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-purple-100 transition text-xs font-medium whitespace-nowrap" title="Pindah Kamar">
                     <i class="fas fa-exchange-alt text-[10px]"></i> <span>Pindah Kamar</span>
                 </a>
             @endif
 
-            {{-- Cancel (pending) --}}
-            @if($res->status === 'pending')
+            {{-- Cancel (pending & menunggu_pembayaran) --}}
+            @if(in_array($res->status, ['pending', 'menunggu_pembayaran']))
                 <form action="{{ route('reservations.cancel', $res) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="bg-red-50 text-red-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-red-100 transition text-xs font-medium whitespace-nowrap" title="Cancel"

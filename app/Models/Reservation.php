@@ -11,6 +11,16 @@ class Reservation extends Model
 {
     use HasFactory;
 
+    // ========== STATUS CONSTANTS ==========
+    /** Status yang menganggap kamar masih terpakai (mencegah double-booking) */
+    public const ACTIVE_STATUSES = ['pending', 'menunggu_pembayaran', 'checked_in'];
+
+    /** Status yang bisa menerima deposit / service charge */
+    public const PENDING_STATUSES = ['pending', 'menunggu_pembayaran'];
+
+    /** Status yang boleh dipindah kamar / extend / diubah */
+    public const CHANGEABLE_STATUSES = ['pending', 'menunggu_pembayaran', 'checked_in'];
+
     protected $fillable = [
         'booking_group_id',
         'reservation_number', 'ota_reservation_number', 'ota_source', 'ota_payment_status', 'ota_paid_amount',
