@@ -110,10 +110,10 @@
         {{-- Sarapan --}}
         <div class="mb-4">
             <label class="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" name="include_breakfast" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" name="include_breakfast" value="1" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                 <span class="text-gray-700 font-medium"><i class="fas fa-coffee text-amber-600 mr-1"></i> Termasuk Sarapan</span>
             </label>
-            <p class="text-xs text-gray-500 mt-1 ml-6">Centang jika tamu mendapatkan sarapan</p>
+            <p class="text-xs text-gray-500 mt-1 ml-6">Hapus centang jika tidak termasuk sarapan</p>
         </div>
 
         <div class="mb-4">

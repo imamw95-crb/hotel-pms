@@ -99,7 +99,7 @@ class CheckinController extends Controller
             'check_in' => $checkInDate,
             'check_out' => $checkOutDate,
             'number_of_cards' => $request->number_of_cards ?? 1,
-            'include_breakfast' => $request->boolean('include_breakfast'),
+            'include_breakfast' => $request->boolean('include_breakfast', true),
             'status' => 'checked_in',
             'total_amount' => $totalAmount,
             'paid_amount' => $request->payment_amount ?? 0,

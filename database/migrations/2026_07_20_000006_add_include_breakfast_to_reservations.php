@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('reservations', function (Blueprint $table) {
-            $table->boolean('include_breakfast')->default(false)->after('paid_date');
+            $table->boolean('include_breakfast')->default(true)->after('paid_date');
         });
     }
 
