@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
     Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
+    Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
+    Route::post('/reservations/{reservation}/extend', [ReservationController::class, 'extendStay'])->name('reservations.extend');
 
     // AI Auto-Reservation
     Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');
@@ -143,6 +145,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-rack', [RoomRackController::class, 'index'])->name('room-rack.index');
     Route::get('/room-rack/check-availability', [RoomRackController::class, 'checkAvailability'])->name('room-rack.check-availability');
     Route::get('/room-rack/occupancy', [RoomRackController::class, 'occupancyCalendar'])->name('room-rack.occupancy');
+    Route::get('/room-rack/check-room-available', [RoomRackController::class, 'checkRoomAvailabilityForMove'])->name('room-rack.check-room-available');
+    Route::post('/room-rack/move-booking', [RoomRackController::class, 'moveBooking'])->name('room-rack.move-booking');
     Route::get('/room-rack/forecast', [RoomRackController::class, 'forecast'])->name('room-rack.forecast');
 
     // Room List — all roles, no permission restriction

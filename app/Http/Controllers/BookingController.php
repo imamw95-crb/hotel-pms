@@ -47,16 +47,20 @@ class BookingController extends Controller
             return response()->json(['rooms' => []]);
         }
 
+        // Set time ke 12:00 agar match dengan jam reservasi (back-to-back aware)
+        $checkInDate = Carbon::parse($checkIn)->setTime(12, 0, 0);
+        $checkOutDate = Carbon::parse($checkOut)->setTime(12, 0, 0);
+
         // Ambil semua kamar yang aktif
         $allRooms = Room::where('status', '!=', 'maintenance')->get();
 
         // Filter kamar yang sudah di-booking di tanggal tersebut
         // Back-to-Booking: check-out di hari yang sama dengan check-in baru
-        // TIDAK dianggap bentrok (check-out 12:00, check-in 14:00)
+        // TIDAK dianggap bentrok (check-out 12:00, check-in 12:00)
         $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
-            ->where(function ($q) use ($checkIn, $checkOut) {
-                $q->where('check_in', '<', $checkOut)
-                    ->where('check_out', '>', $checkIn);
+            ->where(function ($q) use ($checkInDate, $checkOutDate) {
+                $q->where('check_in', '<', $checkOutDate)
+                    ->where('check_out', '>', $checkInDate);
             })
             ->pluck('room_id')
             ->toArray();
@@ -124,15 +128,24 @@ class BookingController extends Controller
             return back()->with('error', "Kamar {$room->room_number} sudah dipesan untuk periode tersebut.")->withInput();
         }
 
-        $guest = Guest::updateOrCreate(
-            ['id_number' => $validated['id_number'] ?? null],
-            [
+        if (!empty($validated['id_number'])) {
+            $guest = Guest::updateOrCreate(
+                ['id_number' => $validated['id_number']],
+                [
+                    'guest_name' => $validated['guest_name'],
+                    'phone' => $validated['phone'] ?? null,
+                    'email' => $validated['email'] ?? null,
+                    'address' => $request->input('address') ?? null,
+                ]
+            );
+        } else {
+            $guest = Guest::create([
                 'guest_name' => $validated['guest_name'],
                 'phone' => $validated['phone'] ?? null,
                 'email' => $validated['email'] ?? null,
                 'address' => $request->input('address') ?? null,
-            ]
-        );
+            ]);
+        }
 
         // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
         // (sudah di-set di atas sebelum validasi)
@@ -215,7 +228,6 @@ class BookingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Booking untuk kamar {$room->room_number} berhasil dibuat.",
-                'redirect_url' => route('rooms.dashboard'),
                 'reservation' => $reservation,
             ]);
         }

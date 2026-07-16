@@ -119,6 +119,16 @@ class AvailabilityService
             ->get()
             ->groupBy('room_id');
 
+        // Load Out of Order records overlapping the date range
+        $oooRecords = OutOfOrder::where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $endDate->format('Y-m-d'))
+            ->where(function ($q) use ($startDate) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $startDate->format('Y-m-d'));
+            })
+            ->get()
+            ->groupBy('room_id');
+
         $days = [];
         $period = $startDate->copy();
         while ($period->lte($endDate)) {
@@ -129,36 +139,55 @@ class AvailabilityService
         $calendar = [];
         foreach ($rooms as $room) {
             $roomReservations = $reservations->get($room->id, collect());
+            $roomOoo = $oooRecords->get($room->id, collect());
             $row = [
                 'room' => $room,
                 'days' => [],
             ];
 
             foreach ($days as $day) {
+                $dayDateStr = $day->format('Y-m-d');
                 $dayEnd = $day->copy()->endOfDay();
                 $booking = $roomReservations->first(function ($r) use ($day, $dayEnd) {
                     $ci = $r->check_in;
                     $co = $r->check_out;
 
-                    // Occupied if check_in <= day AND check_out > day (strict)
-                    return $ci->lte($dayEnd) && $co->gt($day);
+                    // Occupied only on nights stayed (check-out day = available)
+                    // check_in <= day AND check_out > END of day
+                    return $ci->lte($dayEnd) && $co->gt($dayEnd);
                 });
 
                 if ($booking) {
-                    $isCheckin = $booking->check_in->format('Y-m-d') === $day->format('Y-m-d');
-                    $isCheckout = $booking->check_out->format('Y-m-d') === $day->format('Y-m-d');
+                    $isCheckin = $booking->check_in->format('Y-m-d') === $dayDateStr;
+                    $isCheckout = $booking->check_out->format('Y-m-d') === $dayDateStr;
                     $row['days'][] = [
                         'status' => 'occupied',
                         'booking' => $booking,
                         'is_checkin' => $isCheckin,
                         'is_checkout' => $isCheckout,
                     ];
-                } elseif ($room->status === 'maintenance') {
-                    $row['days'][] = ['status' => 'maintenance', 'booking' => null];
-                } elseif ($room->status === 'cleaning') {
-                    $row['days'][] = ['status' => 'dirty', 'booking' => null];
                 } else {
-                    $row['days'][] = ['status' => 'available', 'booking' => null];
+                    // Check for active OOO on this day
+                    $ooo = $roomOoo->first(function ($o) use ($dayDateStr) {
+                        return $o->start_date->format('Y-m-d') <= $dayDateStr
+                            && ($o->end_date === null || $o->end_date->format('Y-m-d') >= $dayDateStr);
+                    });
+
+                    if ($ooo) {
+                        $row['days'][] = [
+                            'status' => 'out_of_order',
+                            'booking' => null,
+                            'ooo' => $ooo,
+                        ];
+                    } elseif ($room->status === 'out_of_order') {
+                        $row['days'][] = ['status' => 'out_of_order', 'booking' => null];
+                    } elseif ($room->status === 'maintenance') {
+                        $row['days'][] = ['status' => 'maintenance', 'booking' => null];
+                    } elseif ($room->status === 'cleaning') {
+                        $row['days'][] = ['status' => 'dirty', 'booking' => null];
+                    } else {
+                        $row['days'][] = ['status' => 'available', 'booking' => null];
+                    }
                 }
             }
 

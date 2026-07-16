@@ -118,13 +118,14 @@ class RoomRackController extends Controller
     }
 
     /**
-     * Occupancy Calendar (AJAX)
+     * Occupancy Calendar — 7-day range view
      */
     public function occupancyCalendar(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->format('Y-m'));
-        $start = Carbon::parse($month.'-01')->startOfMonth();
-        $end = $start->copy()->endOfMonth();
+        $start = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))
+            : Carbon::today();
+        $end = $start->copy()->addDays(6);
 
         $data = $this->availability->getOccupancyCalendar($start, $end);
 
@@ -149,6 +150,88 @@ class RoomRackController extends Controller
         return response()->json([
             'success' => true,
             'forecast' => $forecast,
+        ]);
+    }
+
+    /**
+     * AJAX: Cek ketersediaan kamar untuk drag-and-drop move
+     */
+    public function checkRoomAvailabilityForMove(Request $request)
+    {
+        $request->validate([
+            'room_id' => 'required|exists:rooms,id',
+            'check_in' => 'required|date',
+            'check_out' => 'required|date',
+            'exclude_reservation_id' => 'nullable|exists:reservations,id',
+        ]);
+
+        $room = Room::findOrFail($request->room_id);
+        $isAvailable = $room->isAvailable($request->check_in, $request->check_out, $request->exclude_reservation_id);
+
+        return response()->json([
+            'success' => true,
+            'available' => $isAvailable,
+            'room' => [
+                'id' => $room->id,
+                'room_number' => $room->room_number,
+                'room_type_name' => $room->room_type_name ?? '',
+            ],
+        ]);
+    }
+
+    /**
+     * AJAX: Proses pindah kamar via drag-and-drop
+     */
+    public function moveBooking(Request $request)
+    {
+        $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
+            'new_room_id' => 'required|exists:rooms,id',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $reservation = Reservation::findOrFail($request->reservation_id);
+        $newRoom = Room::findOrFail($request->new_room_id);
+
+        if (!in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pindah kamar hanya bisa dilakukan untuk reservasi dengan status pending/menunggu pembayaran/check-in.',
+            ], 422);
+        }
+
+        $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
+        $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
+
+        if (!$newRoom->isAvailable($checkIn, $checkOut, $reservation->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Kamar {$newRoom->room_number} tidak tersedia untuk periode tersebut.",
+            ], 422);
+        }
+
+        $oldRoom = $reservation->room;
+        $oldRoomNumber = $oldRoom->room_number;
+        $newRoomNumber = $newRoom->room_number;
+        $newTotalAmount = $newRoom->calculateTotalForRange($reservation->check_in, $reservation->check_out);
+
+        $reason = $request->reason ?: 'Drag-drop dari occupancy calendar';
+        $reservation->room_id = $newRoom->id;
+        $reservation->total_amount = $newTotalAmount;
+        $reservation->notes = ($reservation->notes ? $reservation->notes . "\n" : '') .
+            '[' . now()->format('d/m/Y H:i') . '] Pindah kamar dari ' . $oldRoomNumber . ' ke ' . $newRoomNumber . ': ' . $reason;
+        $reservation->save();
+
+        if ($reservation->status === 'checked_in') {
+            $oldRoom->update(['status' => 'cleaning']);
+            $newRoom->update(['status' => 'occupied']);
+        } else {
+            $oldRoom->update(['status' => 'available']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Pindah kamar dari {$oldRoomNumber} ke {$newRoomNumber} berhasil.",
         ]);
     }
 

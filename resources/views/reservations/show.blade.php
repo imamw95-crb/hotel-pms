@@ -32,14 +32,127 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Info Tamu -->
         <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-bold text-lg mb-4 border-b pb-2"><i class="fas fa-user text-blue-500 mr-2"></i>Info Tamu</h3>
-            <div class="space-y-3">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center justify-between">
+                <span><i class="fas fa-user text-blue-500 mr-2"></i>Info Tamu</span>
+                <button type="button" onclick="toggleEditGuest()"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-normal flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50 transition"
+                    id="editGuestBtn">
+                    <i class="fas fa-pen"></i> Edit
+                </button>
+            </h3>
+
+            {{-- Display Mode --}}
+            <div id="guestDisplay" class="space-y-3">
                 <div><span class="text-gray-500 text-sm">Nama</span><p class="font-medium">{{ $reservation->guest->guest_name ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">{{ $reservation->guest->id_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">{{ $reservation->guest->phone ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">{{ $reservation->guest->email ?? '-' }}</p></div>
             </div>
+
+            {{-- Edit Mode (hidden by default) --}}
+            <div id="guestEditForm" style="display:none;">
+                <form onsubmit="saveGuest(event)" class="space-y-3">
+                    @csrf
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Nama <span class="text-red-500">*</span></label>
+                        <input type="text" name="guest_name" value="{{ $reservation->guest->guest_name ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">No. Identitas</label>
+                        <input type="text" name="id_number" value="{{ $reservation->guest->id_number ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Telepon</label>
+                        <input type="text" name="phone" value="{{ $reservation->guest->phone ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Email</label>
+                        <input type="email" name="email" value="{{ $reservation->guest->email ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center gap-2 pt-2">
+                        <button type="submit"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5">
+                            <i class="fas fa-save"></i> Simpan
+                        </button>
+                        <button type="button" onclick="cancelEditGuest()"
+                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                            Batal
+                        </button>
+                        <span id="guestEditStatus" class="text-xs"></span>
+                    </div>
+                </form>
+            </div>
         </div>
+
+        <script>
+            function toggleEditGuest() {
+                document.getElementById('guestDisplay').style.display = 'none';
+                document.getElementById('guestEditForm').style.display = 'block';
+                document.getElementById('editGuestBtn').style.display = 'none';
+            }
+            function cancelEditGuest() {
+                document.getElementById('guestDisplay').style.display = 'block';
+                document.getElementById('guestEditForm').style.display = 'none';
+                document.getElementById('editGuestBtn').style.display = 'flex';
+                document.getElementById('guestEditStatus').textContent = '';
+            }
+            function saveGuest(e) {
+                e.preventDefault();
+                var form = e.target;
+                var btn = form.querySelector('button[type="submit"]');
+                var status = document.getElementById('guestEditStatus');
+                var data = new FormData(form);
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
+                fetch('{{ route("reservations.update-guest", $reservation) }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: data,
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (res.success) {
+                        // Update display values
+                        var guest = res.guest;
+                        var display = document.getElementById('guestDisplay');
+                        display.innerHTML =
+                            '<div><span class="text-gray-500 text-sm">Nama</span><p class="font-medium">' + (guest.guest_name || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">' + (guest.id_number || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">' + (guest.phone || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">' + (guest.email || '-') + '</p></div>';
+
+                        status.textContent = '✓ Tersimpan';
+                        status.className = 'text-xs text-green-600';
+                        setTimeout(function() { status.textContent = ''; }, 3000);
+                        cancelEditGuest();
+
+                        if (typeof Toast !== 'undefined') {
+                            Toast.success(res.message);
+                        }
+                    } else {
+                        status.textContent = '✗ ' + (res.message || 'Gagal menyimpan');
+                        status.className = 'text-xs text-red-600';
+                    }
+                })
+                .catch(function() {
+                    status.textContent = '✗ Gagal menyimpan';
+                    status.className = 'text-xs text-red-600';
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+                });
+            }
+        </script>
 
         <!-- Info Kamar -->
         <div class="bg-white rounded-lg shadow p-6">
@@ -48,7 +161,18 @@
                 <div><span class="text-gray-500 text-sm">No. Kamar</span><p class="font-medium text-xl">{{ $reservation->room->room_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Tipe Kamar</span><p class="font-medium">{{ $reservation->room->room_type_name ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Check-in</span><p class="font-medium">{{ $reservation->check_in->format('d/m/Y H:i') }}</p></div>
-                <div><span class="text-gray-500 text-sm">Check-out</span><p class="font-medium">{{ $reservation->check_out->format('d/m/Y H:i') }}</p></div>
+                <div>
+                    <span class="text-gray-500 text-sm">Check-out</span>
+                    <p class="font-medium flex items-center gap-2">
+                        <span id="checkoutDisplay">{{ $reservation->check_out->format('d/m/Y H:i') }}</span>
+                        @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran', 'checked_in']))
+                        <button type="button" onclick="openExtendModal()"
+                            class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded border border-indigo-300 hover:bg-indigo-50 transition">
+                            <i class="fas fa-clock"></i> Extend
+                        </button>
+                        @endif
+                    </p>
+                </div>
                 <div><span class="text-gray-500 text-sm">Sarapan</span><p class="font-medium">
                     <button type="button"
                         onclick="toggleBreakfast({{ $reservation->id }}, this)"
@@ -67,6 +191,132 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal Extend --}}
+    <div id="extendModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center" onclick="if(event.target===this)closeExtendModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-clock text-indigo-500"></i> Extend Masa Menginap
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Check-out Saat Ini</label>
+                    <p class="font-bold text-lg text-gray-700">{{ $reservation->check_out->format('d/m/Y H:i') }}</p>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1" for="extendDate">Check-out Baru <span class="text-red-500">*</span></label>
+                    <input type="date" id="extendDate" min="{{ $reservation->check_out->copy()->addDay()->format('Y-m-d') }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-[10px] text-gray-400 mt-1">Check-out minimal +1 hari dari tanggal saat ini</p>
+                </div>
+                <div id="extendPreview" class="hidden bg-indigo-50 rounded-lg p-3 text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Tambahan malam:</span>
+                        <span id="extendNights" class="font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Estimasi tambahan biaya:</span>
+                        <span id="extendCost" class="font-bold text-indigo-700">Rp 0</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="submitExtend()"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-1.5">
+                        <i class="fas fa-clock"></i> Extend
+                    </button>
+                    <button type="button" onclick="closeExtendModal()"
+                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                        Batal
+                    </button>
+                    <span id="extendStatus" class="text-xs"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var extendPricePerNight = {{ $reservation->custom_room_rate ?? ($reservation->room->price_per_night ?? 0) }};
+
+        document.getElementById('extendDate')?.addEventListener('change', function() {
+            var currentCheckout = new Date('{{ $reservation->check_out->format("Y-m-d") }}');
+            var newDate = new Date(this.value);
+            if (!this.value) {
+                document.getElementById('extendPreview').classList.add('hidden');
+                return;
+            }
+            var diffTime = newDate.getTime() - currentCheckout.getTime();
+            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) {
+                document.getElementById('extendNights').textContent = diffDays + ' malam';
+                document.getElementById('extendCost').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(diffDays * extendPricePerNight);
+                document.getElementById('extendPreview').classList.remove('hidden');
+            } else {
+                document.getElementById('extendPreview').classList.add('hidden');
+            }
+        });
+
+        function openExtendModal() {
+            document.getElementById('extendModal').classList.remove('hidden');
+            document.getElementById('extendStatus').textContent = '';
+        }
+
+        function closeExtendModal() {
+            document.getElementById('extendModal').classList.add('hidden');
+            document.getElementById('extendStatus').textContent = '';
+        }
+
+        function submitExtend() {
+            var dateInput = document.getElementById('extendDate');
+            var status = document.getElementById('extendStatus');
+            var btn = document.querySelector('#extendModal button[type="button"]');
+            if (!dateInput.value) {
+                status.textContent = '✗ Pilih tanggal check-out baru';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            status.textContent = '';
+
+            fetch('{{ route("reservations.extend", $reservation) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ new_check_out: dateInput.value }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    status.textContent = '✓ ' + res.message;
+                    status.className = 'text-xs text-green-600';
+                    // Update display
+                    var r = res.reservation;
+                    document.getElementById('checkoutDisplay').textContent = new Date(r.check_out).toLocaleString('id-ID', {
+                        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                    setTimeout(function() {
+                        closeExtendModal();
+                        if (typeof Toast !== 'undefined') Toast.success(res.message);
+                        location.reload();
+                    }, 1500);
+                } else {
+                    status.textContent = '✗ ' + (res.message || 'Gagal');
+                    status.className = 'text-xs text-red-600';
+                }
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal memproses extend';
+                status.className = 'text-xs text-red-600';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-clock"></i> Extend';
+            });
+        }
+    </script>
 
     <!-- Info OTA (jika ada) -->
     @if($reservation->ota_reservation_number)
@@ -178,6 +428,7 @@
                             @elseif($txn->type === 'pelunasan') bg-green-100 text-green-800
                             @elseif($txn->type === 'checkin_payment') bg-purple-100 text-purple-800
                             @elseif($txn->type === 'refund') bg-red-100 text-red-800
+                            @elseif($txn->type === 'extend') bg-indigo-100 text-indigo-800
                             @else bg-gray-100 text-gray-800 @endif">
                             {{ strtoupper(str_replace('_', ' ', $txn->type)) }}
                         </span>

@@ -10,7 +10,7 @@ class RoomType extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['code', 'name', 'sequence', 'description'];
+    protected $fillable = ['code', 'name', 'sequence', 'description', 'color_code'];
 
     public function rooms(): HasMany
     {

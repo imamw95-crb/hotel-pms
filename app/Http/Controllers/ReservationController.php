@@ -888,6 +888,132 @@ class ReservationController extends Controller
     }
 
     /**
+     * Perbarui data tamu pada reservasi
+     */
+    public function updateGuest(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'guest_name' => 'required|string|max:255',
+            'id_number' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        $reservation->load('guest');
+
+        if (! $reservation->guest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tamu tidak ditemukan.',
+            ], 404);
+        }
+
+        $reservation->guest->update($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data tamu berhasil diperbarui.',
+                'guest' => $reservation->guest,
+            ]);
+        }
+
+        return back()->with('success', 'Data tamu berhasil diperbarui.');
+    }
+
+    /**
+     * Extend masa menginap — perpanjang check-out date
+     */
+    public function extendStay(Request $request, Reservation $reservation)
+    {
+        if (! in_array($reservation->status, ['pending', 'menunggu_pembayaran', 'checked_in'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Extend hanya bisa dilakukan untuk reservasi dengan status pending / check-in.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'new_check_out' => 'required|date|after:'.now()->format('Y-m-d'),
+        ]);
+
+        $newCheckOut = Carbon::parse($validated['new_check_out'])->setTime(12, 0, 0);
+        $oldCheckOut = $reservation->check_out;
+
+        // Pastikan new check-out > old check-out (minimal +1 hari)
+        if ($newCheckOut->lte($oldCheckOut)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal check-out baru harus setelah tanggal check-out saat ini ('.$oldCheckOut->format('d/m/Y').').',
+            ], 422);
+        }
+
+        // Cek availability kamar untuk periode tambahan
+        $room = $reservation->room;
+        $isAvailable = $room->isAvailable($oldCheckOut->format('Y-m-d H:i:s'), $newCheckOut->format('Y-m-d H:i:s'), $reservation->id);
+        if (! $isAvailable) {
+            return response()->json([
+                'success' => false,
+                'message' => "Kamar {$room->room_number} tidak tersedia untuk periode perpanjangan tersebut (ada reservasi lain).",
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Hitung tambahan biaya untuk hari tambahan
+            $originalNights = $reservation->nights;
+            $additionalAmount = $room->calculateTotalForRange($oldCheckOut->copy()->startOfDay(), $newCheckOut->copy()->startOfDay());
+
+            // Update total amount
+            $reservation->total_amount += $additionalAmount;
+            $reservation->check_out = $newCheckOut;
+            $reservation->save();
+
+            // Catat transaction untuk extend (opsional, sebagai riwayat)
+            if ($additionalAmount > 0) {
+                Transaction::create([
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                    'reservation_id' => $reservation->id,
+                    'type' => 'extend',
+                    'amount' => $additionalAmount,
+                    'payment_method' => $reservation->payment_method ?? 'cash',
+                    'notes' => 'Extend menginap dari '.$oldCheckOut->format('d/m/Y').' ke '.$newCheckOut->format('d/m/Y').' — tambahan Rp '.number_format($additionalAmount, 0, ',', '.'),
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            DB::commit();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Extend berhasil: check-out dari '.$oldCheckOut->format('d/m/Y').' menjadi '.$newCheckOut->format('d/m/Y').'. Tambahan biaya: Rp '.number_format($additionalAmount, 0, ',', '.'),
+                    'reservation' => $reservation->fresh()->load(['guest', 'room']),
+                ]);
+            }
+
+            return redirect()->route('reservations.show', $reservation)
+                ->with('success', 'Extend berhasil: check-out dari '.$oldCheckOut->format('d/m/Y').' menjadi '.$newCheckOut->format('d/m/Y').'. Tambahan biaya: Rp '.number_format($additionalAmount, 0, ',', '.'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Extend stay failed: '.$e->getMessage(), [
+                'reservation_id' => $reservation->id,
+                'old_check_out' => $oldCheckOut,
+                'new_check_out' => $newCheckOut,
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal melakukan extend: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return back()->with('error', 'Gagal melakukan extend: '.$e->getMessage());
+        }
+    }
+
+    /**
      * Refresh partial tabel + statistik via AJAX (tanpa reload halaman)
      */
     public function refreshTable(Request $request)

@@ -72,14 +72,22 @@ class CheckinController extends Controller
         $checkInDate = Carbon::parse($request->check_in)->setTime(12, 0, 0);
         $checkOutDate = Carbon::parse($request->check_out)->setTime(12, 0, 0);
 
-        $guest = Guest::updateOrCreate(
-            ['id_number' => $request->id_number ?? null],
-            [
+        if (!empty($request->id_number)) {
+            $guest = Guest::updateOrCreate(
+                ['id_number' => $request->id_number],
+                [
+                    'guest_name' => $request->guest_name,
+                    'phone' => $request->phone ?? null,
+                    'email' => $request->email ?? null,
+                ]
+            );
+        } else {
+            $guest = Guest::create([
                 'guest_name' => $request->guest_name,
                 'phone' => $request->phone ?? null,
                 'email' => $request->email ?? null,
-            ]
-        );
+            ]);
+        }
 
         $days = $checkInDate->diffInDays($checkOutDate);
         $totalAmount = $room->calculateTotalForRange($checkInDate, $checkOutDate);
