@@ -480,7 +480,8 @@ class ReservationController extends Controller
 
         // Back-to-Booking: check-out di hari yang sama dengan check-in baru
         // TIDAK dianggap bentrok (check-out 12:00, check-in 14:00)
-        $availableRooms = Room::where('status', 'available')
+        // Juga termasuk kamar 'occupied' yang tamunya check-out sebelum target check-in (back-to-back)
+        $availableRooms = Room::whereIn('status', ['available', 'occupied'])
             ->where('id', '!=', $reservation->room_id)
             ->where(function ($query) use ($checkIn, $checkOut, $reservation) {
                 $query->whereDoesntHave('reservations', function ($q) use ($checkIn, $checkOut, $reservation) {
@@ -531,8 +532,8 @@ class ReservationController extends Controller
             return back()->with('error', "Kamar {$newRoom->room_number} tidak tersedia untuk periode tanggal tersebut.");
         }
 
-        if ($newRoom->status !== 'available') {
-            return back()->with('error', "Kamar {$newRoom->room_number} tidak dalam status available.");
+        if (! in_array($newRoom->status, ['available', 'occupied'])) {
+            return back()->with('error', "Kamar {$newRoom->room_number} tidak dalam status available atau occupied.");
         }
 
         $oldRoom = $reservation->room;

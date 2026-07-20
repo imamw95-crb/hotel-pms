@@ -328,10 +328,10 @@ class ReservationApiController extends Controller
             ], 422);
         }
 
-        if ($newRoom->status !== 'available') {
+        if (! in_array($newRoom->status, ['available', 'occupied'])) {
             return response()->json([
                 'success' => false,
-                'message' => "Kamar {$newRoom->room_number} tidak dalam status available.",
+                'message' => "Kamar {$newRoom->room_number} tidak dalam status available atau occupied.",
             ], 422);
         }
 
