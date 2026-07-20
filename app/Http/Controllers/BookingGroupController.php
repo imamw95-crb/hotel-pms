@@ -36,7 +36,7 @@ class BookingGroupController extends Controller
             'id_number' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
-            'check_in' => 'required|date|after_or_equal:today',
+            'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
             'payment_method' => 'nullable|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
