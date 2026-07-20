@@ -23,7 +23,7 @@
     background: #fff;
     width: 190mm;
     margin: 0 auto;
-    zoom: 80%;
+    zoom: 75%;
   }
 
   .header {
