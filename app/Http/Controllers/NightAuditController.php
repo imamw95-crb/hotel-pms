@@ -378,6 +378,7 @@ class NightAuditController extends Controller
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
+                'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
                 'include_breakfast' => $r->include_breakfast,
@@ -392,6 +393,7 @@ class NightAuditController extends Controller
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
+                'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
                 'include_breakfast' => $r->include_breakfast,
@@ -422,6 +424,7 @@ class NightAuditController extends Controller
                     'transaction_number' => $t->transaction_number,
                     'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
                     'room_number' => $t->reservation?->room?->room_number ?? '-',
+                    'room_type' => $t->reservation?->room?->room_type_name ?? '-',
                     'type' => $t->type,
                     'notes' => $t->notes,
                     'status' => $t->reservation?->status ?? '-',
@@ -568,6 +571,7 @@ class NightAuditController extends Controller
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
+                'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'total_nights' => $r->nights,
@@ -584,6 +588,7 @@ class NightAuditController extends Controller
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
+                'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'total_amount' => $r->total_amount,
@@ -597,6 +602,22 @@ class NightAuditController extends Controller
         $webBookings = $allNewBookings->filter(fn ($r) => $r['ota_source'] === 'website' || (empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods)))->values();
         $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website')->values();
 
+        // ─── Room Type Summary ─────────────────────────────────────
+        $roomTypeSummary = Room::selectRaw("
+                room_type_name,
+                SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) as occupied,
+                SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+                SUM(CASE WHEN status = 'cleaning' THEN 1 ELSE 0 END) as cleaning,
+                SUM(CASE WHEN status IN ('maintenance','out_of_order') THEN 1 ELSE 0 END) as maintenance,
+                COUNT(*) as total
+            ")
+            ->whereNotNull('room_type_name')
+            ->where('room_type_name', '!=', '')
+            ->groupBy('room_type_name')
+            ->orderBy('room_type_name')
+            ->get()
+            ->keyBy('room_type_name');
+
         return compact(
             'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms', 'occupancyRate',
             'revenueToday', 'restoRevenueToday', 'serviceChargeRevenueToday', 'totalRevenue',
@@ -608,7 +629,8 @@ class NightAuditController extends Controller
             'depositRevenueToday', 'depositList', 'depositByMethod', 'cashDeposits',
             'cashRevenue', 'cashExpenses', 'cashFlowBalance',
             'checkinsToday', 'checkoutsToday', 'inHouseGuests',
-            'otaBookings', 'webBookings', 'directBookings'
+            'otaBookings', 'webBookings', 'directBookings',
+            'roomTypeSummary'
         );
     }
 }

@@ -131,6 +131,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations/{reservation}/print-registration-card', [ReservationController::class, 'printRegistrationCard'])->name('reservations.print-registration-card');
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
+    Route::post('/reservations/{reservation}/update-dates', [ReservationController::class, 'updateDates'])->name('reservations.update-dates');
     Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
     Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
     Route::post('/reservations/{reservation}/extend', [ReservationController::class, 'extendStay'])->name('reservations.extend');

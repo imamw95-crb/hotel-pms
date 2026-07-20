@@ -1099,6 +1099,109 @@ class ReservationController extends Controller
     }
 
     /**
+     * Update check-in & check-out dates reservasi
+     */
+    public function updateDates(Request $request, Reservation $reservation)
+    {
+        if (! in_array($reservation->status, Reservation::CHANGEABLE_STATUSES)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ubah tanggal hanya bisa dilakukan untuk reservasi dengan status pending / check-in.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'check_in' => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $newCheckIn = Carbon::parse($validated['check_in'])->setTime(14, 0, 0);
+        $newCheckOut = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+
+        // Validasi: minimal 1 malam
+        if ($newCheckOut->lte($newCheckIn)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Check-out harus setelah check-in (minimal 1 malam).',
+            ], 422);
+        }
+
+        // Cek availability kamar untuk periode baru
+        $room = $reservation->room;
+        if (! $room) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kamar tidak ditemukan.',
+            ], 404);
+        }
+
+        $isAvailable = $room->isAvailable(
+            $newCheckIn->format('Y-m-d H:i:s'),
+            $newCheckOut->format('Y-m-d H:i:s'),
+            $reservation->id
+        );
+
+        if (! $isAvailable) {
+            return response()->json([
+                'success' => false,
+                'message' => "Kamar {$room->room_number} tidak tersedia untuk periode tersebut (ada reservasi lain).",
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $oldCheckIn = $reservation->check_in;
+            $oldCheckOut = $reservation->check_out;
+
+            // Hitung ulang total berdasarkan rate (custom atau default)
+            $rate = $reservation->custom_room_rate ?? 0;
+            if ($rate <= 0) {
+                // Pakai kalkulasi dari room (weekend/weekday pricing)
+                $newTotal = $room->calculateTotalForRange($newCheckIn->copy()->startOfDay(), $newCheckOut->copy()->startOfDay());
+            } else {
+                $nights = max(1, (int) $newCheckIn->startOfDay()->diffInDays($newCheckOut->startOfDay()));
+                $newTotal = $rate * $nights;
+            }
+
+            $reservation->check_in = $newCheckIn;
+            $reservation->check_out = $newCheckOut;
+            $reservation->total_amount = $newTotal;
+            $reservation->save();
+
+            // Catat transaction sebagai riwayat perubahan tanggal
+            Transaction::create([
+                'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                'reservation_id' => $reservation->id,
+                'type' => 'adjustment',
+                'amount' => 0,
+                'payment_method' => $reservation->payment_method ?? 'cash',
+                'source_type' => 'internal',
+                'notes' => 'Ubah tanggal: check-in '.$oldCheckIn->format('d/m/Y').' → '.$newCheckIn->format('d/m/Y').', check-out '.$oldCheckOut->format('d/m/Y').' → '.$newCheckOut->format('d/m/Y').'. Total baru: Rp '.number_format($newTotal, 0, ',', '.'),
+                'created_by' => auth()->id(),
+            ]);
+
+            DB::commit();
+
+            // Reload fresh
+            $reservation->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tanggal reservasi berhasil diperbarui. Total baru: Rp '.number_format($newTotal, 0, ',', '.'),
+                'reservation' => $reservation,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal update dates: '.$e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui tanggal: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Perbarui data tamu pada reservasi
      */
     public function updateGuest(Request $request, Reservation $reservation)
@@ -1108,6 +1211,8 @@ class ReservationController extends Controller
             'id_number' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string|max:500',
+            'ota_reservation_number' => 'nullable|string|max:100',
         ]);
 
         $reservation->load('guest');
@@ -1121,11 +1226,16 @@ class ReservationController extends Controller
 
         $reservation->guest->update($validated);
 
+        // Simpan ota_reservation_number ke reservation
+        $reservation->ota_reservation_number = $validated['ota_reservation_number'] ?? null;
+        $reservation->save();
+
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Data tamu berhasil diperbarui.',
                 'guest' => $reservation->guest,
+                'ota_reservation_number' => $reservation->ota_reservation_number,
             ]);
         }
 

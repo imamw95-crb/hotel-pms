@@ -192,6 +192,8 @@
                 <div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">{{ $reservation->guest->id_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">{{ $reservation->guest->phone ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">{{ $reservation->guest->email ?? '-' }}</p></div>
+                <div><span class="text-gray-500 text-sm">No. Reservasi OTA</span><p class="font-medium">{{ $reservation->ota_reservation_number ?? '-' }}</p></div>
+                <div><span class="text-gray-500 text-sm">Alamat</span><p class="font-medium">{{ $reservation->guest->address ?? '-' }}</p></div>
             </div>
 
             {{-- Edit Mode (hidden by default) --}}
@@ -217,6 +219,18 @@
                         <label class="block text-xs text-gray-500 mb-1">Email</label>
                         <input type="email" name="email" value="{{ $reservation->guest->email ?? '' }}"
                             class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">No. Reservasi OTA</label>
+                        <input type="text" name="ota_reservation_number" value="{{ $reservation->ota_reservation_number ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Opsional — jika booking dari OTA">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Alamat</label>
+                        <textarea name="address" rows="2"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Alamat lengkap">{{ $reservation->guest->address ?? '' }}</textarea>
                     </div>
                     <div class="flex items-center gap-2 pt-2">
                         <button type="submit"
@@ -268,12 +282,15 @@
                     if (res.success) {
                         // Update display values
                         var guest = res.guest;
+                        var otaNum = res.ota_reservation_number || '-';
                         var display = document.getElementById('guestDisplay');
                         display.innerHTML =
                             '<div><span class="text-gray-500 text-sm">Nama</span><p class="font-medium">' + (guest.guest_name || '-') + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">' + (guest.id_number || '-') + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">' + (guest.phone || '-') + '</p></div>' +
-                            '<div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">' + (guest.email || '-') + '</p></div>';
+                            '<div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">' + (guest.email || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">No. Reservasi OTA</span><p class="font-medium">' + otaNum + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">Alamat</span><p class="font-medium">' + (guest.address || '-') + '</p></div>';
 
                         status.textContent = '✓ Tersimpan';
                         status.className = 'text-xs text-green-600';
@@ -305,7 +322,9 @@
             <div class="space-y-3">
                 <div><span class="text-gray-500 text-sm">No. Kamar</span><p class="font-medium text-xl">{{ $reservation->room->room_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Tipe Kamar</span><p class="font-medium">{{ $reservation->room->room_type_name ?? '-' }}</p></div>
-                <div><span class="text-gray-500 text-sm">Check-in</span><p class="font-medium">{{ $reservation->check_in->format('d/m/Y H:i') }}</p></div>
+                <div><span class="text-gray-500 text-sm">Check-in</span><p class="font-medium">
+                    <span id="checkinDisplay">{{ $reservation->check_in->format('d/m/Y H:i') }}</span>
+                </p></div>
                 <div>
                     <span class="text-gray-500 text-sm">Check-out</span>
                     <p class="font-medium flex items-center gap-2">
@@ -318,6 +337,33 @@
                         @endif
                     </p>
                 </div>
+                @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran', 'checked_in']))
+                <div>
+                    <span class="text-gray-500 text-sm">&nbsp;</span>
+                    <button type="button" onclick="openChangeDatesModal()"
+                        class="text-blue-600 hover:text-blue-800 text-xs font-semibold flex items-center gap-1 px-2 py-0.5 rounded border border-blue-300 hover:bg-blue-50 transition">
+                        <i class="fas fa-calendar-alt"></i> Ubah Tanggal
+                    </button>
+                </div>
+                @endif
+                <div>
+                    <span class="text-gray-500 text-sm">Harga/Malam</span>
+                    <p class="font-medium">
+                        @php
+                            $displayRate = $reservation->custom_room_rate ?? ($reservation->room->price_per_night ?? 0);
+                            $defaultRate = $reservation->room->price_per_night ?? 0;
+                        @endphp
+                        <span id="rateDisplay">Rp {{ number_format($displayRate, 0, ',', '.') }}</span>
+                        @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran', 'checked_in']))
+                        <button type="button" onclick="openEditRateModal()"
+                            class="text-amber-600 hover:text-amber-800 text-xs font-semibold ml-2 px-2 py-0.5 rounded border border-amber-300 hover:bg-amber-50 transition">
+                            <i class="fas fa-pen"></i> Ubah
+                        </button>
+                        @endif
+                    </p>
+                </div>
+                <div><span class="text-gray-500 text-sm">Jumlah Malam</span><p class="font-medium" id="nightsDisplay">{{ $reservation->nights }} malam</p></div>
+                <div><span class="text-gray-500 text-sm">Total Kamar</span><p class="font-medium text-green-700 text-lg" id="roomTotalDisplay">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</p></div>
                 <div><span class="text-gray-500 text-sm">Sarapan</span><p class="font-medium">
                     <button type="button"
                         onclick="toggleBreakfast({{ $reservation->id }}, this)"
@@ -333,6 +379,98 @@
                         @endif
                     </button>
                 </p></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Ubah Tanggal Check-in / Check-out --}}
+    <div id="changeDatesModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center" onclick="if(event.target===this)closeChangeDatesModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-blue-500"></i> Ubah Tanggal Menginap
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Check-in <span class="text-red-500">*</span></label>
+                    <input type="date" id="changeCheckIn" value="{{ $reservation->check_in->format('Y-m-d') }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Check-out <span class="text-red-500">*</span></label>
+                    <input type="date" id="changeCheckOut" value="{{ $reservation->check_out->format('Y-m-d') }}"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="changeDatesPreview" class="bg-blue-50 rounded-lg p-3 text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Harga/Malam:</span>
+                        <span id="changeRatePreview" class="font-bold">Rp {{ number_format($displayRate, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Jumlah Malam:</span>
+                        <span id="changeNightsPreview" class="font-bold">{{ $reservation->nights }} malam</span>
+                    </div>
+                    <div class="flex justify-between border-t pt-1 mt-1">
+                        <span class="text-gray-700 font-semibold">Estimasi Total:</span>
+                        <span id="changeTotalPreview" class="font-bold text-blue-700">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="submitChangeDates()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5">
+                        <i class="fas fa-save"></i> Simpan Perubahan
+                    </button>
+                    <button type="button" onclick="closeChangeDatesModal()"
+                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                        Batal
+                    </button>
+                    <span id="changeDatesStatus" class="text-xs"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Edit Harga Kamar --}}
+    <div id="editRateModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center" onclick="if(event.target===this)closeEditRateModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-tag text-amber-500"></i> Ubah Harga Kamar
+            </h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Harga Default</label>
+                    <p class="font-bold text-gray-700">Rp {{ number_format($defaultRate, 0, ',', '.') }}/malam</p>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Harga Kustom (Rp) <span class="text-red-500">*</span></label>
+                    <input type="number" id="editRateInput" value="{{ $reservation->custom_room_rate ?? $defaultRate }}" min="0"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <p class="text-[10px] text-gray-400 mt-1">Kosongkan untuk kembali ke harga default</p>
+                </div>
+                <div id="editRatePreview" class="bg-amber-50 rounded-lg p-3 text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Harga/Malam:</span>
+                        <span id="editRatePerNight" class="font-bold">Rp {{ number_format($displayRate, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Jumlah Malam:</span>
+                        <span id="editRateNights" class="font-bold">{{ $reservation->nights }} malam</span>
+                    </div>
+                    <div class="flex justify-between border-t pt-1 mt-1">
+                        <span class="text-gray-700 font-semibold">Total Baru:</span>
+                        <span id="editRateTotal" class="font-bold text-amber-700">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="submitEditRate()"
+                        class="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition flex items-center gap-1.5">
+                        <i class="fas fa-save"></i> Simpan Harga
+                    </button>
+                    <button type="button" onclick="closeEditRateModal()"
+                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                        Batal
+                    </button>
+                    <span id="editRateStatus" class="text-xs"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -459,6 +597,171 @@
             .finally(function() {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-clock"></i> Extend';
+            });
+        }
+
+        // ─── Modal Ubah Tanggal ───
+        var currentRate = {{ $displayRate }};
+        var defaultRate = {{ $defaultRate }};
+
+        document.getElementById('changeCheckIn')?.addEventListener('change', updateChangeDatesPreview);
+        document.getElementById('changeCheckOut')?.addEventListener('change', updateChangeDatesPreview);
+
+        function updateChangeDatesPreview() {
+            var ci = document.getElementById('changeCheckIn').value;
+            var co = document.getElementById('changeCheckOut').value;
+            if (!ci || !co) return;
+            var d1 = new Date(ci);
+            var d2 = new Date(co);
+            if (d2 <= d1) {
+                document.getElementById('changeNightsPreview').textContent = '0 malam';
+                document.getElementById('changeTotalPreview').textContent = 'Rp 0';
+                return;
+            }
+            var diffTime = d2.getTime() - d1.getTime();
+            var nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            var total = nights * currentRate;
+            document.getElementById('changeNightsPreview').textContent = nights + ' malam';
+            document.getElementById('changeTotalPreview').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+        }
+
+        function openChangeDatesModal() {
+            document.getElementById('changeDatesModal').classList.remove('hidden');
+            document.getElementById('changeDatesStatus').textContent = '';
+            updateChangeDatesPreview();
+        }
+
+        function closeChangeDatesModal() {
+            document.getElementById('changeDatesModal').classList.add('hidden');
+            document.getElementById('changeDatesStatus').textContent = '';
+        }
+
+        function submitChangeDates() {
+            var ci = document.getElementById('changeCheckIn');
+            var co = document.getElementById('changeCheckOut');
+            var status = document.getElementById('changeDatesStatus');
+            var btn = document.querySelector('#changeDatesModal .bg-blue-600');
+
+            if (!ci.value || !co.value) {
+                status.textContent = '✗ Pilih tanggal check-in dan check-out';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+            if (new Date(co.value) <= new Date(ci.value)) {
+                status.textContent = '✗ Check-out harus setelah check-in';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            status.textContent = '';
+
+            fetch('{{ route("reservations.update-dates", $reservation) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ check_in: ci.value, check_out: co.value }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    status.textContent = '✓ ' + res.message;
+                    status.className = 'text-xs text-green-600';
+                    setTimeout(function() {
+                        closeChangeDatesModal();
+                        if (typeof Toast !== 'undefined') Toast.success(res.message);
+                        location.reload();
+                    }, 1500);
+                } else {
+                    status.textContent = '✗ ' + (res.message || 'Gagal');
+                    status.className = 'text-xs text-red-600';
+                }
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal menyimpan perubahan tanggal';
+                status.className = 'text-xs text-red-600';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+            });
+        }
+
+        // ─── Modal Edit Harga Kamar ───
+        document.getElementById('editRateInput')?.addEventListener('input', updateEditRatePreview);
+
+        function updateEditRatePreview() {
+            var input = document.getElementById('editRateInput');
+            var rate = parseFloat(input.value) || 0;
+            var nights = {{ $reservation->nights }};
+            var total = rate * nights;
+
+            document.getElementById('editRatePerNight').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(rate);
+            document.getElementById('editRateTotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+        }
+
+        function openEditRateModal() {
+            document.getElementById('editRateModal').classList.remove('hidden');
+            document.getElementById('editRateStatus').textContent = '';
+            updateEditRatePreview();
+        }
+
+        function closeEditRateModal() {
+            document.getElementById('editRateModal').classList.add('hidden');
+            document.getElementById('editRateStatus').textContent = '';
+        }
+
+        function submitEditRate() {
+            var input = document.getElementById('editRateInput');
+            var status = document.getElementById('editRateStatus');
+            var btn = document.querySelector('#editRateModal .bg-amber-600');
+            var rate = input.value.trim() === '' ? null : parseFloat(input.value);
+
+            if (rate !== null && (isNaN(rate) || rate < 0)) {
+                status.textContent = '✗ Masukkan harga yang valid';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            status.textContent = '';
+
+            fetch('{{ route("reservations.update-room-rate", $reservation) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ custom_room_rate: rate }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    status.textContent = '✓ ' + res.message;
+                    status.className = 'text-xs text-green-600';
+                    setTimeout(function() {
+                        closeEditRateModal();
+                        if (typeof Toast !== 'undefined') Toast.success(res.message);
+                        location.reload();
+                    }, 1500);
+                } else {
+                    status.textContent = '✗ ' + (res.message || 'Gagal');
+                    status.className = 'text-xs text-red-600';
+                }
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal menyimpan harga';
+                status.className = 'text-xs text-red-600';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Harga';
             });
         }
     </script>
