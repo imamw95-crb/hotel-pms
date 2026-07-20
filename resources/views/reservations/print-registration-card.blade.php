@@ -18,7 +18,7 @@
 
   body {
     font-family: Arial, sans-serif;
-    font-size: 7.5pt;
+    font-size: 14pt;
     color: #000;
     background: #fff;
     width: 100%;
@@ -27,32 +27,32 @@
 
   .header {
     text-align: center;
-    margin-bottom: 3px;
+    margin-bottom: 6px;
   }
   .hotel-logo {
-    max-height: 55px;
-    max-width: 220px;
+    max-height: 80px;
+    max-width: 280px;
     object-fit: contain;
   }
   .header h1 {
-    font-size: 13pt;
+    font-size: 22pt;
     font-weight: bold;
     letter-spacing: 3px;
     text-transform: uppercase;
-    margin-bottom: 1px;
+    margin-bottom: 3px;
   }
   .header .hotel-address {
-    font-size: 6.5pt;
+    font-size: 14pt;
     color: #333;
-    margin: 1px 0;
+    margin: 3px 0;
   }
-  .header-rule-top { border-top: 2px solid #000; margin: 2px 0 1px; }
-  .header-rule-bot { border-top: 1px solid #000; margin: 1px 0 3px; }
+  .header-rule-top { border-top: 3px solid #000; margin: 4px 0 3px; }
+  .header-rule-bot { border-top: 2px solid #000; margin: 3px 0 5px; }
   .header h2 {
-    font-size: 8pt;
+    font-size: 18pt;
     font-weight: bold;
     letter-spacing: 1.5px;
-    margin: 1px 0;
+    margin: 3px 0;
   }
 
   table {
@@ -64,102 +64,102 @@
   }
   td {
     border: 1px solid #000;
-    padding: 2px 4px;
+    padding: 6px 8px;
     vertical-align: top;
-    font-size: 7pt;
+    font-size: 14pt;
   }
 
   .lbl {
-    font-size: 6pt;
+    font-size: 12pt;
     font-weight: bold;
     display: block;
-    line-height: 1.2;
+    line-height: 1.3;
   }
   .lbl-id {
-    font-size: 5.5pt;
+    font-size: 10pt;
     font-weight: normal;
     display: block;
     color: #333;
-    line-height: 1.1;
+    line-height: 1.2;
   }
   .field-value {
     display: block;
-    font-size: 7pt;
-    min-height: 11px;
-    margin-top: 2px;
-    padding: 0 1px;
+    font-size: 14pt;
+    min-height: 18px;
+    margin-top: 4px;
+    padding: 0 2px;
   }
   .wline {
     display: block;
     border-bottom: 1px solid #666;
-    min-height: 11px;
-    margin-top: 2px;
+    min-height: 18px;
+    margin-top: 4px;
   }
 
   .pay-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 2px 10px;
-    margin-top: 2px;
+    gap: 4px 14px;
+    margin-top: 4px;
   }
   .pay-item {
     display: flex;
     align-items: center;
-    gap: 2px;
-    font-size: 6pt;
+    gap: 4px;
+    font-size: 14pt;
     white-space: nowrap;
   }
   .pay-item input[type="checkbox"] {
-    width: 8px;
-    height: 8px;
+    width: 14px;
+    height: 14px;
     margin: 0;
     flex-shrink: 0;
   }
 
-  .terms-cell { font-size: 5.8pt; line-height: 1.4; }
-  .terms-cell p { margin-bottom: 2px; }
+  .terms-cell { font-size: 12pt; line-height: 1.5; }
+  .terms-cell p { margin-bottom: 4px; }
   .t-id { font-style: italic; color: #222; }
 
   .hotel-use-hd {
     background: #000;
     color: #fff;
     font-weight: bold;
-    font-size: 6.5pt;
+    font-size: 14pt;
     text-align: center;
-    padding: 2px 5px;
+    padding: 6px 8px;
   }
 
   .sign-cell {
-    height: 55px;
+    height: 90px;
     vertical-align: bottom;
   }
   .sign-cell-tall {
-    height: 55px;
+    height: 90px;
     vertical-align: bottom;
     text-align: center;
   }
   .sign-label {
-    font-size: 6pt;
+    font-size: 12pt;
     font-weight: bold;
     text-align: center;
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
   }
   .sign-line {
     border-top: 1px solid #000;
   }
   .sign-text {
-    font-size: 5.2pt;
+    font-size: 10pt;
     font-style: italic;
     color: #333;
-    line-height: 1.4;
-    margin-bottom: 6px;
+    line-height: 1.5;
+    margin-bottom: 10px;
   }
   .sign-disclaimer {
-    font-size: 5pt;
+    font-size: 9pt;
     font-style: italic;
     color: #444;
-    line-height: 1.3;
+    line-height: 1.4;
   }
 
   @media print {
