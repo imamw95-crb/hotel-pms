@@ -237,8 +237,9 @@
             }
         }
 
-        // ── Event Listeners ──
+        // ── Hapus min pada check_in agar bisa milih tanggal sebelumnya (walk-in guest) ──
         if (checkInEl) {
+            checkInEl.removeAttribute('min');
             checkInEl.addEventListener('change', function() {
                 if (checkOutEl) {
                     checkOutEl.min = this.value;
