@@ -105,7 +105,7 @@ class BookingController extends Controller
             'id_number' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
-            'check_in' => 'required|date',
+            'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
             'ota_reservation_number' => 'nullable|string|max:100',

@@ -127,7 +127,7 @@ class ReservationApiController extends Controller
             'guest_name' => 'sometimes|string|max:255',
             'guest_phone' => 'nullable|string|max:20',
             'guest_email' => 'nullable|email|max:255',
-            'check_in' => 'sometimes|date_format:Y-m-d',
+            'check_in' => 'sometimes|date_format:Y-m-d|after_or_equal:today',
             'check_out' => 'sometimes|date_format:Y-m-d|after:check_in',
             'guest_count' => 'nullable|integer|min:1|max:10',
             'notes' => 'nullable|string|max:1000',
