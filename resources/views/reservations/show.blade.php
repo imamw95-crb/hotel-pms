@@ -414,6 +414,9 @@
                     <th class="text-left p-2 font-bold">Metode</th>
                     <th class="text-left p-2 font-bold">Tipe</th>
                     <th class="text-right p-2 font-bold">Nominal</th>
+                    @if(hasPermission('edit_payment') || hasPermission('delete_payment'))
+                    <th class="text-center p-2 font-bold">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -434,6 +437,20 @@
                         </span>
                     </td>
                     <td class="p-2 text-right font-bold">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>
+                    @if(hasPermission('edit_payment') || hasPermission('delete_payment'))
+                    <td class="p-2 text-center whitespace-nowrap">
+                        @if(hasPermission('edit_payment'))
+                        <button type="button" onclick="openEditModal({{ $txn->id }})" class="text-blue-600 hover:text-blue-800 mx-1" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        @endif
+                        @if(hasPermission('delete_payment'))
+                        <button type="button" onclick="confirmDelete({{ $txn->id }})" class="text-red-600 hover:text-red-800 mx-1" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        @endif
+                    </td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
@@ -441,6 +458,9 @@
                 <tr class="bg-gray-100 border-t-2">
                     <td colspan="4" class="p-2 font-bold text-right">TOTAL DIBAYAR</td>
                     <td class="p-2 text-right font-bold text-green-700">Rp {{ number_format($reservation->paid_amount, 0, ',', '.') }}</td>
+                    @if(hasPermission('edit_payment') || hasPermission('delete_payment'))
+                    <td></td>
+                    @endif
                 </tr>
             </tfoot>
         </table>
@@ -527,13 +547,13 @@
                     @if($isOta)
                     <div id="otaPaidAmountWrap" style="{{ in_array($reservation->ota_payment_status, ['paid_ota', 'partial_ota']) ? '' : 'display:none;' }}">
                         <label class="block text-xs text-gray-500 mb-1">Nominal Dibayar OTA (Rp)</label>
-                        <input type="number" name="ota_paid_amount" id="otaPaidAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="{{ $otaPaid > 0 ? $otaPaid : '' }}" oninput="calcSisaBayar()">
+                        <input type="number" name="ota_paid_amount" id="otaPaidAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" value="{{ $otaPaid > 0 ? $otaPaid : '' }}" oninput="calcSisaBayar()">
                         <p class="text-[10px] text-gray-400 mt-0.5">Nominal yang sudah dibayarkan OTA</p>
                     </div>
                     @endif
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Nominal Bayar Hotel (Rp) <span class="text-red-500">*</span></label>
-                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="1000" placeholder="0" value="0" required oninput="calcSisaBayar()">
+                        <input type="number" name="amount" id="paymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" value="0" required oninput="calcSisaBayar()">
                         <p class="text-[10px] text-gray-400 mt-0.5">Nominal yang dibayar tamu di hotel</p>
                     </div>
                     <div class="flex items-end">
@@ -553,7 +573,97 @@
         </div>
         @endif
 
+        {{-- ─── Modal Edit Pembayaran ─── --}}
+        <div id="editPaymentModal" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center" style="display:none;">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-bold text-lg">Edit Pembayaran</h4>
+                    <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                </div>
+                <form id="editPaymentForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Tipe Pembayaran</label>
+                            <select name="payment_type" id="editPaymentType" class="w-full border rounded px-2 py-2 text-sm" required>
+                                <option value="dp">DP (Down Payment)</option>
+                                <option value="pelunasan">Pelunasan</option>
+                                <option value="tambahan">Tambahan</option>
+                                <option value="checkin_payment">Check-in Payment</option>
+                                <option value="refund">Refund</option>
+                                <option value="extend">Extend</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Metode Pembayaran</label>
+                            <select name="payment_method" id="editPaymentMethod" class="w-full border rounded px-2 py-2 text-sm" required>
+                                @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                                @foreach($paymentMethods as $pm)
+                                    <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
+                            <input type="number" name="amount" id="editPaymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" required>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm text-gray-600 border rounded hover:bg-gray-50">Batal</button>
+                        <button type="submit" class="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
+                            <i class="fas fa-save mr-1"></i> Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- ─── Form Hapus Pembayaran (hidden) ─── --}}
+        <form id="deletePaymentForm" method="POST" style="display:none;">
+            @csrf
+            @method('DELETE')
+        </form>
+
         <script>
+            // ─── Edit Payment Modal ───
+            var transactions = @json($transactions->keyBy('id')->map(function($t) {
+                return [
+                    'id' => $t->id,
+                    'type' => $t->type,
+                    'payment_method' => $t->payment_method,
+                    'amount' => $t->amount,
+                ];
+            }));
+
+            function openEditModal(txnId) {
+                var txn = transactions[txnId];
+                if (!txn) return;
+                var form = document.getElementById('editPaymentForm');
+                form.action = '{{ url("transactions") }}/' + txnId + '/edit-payment';
+                document.getElementById('editPaymentType').value = txn.type;
+                document.getElementById('editPaymentMethod').value = txn.payment_method;
+                document.getElementById('editPaymentAmount').value = txn.amount;
+                document.getElementById('editPaymentModal').style.display = 'flex';
+            }
+
+            function closeEditModal() {
+                document.getElementById('editPaymentModal').style.display = 'none';
+            }
+
+            // Close modal on overlay click
+            document.getElementById('editPaymentModal')?.addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
+
+            // ─── Delete Payment Confirmation ───
+            function confirmDelete(txnId) {
+                if (!confirm('Hapus pembayaran ini? Tindakan ini tidak bisa dibatalkan.')) return;
+                var form = document.getElementById('deletePaymentForm');
+                form.action = '{{ url("transactions") }}/' + txnId + '/delete-payment';
+                form.submit();
+            }
+
             function updateOtaPaidAmount() {
                 var status = document.getElementById('otaPaymentStatus').value;
                 var wrap = document.getElementById('otaPaidAmountWrap');

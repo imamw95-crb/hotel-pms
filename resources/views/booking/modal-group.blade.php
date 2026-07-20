@@ -31,7 +31,7 @@
                 <h3 class="font-bold text-gray-700"><i class="fas fa-bed text-green-500 mr-1"></i> Kamar Dipilih</h3>
                 <div class="flex items-center gap-2">
                     <span class="text-xs text-gray-500">Harga bulk:</span>
-                    <input type="number" id="bulkPrice" class="w-24 border rounded px-2 py-1 text-sm" min="0" step="1000" placeholder="Rp">
+                    <input type="number" id="bulkPrice" class="w-24 border rounded px-2 py-1 text-sm" min="0" step="any" placeholder="Rp">
                     <button type="button" onclick="BookingGroup.applyBulkPrice()" class="bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600">Terapkan ke Semua</button>
                 </div>
             </div>
@@ -73,7 +73,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
-                <input type="number" name="price_per_night" id="groupPrice" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Kosongkan = gunakan harga weekday/weekend">
+                <input type="number" name="price_per_night" id="groupPrice" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Kosongkan = gunakan harga weekday/weekend">
                 <p class="text-xs text-gray-500 mt-1">Kosongkan untuk gunakan harga weekday/weekend otomatis per kamar</p>
             </div>
             <div>
@@ -101,7 +101,7 @@
                 {{-- DP Amount Section (hidden by default) --}}
                 <div id="dpAmountSection" class="hidden mt-3 p-3 border border-amber-200 rounded-lg bg-amber-50">
                     <label class="block text-gray-700 font-bold mb-1 text-sm">Jumlah DP (Rp)</label>
-                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan jumlah DP">
+                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Masukkan jumlah DP">
                     <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayarGroup" class="font-bold text-blue-600">Rp 0</span></p>
                 </div>
             </div>

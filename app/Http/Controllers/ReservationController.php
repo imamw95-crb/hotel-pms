@@ -1089,4 +1089,113 @@ class ReservationController extends Controller
             'total' => $reservations->total(),
         ]);
     }
+
+    /**
+     * Edit a transaction/payment
+     */
+    public function editPayment(Request $request, $transactionId)
+    {
+        $transaction = Transaction::findOrFail($transactionId);
+        $reservation = $transaction->reservation;
+
+        if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
+            return back()->with('error', 'Tidak bisa mengedit pembayaran untuk reservasi ini.');
+        }
+
+        $validated = $request->validate([
+            'payment_type' => 'required|in:dp,pelunasan,tambahan,checkin_payment,refund,extend,ota_payment',
+            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        $oldAmount = $transaction->amount;
+
+        DB::beginTransaction();
+        try {
+            // Update transaction
+            $transaction->update([
+                'type' => $validated['payment_type'],
+                'payment_method' => $validated['payment_method'],
+                'amount' => $validated['amount'],
+            ]);
+
+            // Recalculate paid_amount on reservation
+            $reservation->paid_amount -= $oldAmount;
+            $reservation->paid_amount += $validated['amount'];
+
+            // Pastikan paid_amount tidak negatif
+            if ($reservation->paid_amount < 0) {
+                $reservation->paid_amount = 0;
+            }
+
+            // Update paid_date
+            if ($reservation->paid_amount >= $reservation->total_amount) {
+                $reservation->paid_date = now();
+            } else {
+                $reservation->paid_date = null;
+            }
+
+            $reservation->save();
+            DB::commit();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pembayaran berhasil diupdate.',
+                    'redirect_url' => route('reservations.show', $reservation),
+                ]);
+            }
+
+            return redirect()->route('reservations.show', $reservation)
+                ->with('success', 'Pembayaran berhasil diupdate.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal mengupdate pembayaran: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a transaction/payment
+     */
+    public function deletePayment($transactionId)
+    {
+        $transaction = Transaction::findOrFail($transactionId);
+        $reservation = $transaction->reservation;
+
+        if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
+            return back()->with('error', 'Tidak bisa menghapus pembayaran untuk reservasi ini.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Kurangi paid_amount
+            $reservation->paid_amount -= $transaction->amount;
+            if ($reservation->paid_amount < 0) {
+                $reservation->paid_amount = 0;
+            }
+
+            // Update paid_date jika belum lunas
+            if ($reservation->paid_amount < $reservation->total_amount) {
+                $reservation->paid_date = null;
+            }
+
+            $reservation->save();
+            $transaction->delete();
+            DB::commit();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pembayaran berhasil dihapus.',
+                    'redirect_url' => route('reservations.show', $reservation),
+                ]);
+            }
+
+            return redirect()->route('reservations.show', $reservation)
+                ->with('success', 'Pembayaran berhasil dihapus.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menghapus pembayaran: '.$e->getMessage());
+        }
+    }
 }

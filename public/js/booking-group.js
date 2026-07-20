@@ -214,7 +214,7 @@
                 '<td class="p-2 text-gray-600">' + room.room_type_name + '</td>' +
                 '<td class="p-2 text-center text-gray-400 text-xs">Wd ' + Number(room.price_weekday || room.default_price).toLocaleString('id-ID') + '<br>We ' + wd.toLocaleString('id-ID') + '</td>' +
                 '<td class="p-2 text-center">' +
-                    '<input type="number" name="room_prices[' + room.id + ']" value="' + (hasCustomPrice ? customPrice : Number(room.price_weekday || room.default_price)) + '" min="0" step="1000" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="BookingGroup.updateRoomPrice(' + room.id + ', this.value)">' +
+                    '<input type="number" name="room_prices[' + room.id + ']" value="' + (hasCustomPrice ? customPrice : Number(room.price_weekday || room.default_price)) + '" min="0" step="any" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="BookingGroup.updateRoomPrice(' + room.id + ', this.value)">' +
                 '</td>' +
                 '<td class="p-2 text-center">' +
                     '<button type="button" onclick="BookingGroup.removeRoom(' + room.id + ')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>' +

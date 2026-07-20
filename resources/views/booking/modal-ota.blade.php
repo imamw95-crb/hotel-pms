@@ -67,7 +67,7 @@
             </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
-                <input type="number" name="price_per_night" id="otaPricePerNight" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Auto-fill: harga weekday/weekend">
+                <input type="number" name="price_per_night" id="otaPricePerNight" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Auto-fill: harga weekday/weekend">
                 <p class="text-xs text-gray-500 mt-1">Kosongkan untuk gunakan harga otomatis</p>
             </div>
             <div>
@@ -90,7 +90,7 @@
             </div>
             <div id="otaPaidAmountWrap" class="hidden">
                 <label class="block text-gray-700 font-bold mb-2">Jumlah Dibayar OTA (Rp)</label>
-                <input type="number" name="ota_paid_amount" id="otaPaidAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Nominal yang sudah dibayar OTA">
+                <input type="number" name="ota_paid_amount" id="otaPaidAmount" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Nominal yang sudah dibayar OTA">
             </div>
         </div>
 

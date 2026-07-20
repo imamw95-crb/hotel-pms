@@ -116,6 +116,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [ReservationController::class, 'checkoutList'])->middleware('permission:checkout')->name('checkout.index');
     Route::post('/rooms/{room}/checkout', [ReservationController::class, 'checkoutByRoom'])->middleware('permission:checkout')->name('rooms.checkout');
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->middleware('permission:add_payment')->name('reservations.add-payment');
+    Route::put('/transactions/{transactionId}/edit-payment', [ReservationController::class, 'editPayment'])->middleware('permission:edit_payment')->name('transactions.edit-payment');
+    Route::delete('/transactions/{transactionId}/delete-payment', [ReservationController::class, 'deletePayment'])->middleware('permission:delete_payment')->name('transactions.delete-payment');
     Route::get('/room-change', [ReservationController::class, 'roomChangeList'])->middleware('permission:change_room')->name('room-change.index');
     Route::get('/reservations/{reservation}/room-change', [ReservationController::class, 'showRoomChange'])->middleware('permission:change_room')->name('reservations.room-change');
     Route::post('/reservations/{reservation}/room-change', [ReservationController::class, 'changeRoom'])->middleware('permission:change_room')->name('reservations.room-change.store');

@@ -39,7 +39,7 @@
                 <label class="block text-gray-700 font-bold">Kamar Terpilih & Harga per Malam</label>
                 <div class="flex items-center space-x-2">
                     <label class="text-sm text-gray-600">Harga Semua Kamar:</label>
-                    <input type="number" id="bulkPrice" placeholder="Rp" class="w-32 border rounded px-2 py-1 text-sm" min="0" step="1000">
+                    <input type="number" id="bulkPrice" placeholder="Rp" class="w-32 border rounded px-2 py-1 text-sm" min="0" step="any">
                     <button type="button" onclick="BookingGroup.applyBulkPrice()" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Apply</button>
                 </div>
             </div>
@@ -125,7 +125,7 @@
             </div>
             <div id="dpAmountSection" class="hidden">
                 <label class="block text-gray-700 font-bold mb-2">Nominal DP (Rp) <span class="text-red-500">*</span></label>
-                <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan nominal DP">
+                <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Masukkan nominal DP">
                 <p class="text-xs text-gray-500 mt-1">Sisa: <span id="sisaBayarGroup" class="font-semibold text-orange-600">Rp 0</span></p>
             </div>
         </div>

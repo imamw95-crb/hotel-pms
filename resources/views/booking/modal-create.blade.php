@@ -58,7 +58,7 @@
             </div>
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Harga per Malam (Rp)</label>
-                <input type="number" name="price_per_night" id="pricePerNight" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Auto-fill: harga weekday/weekend">
+                <input type="number" name="price_per_night" id="pricePerNight" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Auto-fill: harga weekday/weekend">
                 <p class="text-xs text-gray-500 mt-1">Kosongkan untuk gunakan harga weekday/weekend otomatis. Isi manual untuk harga tetap.</p>
             </div>
             <div>
@@ -94,7 +94,7 @@
                 {{-- DP Amount Section (hidden by default) --}}
                 <div id="dpAmountSection" class="hidden mt-3 p-3 border border-amber-200 rounded-lg bg-amber-50">
                     <label class="block text-gray-700 font-bold mb-1 text-sm">Jumlah DP (Rp)</label>
-                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="1000" placeholder="Masukkan jumlah DP">
+                    <input type="number" name="dp_amount" id="dpAmount" class="w-full border rounded px-3 py-2" min="0" step="any" placeholder="Masukkan jumlah DP">
                     <p class="text-xs text-gray-500 mt-1">Sisa bayar: <span id="sisaBayar" class="font-bold text-blue-600">Rp 0</span></p>
                 </div>
             </div>

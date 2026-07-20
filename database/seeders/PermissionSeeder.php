@@ -26,6 +26,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'Edit Reservation', 'slug' => 'edit_reservation', 'group' => 'reservation', 'description' => 'Dapat mengubah reservasi'],
             ['name' => 'Cancel Reservation', 'slug' => 'cancel_reservation', 'group' => 'reservation', 'description' => 'Dapat membatalkan reservasi'],
             ['name' => 'Add Payment', 'slug' => 'add_payment', 'group' => 'reservation', 'description' => 'Dapat menambah pembayaran'],
+            ['name' => 'Edit Payment', 'slug' => 'edit_payment', 'group' => 'reservation', 'description' => 'Dapat mengedit pembayaran'],
+            ['name' => 'Delete Payment', 'slug' => 'delete_payment', 'group' => 'reservation', 'description' => 'Dapat menghapus pembayaran'],
 
             // Check-in/Check-out Permissions
             ['name' => 'Check In', 'slug' => 'checkin', 'group' => 'checkin', 'description' => 'Dapat melakukan check-in'],
@@ -91,7 +93,7 @@ class PermissionSeeder extends Seeder
         // Assign permissions to roles
         $this->assignPermissionToRole('admin', [
             'create_booking', 'view_bookings', 'edit_booking', 'delete_booking', 'create_booking_group',
-            'view_reservations', 'create_reservation', 'edit_reservation', 'cancel_reservation', 'add_payment',
+            'view_reservations', 'create_reservation', 'edit_reservation', 'cancel_reservation', 'add_payment', 'edit_payment', 'delete_payment',
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms', 'change_room',
             'view_room_types', 'create_room_type', 'edit_room_type', 'delete_room_type',
@@ -105,7 +107,7 @@ class PermissionSeeder extends Seeder
 
         $this->assignPermissionToRole('frontoffice', [
             'create_booking', 'view_bookings', 'create_booking_group',
-            'view_reservations', 'create_reservation', 'edit_reservation', 'cancel_reservation', 'add_payment',
+            'view_reservations', 'create_reservation', 'edit_reservation', 'cancel_reservation', 'add_payment', 'edit_payment', 'delete_payment',
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_room_dashboard', 'change_room',
             'view_reports',
