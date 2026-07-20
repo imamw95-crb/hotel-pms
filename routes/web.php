@@ -109,6 +109,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/check-new', [ReservationController::class, 'checkNew'])->name('reservations.check-new');
     Route::get('/reservations/refresh', [ReservationController::class, 'refreshTable'])->name('reservations.refresh');
+    // Group Booking — pelunasan & invoice (HARUS sebelum route {reservation})
+    Route::post('/reservations/group-payment/{bookingGroupId}', [ReservationController::class, 'groupPayment'])->middleware('permission:add_payment')->name('reservations.group-payment');
+    Route::get('/reservations/group-invoice/{bookingGroupId}', [ReservationController::class, 'printGroupInvoice'])->name('reservations.group-invoice');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/toggle-breakfast', [ReservationController::class, 'toggleBreakfast'])->name('reservations.toggle-breakfast');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');
@@ -128,10 +131,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/update-total', [ReservationController::class, 'updateTotal'])->name('reservations.update-total');
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
     Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
-    Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
-    // Group Booking — pelunasan & invoice
-    Route::post('/reservations/group-payment/{bookingGroupId}', [ReservationController::class, 'groupPayment'])->middleware('permission:add_payment')->name('reservations.group-payment');
-    Route::get('/reservations/group-invoice/{bookingGroupId}', [ReservationController::class, 'printGroupInvoice'])->name('reservations.group-invoice');
     Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
     Route::post('/reservations/{reservation}/extend', [ReservationController::class, 'extendStay'])->name('reservations.extend');
 
