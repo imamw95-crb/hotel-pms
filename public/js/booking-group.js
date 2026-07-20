@@ -47,11 +47,6 @@
         return total;
     }
 
-    // ── Set min dates ──
-    var today = new Date();
-    if (checkInEl) checkInEl.min = fmtDate(today);
-    if (checkOutEl) checkOutEl.min = fmtDate(today);
-
     // ── Check room availability via AJAX ──
     function checkAvailability() {
         var ci = checkInEl ? checkInEl.value : '';

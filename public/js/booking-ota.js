@@ -48,11 +48,6 @@
         return total;
     }
 
-    // ── Set min dates ──
-    var today = new Date();
-    if (checkInEl) checkInEl.min = fmtDate(today);
-    if (checkOutEl) checkOutEl.min = fmtDate(today);
-
     // ── Auto-detect OTA Source from reservation number ──
     function detectOtaSource(value) {
         if (!value) {
