@@ -47,18 +47,50 @@ class BookingGroupController extends Controller
 
         $rooms = Room::whereIn('id', $validated['room_ids'])->get();
 
-        $guest = Guest::updateOrCreate(
-            ['id_number' => $validated['id_number'] ?? null],
-            [
-                'guest_name' => $validated['guest_name'],
-                'phone' => $validated['phone'] ?? null,
-                'email' => $validated['email'] ?? null,
-            ]
-        );
-
         // Standard hotel time: check-in jam 12:00 siang, check-out jam 12:00 siang
         $checkIn = Carbon::parse($validated['check_in'])->setTime(12, 0, 0);
         $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+
+        // ── Validasi ketersediaan kamar ──
+        $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
+            ->where(function ($q) use ($checkIn, $checkOut) {
+                $q->where('check_in', '<', $checkOut)
+                    ->where('check_out', '>', $checkIn);
+            })
+            ->whereIn('room_id', $validated['room_ids'])
+            ->pluck('room_id')
+            ->unique()
+            ->toArray();
+
+        if (! empty($bookedRoomIds)) {
+            $conflictRooms = Room::whereIn('id', $bookedRoomIds)->pluck('room_number')->implode(', ');
+            $msg = 'Kamar berikut sudah dibooking untuk periode tersebut: '.$conflictRooms.'. Silakan hapus kamar tersebut dari daftar.';
+
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+
+            return back()->with('error', $msg)->withInput();
+        }
+
+        // ── Guest handling ──
+        if (! empty($validated['id_number'])) {
+            $guest = Guest::updateOrCreate(
+                ['id_number' => $validated['id_number']],
+                [
+                    'guest_name' => $validated['guest_name'],
+                    'phone' => $validated['phone'] ?? null,
+                    'email' => $validated['email'] ?? null,
+                ]
+            );
+        } else {
+            $guest = Guest::create([
+                'guest_name' => $validated['guest_name'],
+                'phone' => $validated['phone'] ?? null,
+                'email' => $validated['email'] ?? null,
+            ]);
+        }
+
         $customPrice = $validated['price_per_night'] ?? null;
         $roomPrices = $request->input('room_prices', []);
         $days = $checkIn->diffInDays($checkOut);
