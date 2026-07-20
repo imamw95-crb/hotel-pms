@@ -27,7 +27,7 @@ class ReservationStoreRequest extends FormRequest
             'guest_email'              => 'nullable|email|max:255',
             'guest_id_number'          => 'nullable|string|max:50',
             'room_id'                  => 'required|exists:rooms,id',
-            'check_in'                 => 'required|date_format:Y-m-d|after_or_equal:today',
+            'check_in'                 => 'required|date_format:Y-m-d',
             'check_out'                => 'required|date_format:Y-m-d|after:check_in',
             'guest_count'              => 'nullable|integer|min:1|max:10',
             'total_amount'             => 'nullable|numeric|min:0',

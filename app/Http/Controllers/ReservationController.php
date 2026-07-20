@@ -642,15 +642,6 @@ class ReservationController extends Controller
             ], 422);
         }
 
-        // Cegah backdate
-        if ($checkIn->isBefore(now()->startOfDay())) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tanggal check-in tidak boleh sebelum hari ini.',
-                'ai_data' => $aiData,
-            ], 422);
-        }
-
         // Step 4: Find available room
         $roomId = null;
         $roomTypeName = $aiData['room_type'] ?? null;
