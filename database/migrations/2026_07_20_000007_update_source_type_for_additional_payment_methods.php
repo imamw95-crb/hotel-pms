@@ -25,7 +25,6 @@ return new class extends Migration
         DB::table('payment_methods')->whereIn('slug', [
             'tiket.com', 'traveloka.com', 'ota_payment', 'ota-traveloka', 'ota_traveloka', 'ota_tiket_com',
         ])->update(['source_type' => 'ota']);
-    }
 
         // Backfill source_type untuk transaksi lama
         DB::statement('
