@@ -109,6 +109,7 @@ ssh hotel@192.168.88.5
 cd /www/wwwroot/icon.cloudnod.my.id   # atau embun.cloudnod.my.id
 git pull origin main
 php artisan migrate --force
+php artisan db:seed --class=PermissionSeeder --force
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache

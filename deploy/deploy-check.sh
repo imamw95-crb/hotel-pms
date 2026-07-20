@@ -32,6 +32,10 @@ if [[ $LOCAL != $REMOTE ]]; then
     log "Running migrations..."
     php artisan migrate --force
     
+    # Seed permissions (idempotent — aman dijalankan berulang)
+    log "Seeding permissions..."
+    php artisan db:seed --class=PermissionSeeder --force
+    
     # Cache optimization
     log "Caching config, routes, views..."
     php artisan config:cache

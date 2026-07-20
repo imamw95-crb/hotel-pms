@@ -62,10 +62,11 @@ Setiap push ke `main`, server menjalankan:
 | 1 | `git pull origin main` | Pull latest code |
 | 2 | `composer install --no-dev --optimize-autoloader` | Hanya jika composer.json/lock berubah |
 | 3 | `php artisan migrate --force` | **Auto migrate** — berhenti jika gagal |
-| 4 | `php artisan config:cache` | Cache config untuk production |
-| 5 | `php artisan route:cache` | Cache routes |
-| 6 | `php artisan view:cache` | Cache Blade templates |
-| 7 | `php artisan queue:restart` | Restart queue workers |
+| 4 | `php artisan db:seed --class=PermissionSeeder --force` | Seed permissions (idempotent) |
+| 5 | `php artisan config:cache` | Cache config untuk production |
+| 6 | `php artisan route:cache` | Cache routes |
+| 7 | `php artisan view:cache` | Cache Blade templates |
+| 8 | `php artisan queue:restart` | Restart queue workers |
 
 ## Log
 
