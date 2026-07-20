@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\OutOfOrder;
 use App\Models\Allotment;
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Http\Requests\ReservationStoreRequest;
 use App\Services\BookingNotificationService;
 use App\Services\ReservationService;
@@ -402,6 +403,8 @@ class ReservationApiController extends Controller
                 $reservation->ota_paid_amount = $otaPaidAmount;
             }
 
+            $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+
             if ($otaPaidAmount > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
                 Transaction::create([
@@ -410,6 +413,7 @@ class ReservationApiController extends Controller
                     'type' => $otaTxnType,
                     'amount' => $otaPaidAmount,
                     'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
                     'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
                     'created_by' => auth()->id(),
                 ]);
@@ -422,6 +426,7 @@ class ReservationApiController extends Controller
                     'type' => $validated['payment_type'],
                     'amount' => $hotelAmount,
                     'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
                     'created_by' => auth()->id(),
                 ]);
             }

@@ -12,7 +12,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'transaction_number', 'reservation_id', 'type', 'amount',
-        'payment_method', 'notes', 'created_by',
+        'payment_method', 'source_type', 'notes', 'created_by',
     ];
 
     // Tipe pembayaran: dp, pelunasan, checkin_payment, additional, checkout_payment, refund, tambahan, ota_payment

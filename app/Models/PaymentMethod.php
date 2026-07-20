@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class PaymentMethod extends Model
 {
-    protected $fillable = ['name', 'slug', 'is_active'];
+    protected $fillable = ['name', 'slug', 'source_type', 'is_active'];
+
+    public function scopeBySourceType($query, $sourceType)
+    {
+        return $query->where('source_type', $sourceType);
+    }
 
     public function getDisplayNameAttribute()
     {

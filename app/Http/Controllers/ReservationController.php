@@ -174,6 +174,9 @@ class ReservationController extends Controller
             return back()->with('error', 'Total pembayaran (OTA + Hotel) melebihi total tagihan (Rp '.number_format($reservation->total_amount, 0, ',', '.').')');
         }
 
+        // Cari source_type dari payment method yang dipilih
+        $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+
         DB::beginTransaction();
         try {
             // 1. Update OTA payment status di reservation
@@ -191,6 +194,7 @@ class ReservationController extends Controller
                     'type' => $otaTxnType,
                     'amount' => $otaPaidAmount,
                     'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
                     'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
                     'created_by' => auth()->id(),
                 ]);
@@ -204,6 +208,7 @@ class ReservationController extends Controller
                     'type' => $validated['payment_type'],
                     'amount' => $hotelAmount,
                     'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
                     'created_by' => auth()->id(),
                 ]);
             }
@@ -846,6 +851,9 @@ class ReservationController extends Controller
             return back()->with('error', 'Tidak ada reservasi dalam group ini yang bisa dibayar.');
         }
 
+        // Cari source_type dari payment method yang dipilih
+        $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+
         DB::beginTransaction();
         try {
             $totalPaid = 0;
@@ -867,6 +875,7 @@ class ReservationController extends Controller
                     'type' => 'pelunasan',
                     'amount' => $sisa,
                     'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
                     'notes' => 'Pelunasan group booking',
                     'created_by' => auth()->id(),
                 ]);
@@ -1129,12 +1138,15 @@ class ReservationController extends Controller
 
             // Catat transaction untuk extend (opsional, sebagai riwayat)
             if ($additionalAmount > 0) {
+                $paymentMethodSlug = $reservation->payment_method ?? 'cash';
+                $sourceType = PaymentMethod::where('slug', $paymentMethodSlug)->value('source_type');
                 Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => 'extend',
                     'amount' => $additionalAmount,
-                    'payment_method' => $reservation->payment_method ?? 'cash',
+                    'payment_method' => $paymentMethodSlug,
+                    'source_type' => $sourceType,
                     'notes' => 'Extend menginap dari '.$oldCheckOut->format('d/m/Y').' ke '.$newCheckOut->format('d/m/Y').' — tambahan Rp '.number_format($additionalAmount, 0, ',', '.'),
                     'created_by' => auth()->id(),
                 ]);

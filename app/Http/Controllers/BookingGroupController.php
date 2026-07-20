@@ -129,6 +129,10 @@ class BookingGroupController extends Controller
                 $reservations[] = $reservation;
             }
 
+            // Cari source_type dari payment method yang dipilih
+            $paymentMethodSlug = $validated['payment_method'] ?? 'cash';
+            $sourceType = PaymentMethod::where('slug', $paymentMethodSlug)->value('source_type');
+
             // Jika DP, buat transaksi DP
             if ($paymentType === 'dp' && $dpAmount > 0) {
                 $dpPerRoom = $dpAmount / count($rooms);
@@ -139,7 +143,8 @@ class BookingGroupController extends Controller
                         'reservation_id' => $reservation->id,
                         'type' => 'dp',
                         'amount' => $dpPerRoom,
-                        'payment_method' => $validated['payment_method'] ?? 'cash',
+                        'payment_method' => $paymentMethodSlug,
+                        'source_type' => $sourceType,
                         'created_by' => auth()->id(),
                     ]);
                 }
@@ -152,7 +157,8 @@ class BookingGroupController extends Controller
                         'reservation_id' => $reservation->id,
                         'type' => 'pelunasan',
                         'amount' => $reservation->total_amount,
-                        'payment_method' => $validated['payment_method'] ?? 'cash',
+                        'payment_method' => $paymentMethodSlug,
+                        'source_type' => $sourceType,
                         'created_by' => auth()->id(),
                     ]);
                 }

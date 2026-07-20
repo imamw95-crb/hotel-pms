@@ -549,6 +549,7 @@
                     <th class="text-left p-2 font-bold">No. Transaksi</th>
                     <th class="text-left p-2 font-bold">Tanggal</th>
                     <th class="text-left p-2 font-bold">Metode</th>
+                    <th class="text-left p-2 font-bold">Sumber</th>
                     <th class="text-left p-2 font-bold">Tipe</th>
                     <th class="text-right p-2 font-bold">Nominal</th>
                     @if(hasPermission('edit_payment') || hasPermission('delete_payment'))
@@ -562,6 +563,21 @@
                     <td class="p-2 font-medium">{{ $txn->transaction_number }}</td>
                     <td class="p-2">{{ $txn->created_at->format('d/m/Y H:i') }}</td>
                     <td class="p-2 capitalize">{{ str_replace('_', ' ', $txn->payment_method) }}</td>
+                    <td class="p-2">
+                        @if($txn->source_type)
+                        <span class="px-2 py-0.5 rounded text-xs font-bold
+                            @if($txn->source_type === 'tunai') bg-yellow-100 text-yellow-800
+                            @elseif($txn->source_type === 'transfer') bg-blue-100 text-blue-800
+                            @elseif($txn->source_type === 'kartu') bg-purple-100 text-purple-800
+                            @elseif($txn->source_type === 'e-wallet') bg-teal-100 text-teal-800
+                            @elseif($txn->source_type === 'ota') bg-orange-100 text-orange-800
+                            @else bg-gray-100 text-gray-800 @endif">
+                            {{ strtoupper($txn->source_type) }}
+                        </span>
+                        @else
+                        <span class="text-gray-400 text-xs">—</span>
+                        @endif
+                    </td>
                     <td class="p-2">
                         <span class="px-2 py-0.5 rounded text-xs font-bold
                             @if($txn->type === 'dp') bg-blue-100 text-blue-800
@@ -593,7 +609,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-gray-100 border-t-2">
-                    <td colspan="4" class="p-2 font-bold text-right">TOTAL DIBAYAR</td>
+                    <td colspan="5" class="p-2 font-bold text-right">TOTAL DIBAYAR</td>
                     <td class="p-2 text-right font-bold text-green-700">Rp {{ number_format($reservation->paid_amount, 0, ',', '.') }}</td>
                     @if(hasPermission('edit_payment') || hasPermission('delete_payment'))
                     <td></td>

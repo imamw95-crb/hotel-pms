@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Deposit;
 use App\Models\Guest;
 use App\Models\HousekeepingTask;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
@@ -294,7 +295,8 @@ class AiActionService
             return DB::transaction(function () use ($reservation, $cardCount) {
                 $reservation->update(['status' => 'checked_in', 'number_of_cards' => $cardCount]);
                 $reservation->room->update(['status' => 'occupied']);
-                Transaction::create(['reservation_id' => $reservation->id, 'type' => 'checkin_payment', 'amount' => 0, 'payment_method' => 'cash', 'notes' => 'Check-in via AI Chat', 'created_by' => auth()->id() ?? 1]);
+                $sourceType = PaymentMethod::where('slug', 'cash')->value('source_type');
+                Transaction::create(['reservation_id' => $reservation->id, 'type' => 'checkin_payment', 'amount' => 0, 'payment_method' => 'cash', 'source_type' => $sourceType, 'notes' => 'Check-in via AI Chat', 'created_by' => auth()->id() ?? 1]);
                 $fmt = fn ($v) => 'Rp '.number_format($v, 0, ',', '.');
 
                 return [
@@ -371,7 +373,8 @@ class AiActionService
         try {
             return DB::transaction(function () use ($reservation, $amount, $paymentMethod) {
                 if ($amount > 0) {
-                    Transaction::create(['reservation_id' => $reservation->id, 'type' => 'checkout_payment', 'amount' => $amount, 'payment_method' => $paymentMethod, 'notes' => 'Check-out via AI Chat', 'created_by' => auth()->id() ?? 1]);
+                    $sourceType = PaymentMethod::where('slug', $paymentMethod)->value('source_type');
+                    Transaction::create(['reservation_id' => $reservation->id, 'type' => 'checkout_payment', 'amount' => $amount, 'payment_method' => $paymentMethod, 'source_type' => $sourceType, 'notes' => 'Check-out via AI Chat', 'created_by' => auth()->id() ?? 1]);
                     $reservation->increment('paid_amount', $amount);
                 }
                 $reservation->update(['status' => 'checked_out']);
@@ -443,7 +446,8 @@ class AiActionService
         }
 
         try {
-            Transaction::create(['reservation_id' => $reservation->id, 'type' => $type, 'amount' => $amount, 'payment_method' => $paymentMethod, 'notes' => 'Pembayaran via AI Chat', 'created_by' => auth()->id() ?? 1]);
+            $sourceType = PaymentMethod::where('slug', $paymentMethod)->value('source_type');
+            Transaction::create(['reservation_id' => $reservation->id, 'type' => $type, 'amount' => $amount, 'payment_method' => $paymentMethod, 'source_type' => $sourceType, 'notes' => 'Pembayaran via AI Chat', 'created_by' => auth()->id() ?? 1]);
             $reservation->increment('paid_amount', $amount);
             $fmt = fn ($v) => 'Rp '.number_format($v, 0, ',', '.');
             $remaining = (float) $reservation->fresh()->remaining_payment;

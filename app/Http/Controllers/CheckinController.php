@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
@@ -107,12 +108,14 @@ class CheckinController extends Controller
         ]);
 
         if ($request->payment_amount > 0) {
+            $sourceType = PaymentMethod::where('slug', $request->payment_method ?? 'cash')->value('source_type');
             Transaction::create([
                 'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                 'reservation_id' => $reservation->id,
                 'type' => 'checkin_payment',
                 'amount' => $request->payment_amount,
                 'payment_method' => $request->payment_method ?? 'cash',
+                'source_type' => $sourceType,
                 'created_by' => auth()->id(),
             ]);
         }

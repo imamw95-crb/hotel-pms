@@ -189,12 +189,14 @@ class BookingController extends Controller
             DB::beginTransaction();
             try {
                 $txnType = ($paymentType === 'full') ? 'pelunasan' : 'dp';
+                $sourceType = PaymentMethod::where('slug', $paymentMethod)->value('source_type');
                 Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $txnType,
                     'amount' => $initialPaid,
                     'payment_method' => $paymentMethod,
+                    'source_type' => $sourceType,
                     'notes' => 'Pembayaran awal saat booking'.($paymentType === 'full' ? ' (Lunas)' : ' (DP)'),
                     'created_by' => auth()->id(),
                 ]);
