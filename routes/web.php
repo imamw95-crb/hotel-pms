@@ -25,6 +25,7 @@ use App\Http\Controllers\OutOfOrderController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PromoPriceController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AvailableRoomsController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RestoController;
 use App\Http\Controllers\RoomController;
@@ -150,6 +151,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/room-rack/check-room-available', [RoomRackController::class, 'checkRoomAvailabilityForMove'])->name('room-rack.check-room-available');
     Route::post('/room-rack/move-booking', [RoomRackController::class, 'moveBooking'])->name('room-rack.move-booking');
     Route::get('/room-rack/forecast', [RoomRackController::class, 'forecast'])->name('room-rack.forecast');
+
+    // Available Rooms
+    Route::get('/available-rooms', [AvailableRoomsController::class, 'index'])->name('available-rooms.index');
 
     // Room List — all roles, no permission restriction
     Route::get('/room-list', [RoomListController::class, 'index'])->name('room-list.index');

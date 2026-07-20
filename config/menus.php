@@ -79,6 +79,11 @@ return [
             'icon' => 'bed',
             'children' => [
                 [
+                    'label' => 'Available Rooms',
+                    'route' => 'available-rooms.index',
+                    'permission' => 'view_rooms',
+                ],
+                [
                     'label' => 'Room Rack',
                     'route' => 'room-rack.index',
                     'permission' => 'view_rooms',
