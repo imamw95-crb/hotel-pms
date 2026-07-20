@@ -4,7 +4,7 @@
 
     <div id="availabilityStatus" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
 
-    <form method="POST" action="{{ route('booking.store') }}" data-ajax="true">
+    <form method="POST" action="{{ route('booking.store') }}" data-ajax="true" data-check-url="{{ route('booking.check-availability') }}">
         @csrf
 
         <!-- Row 1: Check-in, Check-out, Kamar -->
