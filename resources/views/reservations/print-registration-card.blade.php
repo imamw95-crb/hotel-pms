@@ -11,7 +11,7 @@
 <style>
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm 8mm 10mm;
+    margin: 6mm 8mm 6mm 8mm;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,7 +21,7 @@
     font-size: 5pt;
     color: #000;
     background: #fff;
-    width: 100%;
+    width: 190mm;
     margin: 0 auto;
   }
 
