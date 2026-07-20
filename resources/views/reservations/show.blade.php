@@ -627,14 +627,17 @@
 
         <script>
             // ─── Edit Payment Modal ───
-            var transactions = @json($transactions->keyBy('id')->map(function($t) {
-                return [
-                    'id' => $t->id,
-                    'type' => $t->type,
-                    'payment_method' => $t->payment_method,
-                    'amount' => $t->amount,
-                ];
-            }));
+            @php
+                $transactionsJson = $transactions->keyBy('id')->map(function($t) {
+                    return [
+                        'id' => $t->id,
+                        'type' => $t->type,
+                        'payment_method' => $t->payment_method,
+                        'amount' => $t->amount,
+                    ];
+                });
+            @endphp
+            var transactions = @json($transactionsJson);
 
             function openEditModal(txnId) {
                 var txn = transactions[txnId];
