@@ -129,6 +129,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/update-room-rate', [ReservationController::class, 'updateRoomRate'])->name('reservations.update-room-rate');
     Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
     Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
+    // Group Booking — pelunasan & invoice
+    Route::post('/reservations/group-payment/{bookingGroupId}', [ReservationController::class, 'groupPayment'])->middleware('permission:add_payment')->name('reservations.group-payment');
+    Route::get('/reservations/group-invoice/{bookingGroupId}', [ReservationController::class, 'printGroupInvoice'])->name('reservations.group-invoice');
+    Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
     Route::post('/reservations/{reservation}/extend', [ReservationController::class, 'extendStay'])->name('reservations.extend');
 
     // AI Auto-Reservation

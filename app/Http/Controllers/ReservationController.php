@@ -122,7 +122,25 @@ class ReservationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('reservations.show', compact('reservation', 'transactions'));
+        // ─── Group Booking Info ───
+        $groupReservations = collect();
+        $groupTotal = 0;
+        $groupPaid = 0;
+        $isGroup = !empty($reservation->booking_group_id);
+        if ($isGroup) {
+            $groupReservations = Reservation::with(['guest', 'room', 'transactions'])
+                ->where('booking_group_id', $reservation->booking_group_id)
+                ->where('id', '!=', $reservation->id)
+                ->get();
+            $allInGroup = collect([$reservation])->merge($groupReservations);
+            $groupTotal = $allInGroup->sum('total_amount');
+            $groupPaid = $allInGroup->sum('paid_amount');
+        }
+
+        return view('reservations.show', compact(
+            'reservation', 'transactions',
+            'isGroup', 'groupReservations', 'groupTotal', 'groupPaid'
+        ));
     }
 
     /**
@@ -808,6 +826,113 @@ class ReservationController extends Controller
         $reservation->load(['guest', 'room', 'createdBy']);
 
         return view('reservations.print-registration-card', compact('reservation'));
+    }
+
+    /**
+     * POST /reservations/group-payment/{bookingGroupId}
+     * Pelunasan semua reservasi dalam 1 group booking sekaligus
+     */
+    public function groupPayment(Request $request, string $bookingGroupId)
+    {
+        $validated = $request->validate([
+            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+        ]);
+
+        $reservations = Reservation::where('booking_group_id', $bookingGroupId)
+            ->whereIn('status', ['pending', 'menunggu_pembayaran', 'checked_in'])
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return back()->with('error', 'Tidak ada reservasi dalam group ini yang bisa dibayar.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalPaid = 0;
+            $totalSisa = 0;
+            $paidCount = 0;
+
+            foreach ($reservations as $res) {
+                $sisa = $res->total_amount - $res->paid_amount;
+                if ($sisa <= 0) {
+                    continue; // sudah lunas
+                }
+
+                $totalSisa += $sisa;
+
+                // Buat transaksi pelunasan
+                Transaction::create([
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                    'reservation_id' => $res->id,
+                    'type' => 'pelunasan',
+                    'amount' => $sisa,
+                    'payment_method' => $validated['payment_method'],
+                    'notes' => 'Pelunasan group booking',
+                    'created_by' => auth()->id(),
+                ]);
+
+                // Update paid_amount
+                $res->paid_amount += $sisa;
+                $res->paid_date = now();
+                $res->payment_method = $validated['payment_method'];
+                $res->save();
+
+                $totalPaid += $sisa;
+                $paidCount++;
+            }
+
+            DB::commit();
+
+            $message = "✅ Pelunasan group berhasil: {$paidCount} kamar, total Rp ".number_format($totalPaid, 0, ',', '.');
+
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Group payment failed', [
+                'booking_group_id' => $bookingGroupId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Gagal memproses pembayaran group: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * GET /reservations/group-invoice/{bookingGroupId}
+     * Print invoice gabungan untuk semua reservasi dalam 1 group
+     */
+    public function printGroupInvoice(string $bookingGroupId)
+    {
+        $reservations = Reservation::with([
+            'guest', 'room', 'createdBy',
+            'serviceCharges', 'serviceCharges.createdBy',
+            'restoTransactions', 'restoTransactions.createdBy',
+        ])
+            ->where('booking_group_id', $bookingGroupId)
+            ->orderBy('room_id')
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ditemukan reservasi untuk group ini.');
+        }
+
+        // Ambil semua transaction IDs untuk group
+        $reservationIds = $reservations->pluck('id');
+        $transactions = Transaction::whereIn('reservation_id', $reservationIds)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $groupTotal = $reservations->sum('total_amount');
+        $groupPaid = $reservations->sum('paid_amount');
+        $totalServiceCharge = $reservations->sum(fn($r) => $r->serviceCharges->sum('total_amount'));
+        $totalResto = $reservations->sum(fn($r) => $r->restoTransactions->sum('total_amount'));
+        $grandTotal = $groupTotal + $totalServiceCharge + $totalResto;
+
+        return view('reservations.print-group-invoice', compact(
+            'reservations', 'transactions',
+            'groupTotal', 'groupPaid',
+            'totalServiceCharge', 'totalResto', 'grandTotal'
+        ));
     }
 
     /**

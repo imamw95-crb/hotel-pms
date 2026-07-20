@@ -29,6 +29,139 @@
         </div>
     </div>
 
+    {{-- Group Booking Info --}}
+    @if($isGroup)
+    @php
+        $allGroup = collect([$reservation])->merge($groupReservations);
+        $totalGroup = $allGroup->sum('total_amount');
+        $paidGroup = $allGroup->sum('paid_amount');
+        $sisaGroup = $totalGroup - $paidGroup;
+        $allLunas = $sisaGroup <= 0;
+    @endphp
+    <div class="bg-indigo-50 border-2 border-indigo-300 rounded-lg shadow p-5 mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-lg text-indigo-800 flex items-center gap-2">
+                <i class="fas fa-layer-group"></i> Group Booking — {{ $allGroup->count() }} Kamar
+            </h3>
+            <span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">GROUP</span>
+        </div>
+
+        <!-- Table Ringkasan Group -->
+        <div class="overflow-x-auto mb-3">
+            <table class="w-full text-sm bg-white rounded-lg overflow-hidden">
+                <thead>
+                    <tr class="bg-indigo-600 text-white text-xs">
+                        <th class="p-2 text-left">No.</th>
+                        <th class="p-2 text-left">Reservasi</th>
+                        <th class="p-2 text-left">Kamar</th>
+                        <th class="p-2 text-left">Tamu</th>
+                        <th class="p-2 text-right">Total</th>
+                        <th class="p-2 text-right">Dibayar</th>
+                        <th class="p-2 text-right">Sisa</th>
+                        <th class="p-2 text-center">Status</th>
+                        <th class="p-2 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($allGroup as $idx => $res)
+                    @php
+                        $sisaRes = $res->total_amount - $res->paid_amount;
+                        $isActive = $res->id === $reservation->id;
+                    @endphp
+                    <tr class="border-b border-gray-100 {{ $isActive ? 'bg-indigo-100 font-semibold' : 'hover:bg-gray-50' }}">
+                        <td class="p-2">{{ $idx + 1 }}</td>
+                        <td class="p-2">
+                            @if($isActive)
+                                <span class="text-indigo-700">{{ $res->reservation_number }}</span>
+                            @else
+                                <a href="{{ route('reservations.show', $res) }}" class="text-blue-600 hover:text-blue-800 underline">
+                                    {{ $res->reservation_number }}
+                                </a>
+                            @endif
+                        </td>
+                        <td class="p-2">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2">{{ $res->guest->guest_name ?? '-' }}</td>
+                        <td class="p-2 text-right">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
+                        <td class="p-2 text-right text-green-600">Rp {{ number_format($res->paid_amount, 0, ',', '.') }}</td>
+                        <td class="p-2 text-right {{ $sisaRes > 0 ? 'text-red-600' : 'text-green-600' }}">
+                            @if($sisaRes > 0)
+                                Rp {{ number_format($sisaRes, 0, ',', '.') }}
+                            @else
+                                <span class="text-green-600">✓ Lunas</span>
+                            @endif
+                        </td>
+                        <td class="p-2 text-center">
+                            @if($res->status === 'checked_in')
+                                <span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Check-in</span>
+                            @elseif($res->status === 'checked_out')
+                                <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">Check-out</span>
+                            @elseif($res->status === 'cancelled')
+                                <span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">Batal</span>
+                            @else
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Pending</span>
+                            @endif
+                        </td>
+                        <td class="p-2 text-center">
+                            @if(!$isActive)
+                                <a href="{{ route('reservations.show', $res) }}" class="text-blue-600 hover:text-blue-800 text-xs" title="Lihat Detail">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            @else
+                                <span class="text-indigo-400 text-xs">▼ aktif</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="bg-indigo-100 font-bold text-sm">
+                        <td colspan="4" class="p-2 text-right">TOTAL GROUP</td>
+                        <td class="p-2 text-right">Rp {{ number_format($totalGroup, 0, ',', '.') }}</td>
+                        <td class="p-2 text-right text-green-700">Rp {{ number_format($paidGroup, 0, ',', '.') }}</td>
+                        <td class="p-2 text-right {{ $sisaGroup > 0 ? 'text-red-700' : 'text-green-700' }}">
+                            @if($sisaGroup > 0)
+                                Rp {{ number_format($sisaGroup, 0, ',', '.') }}
+                            @else
+                                LUNAS
+                            @endif
+                        </td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Progress Bar Group -->
+        @php $groupPercent = $totalGroup > 0 ? round(($paidGroup / $totalGroup) * 100) : 0; @endphp
+        <div class="mb-3">
+            <div class="flex justify-between text-xs mb-1">
+                <span class="text-indigo-700 font-medium">Progress Pembayaran Group</span>
+                <span class="font-bold {{ $groupPercent >= 100 ? 'text-green-600' : 'text-indigo-600' }}">{{ $groupPercent }}%</span>
+            </div>
+            <div class="w-full bg-indigo-200 rounded-full h-2.5">
+                <div class="h-2.5 rounded-full {{ $groupPercent >= 100 ? 'bg-green-500' : 'bg-indigo-500' }}" style="width: {{ $groupPercent }}%"></div>
+            </div>
+        </div>
+
+        <!-- Aksi Group -->
+        <div class="flex flex-wrap gap-2 mt-2">
+            @if(!$allLunas)
+            <form action="{{ route('reservations.group-payment', $reservation->booking_group_id) }}" method="POST" data-ajax="true" data-confirm="Lakukan pelunasan untuk semua {{ $allGroup->count() }} kamar (total Rp {{ number_format($sisaGroup, 0, ',', '.') }})?">
+                @csrf
+                <input type="hidden" name="payment_method" value="{{ $reservation->payment_method ?? 'cash' }}">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                    <i class="fas fa-credit-card"></i> Pelunasan Semua Kamar (Rp {{ number_format($sisaGroup, 0, ',', '.') }})
+                </button>
+            </form>
+            @endif
+            <a href="{{ route('reservations.group-invoice', $reservation->booking_group_id) }}" target="_blank"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-file-invoice"></i> Print Group Invoice
+            </a>
+        </div>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Info Tamu -->
         <div class="bg-white rounded-lg shadow p-6">
