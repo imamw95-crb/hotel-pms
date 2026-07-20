@@ -230,7 +230,7 @@ class BookingSyncService
     private function isOtaPaymentMethod(string $method): bool
     {
         return in_array($method, [
-            'tiket.com', 'traveloka.com', 'ota_payment',
+            'ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment',
         ]);
     }
 

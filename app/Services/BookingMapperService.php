@@ -95,7 +95,7 @@ class BookingMapperService
         $method = strtolower(trim($paymentMethod));
 
         $validMethods = [
-            'tiket.com', 'traveloka.com', 'ota_payment',
+            'ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment',
             'bank_transfer', 'credit_card', 'debit_card', 'cash',
             'virtual_account', 'ewallet', 'qris',
         ];
@@ -128,7 +128,7 @@ class BookingMapperService
     private function isOtaPaymentMethod(string $method): bool
     {
         return in_array($method, [
-            'tiket.com', 'traveloka.com', 'ota_payment',
+            'ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment',
         ]);
     }
 

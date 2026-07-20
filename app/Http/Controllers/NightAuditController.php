@@ -404,7 +404,7 @@ class NightAuditController extends Controller
         $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
 
         // ─── OTA payment method list ───────────────────────────────
-        $otaPaymentMethods = ['tiket.com', 'traveloka.com', 'ota_payment'];
+        $otaPaymentMethods = ['ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment'];
 
         // Revenue by method with details
         $transactions = Transaction::whereDate('created_at', $date)
