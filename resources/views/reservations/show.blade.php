@@ -158,6 +158,10 @@
                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                 <i class="fas fa-file-invoice"></i> Print Group Invoice
             </a>
+            <a href="{{ route('reservations.group-kwitansi', $reservation->booking_group_id) }}" target="_blank"
+               class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-receipt"></i> Print Kwitansi Group
+            </a>
         </div>
     </div>
     @endif

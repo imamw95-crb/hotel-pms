@@ -112,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
     // Group Booking — pelunasan & invoice (HARUS sebelum route {reservation})
     Route::post('/reservations/group-payment/{bookingGroupId}', [ReservationController::class, 'groupPayment'])->middleware('permission:add_payment')->name('reservations.group-payment');
     Route::get('/reservations/group-invoice/{bookingGroupId}', [ReservationController::class, 'printGroupInvoice'])->name('reservations.group-invoice');
+    Route::get('/reservations/group-kwitansi/{bookingGroupId}', [ReservationController::class, 'printGroupKwitansi'])->name('reservations.group-kwitansi');
     Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::post('/reservations/{reservation}/toggle-breakfast', [ReservationController::class, 'toggleBreakfast'])->name('reservations.toggle-breakfast');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');

@@ -936,6 +936,38 @@ class ReservationController extends Controller
     }
 
     /**
+     * GET /reservations/group-kwitansi/{bookingGroupId}
+     * Print kwitansi gabungan untuk semua reservasi dalam 1 group
+     */
+    public function printGroupKwitansi(string $bookingGroupId)
+    {
+        $reservations = Reservation::with([
+            'guest', 'room', 'createdBy',
+        ])
+            ->where('booking_group_id', $bookingGroupId)
+            ->orderBy('room_id')
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ditemukan reservasi untuk group ini.');
+        }
+
+        $reservationIds = $reservations->pluck('id');
+        $transactions = Transaction::with('reservation')
+            ->whereIn('reservation_id', $reservationIds)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $groupTotal = $reservations->sum('total_amount');
+        $groupPaid = $reservations->sum('paid_amount');
+
+        return view('reservations.print-group-kwitansi', compact(
+            'reservations', 'transactions',
+            'groupTotal', 'groupPaid'
+        ));
+    }
+
+    /**
      * Update total amount reservasi
      */
     public function updateTotal(Request $request, Reservation $reservation)
