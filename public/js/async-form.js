@@ -17,21 +17,24 @@ function initAsyncForms() {
             f.addEventListener('submit', function(e) {
                 e.preventDefault();
                 if (typeof FormHandler !== 'undefined' && FormHandler.submit) {
-                    FormHandler.submit(f, {
-                        onSuccess: function(data) {
-                            if (f.closest('#modalContainer')) {
-                                Modal.close();
-                            }
-                            // Auto-refresh page after actions that change room state (checkout, checkin, etc.)
-                            if (f.dataset.refresh === 'true' && data && data.success) {
-                                if (data.redirect_url) {
-                                    window.location.href = data.redirect_url;
-                                } else {
-                                    window.location.reload();
-                                }
+                    var options = {};
+                    if (f.dataset.confirm) {
+                        options.confirmMessage = f.dataset.confirm;
+                    }
+                    options.onSuccess = function(data) {
+                        if (f.closest('#modalContainer')) {
+                            Modal.close();
+                        }
+                        // Auto-refresh page after actions that change room state (checkout, checkin, etc.)
+                        if (f.dataset.refresh === 'true' && data && data.success) {
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            } else {
+                                window.location.reload();
                             }
                         }
-                    });
+                    };
+                    FormHandler.submit(f, options);
                 }
             });
         })(form);

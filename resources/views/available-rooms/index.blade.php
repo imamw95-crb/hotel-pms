@@ -60,7 +60,7 @@
         $grandAvailable = array_sum(array_column($availability, 'available'));
         $grandMtn = array_sum(array_column($availability, 'maintenance_or_ooo'));
     @endphp
-    <div class="grid grid-cols-5 gap-3">
+    <div class="grid grid-cols-6 gap-3">
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800 col-span-2 flex items-center gap-2">
             <i class="fas fa-calendar-alt"></i>
             <span><strong>{{ \Carbon\Carbon::parse($checkIn)->isoFormat('D MMM YYYY') }}</strong> &mdash; <strong>{{ \Carbon\Carbon::parse($checkOut)->isoFormat('D MMM YYYY') }}</strong> ({{ \Carbon\Carbon::parse($checkIn)->diffInDays(\Carbon\Carbon::parse($checkOut)) }} malam)</span>
@@ -72,6 +72,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
             <p class="text-lg font-bold text-red-600">{{ $grandOccupied }}</p>
             <p class="text-[10px] text-gray-500">Terisi</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
+            <p class="text-lg font-bold text-gray-500">{{ $grandMtn }}</p>
+            <p class="text-[10px] text-gray-500">Mnt/OOO</p>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-3 text-center">
             <p class="text-lg font-bold text-emerald-600">{{ $grandAvailable }}</p>

@@ -146,7 +146,7 @@
         <!-- Aksi Group -->
         <div class="flex flex-wrap gap-2 mt-2">
             @if(!$allLunas)
-            <form action="{{ route('reservations.group-payment', $reservation->booking_group_id) }}" method="POST" data-ajax="true" data-confirm="Lakukan pelunasan untuk semua {{ $allGroup->count() }} kamar (total Rp {{ number_format($sisaGroup, 0, ',', '.') }})?">
+            <form action="{{ route('reservations.group-payment', $reservation->booking_group_id) }}" method="POST" data-ajax="true" data-refresh="true" data-confirm="Lakukan pelunasan untuk semua {{ $allGroup->count() }} kamar (total Rp {{ number_format($sisaGroup, 0, ',', '.') }})?">
                 @csrf
                 <div class="flex items-center gap-2">
                     <select name="payment_method" class="border rounded px-2 py-1.5 text-sm" required>

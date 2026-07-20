@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guest;
 use App\Models\Allotment;
+use App\Models\BookingNotification;
 use App\Models\HousekeepingTask;
 use App\Models\OutOfOrder;
 use App\Models\PaymentMethod;
@@ -892,7 +893,41 @@ class ReservationController extends Controller
 
             DB::commit();
 
+            // Buat notifikasi untuk payment group
+            try {
+                foreach ($reservations as $res) {
+                    if ($res->paid_amount >= $res->total_amount) {
+                        $messageNotif = sprintf(
+                            '💰 Pelunasan Group — %s — Rp %s via %s',
+                            $res->guest?->guest_name ?? '-',
+                            number_format($res->total_amount, 0, ',', '.'),
+                            $validated['payment_method']
+                        );
+                        BookingNotification::create([
+                            'type' => 'payment',
+                            'action' => 'created',
+                            'reservation_id' => $res->id,
+                            'guest_name' => $res->guest?->guest_name ?? 'Unknown',
+                            'room_number' => $res->room?->room_number,
+                            'message' => $messageNotif,
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to create group payment notification', [
+                    'booking_group_id' => $bookingGroupId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             $message = "✅ Pelunasan group berhasil: {$paidCount} kamar, total Rp ".number_format($totalPaid, 0, ',', '.');
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                ]);
+            }
 
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
@@ -902,7 +937,16 @@ class ReservationController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Gagal memproses pembayaran group: '.$e->getMessage());
+            $errorMsg = 'Gagal memproses pembayaran group: '.$e->getMessage();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMsg,
+                ], 500);
+            }
+
+            return back()->with('error', $errorMsg);
         }
     }
 
