@@ -404,8 +404,8 @@
         </div>
 
         <!-- Riwayat Pembayaran (Multi Payment) -->
-        @if($transactions->count() > 0)
         <h4 class="font-bold text-sm text-gray-600 mb-2 uppercase">Riwayat Pembayaran</h4>
+        @if($transactions->count() > 0)
         <table class="w-full text-sm mb-4">
             <thead>
                 <tr class="bg-gray-50 border-b">
@@ -464,6 +464,8 @@
                 </tr>
             </tfoot>
         </table>
+        @else
+        <p class="text-gray-400 text-sm italic mb-4">Belum ada pembayaran.</p>
         @endif
 
         <!-- Form Input Pembayaran (1 Input Transaksi Universal) -->
