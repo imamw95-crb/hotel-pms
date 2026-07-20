@@ -113,5 +113,13 @@
 <script>
     window._preSelectedRoomId = '{{ $selectedRoom ? $selectedRoom->id : "" }}';
     window._preSelectedRoomNumber = '{{ $selectedRoom ? $selectedRoom->room_number : "" }}';
+
+    // Hapus min pada check_in agar tanggal sebelumnya bisa dipilih (Firefox fix)
+    (function() {
+        var el = document.getElementById('otaCheckIn');
+        if (el) el.removeAttribute('min');
+        var el2 = document.getElementById('checkIn');
+        if (el2) el2.removeAttribute('min');
+    })();
 </script>
 <script src="{{ asset('js/booking-ota.js') }}"></script>

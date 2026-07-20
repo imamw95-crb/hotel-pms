@@ -225,8 +225,11 @@
         return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    // ── Event listeners ──
-    if (checkInEl) checkInEl.addEventListener('change', checkAvailability);
+    // ── Hapus min agar tanggal sebelumnya bisa dipilih ──
+    if (checkInEl) {
+        checkInEl.removeAttribute('min');
+        checkInEl.addEventListener('change', checkAvailability);
+    }
     if (checkOutEl) checkOutEl.addEventListener('change', checkAvailability);
     if (roomSelect) roomSelect.addEventListener('change', calculateTotal);
     if (priceInput) {

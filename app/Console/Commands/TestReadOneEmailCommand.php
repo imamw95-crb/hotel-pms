@@ -136,71 +136,83 @@ class TestReadOneEmailCommand extends Command
                 $this->info('─── AI Processing ───');
                 $this->info('⏳ Sending to OpenRouter AI...');
 
-                $aiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
+                $allAiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
 
-                if (! $aiData) {
+                if (! $allAiData || ! is_array($allAiData) || count($allAiData) === 0) {
                     $this->error('❌ AI parsing failed');
                     $imap->disconnect();
 
                     return self::FAILURE;
                 }
 
-                $this->info('✅ AI parsing successful');
-                $this->newLine();
-                $this->table(
-                    ['Field', 'Value'],
-                    collect($aiData)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray()
-                );
+                $roomCount = count($allAiData);
+                $this->info("✅ AI parsing successful — {$roomCount} room(s) detected");
                 $this->newLine();
 
-                // ─── Mapping ─────────────────────────────────────────
-                $this->info('─── Booking Mapping ───');
-                $mapped = $mapper->mapToReservation($aiData);
-                $this->table(
-                    ['Field', 'Value'],
-                    collect($mapped)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray()
-                );
-                $this->newLine();
+                foreach ($allAiData as $roomIndex => $aiData) {
+                    $roomLabel = $roomCount > 1 ? "Room #" . ($roomIndex + 1) : "Booking";
+                    $this->info("─── {$roomLabel} ───");
 
-                // ─── Sync to Database ────────────────────────────────
-                if ($syncToDb) {
-                    $this->info('─── Sync to Database ───');
-                    $this->info('⏳ Saving reservation...');
-
-                    $result = $sync->sync($aiData);
-
-                    if (! $result['success']) {
-                        $this->error('❌ Sync failed');
-                        $imap->disconnect();
-
-                        return self::FAILURE;
-                    }
-
-                    $reservation = $result['reservation'];
-                    $action = $result['action'];
-
-                    $this->info("✅ Reservation {$action} successfully!");
                     $this->table(
                         ['Field', 'Value'],
-                        [
-                            ['Reservation #', $reservation->reservation_number],
-                            ['Guest', $reservation->guest->guest_name ?? 'N/A'],
-                            ['Room', $reservation->room->room_number ?? 'Unassigned'],
-                            ['Check-in', $reservation->check_in->format('Y-m-d H:i')],
-                            ['Check-out', $reservation->check_out->format('Y-m-d H:i')],
-                            ['Status', $reservation->status],
-                            ['Action', $action],
-                        ]
+                        collect($aiData)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray()
                     );
                     $this->newLine();
 
+                    // ─── Mapping ─────────────────────────────────────────
+                    $this->info("─── {$roomLabel} Mapping ───");
+                    $aiDataForSync = $aiData;
+                    if ($roomCount > 1) {
+                        $aiDataForSync['reservation_id'] = $aiData['reservation_id'] . '/R' . ($roomIndex + 1);
+                    }
+                    $mapped = $mapper->mapToReservation($aiDataForSync);
+                    $this->table(
+                        ['Field', 'Value'],
+                        collect($mapped)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : ($v ?? 'NULL')])->toArray()
+                    );
+                    $this->newLine();
+
+                    // ─── Sync to Database ────────────────────────────────
+                    if ($syncToDb) {
+                        $this->info("─── {$roomLabel} Sync ───");
+                        $this->info('⏳ Saving reservation...');
+
+                        $result = $sync->sync($aiDataForSync);
+
+                        if (! $result['success']) {
+                            $this->error("❌ {$roomLabel} sync failed: " . ($result['error'] ?? 'unknown'));
+                            continue;
+                        }
+
+                        $reservation = $result['reservation'];
+                        $action = $result['action'];
+
+                        $this->info("✅ {$roomLabel} {$action} successfully!");
+                        $this->table(
+                            ['Field', 'Value'],
+                            [
+                                ['Reservation #', $reservation->reservation_number],
+                                ['Guest', $reservation->guest->guest_name ?? 'N/A'],
+                                ['Room', $reservation->room->room_number ?? 'Unassigned'],
+                                ['Check-in', $reservation->check_in->format('Y-m-d H:i')],
+                                ['Check-out', $reservation->check_out->format('Y-m-d H:i')],
+                                ['Status', $reservation->status],
+                                ['Action', $action],
+                            ]
+                        );
+                        $this->newLine();
+                    } else {
+                        $this->info("─── {$roomLabel} Sync (SKIPPED) ───");
+                        $this->info('Use --sync flag to save to reservations table');
+                        $this->newLine();
+                    }
+                }
+
+                if ($syncToDb) {
                     $this->info('═══════════════════════════════════════');
-                    $this->info('  ✅ SYNC COMPLETE — Reservation saved');
+                    $this->info('  ✅ SYNC COMPLETE');
                     $this->info('═══════════════════════════════════════');
                 } else {
-                    $this->info('─── Sync (SKIPPED) ───');
-                    $this->info('Use --sync flag to save to reservations table');
-                    $this->newLine();
                     $this->info('═══════════════════════════════════════');
                     $this->info('  ✅ LIVE TEST PASSED');
                     $this->info('  Email can be processed successfully');

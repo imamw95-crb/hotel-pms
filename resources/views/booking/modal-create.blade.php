@@ -130,5 +130,10 @@
     window._preSelectedRoomId = '{{ $selectedRoom ? $selectedRoom->id : "" }}';
     window._preSelectedRoomNumber = '{{ $selectedRoom ? $selectedRoom->room_number : "" }}';
 
+    // Hapus min pada check_in agar tanggal sebelumnya bisa dipilih (Firefox fix)
+    (function() {
+        var el = document.getElementById('checkIn');
+        if (el) el.removeAttribute('min');
+    })();
 </script>
 <script src="{{ asset('js/booking-modal.js') }}"></script>

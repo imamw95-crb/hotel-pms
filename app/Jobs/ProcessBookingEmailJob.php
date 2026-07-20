@@ -65,59 +65,100 @@ class ProcessBookingEmailJob implements ShouldQueue
             return;
         }
 
-        // Step 1: AI Parsing
-        $aiData = $openRouter->parseBookingEmail($this->body, $this->subject, $this->otaSource);
+        // Step 1: AI Parsing (returns array of bookings)
+        $allAiData = $openRouter->parseBookingEmail($this->body, $this->subject, $this->otaSource);
 
-        if (! $aiData) {
+        if (! $allAiData || ! is_array($allAiData) || count($allAiData) === 0) {
             Log::error('AI parsing failed for email', ['uid' => $this->emailUid]);
-            $this->markFailed('AI parsing returned null');
+            $this->markFailed('AI parsing returned null/empty');
 
             return;
         }
 
-        // Step 2: Validate AI output
-        if (! $this->validateAiOutput($aiData)) {
-            Log::error('AI output validation failed', [
+        $roomCount = count($allAiData);
+        Log::info("AI parsed {$roomCount} room(s) from email", ['uid' => $this->emailUid]);
+
+        $successResults = [];
+        $errors = [];
+
+        foreach ($allAiData as $index => $aiData) {
+            $roomLabel = $roomCount > 1 ? "Room #".($index + 1) : "Room";
+
+            // Step 2: Validate AI output for this room
+            if (! $this->validateAiOutput($aiData)) {
+                $errMsg = "{$roomLabel}: AI output validation failed";
+                Log::error($errMsg, ['uid' => $this->emailUid, 'ai_data' => $aiData]);
+                $errors[] = $errMsg;
+                continue;
+            }
+
+            // Make ota_reservation_number unique per room (e.g., "HTL-123/R1", "HTL-123/R2")
+            $originalReservationId = $aiData['reservation_id'];
+            if ($roomCount > 1) {
+                $aiData['reservation_id'] = $originalReservationId . '/R' . ($index + 1);
+            }
+
+            // Step 3: Sync to booking system
+            $result = $sync->sync($aiData);
+
+            if (! $result['success']) {
+                $errMsg = "{$roomLabel}: Booking sync failed";
+                Log::error($errMsg, [
+                    'uid' => $this->emailUid,
+                    'reservation' => $originalReservationId,
+                ]);
+                $errors[] = $errMsg . ($result['error'] ? ": {$result['error']}" : '');
+                continue;
+            }
+
+            $successResults[] = [
+                'result' => $result,
+                'aiData' => $aiData,
+                'originalReservationId' => $originalReservationId,
+            ];
+
+            // Step 5: Trigger notification to Front Office (per room)
+            $this->triggerNotification($result, $aiData);
+
+            Log::info("OTA email: {$roomLabel} processed successfully", [
                 'uid' => $this->emailUid,
-                'ai_data' => $aiData,
+                'action' => $result['action'],
+                'reservation' => $result['reservation']?->reservation_number,
+                'ota_id' => $aiData['reservation_id'],
             ]);
-            $this->markFailed('AI output validation failed: missing required fields');
+        }
 
+        // Step 4: Mark as processed (if at least one room succeeded)
+        if (count($successResults) > 0) {
+            $first = $successResults[0];
+            ProcessedEmail::markProcessed([
+                'email_uid' => $this->emailUid,
+                'sender' => $this->sender,
+                'subject' => $this->subject,
+                'status' => 'processed',
+                'email_type' => $this->emailType,
+                'ota_source' => $this->otaSource,
+                'reservation_id' => $first['originalReservationId'],
+            ]);
+        } else {
+            // All rooms failed
+            $this->markFailed('All rooms failed: ' . implode('; ', $errors));
             return;
         }
 
-        // Step 3: Sync to booking system
-        $result = $sync->sync($aiData);
-
-        if (! $result['success']) {
-            Log::error('Booking sync failed', [
+        if (count($errors) > 0) {
+            Log::warning('OTA email processed with partial errors', [
                 'uid' => $this->emailUid,
-                'reservation' => $aiData['reservation_id'] ?? 'unknown',
+                'success' => count($successResults),
+                'errors' => count($errors),
+                'error_details' => implode('; ', $errors),
             ]);
-            $this->markFailed('Booking sync failed');
-
-            return;
+        } else {
+            Log::info('OTA email processed successfully', [
+                'uid' => $this->emailUid,
+                'rooms' => count($successResults),
+            ]);
         }
-
-        // Step 4: Mark as processed
-        ProcessedEmail::markProcessed([
-            'email_uid' => $this->emailUid,
-            'sender' => $this->sender,
-            'subject' => $this->subject,
-            'status' => 'processed',
-            'email_type' => $this->emailType,
-            'ota_source' => $this->otaSource,
-            'reservation_id' => $aiData['reservation_id'] ?? null,
-        ]);
-
-        // Step 5: Trigger notification to Front Office
-        $this->triggerNotification($result, $aiData);
-
-        Log::info('OTA email processed successfully', [
-            'uid' => $this->emailUid,
-            'action' => $result['action'],
-            'reservation' => $aiData['reservation_id'] ?? null,
-        ]);
     }
 
     /**

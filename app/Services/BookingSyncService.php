@@ -94,17 +94,18 @@ class BookingSyncService
                 $otaPaidAmount = 0;
                 $otaPaymentStatus = 'unpaid_ota';
 
-                if ($isOtaPayment) {
-                    // OTA collected payment — check if full or partial
-                    // If AI didn't provide price but we have a room, calculate from room rate
-                    if ($aiTotalPrice <= 0 && $roomId) {
-                        $room = Room::find($roomId);
-                        if ($room) {
-                            $checkIn = Carbon::parse($mapped['check_in']);
-                            $checkOut = Carbon::parse($mapped['check_out']);
-                            $aiTotalPrice = $room->calculateTotalForRange($checkIn, $checkOut);
-                        }
+                // Room rate fallback for ALL payment types:
+                // If AI didn't provide price but we have a room, calculate from room rate
+                if ($aiTotalPrice <= 0 && $roomId) {
+                    $room = Room::find($roomId);
+                    if ($room) {
+                        $checkIn = Carbon::parse($mapped['check_in']);
+                        $checkOut = Carbon::parse($mapped['check_out']);
+                        $aiTotalPrice = $room->calculateTotalForRange($checkIn, $checkOut);
                     }
+                }
+
+                if ($isOtaPayment) {
                     $otaPaidAmount = $aiTotalPrice;
                     $otaPaymentStatus = 'paid_ota';
                 }
@@ -137,38 +138,24 @@ class BookingSyncService
                 if (! $existing) {
                     $reservationData['created_by'] = 1; // system user
                     $reservationData['ota_reservation_number'] = $mapped['ota_reservation_number'];
-
-                    // Fallback: calculate from room price if AI didn't provide total
-                    $aiTotal = $mapped['total_amount'] ?? 0;
-                    if ($aiTotal <= 0 && $roomId) {
-                        $room = Room::find($roomId);
-                        if ($room) {
-                            $checkIn = Carbon::parse($mapped['check_in']);
-                            $checkOut = Carbon::parse($mapped['check_out']);
-                            $reservationData['total_amount'] = $room->calculateTotalForRange($checkIn, $checkOut);
-                        }
-                    }
                 }
 
                 // For modifications: update existing reservation
                 if ($action === 'updated') {
-                    // Fallback: calculate from room price if AI didn't provide total AND current total is 0
-                    $updateTotal = $aiTotalPrice;
-                    if ($updateTotal <= 0 && $roomId) {
-                        $room = Room::find($roomId);
-                        if ($room) {
-                            $checkIn = Carbon::parse($mapped['check_in']);
-                            $checkOut = Carbon::parse($mapped['check_out']);
-                            $updateTotal = $room->calculateTotalForRange($checkIn, $checkOut);
-                            $reservationData['total_amount'] = $updateTotal;
-                        }
-                    }
-
-                    if (($reservationData['total_amount'] ?? 0) <= 0) {
-                        Log::error('BookingSync: total_amount tidak valid untuk update (0)', [
+                    // For OTA-paid bookings, total_amount wajib diisi.
+                    // Untuk pay-at-hotel, 0 diperbolehkan (staff input manual nanti).
+                    if (($reservationData['total_amount'] ?? 0) <= 0 && $isOtaPayment) {
+                        Log::error('BookingSync: total_amount tidak valid untuk update OTA (0)', [
                             'ota_reservation_number' => $mapped['ota_reservation_number'],
                         ]);
                         return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Total amount tidak valid (0). Periksa tanggal check-in/check-out.'];
+                    }
+
+                    if (($reservationData['total_amount'] ?? 0) <= 0 && ! $isOtaPayment) {
+                        Log::warning('BookingSync: total_amount = 0 untuk pay-at-hotel update', [
+                            'ota_reservation_number' => $mapped['ota_reservation_number'],
+                            'note' => 'Staff perlu mengisi total_amount manual',
+                        ]);
                     }
 
                     $existing->update($reservationData);
@@ -184,12 +171,20 @@ class BookingSyncService
                     return ['reservation' => $existing->fresh(), 'action' => 'updated', 'success' => true];
                 }
 
-                // Validasi total_amount tidak boleh 0 untuk reservasi baru
-                if (($reservationData['total_amount'] ?? 0) <= 0) {
-                    Log::error('BookingSync: total_amount tidak valid untuk reservasi baru (0)', [
+                // Validasi total_amount untuk reservasi baru
+                // Untuk OTA-paid: wajib isi. Untuk pay-at-hotel: 0 diperbolehkan.
+                if (($reservationData['total_amount'] ?? 0) <= 0 && $isOtaPayment) {
+                    Log::error('BookingSync: total_amount tidak valid untuk reservasi OTA baru (0)', [
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
                     ]);
                     return ['reservation' => null, 'action' => 'none', 'success' => false, 'error' => 'Total amount tidak valid (0). Periksa tanggal check-in/check-out.'];
+                }
+
+                if (($reservationData['total_amount'] ?? 0) <= 0 && ! $isOtaPayment) {
+                    Log::warning('BookingSync: total_amount = 0 untuk pay-at-hotel baru', [
+                        'ota_reservation_number' => $mapped['ota_reservation_number'],
+                        'note' => 'Staff perlu mengisi total_amount manual',
+                    ]);
                 }
 
                 // New reservation — use updateOrCreate with unique OTA number

@@ -131,4 +131,11 @@
 </div>
 
 <meta name="booking-check-url" content="{{ route('booking.check-availability') }}">
+<script>
+    // Hapus min pada check_in agar tanggal sebelumnya bisa dipilih (Firefox fix)
+    (function() {
+        var el = document.getElementById('checkIn');
+        if (el) el.removeAttribute('min');
+    })();
+</script>
 <script src="{{ asset('js/booking-group.js') }}"></script>

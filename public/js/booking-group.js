@@ -316,8 +316,9 @@
             apiUrl = '/booking/check-availability';
         }
 
-        // ── Event Listeners ──
+        // ── Hapus min agar tanggal sebelumnya bisa dipilih ──
         if (checkInEl) {
+            checkInEl.removeAttribute('min');
             checkInEl.addEventListener('change', function() {
                 if (checkOutEl) {
                     checkOutEl.min = this.value;

@@ -26,8 +26,9 @@ class OpenRouterService
 
     /**
      * Parse OTA email content into structured booking data.
+     * Returns an array of bookings — single item for 1 room, multiple for multi-room.
      *
-     * @return array{reservation_id: string, guest_name: string, checkin_date: string, checkout_date: string, room_type: string, guest_count: int, total_price: float, payment_method: string, payment_date: string, status: string, ota_source: string}|null
+     * @return array[]|null Array of booking arrays, or null on failure
      */
     public function parseBookingEmail(string $emailBody, string $emailSubject = '', string $otaSource = ''): ?array
     {
@@ -48,7 +49,7 @@ class OpenRouterService
                         ['role' => 'user', 'content' => $prompt],
                     ],
                     'temperature' => 0.1,
-                    'max_tokens' => 2048,
+                    'max_tokens' => 4096,
                 ]);
 
             if (! $response->successful()) {
@@ -72,7 +73,19 @@ class OpenRouterService
                 return null;
             }
 
-            return $this->extractJson($content);
+            $parsed = $this->extractJson($content);
+
+            // Always return as array of bookings
+            if ($parsed === null) {
+                return null;
+            }
+
+            // If single object (associative), wrap in array
+            if (! isset($parsed[0]) || ! is_array($parsed[0])) {
+                return [$parsed];
+            }
+
+            return $parsed;
         } catch (\Exception $e) {
             Log::error('OpenRouter service exception: '.$e->getMessage(), [
                 'exception' => get_class($e),
@@ -90,15 +103,26 @@ class OpenRouterService
         return <<<PROMPT
 You are a hotel OTA booking parser. Extract booking info from the email below.
 
-Return ONLY valid JSON — no markdown, no explanation.
+Return ONLY valid JSON array — no markdown, no explanation.
 
-{"reservation_id":"","guest_name":"","checkin_date":"","checkout_date":"","room_type":"","guest_count":1,"total_price":0,"payment_method":"","payment_date":"","status":"confirmed","ota_source":"{$otaSource}"}
+Single room example:
+[{"reservation_id":"HTL-123","guest_name":"Budi Santoso","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"}]
+
+Multi-room example (2 rooms, different guest names):
+[
+  {"reservation_id":"HTL-456","guest_name":"Siti Rahma","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"},
+  {"reservation_id":"HTL-456","guest_name":"Ahmad Fauzi","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"}
+]
 
 Rules:
+- ALWAYS return an array, even for 1 room: [{...}]
 - status: cancelled|modified|confirmed
 - Dates: YYYY-MM-DD format
-- reservation_id = OTA booking reference number
-- total_price: find FINAL total (not per-night). Search: total, grand total, amount, total bayar/harga, Rp, IDR. Convert "500.000" to 500000. Default 0.
+- reservation_id = OTA booking reference number (same for all rooms in one booking)
+- guest_name = guest name for THIS room (if one name covers all, use same name for each room)
+- room_type = room type for THIS room
+- guest_count = number of guests for THIS room
+- total_price = price for THIS room (not total of all rooms). If only grand total given, divide by room count.
 - payment_method: tiket.com|traveloka.com|ota_payment|bank_transfer|credit_card|cash|"" (empty if unknown)
   * "pay at hotel" / "bayar di hotel" / unpaid → cash
   * OTA already collected (paid, confirmed payment) → OTA source name
@@ -251,6 +275,7 @@ PROMPT;
 
     /**
      * Extract and decode JSON from AI response.
+     * Handles both single objects ({...}) and arrays ([{...}]).
      */
     private function extractJson(string $content): ?array
     {
@@ -260,9 +285,17 @@ PROMPT;
             return $decoded;
         }
 
-        // Try to extract JSON from markdown code blocks
-        if (preg_match('/```(?:json)?\s*(\{.*?\})\s*```/s', $content, $matches)) {
+        // Try to extract JSON from markdown code blocks (array or object)
+        if (preg_match('/```(?:json)?\s*(\[.*\]|\{.*\})\s*```/s', $content, $matches)) {
             $decoded = json_decode($matches[1], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Try to find any JSON array in the content (greedy match from first [ to last ])
+        if (preg_match('/\[.*\]/s', $content, $matches)) {
+            $decoded = json_decode($matches[0], true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                 return $decoded;
             }

@@ -223,100 +223,126 @@ class ReadHotelEmailsCommand extends Command
                     continue;
                 }
 
-                // ═══ STEP 4: AI PARSING ═══
-                $aiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
+                // ═══ STEP 4: AI PARSING (returns array of bookings) ═══
+                $allAiData = $openRouter->parseBookingEmail($body, $subject, $otaSource);
 
-                if (! $aiData) {
+                if (! $allAiData || ! is_array($allAiData) || count($allAiData) === 0) {
                     $this->error('  ❌ AI parsing failed');
-                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI parsing returned null', $body);
-                    // Don't mark as seen — allow retry
+                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI parsing returned null/empty', $body);
                     $failed++;
 
                     continue;
                 }
 
-                $this->info("  ✅ AI: {$aiData['guest_name']} ({$aiData['reservation_id']})");
+                $roomCount = count($allAiData);
+                $this->info("  ✅ AI: {$roomCount} room(s) detected");
 
-                // ═══ STEP 5: VALIDATE AI OUTPUT ═══
-                if (! $this->validateAiOutput($aiData)) {
-                    $this->error('  ❌ AI output validation failed');
-                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI output validation failed', $body);
-                    $failed++;
+                // ═══ STEP 5-9: PROCESS EACH ROOM ═══
+                $successResults = [];
+                $roomErrors = [];
 
-                    continue;
+                foreach ($allAiData as $roomIndex => $aiData) {
+                    $roomLabel = $roomCount > 1 ? "  📍 Room #".($roomIndex + 1) : "";
+
+                    // Validate AI output for this room
+                    if (! $this->validateAiOutput($aiData)) {
+                        $this->error("  ❌ {$roomLabel} AI validation failed");
+                        $roomErrors[] = "Room #".($roomIndex + 1).": validation failed";
+                        continue;
+                    }
+
+                    $this->info("  ✅ AI: {$aiData['guest_name']} ({$aiData['reservation_id']}) {$roomLabel}");
+
+                    // Make ota_reservation_number unique per room
+                    $originalReservationId = $aiData['reservation_id'];
+                    if ($roomCount > 1) {
+                        $aiData['reservation_id'] = $originalReservationId . '/R' . ($roomIndex + 1);
+                    }
+
+                    // Dry-run check
+                    if ($dryRun) {
+                        $this->info("  🔍 Dry-run: not saving");
+                        $this->info("     → Would create: {$aiData['guest_name']}, {$aiData['checkin_date']} to {$aiData['checkout_date']}");
+                        continue;
+                    }
+
+                    // Check room availability
+                    $checkIn = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
+                    $checkOut = Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
+
+                    if ($checkIn->gte($checkOut)) {
+                        $this->error("  ❌ {$roomLabel}: Invalid dates");
+                        $roomErrors[] = "Room #".($roomIndex + 1).": invalid dates";
+                        continue;
+                    }
+
+                    $roomId = $sync->findAvailableRoom($aiData['room_type'] ?? null, $checkIn, $checkOut);
+
+                    if (! $roomId && ($aiData['status'] ?? '') !== 'cancelled') {
+                        $this->warn("  ⚠️ {$roomLabel}: No available room for type '{$aiData['room_type']}' — unassigned");
+                    }
+
+                    // Sync reservation
+                    $result = $sync->sync($aiData, $roomId);
+
+                    if (! $result['success']) {
+                        $this->error("  ❌ {$roomLabel}: Sync failed");
+                        $roomErrors[] = "Room #".($roomIndex + 1).": sync failed: ".($result['error'] ?? 'unknown');
+                        continue;
+                    }
+
+                    $reservation = $result['reservation'];
+                    $action = $result['action'];
+
+                    $roomInfo = $reservation->room
+                        ? "Room {$reservation->room->room_number}"
+                        : 'Room unassigned';
+
+                    $paymentInfo = '';
+                    if ($reservation->ota_reservation_number) {
+                        $paidStr = 'Rp '.number_format($reservation->paid_amount, 0, ',', '.');
+                        $totalStr = 'Rp '.number_format($reservation->total_amount, 0, ',', '.');
+                        $statusStr = str_replace('_', ' ', $reservation->ota_payment_status ?? 'unpaid_ota');
+                        $paymentInfo = " | {$paidStr}/{$totalStr} ({$statusStr})";
+                    }
+
+                    $this->info("  ✅ {$action}: {$reservation->reservation_number} ({$roomInfo}){$paymentInfo}");
+
+                    // Trigger notification
+                    $notifService = app(BookingNotificationService::class);
+                    match ($action) {
+                        'created' => $notifService->otaBookingCreated($reservation, $aiData, $otaSource),
+                        'updated' => $notifService->otaBookingUpdated($reservation, $aiData, $otaSource),
+                        'cancelled' => $notifService->otaBookingCancelled($reservation, $aiData, $otaSource),
+                        default => null,
+                    };
+
+                    $successResults[] = [
+                        'reservation' => $reservation,
+                        'action' => $action,
+                        'aiData' => $aiData,
+                        'originalReservationId' => $originalReservationId,
+                    ];
                 }
 
-                // ═══ STEP 6: DRY-RUN CHECK ═══
-                if ($dryRun) {
-                    $this->info('  🔍 Dry-run: not saving');
-                    $this->info("     → Would create: {$aiData['guest_name']}, {$aiData['checkin_date']} to {$aiData['checkout_date']}");
+                // ═══ STEP 10: SAVE UID + MARK AS READ ═══
+                if (count($successResults) > 0) {
+                    $imap->markAsSeen($message);
+                    $parser->markProcessed(
+                        $uid, $sender, $subject, $emailType, $otaSource,
+                        $successResults[0]['originalReservationId'] ?? ($allAiData[0]['reservation_id'] ?? null),
+                        $body
+                    );
+                    $processed++;
+                } elseif ($dryRun) {
                     $imap->markAsSeen($message);
                     $processed++;
-
-                    continue;
-                }
-
-                // ═══ STEP 7: CHECK ROOM AVAILABILITY (overbooking prevention) ═══
-                $checkIn = Carbon::parse($aiData['checkin_date'])->setTime(14, 0);
-                $checkOut = Carbon::parse($aiData['checkout_date'])->setTime(12, 0);
-
-                if ($checkIn->gte($checkOut)) {
-                    $this->error('  ❌ Invalid dates: check-in >= check-out');
-                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'Invalid dates: check-in >= check-out', $body);
+                } else {
+                    // All rooms failed
+                    $parser->markFailed($uid, $sender, $subject, $otaSource,
+                        'All rooms failed: ' . implode('; ', $roomErrors), $body);
                     $failed++;
-
-                    continue;
                 }
-
-                // Find available room by type (back-to-back aware)
-                $roomId = $sync->findAvailableRoom($aiData['room_type'] ?? null, $checkIn, $checkOut);
-
-                if (! $roomId && ($aiData['status'] ?? '') !== 'cancelled') {
-                    $this->warn("  ⚠️ No available room for type '{$aiData['room_type']}' — reservation will be unassigned");
-                }
-
-                // ═══ STEP 8: CREATE/UPDATE RESERVATION ═══
-                $result = $sync->sync($aiData, $roomId);
-
-                if (! $result['success']) {
-                    $this->error('  ❌ Sync failed');
-                    $parser->markFailed($uid, $sender, $subject, $otaSource, 'Sync failed: '.($result['error'] ?? 'unknown'), $body);
-                    $failed++;
-
-                    continue;
-                }
-
-                $reservation = $result['reservation'];
-                $action = $result['action'];
-
-                $roomInfo = $reservation->room
-                    ? "Room {$reservation->room->room_number}"
-                    : 'Room unassigned';
-
-                $paymentInfo = '';
-                if ($reservation->ota_reservation_number) {
-                    $paidStr = 'Rp '.number_format($reservation->paid_amount, 0, ',', '.');
-                    $totalStr = 'Rp '.number_format($reservation->total_amount, 0, ',', '.');
-                    $statusStr = str_replace('_', ' ', $reservation->ota_payment_status ?? 'unpaid_ota');
-                    $paymentInfo = " | {$paidStr}/{$totalStr} ({$statusStr})";
-                }
-
-                $this->info("  ✅ {$action}: {$reservation->reservation_number} ({$roomInfo}){$paymentInfo}");
-
-                // ═══ STEP 9: TRIGGER NOTIFICATION ═══
-                $notifService = app(BookingNotificationService::class);
-                match ($action) {
-                    'created' => $notifService->otaBookingCreated($reservation, $aiData, $otaSource),
-                    'updated' => $notifService->otaBookingUpdated($reservation, $aiData, $otaSource),
-                    'cancelled' => $notifService->otaBookingCancelled($reservation, $aiData, $otaSource),
-                    default => null,
-                };
-
-                // ═══ STEP 10: SAVE UID + MARK AS READ (atomic) ═══
-                $imap->markAsSeen($message);
-                $parser->markProcessed($uid, $sender, $subject, $emailType, $otaSource, $aiData['reservation_id'] ?? null, $body);
-
-                $processed++;
 
             } catch (\Exception $e) {
                 $this->error('  ❌ Error: '.$e->getMessage());

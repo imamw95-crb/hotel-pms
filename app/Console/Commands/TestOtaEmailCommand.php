@@ -105,17 +105,28 @@ class TestOtaEmailCommand extends Command
             $this->info('─── Step 3: AI Parsing (OpenRouter) ───');
             $this->info('⏳ Sending to AI...');
 
-            $aiData = $openRouter->parseBookingEmail($emailBody, $emailSubject, $otaSource);
+            $allAiData = $openRouter->parseBookingEmail($emailBody, $emailSubject, $otaSource);
 
-            if (! $aiData) {
+            if (! $allAiData || ! is_array($allAiData) || count($allAiData) === 0) {
                 $this->error('❌ AI parsing failed');
 
                 return self::FAILURE;
             }
 
-            $this->info('✅ AI parsing successful');
+            $roomCount = count($allAiData);
+            $this->info("✅ AI parsing successful — {$roomCount} room(s) detected");
             $this->newLine();
+
+            // Show first room's data in table
+            $aiData = $allAiData[0];
             $this->table(['Field', 'Value'], collect($aiData)->map(fn ($v, $k) => [$k, is_array($v) ? json_encode($v) : $v])->toArray());
+
+            if ($roomCount > 1) {
+                $this->newLine();
+                $this->info("ℹ️  Email contains {$roomCount} rooms. Showing first room above.");
+                $this->info("   Room #2: {$allAiData[1]['guest_name']} ({$allAiData[1]['room_type']}) " .
+                    ($allAiData[2] ?? false ? "| Room #3: {$allAiData[2]['guest_name']}" : ''));
+            }
         }
         $this->newLine();
 
