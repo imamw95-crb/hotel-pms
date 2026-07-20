@@ -1162,10 +1162,6 @@ class ReservationController extends Controller
         $transaction = Transaction::findOrFail($transactionId);
         $reservation = $transaction->reservation;
 
-        if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
-            return back()->with('error', 'Tidak bisa menghapus pembayaran untuk reservasi ini.');
-        }
-
         DB::beginTransaction();
         try {
             // Kurangi paid_amount
