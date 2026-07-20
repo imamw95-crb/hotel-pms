@@ -148,10 +148,18 @@
             @if(!$allLunas)
             <form action="{{ route('reservations.group-payment', $reservation->booking_group_id) }}" method="POST" data-ajax="true" data-confirm="Lakukan pelunasan untuk semua {{ $allGroup->count() }} kamar (total Rp {{ number_format($sisaGroup, 0, ',', '.') }})?">
                 @csrf
-                <input type="hidden" name="payment_method" value="{{ $reservation->payment_method ?? 'cash' }}">
-                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
-                    <i class="fas fa-credit-card"></i> Pelunasan Semua Kamar (Rp {{ number_format($sisaGroup, 0, ',', '.') }})
-                </button>
+                <div class="flex items-center gap-2">
+                    <select name="payment_method" class="border rounded px-2 py-1.5 text-sm" required>
+                        <option value="">-- Pilih Metode --</option>
+                        @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                        @foreach($paymentMethods as $pm)
+                            <option value="{{ $pm->slug }}" {{ $reservation->payment_method === $pm->slug ? 'selected' : '' }}>{{ $pm->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap">
+                        <i class="fas fa-credit-card"></i> Pelunasan Semua Kamar (Rp {{ number_format($sisaGroup, 0, ',', '.') }})
+                    </button>
+                </div>
             </form>
             @endif
             <a href="{{ route('reservations.group-invoice', $reservation->booking_group_id) }}" target="_blank"
