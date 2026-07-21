@@ -43,6 +43,10 @@ class NightAuditController extends Controller
             $data = $this->buildSnapshotData($date);
         } elseif ($snapshot && $snapshot->snapshot_data) {
             $data = $snapshot->snapshot_data;
+            // Normalize roomTypeSummary from array (JSON) → Collection of objects for consistent view rendering
+            if (isset($data['roomTypeSummary']) && is_array($data['roomTypeSummary'])) {
+                $data['roomTypeSummary'] = collect($data['roomTypeSummary'])->map(fn ($item) => (object) $item);
+            }
         }
 
         return view('reports.night-audit-v2.index', compact(
@@ -175,6 +179,10 @@ class NightAuditController extends Controller
         }
 
         $data = $auditLog->snapshot_data ?? [];
+        // Normalize roomTypeSummary from array (JSON) → Collection of objects
+        if (isset($data['roomTypeSummary']) && is_array($data['roomTypeSummary'])) {
+            $data['roomTypeSummary'] = collect($data['roomTypeSummary'])->map(fn ($item) => (object) $item);
+        }
         $date = $auditLog->audit_date->format('Y-m-d');
 
         return view('reports.night-audit-v2.locked', compact('auditLog', 'data', 'date'));
