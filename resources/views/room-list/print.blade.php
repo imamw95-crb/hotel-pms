@@ -49,7 +49,7 @@
         .report-date { text-align: center; font-size: 10px; color: #666; margin-bottom: 10px; }
 
         .summary-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
+            display: grid; grid-template-columns: repeat(3, 1fr);
             gap: 6px; margin-bottom: 12px;
         }
         .summary-card {
@@ -122,10 +122,6 @@
         <div class="summary-card blue">
             <div class="num">{{ $currentlyStaying->count() }}</div>
             <div class="label">In House</div>
-        </div>
-        <div class="summary-card amber">
-            <div class="num">{{ $upcoming->count() }}</div>
-            <div class="label">Akan Datang</div>
         </div>
     </div>
 
@@ -291,59 +287,6 @@
             @empty
             <tr>
                 <td colspan="9" style="text-align:center;padding:10px;color:#999;">Tidak ada tamu menginap</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    {{-- ──────────────────────────────────────────────── --}}
-    {{-- 4. AKAN DATANG --}}
-    {{-- ──────────────────────────────────────────────── --}}
-    <div class="section-title upcoming">
-        <i class="fas fa-calendar-alt"></i> Akan Datang
-        <span style="font-weight:normal;font-size:9px;color:#666;margin-left:6px;">({{ $upcoming->count() }} reservasi)</span>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:30px;">No</th>
-                <th>Reservasi</th>
-                <th>Tamu</th>
-                <th>Kamar</th>
-                <th>Tipe Kamar</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
-                <th>Malam</th>
-                <th>Sarapan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($upcoming as $i => $res)
-            <tr>
-                <td style="text-align:center;">{{ $i + 1 }}</td>
-                <td style="font-size:8px;">{{ $res->reservation_number }}</td>
-                <td>
-                    <strong>{{ $res->guest->guest_name ?? '-' }}</strong>
-                    @if($res->guest->phone)
-                        <br><span style="font-size:7px;color:#666;">{{ $res->guest->phone }}</span>
-                    @endif
-                </td>
-                <td><strong>{{ $res->room->room_number ?? '-' }}</strong></td>
-                <td>{{ $res->room->room_type_name ?? '-' }}</td>
-                <td>{{ $res->check_in ? $res->check_in->format('d/m/Y') : '-' }}</td>
-                <td>{{ $res->check_out ? $res->check_out->format('d/m/Y') : '-' }}</td>
-                <td style="text-align:center;">{{ $res->nights }}</td>
-                <td style="text-align:center;">
-                    @if($res->include_breakfast)
-                        <span class="badge badge-amber">Ya</span>
-                    @else
-                        <span style="color:#999;">—</span>
-                    @endif
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="9" style="text-align:center;padding:10px;color:#999;">Tidak ada reservasi mendatang</td>
             </tr>
             @endforelse
         </tbody>
