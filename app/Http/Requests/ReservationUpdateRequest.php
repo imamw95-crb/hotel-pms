@@ -22,10 +22,12 @@ class ReservationUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'guest_name'   => 'sometimes|string|max:255',
-            'guest_phone'  => 'nullable|string|max:20',
-            'guest_email'  => 'nullable|email|max:255',
-            'check_in'     => 'sometimes|date_format:Y-m-d',
+            'guest_name'             => 'sometimes|string|max:255',
+            'guest_phone'            => 'nullable|string|max:20',
+            'guest_email'            => 'nullable|email|max:255',
+            'guest_place_of_birth'   => 'nullable|string|max:100',
+            'guest_date_of_birth'    => 'nullable|date',
+            'check_in'               => 'sometimes|date_format:Y-m-d',
             'check_out'    => 'sometimes|date_format:Y-m-d|after:check_in',
             'guest_count'  => 'nullable|integer|min:1|max:10',
             'notes'        => 'nullable|string|max:1000',

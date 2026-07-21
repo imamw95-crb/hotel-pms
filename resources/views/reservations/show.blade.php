@@ -192,6 +192,8 @@
                 <div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">{{ $reservation->guest->id_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">{{ $reservation->guest->phone ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">{{ $reservation->guest->email ?? '-' }}</p></div>
+                <div><span class="text-gray-500 text-sm">Tempat Lahir</span><p class="font-medium">{{ $reservation->guest->place_of_birth ?? '-' }}</p></div>
+                <div><span class="text-gray-500 text-sm">Tanggal Lahir</span><p class="font-medium">{{ $reservation->guest->date_of_birth ? \Carbon\Carbon::parse($reservation->guest->date_of_birth)->format('d/m/Y') : '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">No. Reservasi OTA</span><p class="font-medium">{{ $reservation->ota_reservation_number ?? '-' }}</p></div>
                 <div><span class="text-gray-500 text-sm">Alamat</span><p class="font-medium">{{ $reservation->guest->address ?? '-' }}</p></div>
             </div>
@@ -218,6 +220,17 @@
                     <div>
                         <label class="block text-xs text-gray-500 mb-1">Email</label>
                         <input type="email" name="email" value="{{ $reservation->guest->email ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Tempat Lahir</label>
+                        <input type="text" name="place_of_birth" value="{{ $reservation->guest->place_of_birth ?? '' }}"
+                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Tempat lahir (opsional)">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Tanggal Lahir</label>
+                        <input type="date" name="date_of_birth" value="{{ $reservation->guest->date_of_birth ? \Carbon\Carbon::parse($reservation->guest->date_of_birth)->format('Y-m-d') : '' }}"
                             class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
@@ -289,6 +302,8 @@
                             '<div><span class="text-gray-500 text-sm">No. Identitas</span><p class="font-medium">' + (guest.id_number || '-') + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">Telepon</span><p class="font-medium">' + (guest.phone || '-') + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">Email</span><p class="font-medium">' + (guest.email || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">Tempat Lahir</span><p class="font-medium">' + (guest.place_of_birth || '-') + '</p></div>' +
+                            '<div><span class="text-gray-500 text-sm">Tanggal Lahir</span><p class="font-medium">' + (guest.date_of_birth || '-') + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">No. Reservasi OTA</span><p class="font-medium">' + otaNum + '</p></div>' +
                             '<div><span class="text-gray-500 text-sm">Alamat</span><p class="font-medium">' + (guest.address || '-') + '</p></div>';
 

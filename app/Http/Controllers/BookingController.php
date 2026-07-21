@@ -117,6 +117,8 @@ class BookingController extends Controller
             'dp_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'include_breakfast' => 'nullable|boolean',
+            'place_of_birth' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
         ]);
 
         $room = Room::findOrFail($validated['room_id']);
@@ -136,6 +138,8 @@ class BookingController extends Controller
                     'phone' => $validated['phone'] ?? null,
                     'email' => $validated['email'] ?? null,
                     'address' => $request->input('address') ?? null,
+                    'place_of_birth' => $validated['place_of_birth'] ?? null,
+                    'date_of_birth' => $validated['date_of_birth'] ?? null,
                 ]
             );
         } else {
@@ -144,6 +148,8 @@ class BookingController extends Controller
                 'phone' => $validated['phone'] ?? null,
                 'email' => $validated['email'] ?? null,
                 'address' => $request->input('address') ?? null,
+                'place_of_birth' => $validated['place_of_birth'] ?? null,
+                'date_of_birth' => $validated['date_of_birth'] ?? null,
             ]);
         }
 

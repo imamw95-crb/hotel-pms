@@ -275,11 +275,17 @@
     </td>
   </tr>
 
-  <!-- ROW: Date of Birth / Vehicle No -->
+  <!-- ROW: Place & Date of Birth / Vehicle No -->
   <tr>
     <td colspan="3">
-      <span class="lbl">Date of Birth / Tanggal Lahir</span>
-      <span class="wline"></span>
+      <span class="lbl">Place &amp; Date of Birth / Tempat &amp; Tgl. Lahir</span>
+      <span class="field-value">
+        @php
+          $pob = $reservation->guest->place_of_birth ?? '';
+          $dob = $reservation->guest->date_of_birth ? \Carbon\Carbon::parse($reservation->guest->date_of_birth)->format('d/m/Y') : '';
+        @endphp
+        {{ $pob }}{{ $pob && $dob ? ', ' : '' }}{{ $dob }}
+      </span>
     </td>
     <td colspan="2">
       <span class="lbl">No. of Vehicle / No. Kendaraan</span>

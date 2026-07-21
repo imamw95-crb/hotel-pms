@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <!-- Row 2: Nama Tamu, Identitas, Telepon -->
+        <!-- Row 2: Nama Tamu, Identitas, Telepon, Alamat -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Nama Tamu</label>
@@ -43,6 +43,18 @@
             <div>
                 <label class="block text-gray-700 font-bold mb-2">Alamat</label>
                 <input type="text" name="address" class="w-full border rounded px-3 py-2" placeholder="Alamat (opsional)">
+            </div>
+        </div>
+
+        <!-- Row 2b: Tempat Lahir, Tanggal Lahir -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tempat Lahir</label>
+                <input type="text" name="place_of_birth" class="w-full border rounded px-3 py-2" placeholder="Tempat lahir (opsional)">
+            </div>
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">Tanggal Lahir</label>
+                <input type="date" name="date_of_birth" class="w-full border rounded px-3 py-2">
             </div>
         </div>
 

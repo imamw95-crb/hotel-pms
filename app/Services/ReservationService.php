@@ -58,8 +58,10 @@ class ReservationService
                     'phone'      => $data['guest_phone'] ?? null,
                 ],
                 [
-                    'email'     => $data['guest_email'] ?? null,
-                    'id_number' => $data['guest_id_number'] ?? null,
+                    'email'           => $data['guest_email'] ?? null,
+                    'id_number'       => $data['guest_id_number'] ?? null,
+                    'place_of_birth'  => $data['guest_place_of_birth'] ?? null,
+                    'date_of_birth'   => $data['guest_date_of_birth'] ?? null,
                 ]
             );
 

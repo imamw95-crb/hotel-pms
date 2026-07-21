@@ -48,6 +48,8 @@ class GuestController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
             'address' => 'nullable|string',
+            'place_of_birth' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 
@@ -79,6 +81,8 @@ class GuestController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
             'address' => 'nullable|string',
+            'place_of_birth' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
 

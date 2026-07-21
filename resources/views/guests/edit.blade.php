@@ -43,6 +43,23 @@
             @enderror
         </div>
 
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-gray-700 mb-2">Tempat Lahir</label>
+                <input type="text" name="place_of_birth" value="{{ old('place_of_birth', $guest->place_of_birth) }}" class="w-full border rounded px-3 py-2" placeholder="Tempat lahir (opsional)">
+                @error('place_of_birth')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-gray-700 mb-2">Tanggal Lahir</label>
+                <input type="date" name="date_of_birth" value="{{ old('date_of_birth', $guest->date_of_birth) }}" class="w-full border rounded px-3 py-2">
+                @error('date_of_birth')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
         <div class="mb-4">
             <label class="block text-gray-700 mb-2">Alamat</label>
             <textarea name="address" class="w-full border rounded px-3 py-2" rows="3">{{ old('address', $guest->address) }}</textarea>

@@ -12,6 +12,7 @@ class Guest extends Model
 
     protected $fillable = [
         'guest_name', 'id_number', 'phone', 'email', 'address', 'notes',
+        'place_of_birth', 'date_of_birth',
     ];
 
     public function reservations(): HasMany

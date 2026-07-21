@@ -128,6 +128,8 @@ class ReservationApiController extends Controller
             'guest_name' => 'sometimes|string|max:255',
             'guest_phone' => 'nullable|string|max:20',
             'guest_email' => 'nullable|email|max:255',
+            'guest_place_of_birth' => 'nullable|string|max:100',
+            'guest_date_of_birth' => 'nullable|date',
             'check_in' => 'sometimes|date_format:Y-m-d',
             'check_out' => 'sometimes|date_format:Y-m-d|after:check_in',
             'guest_count' => 'nullable|integer|min:1|max:10',
@@ -138,12 +140,14 @@ class ReservationApiController extends Controller
         DB::beginTransaction();
         try {
             // Update guest info jika ada
-            if (isset($validated['guest_name']) || isset($validated['guest_phone']) || isset($validated['guest_email'])) {
+            if (isset($validated['guest_name']) || isset($validated['guest_phone']) || isset($validated['guest_email']) || isset($validated['guest_place_of_birth']) || isset($validated['guest_date_of_birth'])) {
                 $guest = $reservation->guest;
                 $guest->update(array_filter([
                     'guest_name' => $validated['guest_name'] ?? null,
                     'phone' => $validated['guest_phone'] ?? null,
                     'email' => $validated['guest_email'] ?? null,
+                    'place_of_birth' => $validated['guest_place_of_birth'] ?? null,
+                    'date_of_birth' => $validated['guest_date_of_birth'] ?? null,
                 ], fn ($v) => $v !== null));
             }
 

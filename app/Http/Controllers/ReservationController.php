@@ -1212,6 +1212,8 @@ class ReservationController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string|max:500',
+            'place_of_birth' => 'nullable|string|max:100',
+            'date_of_birth' => 'nullable|date',
             'ota_reservation_number' => 'nullable|string|max:100',
         ]);
 
