@@ -20,7 +20,7 @@ class NightAuditController extends Controller
      */
     public function index(Request $request)
     {
-        $date = $request->get('date', Carbon::today()->format('Y-m-d'));
+        $date = $request->get('date', Carbon::yesterday()->format('Y-m-d'));
         $auditLog = NightAuditLog::where('audit_date', $date)->first();
 
         $mode = 'preview';
@@ -59,7 +59,7 @@ class NightAuditController extends Controller
      */
     public function preview(Request $request)
     {
-        $date = $request->get('date', Carbon::today()->format('Y-m-d'));
+        $date = $request->get('date', Carbon::yesterday()->format('Y-m-d'));
         $data = $this->buildSnapshotData($date);
 
         if ($request->expectsJson()) {
@@ -84,7 +84,7 @@ class NightAuditController extends Controller
      */
     public function saveDraft(Request $request)
     {
-        $date = $request->get('date', Carbon::today()->format('Y-m-d'));
+        $date = $request->get('date', Carbon::yesterday()->format('Y-m-d'));
         $data = $this->buildSnapshotData($date);
 
         NightAuditLog::updateOrCreate(
@@ -119,7 +119,7 @@ class NightAuditController extends Controller
      */
     public function lock(Request $request)
     {
-        $date = $request->get('date', Carbon::today()->format('Y-m-d'));
+        $date = $request->get('date', Carbon::yesterday()->format('Y-m-d'));
         $data = $this->buildSnapshotData($date);
 
         NightAuditLog::updateOrCreate(
