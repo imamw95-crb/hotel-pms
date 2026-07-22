@@ -242,7 +242,7 @@
     <!-- QR Code -->
     @php
         $firstReservation = $reservations->first();
-        $invoiceUrl = $firstReservation ? url('/invoice/' . $firstReservation->reservation_number) : '#';
+        $invoiceUrl = $firstReservation ? config('app.url') . '/invoice/' . $firstReservation->reservation_number : '#';
     @endphp
     <div style="text-align: center; margin: 15px 0; padding: 10px; border-top: 1px solid #ddd;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($invoiceUrl) }}"
