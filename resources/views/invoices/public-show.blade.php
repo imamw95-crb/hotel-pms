@@ -636,12 +636,10 @@
                             @elseif($txnOts && $txnOts['status'] === 'confirming')
                                 <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-semibold tracking-wide" title="Telah di-timestamp, menunggu blockchain">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    TIMESTAMPED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'pending')
                                 <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Telah di-timestamp">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    TIMESTAMPED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'tampered')
                                 <span class="inline-flex items-center gap-1 text-red-500 text-[10px] font-medium">
