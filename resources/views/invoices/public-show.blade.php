@@ -15,7 +15,42 @@
         body { font-family: 'Inter', system-ui, sans-serif; }
         @media print {
             .no-print { display: none !important; }
-            body { font-size: 11px; }
+            body { font-size: 8px; padding: 0; margin: 0; }
+            .print-compact { padding: 0 !important; margin: 0 !important; }
+            .print-compact .p-2\.5 { padding: 3px 4px !important; }
+            .print-compact .p-3\.5 { padding: 4px 6px !important; }
+            .print-compact .p-2 { padding: 2px 4px !important; }
+            .print-compact .py-1\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
+            .print-compact .py-0\.5 { padding-top: 0px !important; padding-bottom: 0px !important; }
+            .print-compact .mb-5 { margin-bottom: 3px !important; }
+            .print-compact .mb-6 { margin-bottom: 4px !important; }
+            .print-compact .pb-5 { padding-bottom: 3px !important; }
+            .print-compact .pb-2 { padding-bottom: 1px !important; }
+            .print-compact .gap-4 { gap: 3px !important; }
+            .print-compact .mt-6 { margin-top: 4px !important; }
+            .print-compact .pt-4 { padding-top: 3px !important; }
+            .print-compact .border-b { border-bottom-width: 0.5px !important; }
+            .print-compact table { font-size: 7px !important; }
+            .print-compact th { font-size: 6.5px !important; padding: 2px 4px !important; }
+            .print-compact td { padding: 1px 4px !important; }
+            .print-compact .w-56 { width: 180px !important; }
+            .print-compact h1 { font-size: 13px !important; }
+            .print-compact h2 { font-size: 11px !important; }
+            .print-compact .h-10 { height: 24px !important; }
+            .print-compact .mb-2\.5 { margin-bottom: 2px !important; }
+            .print-compact .text-sm { font-size: 7px !important; }
+            .print-compact .text-xs { font-size: 6.5px !important; }
+            .print-compact .text-\[11px\] { font-size: 6.5px !important; }
+            .print-compact .text-\[10px\] { font-size: 6px !important; }
+            .print-compact .leading-relaxed { line-height: 1.2 !important; }
+            .print-compact .tracking-wide { letter-spacing: 0.3px !important; }
+            .print-compact .tracking-wider { letter-spacing: 0.3px !important; }
+            .print-compact .rounded-xl { border-radius: 0 !important; }
+            .print-compact .rounded-lg { border-radius: 0 !important; }
+            .print-compact .border { border-width: 0.5px !important; }
+            .print-compact .shadow-sm, .print-compact .shadow { box-shadow: none !important; }
+            .print-compact .gap-3 { gap: 2px !important; }
+            .print-compact img.h-10 { margin-bottom: 1px !important; }
         }
         .crypto-card {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -213,7 +248,7 @@
 
     <!-- Invoice Content -->
     <div class="max-w-4xl mx-auto mb-8 px-4 sm:px-6">
-        <div class="bg-white rounded-xl invoice-card print:shadow-none print:rounded-none print:p-6">
+        <div class="bg-white rounded-xl invoice-card print:shadow-none print:rounded-none print:!p-2 print-compact">
             <!-- Header -->
             <div class="flex justify-between items-start border-b border-slate-200 pb-5 mb-6 invoice-header">
                 <div>
