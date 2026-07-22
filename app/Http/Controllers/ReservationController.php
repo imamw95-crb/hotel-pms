@@ -12,6 +12,7 @@ use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
 use App\Services\OpenRouterService;
+use App\Services\OpenTimestampService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -186,10 +187,12 @@ class ReservationController extends Controller
                 $reservation->ota_paid_amount = $otaPaidAmount;
             }
 
+            $otsService = app(OpenTimestampService::class);
+
             // 2. Buat transaction untuk OTA payment (jika ada)
             if ($otaPaidAmount > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
-                Transaction::create([
+                $otaTxn = Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $otaTxnType,
@@ -199,11 +202,13 @@ class ReservationController extends Controller
                     'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
                     'created_by' => auth()->id(),
                 ]);
+                // 🔐 OTS: Timestamp receipt OTA
+                $otsService->timestampTransaction($otaTxn);
             }
 
             // 3. Buat transaction untuk hotel payment (jika ada)
             if ($hotelAmount > 0) {
-                Transaction::create([
+                $hotelTxn = Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $validated['payment_type'],
@@ -212,14 +217,21 @@ class ReservationController extends Controller
                     'source_type' => $sourceType,
                     'created_by' => auth()->id(),
                 ]);
+                // 🔐 OTS: Timestamp receipt pembayaran (DP/Pelunasan/Tambahan)
+                $otsService->timestampTransaction($hotelTxn);
             }
 
             // 4. Update paid_amount di reservasi (OTA + Hotel)
             $reservation->paid_amount += ($otaPaidAmount + $hotelAmount);
 
-            // 5. Jika sudah lunas, update paid_date
+            // 5. Jika sudah lunas, update paid_date & timestamp final invoice
             if ($reservation->paid_amount >= $reservation->total_amount) {
                 $reservation->paid_date = now();
+                // 🔐 OTS: Timestamp final invoice
+                $otsService->timestampInvoice($reservation, 'final');
+            } else {
+                // 🔐 OTS: Reset proof lama karena data berubah (DP/Tambahan)
+                $otsService->resetInvoiceProof($reservation);
             }
 
             // 6. Update payment method
@@ -855,6 +867,8 @@ class ReservationController extends Controller
         // Cari source_type dari payment method yang dipilih
         $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
 
+        $otsService = app(OpenTimestampService::class);
+
         DB::beginTransaction();
         try {
             $totalPaid = 0;
@@ -870,7 +884,7 @@ class ReservationController extends Controller
                 $totalSisa += $sisa;
 
                 // Buat transaksi pelunasan
-                Transaction::create([
+                $txn = Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $res->id,
                     'type' => 'pelunasan',
@@ -881,11 +895,17 @@ class ReservationController extends Controller
                     'created_by' => auth()->id(),
                 ]);
 
+                // 🔐 OTS: Timestamp receipt pelunasan
+                $otsService->timestampTransaction($txn);
+
                 // Update paid_amount
                 $res->paid_amount += $sisa;
                 $res->paid_date = now();
                 $res->payment_method = $validated['payment_method'];
                 $res->save();
+
+                // 🔐 OTS: Timestamp final invoice
+                $otsService->timestampInvoice($res, 'final');
 
                 $totalPaid += $sisa;
                 $paidCount++;
@@ -1032,6 +1052,7 @@ class ReservationController extends Controller
         $oldAmount = $reservation->total_amount;
         $reservation->total_amount = $validated['total_amount'];
         $reservation->invoice_signature = null;
+        app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
         return response()->json([
@@ -1068,6 +1089,7 @@ class ReservationController extends Controller
 
         $reservation->total_amount = $newTotal;
         $reservation->invoice_signature = null;
+        app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
         return response()->json([
@@ -1169,6 +1191,7 @@ class ReservationController extends Controller
             $reservation->check_out = $newCheckOut;
             $reservation->total_amount = $newTotal;
             $reservation->invoice_signature = null;
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
             $reservation->saveQuietly();
 
             // Catat transaction sebagai riwayat perubahan tanggal
@@ -1234,6 +1257,7 @@ class ReservationController extends Controller
         // Simpan ota_reservation_number ke reservation
         $reservation->ota_reservation_number = $validated['ota_reservation_number'] ?? null;
         $reservation->invoice_signature = null;
+        app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
         if ($request->expectsJson()) {
@@ -1295,6 +1319,7 @@ class ReservationController extends Controller
             $reservation->total_amount += $additionalAmount;
             $reservation->check_out = $newCheckOut;
             $reservation->invoice_signature = null;
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
             $reservation->saveQuietly();
 
             // Catat transaction untuk extend (opsional, sebagai riwayat)
@@ -1467,6 +1492,11 @@ class ReservationController extends Controller
             }
 
             $reservation->save();
+
+            // Reset OTS untuk transaction & invoice karena data berubah
+            app(OpenTimestampService::class)->resetTransactionProof($transaction);
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+
             DB::commit();
 
             if (request()->expectsJson()) {
@@ -1507,6 +1537,11 @@ class ReservationController extends Controller
             }
 
             $reservation->save();
+
+            // Reset OTS untuk transaction & invoice karena data berubah
+            app(OpenTimestampService::class)->resetTransactionProof($transaction);
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+
             $transaction->delete();
             DB::commit();
 

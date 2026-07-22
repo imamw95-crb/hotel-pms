@@ -59,6 +59,8 @@ Route::get('/tv/{room}/status', [TvController::class, 'status'])->name('tv.statu
 
 // Public Invoice — lihat invoice online via QR code / link (tanpa auth)
 Route::get('/invoice/{reservationNumber}', [App\Http\Controllers\InvoiceController::class, 'publicShow'])->name('invoice.public');
+Route::get('/invoice/{reservationNumber}/ots-proof', [App\Http\Controllers\InvoiceController::class, 'downloadOtsProof'])->name('invoice.ots-proof');
+Route::get('/invoice/{reservationNumber}/ots-proof/transaction/{transactionId}', [App\Http\Controllers\InvoiceController::class, 'downloadTransactionOtsProof'])->name('invoice.ots-proof.transaction');
 
 // Dashboard shortcut
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard');

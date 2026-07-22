@@ -72,4 +72,15 @@ return [
         'whitelist_senders' => env('OTA_WHITELIST_SENDERS', 'info.partner@tiket.com,hotel@traveloka.com'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | OpenTimestamps Configuration
+    |--------------------------------------------------------------------------
+    */
+    'opentimestamps' => [
+        'enabled' => env('OTS_ENABLED', true),
+        'calendar' => env('OTS_CALENDAR', 'https://a.pool.opentimestamps.org'),
+        'bin_path' => env('OTS_BIN_PATH', 'ots'),
+    ],
+
 ];

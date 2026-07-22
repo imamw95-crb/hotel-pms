@@ -244,7 +244,7 @@
         </div>
     </div>
 
-    <!-- QR Code — dengan HMAC Signature (short) -->
+    <!-- QR Code — dengan HMAC Signature (short) + OTS -->
     @php
         $firstReservation = $reservations->first();
         if ($firstReservation) {
@@ -252,6 +252,11 @@
             if (!$firstReservation->invoice_signature) {
                 $firstReservation->invoice_signature = $sigService->generate($firstReservation);
                 $firstReservation->saveQuietly();
+            }
+            // 🔐 OTS: Timestamp invoice saat pertama dicetak (jika belum)
+            if (!$firstReservation->ots_proof) {
+                app(\App\Services\OpenTimestampService::class)->timestampInvoice($firstReservation, 'issued');
+                $firstReservation->refresh();
             }
             $baseUrl = config('app.url');
             $shortSig = substr($firstReservation->invoice_signature, 0, 16);
