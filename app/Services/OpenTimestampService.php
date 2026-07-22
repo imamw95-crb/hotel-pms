@@ -608,7 +608,7 @@ class OpenTimestampService
             'message' => $match
                 ? match ($otsStatus) {
                     InvoiceTimestamp::STATUS_CONFIRMED => 'Dokumen telah di-timestamp blockchain dan tidak berubah.',
-                    InvoiceTimestamp::STATUS_CONFIRMING => 'Proof telah dikirim ke calendar, menunggu konfirmasi block Bitcoin.',
+                    InvoiceTimestamp::STATUS_CONFIRMING => 'Proof telah dikirim ke calendar, menunggu konfirmasi block.',
                     InvoiceTimestamp::STATUS_FAILED => 'Proof gagal dikonfirmasi, akan dicoba ulang oleh sistem.',
                     default => 'Hash cocok, menunggu proses stamping ke blockchain.',
                 }

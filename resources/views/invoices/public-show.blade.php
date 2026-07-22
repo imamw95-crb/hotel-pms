@@ -146,7 +146,7 @@
                         <p class="text-[10px] font-semibold uppercase tracking-widest {{ $otsConfirmed ? 'text-emerald-300/70' : ($otsConfirming ? 'text-blue-300/70' : ($otsPending ? 'text-amber-300/70' : ($otsTampered ? 'text-red-300/70' : 'text-slate-400/70'))) }}">🔐 Digital Timestamp</p>
                         <p class="text-sm font-semibold {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">
                             @if($otsConfirmed)
-                                Verified on Bitcoin Blockchain
+                                Verified on Blockchain
                             @elseif($otsConfirming)
                                 Blockchain Proof Active
                             @elseif($otsPending)
@@ -209,9 +209,9 @@
                             </div>
                             <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsConfirming ? 'text-blue-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60'))) }} mt-0.5 leading-relaxed">
                                 @if($otsConfirmed)
-                                    Timestamp telah dikonfirmasi di Bitcoin Blockchain.
+                                    Timestamp telah dikonfirmasi di Blockchain.
                                 @elseif($otsConfirming)
-                                    Dokumen telah di-timestamp, bukti sedang dikirim ke blockchain Bitcoin.
+                                    Dokumen telah di-timestamp, bukti sedang dikirim ke blockchain publik.
                                 @elseif($otsPending)
                                     Proof telah dibuat, menunggu proses stamping ke blockchain.
                                 @elseif($otsTampered)
@@ -246,7 +246,7 @@
                             <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Blockchain</span>
                         </div>
-                        <p class="text-[11px] text-slate-300 font-medium">Bitcoin</p>
+                        <p class="text-[11px] text-slate-300 font-medium">Bitcoin Blockchain</p>  {{-- Teknis: blockchain yg digunakan --}}
                     </div>
 
                     {{-- Calendar --}}
@@ -274,7 +274,7 @@
                     <div class="p-2.5 rounded-lg bg-slate-800/20">
                         <div class="flex items-center gap-1.5 mb-1">
                             <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Bitcoin Block</span>
+                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Block Height</span>
                         </div>
                         <p class="text-[11px] text-slate-300 font-mono">{{ number_format($otsData['bitcoin_block']) }}</p>
                     </div>
@@ -285,7 +285,7 @@
                     <div class="p-2.5 rounded-lg bg-slate-800/20">
                         <div class="flex items-center gap-1.5 mb-1">
                             <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Bitcoin TX</span>
+                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">TX Hash</span>
                         </div>
                         <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-400 hover:text-indigo-300 truncate block transition">
                             {{ substr($otsData['bitcoin_txid'], 0, 20) }}...
@@ -312,7 +312,7 @@
                         @if($otsData && $otsData['bitcoin_txid'])
                         <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 text-[10px] font-medium transition">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            Verify on Blockchain
+                            Verify on Explorer
                         </a>
                         @endif
 
