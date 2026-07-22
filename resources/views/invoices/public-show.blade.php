@@ -610,14 +610,14 @@
                         <td class="p-3 border-b border-slate-100 text-right font-medium text-slate-700">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>
                         <td class="p-3 border-b border-slate-100 text-center">
                             @if($txnOts && $txnOts['status'] === 'verified')
-                                <span class="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-medium" title="Verified on blockchain {{ \Carbon\Carbon::parse($txnOts['timestamp']['confirmed_at'] ?? $txnOts['timestamped_at'])->format('d/m/Y H:i') }}">
+                                <span class="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-semibold tracking-wide" title="Verified on blockchain">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    Verified
+                                    VERIFIED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'confirming')
-                                <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-medium" title="Telah di-timestamp, menunggu blockchain">
+                                <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-semibold tracking-wide" title="Telah di-timestamp, menunggu blockchain">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Timestamped
+                                    TIMESTAMPED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'pending')
                                 <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Menunggu proses stamping">
