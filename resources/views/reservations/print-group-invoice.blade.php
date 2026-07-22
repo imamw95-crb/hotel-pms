@@ -492,7 +492,6 @@
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($invoiceUrl) }}"
                          alt="QR Code"
                          class="inline-block" style="width:60px; height:60px;">
-                    <p class="text-[9px] text-slate-400 mt-1">Scan for online invoice</p>
                 </div>
             </div>
 
