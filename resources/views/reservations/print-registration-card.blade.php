@@ -212,27 +212,23 @@
     </td>
   </tr>
 
-  <!-- ROW 2: No. of Guest / Room Type / Room Rate / Room No / Conf. No -->
+  <!-- ROW 2: No. of Guest / Room Type / Room No / Conf. No -->
   <tr>
     <td style="width:14%">
       <span class="lbl">No. of Guest</span>
       <span class="lbl-id">Jumlah Tamu</span>
       <span class="wline"></span>
     </td>
-    <td style="width:22%">
+    <td style="width:32%">
       <span class="lbl">Room Type / Jenis Kamar</span>
       <span class="field-value">{{ $reservation->room->room_type_name ?? '' }}</span>
-    </td>
-    <td style="width:20%">
-      <span class="lbl">Room Rate / Tarif Kamar</span>
-      <span class="field-value">{{ $reservation->custom_room_rate ? 'Rp '.number_format($reservation->custom_room_rate, 0, ',', '.') : ($reservation->total_amount ? 'Rp '.number_format($reservation->total_amount, 0, ',', '.') : '') }}</span>
     </td>
     <td style="width:14%">
       <span class="lbl">Room No.</span>
       <span class="lbl-id">No. Kamar</span>
       <span class="field-value">{{ $reservation->room->room_number ?? '' }}</span>
     </td>
-    <td style="width:30%">
+    <td style="width:40%">
       <span class="lbl">Conf. No. / No. Konfirmasi</span>
       <span class="field-value">{{ $reservation->reservation_number }}</span>
     </td>
