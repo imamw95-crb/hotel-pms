@@ -471,29 +471,8 @@
             </div>
             @endif
 
-            <!-- QR Code + Signature Section -->
+            <!-- QR Code -->
             <div class="border-t border-slate-200 pt-4 mt-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 sign-section">
-                    <div class="text-center">
-                        <p class="text-xs text-slate-500 mb-1">Diterima Oleh</p>
-                        <div class="border-t border-slate-300 mt-8 pt-1">
-                            <p class="text-[10px] text-slate-400">( _____________ )</p>
-                        </div>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-slate-500 mb-1">Hormat Kami</p>
-                        <div class="border-t border-slate-300 mt-8 pt-1">
-                            <p class="text-[10px] text-slate-400">( _____________ )</p>
-                        </div>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-slate-500 mb-1">Mengetahui</p>
-                        <div class="border-t border-slate-300 mt-8 pt-1">
-                            <p class="text-[10px] text-slate-400">( _____________ )</p>
-                        </div>
-                    </div>
-                </div>
-
                 {{-- QR Code --}}
                 @php
                     if ($firstReservation) {
