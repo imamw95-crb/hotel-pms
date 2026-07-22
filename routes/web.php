@@ -58,13 +58,23 @@ Route::get('/tv/{room}', [TvController::class, 'welcome'])->name('tv.welcome');
 Route::get('/tv/{room}/status', [TvController::class, 'status'])->name('tv.status');
 
 // Public Invoice — lihat invoice online via QR code / link (tanpa auth)
-Route::get('/invoice/{reservationNumber}', [App\Http\Controllers\InvoiceController::class, 'publicShow'])->name('invoice.public');
-Route::get('/invoice/{reservationNumber}/ots-proof', [App\Http\Controllers\InvoiceController::class, 'downloadOtsProof'])->name('invoice.ots-proof');
-Route::get('/invoice/{reservationNumber}/ots-proof/transaction/{transactionId}', [App\Http\Controllers\InvoiceController::class, 'downloadTransactionOtsProof'])->name('invoice.ots-proof.transaction');
+Route::get('/invoice/{reservationNumber}', [App\Http\Controllers\InvoiceController::class, 'publicShow'])
+    ->middleware('throttle:10,1')
+    ->name('invoice.public');
+Route::get('/invoice/{reservationNumber}/ots-proof', [App\Http\Controllers\InvoiceController::class, 'downloadOtsProof'])
+    ->middleware('throttle:10,1')
+    ->name('invoice.ots-proof');
+Route::get('/invoice/{reservationNumber}/ots-proof/transaction/{transactionId}', [App\Http\Controllers\InvoiceController::class, 'downloadTransactionOtsProof'])
+    ->middleware('throttle:10,1')
+    ->name('invoice.ots-proof.transaction');
 
 // ── OpenTimestamps — Download & Verify ──
-Route::get('/invoice/{reservationNumber}/ots/download', [App\Http\Controllers\OpenTimestampWebController::class, 'downloadInvoiceOts'])->name('invoice.ots.download');
-Route::get('/invoice/{reservationNumber}/ots/download/transaction/{transactionId}', [App\Http\Controllers\OpenTimestampWebController::class, 'downloadTransactionOts'])->name('invoice.ots.download.transaction');
+Route::get('/invoice/{reservationNumber}/ots/download', [App\Http\Controllers\OpenTimestampWebController::class, 'downloadInvoiceOts'])
+    ->middleware('throttle:10,1')
+    ->name('invoice.ots.download');
+Route::get('/invoice/{reservationNumber}/ots/download/transaction/{transactionId}', [App\Http\Controllers\OpenTimestampWebController::class, 'downloadTransactionOts'])
+    ->middleware('throttle:10,1')
+    ->name('invoice.ots.download.transaction');
 Route::get('/ots/verify/{sha256}', [App\Http\Controllers\OpenTimestampWebController::class, 'publicVerify'])->name('ots.verify');
 
 // Dashboard shortcut
