@@ -244,7 +244,7 @@
         </div>
     </div>
 
-    <!-- QR Code — dengan HMAC Signature -->
+    <!-- QR Code — dengan HMAC Signature (short) -->
     @php
         $firstReservation = $reservations->first();
         if ($firstReservation) {
@@ -253,13 +253,15 @@
                 $firstReservation->invoice_signature = $sigService->generate($firstReservation);
                 $firstReservation->saveQuietly();
             }
-            $invoiceUrl = url('/invoice/' . $firstReservation->reservation_number . '?sig=' . $firstReservation->invoice_signature);
+            $baseUrl = config('app.url');
+            $shortSig = substr($firstReservation->invoice_signature, 0, 16);
+            $invoiceUrl = $baseUrl . '/invoice/' . $firstReservation->reservation_number . '?sig=' . $shortSig;
         } else {
             $invoiceUrl = '#';
         }
     @endphp
     <div style="text-align: center; margin: 8px 0 5px;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode($invoiceUrl) }}"
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($invoiceUrl) }}"
              alt="QR Code"
              style="width:60px; height:60px;">
         <p style="font-size: 8px; color: #999; margin-top: 1px;">Scan invoice online</p>

@@ -28,7 +28,9 @@ class InvoiceController extends Controller
         $signatureStatus = 'no_signature';
 
         if ($signature && $reservation->invoice_signature) {
-            $isValid = $signatureService->verify($reservation, $signature);
+            // Bandingkan 16 karakter pertama (short signature di QR)
+            $storedShort = substr($reservation->invoice_signature, 0, 16);
+            $isValid = hash_equals($storedShort, $signature);
             $signatureStatus = $isValid ? 'valid' : 'invalid';
         }
 
