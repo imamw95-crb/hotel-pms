@@ -210,7 +210,7 @@ class ReportController extends Controller
         $endDate = $request->get('end_date', Carbon::today()->format('Y-m-d'));
         $command = $request->get('command', 'all');
 
-        $query = MHSLog::with(['reservation.room', 'creator'])
+        $query = MHSLog::with(['reservation.room', 'createdBy'])
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate);
 

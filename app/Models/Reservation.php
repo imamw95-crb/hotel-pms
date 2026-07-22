@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\Blameable;
 
 class Reservation extends Model
 {
     use HasFactory;
+    use Blameable;
 
     // ========== STATUS CONSTANTS ==========
     /** Status yang menganggap kamar masih terpakai (mencegah double-booking) */

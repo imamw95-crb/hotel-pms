@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class ServiceCharge extends Model
 {
+    use Blameable;
+
     protected $table = 'service_charges';
 
     protected $fillable = [

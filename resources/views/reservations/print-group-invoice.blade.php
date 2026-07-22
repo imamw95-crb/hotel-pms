@@ -231,16 +231,16 @@
     <!-- Signature -->
     <div class="sign-section" style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
         <div class="sign-box" style="text-align: center; width: 30%;">
-            <p>Diterima Oleh</p>
-            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;"></div>
+            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;">Dibuat Oleh</div>
+            <p style="font-size:10px; color:#999;">{{ $reservations->first()->createdBy->name ?? '-' }}</p>
         </div>
         <div class="sign-box" style="text-align: center; width: 30%;">
-            <p>Hormat Kami</p>
-            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;"></div>
+            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;">Diterima Oleh</div>
+            <p style="font-size:10px; color:#999;">{{ $reservations->first()->guest->guest_name ?? '-' }}</p>
         </div>
         <div class="sign-box" style="text-align: center; width: 30%;">
-            <p>Mengetahui</p>
-            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;"></div>
+            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;">DwiPurnamasari</div>
+            <p style="font-size:10px; color:#999;">&nbsp;</p>
         </div>
     </div>
 

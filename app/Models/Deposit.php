@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class Deposit extends Model
 {
+    use Blameable;
+
     protected $fillable = [
         'receipt_number', 'guest_id', 'reservation_id', 'number_of_cards',
         'nominal_per_card', 'total_amount', 'payment_method', 'notes', 'status', 'created_by',

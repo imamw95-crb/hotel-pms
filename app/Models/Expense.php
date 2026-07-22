@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class Expense extends Model
 {
     use HasFactory;
+    use Blameable;
 
     protected $fillable = [
         'expense_number', 'description', 'amount',

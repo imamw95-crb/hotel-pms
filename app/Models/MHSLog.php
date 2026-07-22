@@ -3,16 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class MHSLog extends Model
 {
+    use Blameable;
+
     protected $table = 'mhs_logs';
 
     protected $fillable = [
         'command', 'reservation_id', 'created_by', 'request_data', 'response_data', 'success', 'error_message',
     ];
 
-    public function creator()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }

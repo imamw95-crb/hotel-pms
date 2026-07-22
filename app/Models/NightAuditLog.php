@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class NightAuditLog extends Model
 {
+    use Blameable;
+
     protected $fillable = [
         'audit_date', 'status',
         'total_rooms', 'occupied_rooms', 'available_rooms', 'maintenance_rooms', 'occupancy_rate',

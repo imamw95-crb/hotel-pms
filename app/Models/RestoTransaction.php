@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\Blameable;
 
 class RestoTransaction extends Model
 {
+    use Blameable;
+
     protected $table = 'resto_transactions';
 
     protected $fillable = [

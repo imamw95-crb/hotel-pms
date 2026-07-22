@@ -28,7 +28,7 @@ class IssueCardController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get();
-        $recentLogs = MHSLog::with(['reservation.room', 'creator'])
+        $recentLogs = MHSLog::with(['reservation.room', 'createdBy'])
             ->orderBy('created_at', 'desc')
             ->limit(20)
             ->get();
