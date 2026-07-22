@@ -5,43 +5,44 @@
     <title>Invoice - {{ $reservation->reservation_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 12px; padding: 30px; max-width: 210mm; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
-        .hotel-info h1 { font-size: 24px; color: #1a365d; }
-        .hotel-info p { font-size: 11px; color: #666; margin: 2px 0; }
+        body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; max-width: 210mm; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .hotel-info h1 { font-size: 22px; color: #1a365d; }
+        .hotel-info p { font-size: 10px; color: #666; margin: 1px 0; }
         .invoice-info { text-align: right; }
-        .invoice-info h2 { font-size: 18px; color: #c53030; }
-        .invoice-info p { font-size: 11px; margin: 2px 0; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .details-box { border: 1px solid #ddd; padding: 10px; border-radius: 4px; }
-        .details-box h3 { font-size: 12px; color: #1a365d; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
-        .details-box table { width: 100%; font-size: 11px; }
-        .details-box td { padding: 2px 0; }
+        .invoice-info h2 { font-size: 16px; color: #c53030; }
+        .invoice-info p { font-size: 10px; margin: 1px 0; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 12px; }
+        .details-box { border: 1px solid #ddd; padding: 8px; border-radius: 4px; }
+        .details-box h3 { font-size: 11px; color: #1a365d; border-bottom: 1px solid #eee; padding-bottom: 3px; margin-bottom: 5px; }
+        .details-box table { width: 100%; font-size: 10px; }
+        .details-box td { padding: 1px 0; }
         .details-box td:first-child { color: #666; width: 40%; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        .items-table th { background: #1a365d; color: #fff; padding: 8px; text-align: left; font-size: 11px; }
-        .items-table td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        .items-table th { background: #1a365d; color: #fff; padding: 5px 6px; text-align: left; font-size: 10px; }
+        .items-table td { padding: 4px 6px; border-bottom: 1px solid #eee; font-size: 10px; }
         .items-table .text-right { text-align: right; }
-        .summary { width: 200px; margin-left: auto; margin-bottom: 20px; }
-        .summary table { width: 100%; font-size: 12px; }
-        .summary td { padding: 4px 8px; }
+        .summary { width: 200px; margin-left: auto; margin-bottom: 8px; }
+        .summary table { width: 100%; font-size: 11px; }
+        .summary td { padding: 2px 6px; }
         .summary td:first-child { text-align: right; color: #666; }
         .summary td:last-child { text-align: right; font-weight: bold; }
-        .summary .grand-total { background: #1a365d; color: #fff; font-size: 14px; }
-        .summary .grand-total td { padding: 8px; }
-        .payment-history { margin-bottom: 20px; }
-        .payment-history h3 { font-size: 12px; color: #1a365d; margin-bottom: 8px; }
-        .payment-history table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .payment-history th { background: #f0f0f0; padding: 6px 8px; text-align: left; border: 1px solid #ddd; }
-        .payment-history td { padding: 5px 8px; border: 1px solid #ddd; }
+        .summary .grand-total { background: #1a365d; color: #fff; font-size: 12px; }
+        .summary .grand-total td { padding: 5px 6px; }
+        .payment-history { margin-bottom: 10px; }
+        .payment-history h3 { font-size: 11px; color: #1a365d; margin-bottom: 5px; }
+        .payment-history table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .payment-history th { background: #f0f0f0; padding: 4px 6px; text-align: left; border: 1px solid #ddd; }
+        .payment-history td { padding: 3px 6px; border: 1px solid #ddd; }
         .payment-history .text-right { text-align: right; }
-        .sign-section { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
-        .sign-box { text-align: center; width: 30%; }
-        .sign-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 5px; font-size: 11px; }
-        .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #999; }
         @media print {
-            body { padding: 10px; }
+            body { padding: 5px; font-size: 11px; }
             .no-print { display: none !important; }
+            .details { margin-bottom: 10px; }
+            .items-table { margin-bottom: 8px; }
+            .summary { margin-bottom: 8px; }
+            .sign-section { margin-top: 15px; }
+            .footer { margin-top: 8px; }
         }
     </style>
 </head>
@@ -230,7 +231,7 @@
         </table>
     </div>
     <!-- Terbilang -->
-    <div style="margin: 10px 0; padding: 8px 12px; border: 1px solid #333; font-size: 12px; font-style: italic; width: 100%; box-sizing: border-box;">
+    <div style="margin: 5px 0; padding: 5px 10px; border: 1px solid #333; font-size: 11px; font-style: italic; width: 100%; box-sizing: border-box;">
         <strong>Terbilang:</strong> {{ terbilang($reservation->paid_amount) }} Rupiah
     </div>
 
@@ -264,13 +265,13 @@
     @endif
 
     <!-- Sign -->
-    <div class="sign-section">
-        <div class="sign-box">
-            <div class="sign-line">Dibuat Oleh</div>
+    <div class="sign-section" style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+        <div class="sign-box" style="text-align: center; width: 30%;">
+            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;">Dibuat Oleh</div>
             <p style="font-size:10px; color:#999;">{{ $reservation->createdBy->name ?? '-' }}</p>
         </div>
-        <div class="sign-box">
-            <div class="sign-line">Diterima Oleh</div>
+        <div class="sign-box" style="text-align: center; width: 30%;">
+            <div class="sign-line" style="border-top: 1px solid #333; margin-top: 30px; padding-top: 5px; font-size: 11px;">Diterima Oleh</div>
             <p style="font-size:10px; color:#999;">{{ $reservation->guest->guest_name ?? '-' }}</p>
         </div>
     </div>
@@ -279,14 +280,14 @@
     @php
         $invoiceUrl = config('app.url') . '/invoice/' . $reservation->reservation_number;
     @endphp
-    <div style="text-align: center; margin: 15px 0; padding: 10px; border-top: 1px solid #ddd;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($invoiceUrl) }}"
+    <div style="text-align: center; margin: 8px 0 5px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode($invoiceUrl) }}"
              alt="QR Code"
-             style="width:100px; height:100px;">
-        <p style="font-size: 9px; color: #999; margin-top: 3px;">Scan untuk lihat invoice online</p>
+             style="width:60px; height:60px;">
+        <p style="font-size: 8px; color: #999; margin-top: 1px;">Scan invoice online</p>
     </div>
 
-    <div class="footer">
+    <div class="footer" style="text-align: center; margin-top: 8px; font-size: 10px; color: #999;">
         <p>Invoice ini sah sebagai bukti tagihan pembayaran</p>
         <p>{{ $hotel->hotel_name ?? 'Dynamic PMS V.2' }} &copy; {{ date('Y') }}</p>
     </div>
