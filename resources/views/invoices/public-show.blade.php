@@ -146,11 +146,11 @@
                         <p class="text-[10px] font-semibold uppercase tracking-widest {{ $otsConfirmed ? 'text-emerald-300/70' : ($otsConfirming ? 'text-blue-300/70' : ($otsPending ? 'text-amber-300/70' : ($otsTampered ? 'text-red-300/70' : 'text-slate-400/70'))) }}">🔐 Digital Timestamp</p>
                         <p class="text-sm font-semibold {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">
                             @if($otsConfirmed)
-                                Verified on Blockchain
+                                Document Verified & Secured
                             @elseif($otsConfirming)
-                                Blockchain Proof Active
+                                Document Verified & Secured
                             @elseif($otsPending)
-                                Pending Blockchain Confirmation
+                                Verification in Progress
                             @elseif($otsTampered)
                                 Document Integrity Compromised!
                             @else
@@ -209,11 +209,11 @@
                             </div>
                             <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsConfirming ? 'text-blue-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60'))) }} mt-0.5 leading-relaxed">
                                 @if($otsConfirmed)
-                                    Timestamp telah dikonfirmasi di Blockchain.
+                                    Dokumen telah diverifikasi dan diamankan dengan tanda tangan digital.
                                 @elseif($otsConfirming)
-                                    Dokumen telah di-timestamp, bukti sedang dikirim ke blockchain publik.
+                                    Dokumen telah diverifikasi dan ditandatangani secara digital.
                                 @elseif($otsPending)
-                                    Proof telah dibuat, menunggu proses stamping ke blockchain.
+                                    Verifikasi digital sedang diproses.
                                 @elseif($otsTampered)
                                     Data telah berubah sejak di-timestamp!
                                 @else
