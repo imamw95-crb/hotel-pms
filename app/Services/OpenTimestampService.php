@@ -220,18 +220,63 @@ class OpenTimestampService
     }
 
     /**
-     * Buat proof OTS (simulated — akan diganti dengan OTS CLI nanti).
-     * Saat OTS CLI tersedia, hash dikirim ke blockchain calendar.
+     * Buat proof OTS menggunakan OTS CLI.
+     * Hash dikirim ke blockchain calendar OpenTimestamps.
      */
     protected function createProof(string $hash, string $context): array
     {
-        return [
+        $otsBin = config('services.opentimestamps.bin_path', 'ots');
+        $calendar = config('services.opentimestamps.calendar', 'https://a.pool.opentimestamps.org');
+        $proof = [
             'algorithm' => 'SHA-256',
             'hash' => $hash,
             'timestamp' => now()->toIso8601String(),
-            'ots_version' => 'pending', // akan jadi 'confirmed' setelah OTS CLI
-            'calendar' => config('services.opentimestamps.calendar', 'https://a.pool.opentimestamps.org'),
+            'ots_version' => 'pending',
+            'calendar' => $calendar,
             'note' => 'OTS CLI integration pending — hash siap dikirim ke blockchain.',
         ];
+
+        // Coba submit ke OTS CLI
+        try {
+            $tmpDir = sys_get_temp_dir();
+            $digestFile = $tmpDir . '/ots_' . $hash . '.txt';
+            $otsFile = $digestFile . '.ots';
+
+            // Tulis hash ke file
+            file_put_contents($digestFile, $hash);
+
+            // Jalankan ots stamp
+            $cmd = sprintf('%s stamp -c %s %s 2>&1', escapeshellcmd($otsBin), escapeshellarg($calendar), escapeshellarg($digestFile));
+            $output = [];
+            $returnVar = 0;
+            exec($cmd, $output, $returnVar);
+
+            if ($returnVar === 0 && file_exists($otsFile)) {
+                $otsContent = base64_encode(file_get_contents($otsFile));
+                $proof['ots_version'] = 'confirmed';
+                $proof['proof_file'] = $otsContent;
+                $proof['note'] = 'OTS proof confirmed — hash telah dikirim ke blockchain calendar.';
+
+                // Baca info dari ots
+                $infoCmd = sprintf('%s info %s 2>&1', escapeshellcmd($otsBin), escapeshellarg($otsFile));
+                exec($infoCmd, $infoOutput);
+                $proof['info'] = implode("\n", $infoOutput);
+            } elseif ($returnVar === 0) {
+                $proof['note'] = 'OTS stamp completed but .ots file not found. Output: ' . implode("\n", $output);
+            } else {
+                $proof['note'] = 'OTS CLI error: ' . implode("\n", $output);
+                Log::warning('OTS CLI stamp failed', ['hash' => $hash, 'output' => $output]);
+            }
+
+            // Cleanup temp files
+            if (file_exists($digestFile)) unlink($digestFile);
+            // Keep .ots file for verification (will be cleaned up later)
+
+        } catch (\Exception $e) {
+            $proof['note'] = 'OTS CLI exception: ' . $e->getMessage();
+            Log::error('OTS CLI exception', ['hash' => $hash, 'error' => $e->getMessage()]);
+        }
+
+        return $proof;
     }
 }
