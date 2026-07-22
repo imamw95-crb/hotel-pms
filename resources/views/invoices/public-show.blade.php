@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Invoice Online - {{ $reservation->reservation_number }}</title>
+    <title>{{ $isGroupInvoice ? 'Group Invoice' : 'Invoice Online' }} - {{ $reservation->reservation_number }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -268,9 +268,14 @@
                     @if($hotel->website)<p class="text-xs text-slate-400">{{ $hotel->website }}</p>@endif
                 </div>
                 <div class="text-right shrink-0 invoice-header-right">
-                    <h2 class="text-base font-bold text-slate-900 tracking-tight">INVOICE</h2>
+                    <h2 class="text-base font-bold text-slate-900 tracking-tight">{{ $isGroupInvoice ? 'GROUP INVOICE' : 'INVOICE' }}</h2>
                     <div class="mt-1 space-y-0.5">
-                        <p class="text-xs text-slate-500"><span class="text-slate-400">No.</span> {{ $reservation->reservation_number }}</p>
+                        @if($isGroupInvoice)
+                            <p class="text-xs text-slate-500"><span class="text-slate-400">Group No.</span> {{ $reservation->booking_group_id }}</p>
+                            <p class="text-xs text-slate-500"><span class="text-slate-400">Jumlah Kamar</span> {{ $reservations->count() }}</p>
+                        @else
+                            <p class="text-xs text-slate-500"><span class="text-slate-400">No.</span> {{ $reservation->reservation_number }}</p>
+                        @endif
                         <p class="text-xs text-slate-500"><span class="text-slate-400">Date</span> {{ \Carbon\Carbon::now()->format('d F Y') }}</p>
                     </div>
                 </div>
@@ -316,13 +321,20 @@
                 </table>
             </div>
             <div class="border border-slate-200 rounded-lg p-3.5">
-                <h3 class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-2.5 border-b border-slate-100">Room Information</h3>
+                <h3 class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-2.5 border-b border-slate-100">{{ $isGroupInvoice ? 'Group Info Menginap' : 'Room Information' }}</h3>
                 <table class="w-full text-sm">
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Room Type</td><td class="text-slate-700">: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Room No.</td><td class="text-slate-700">: {{ $reservation->room->room_number ?? '-' }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Nights</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
+                    @if($isGroupInvoice)
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Durasi</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Total Kamar</td><td class="text-slate-700">: {{ $reservations->count() }} kamar</td></tr>
+                    @else
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Room Type</td><td class="text-slate-700">: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Room No.</td><td class="text-slate-700">: {{ $reservation->room->room_number ?? '-' }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-0.5">Nights</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
+                    @endif
                 </table>
             </div>
         </div>
@@ -340,6 +352,17 @@
                 </tr>
             </thead>
             <tbody>
+                @if($isGroupInvoice)
+                    @foreach($reservations as $idx => $res)
+                    <tr class="{{ $idx % 2 === 0 ? 'bg-slate-50' : '' }} border-b border-slate-100">
+                        <td class="p-2.5 text-slate-700">Room {{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2.5 text-center text-slate-600">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-2.5 text-center text-slate-600">{{ $res->nights }} night(s)</td>
+                        <td class="p-2.5 text-right text-slate-600">Rp {{ number_format($res->total_amount / max(1, $res->nights), 0, ',', '.') }}</td>
+                        <td class="p-2.5 text-right font-semibold text-slate-800">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
+                    </tr>
+                    @endforeach
+                @else
                 <tr class="border-b border-slate-100">
                     <td class="p-2.5 text-slate-700">Room {{ $reservation->room->room_number ?? '-' }}</td>
                     <td class="p-2.5 text-center text-slate-600">{{ $reservation->room->room_number ?? '-' }}</td>
@@ -347,11 +370,17 @@
                     <td class="p-2.5 text-right text-slate-600">Rp {{ number_format($reservation->total_amount / max(1, $reservation->nights), 0, ',', '.') }}</td>
                     <td class="p-2.5 text-right font-semibold text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
                 </tr>
+                @endif
             </tbody>
         </table>
         </div>
 
-        @if($reservation->serviceCharges->count() > 0)
+        @php
+            $allServiceCharges = $isGroupInvoice
+                ? $reservations->flatMap(fn($r) => $r->serviceCharges)
+                : $reservation->serviceCharges;
+        @endphp
+        @if($allServiceCharges->count() > 0)
         <div class="responsive-table">
         <table class="w-full border-collapse mb-5 text-sm">
             <thead>
@@ -364,7 +393,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($reservation->serviceCharges as $sc)
+                @foreach($allServiceCharges as $sc)
                 <tr class="border-b border-slate-100">
                     <td class="p-2.5 text-slate-700">{{ $sc->charge_number }}</td>
                     <td class="p-2.5 text-center text-slate-600">{{ $sc->charge_date->format('d/m/Y') }}</td>
@@ -384,7 +413,12 @@
         </div>
         @endif
 
-        @if($reservation->restoTransactions->count() > 0)
+        @php
+            $allRestoTransactions = $isGroupInvoice
+                ? $reservations->flatMap(fn($r) => $r->restoTransactions)
+                : $reservation->restoTransactions;
+        @endphp
+        @if($allRestoTransactions->count() > 0)
         <div class="responsive-table">
         <table class="w-full border-collapse mb-5 text-sm">
             <thead>
@@ -397,7 +431,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($reservation->restoTransactions as $rt)
+                @foreach($allRestoTransactions as $rt)
                 <tr class="border-b border-slate-100">
                     <td class="p-2.5"></td>
                     <td class="p-2.5 font-mono text-[11px] text-slate-600">{{ $rt->transaction_number }}</td>
@@ -428,10 +462,17 @@
         <!-- Summary -->
         <div class="flex justify-end mb-6">
             <table class="w-56 text-sm summary-table">
+                @if($isGroupInvoice)
+                <tr>
+                    <td class="py-1.5 text-right text-slate-500">Total Kamar</td>
+                    <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($groupTotal, 0, ',', '.') }}</td>
+                </tr>
+                @else
                 <tr>
                     <td class="py-1.5 text-right text-slate-500">Subtotal</td>
                     <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
                 </tr>
+                @endif
                 @if($totalServiceCharge > 0)
                 <tr>
                     <td class="py-1.5 text-right text-slate-500">Other Revenue</td>
@@ -450,11 +491,11 @@
                 </tr>
                 <tr>
                     <td class="py-1.5 text-right text-slate-500">Paid</td>
-                    <td class="py-1.5 text-right font-medium text-emerald-600">Rp {{ number_format($reservation->paid_amount, 0, ',', '.') }}</td>
+                    <td class="py-1.5 text-right font-medium text-emerald-600">Rp {{ number_format($isGroupInvoice ? $groupPaid : $reservation->paid_amount, 0, ',', '.') }}</td>
                 </tr>
                 <tr class="bg-slate-800">
                     <td class="px-2 py-1.5 text-right font-semibold text-white text-xs uppercase tracking-wider">Balance Due</td>
-                    <td class="px-2 py-1.5 text-right font-bold text-white">Rp {{ number_format(max(0, $grandTotal - $reservation->paid_amount), 0, ',', '.') }}</td>
+                    <td class="px-2 py-1.5 text-right font-bold text-white">Rp {{ number_format(max(0, $grandTotal - ($isGroupInvoice ? $groupPaid : $reservation->paid_amount)), 0, ',', '.') }}</td>
                 </tr>
             </table>
         </div>

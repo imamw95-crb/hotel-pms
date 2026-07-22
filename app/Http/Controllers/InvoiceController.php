@@ -46,6 +46,52 @@ class InvoiceController extends Controller
 
         $otsStatus = $otsService->verifyInvoice($reservation);
 
+        // ── Cek apakah ini bagian dari booking group ──
+        $isGroupInvoice = !empty($reservation->booking_group_id);
+
+        if ($isGroupInvoice) {
+            // Load semua reservasi dalam group yang sama
+            $reservations = Reservation::with([
+                'guest', 'room', 'room.roomType', 'createdBy',
+                'serviceCharges', 'serviceCharges.createdBy',
+                'restoTransactions', 'restoTransactions.createdBy',
+            ])
+                ->where('booking_group_id', $reservation->booking_group_id)
+                ->orderBy('room_id')
+                ->get();
+
+            // Ambil semua transaction IDs untuk group
+            $reservationIds = $reservations->pluck('id');
+            $transactions = Transaction::whereIn('reservation_id', $reservationIds)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // ── OTS untuk setiap transaksi ──
+            $transactionsOts = [];
+            foreach ($transactions as $txn) {
+                if (!$txn->ots_proof) {
+                    $otsService->timestampTransaction($txn);
+                    $txn->refresh();
+                }
+                $transactionsOts[$txn->id] = $otsService->verifyTransaction($txn);
+            }
+
+            $groupTotal = $reservations->sum('total_amount');
+            $groupPaid = $reservations->sum('paid_amount');
+            $totalServiceCharge = $reservations->sum(fn($r) => $r->serviceCharges->sum('total_amount'));
+            $totalResto = $reservations->sum(fn($r) => $r->restoTransactions->sum('total_amount'));
+            $grandTotal = $groupTotal + $totalServiceCharge + $totalResto;
+
+            return view('invoices.public-show', compact(
+                'reservation', 'reservations', 'transactions',
+                'groupTotal', 'groupPaid',
+                'totalServiceCharge', 'totalResto', 'grandTotal',
+                'signatureStatus', 'isValid',
+                'otsStatus', 'transactionsOts',
+                'isGroupInvoice'
+            ));
+        }
+
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -69,7 +115,8 @@ class InvoiceController extends Controller
             'reservation', 'transactions',
             'totalServiceCharge', 'totalResto', 'grandTotal',
             'signatureStatus', 'isValid',
-            'otsStatus', 'transactionsOts'
+            'otsStatus', 'transactionsOts',
+            'isGroupInvoice'
         ));
     }
 
