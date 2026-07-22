@@ -11,6 +11,7 @@ use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
+use App\Services\InvoiceSignatureService;
 use App\Services\OpenRouterService;
 use App\Services\OpenTimestampService;
 use Carbon\Carbon;
@@ -1001,10 +1002,47 @@ class ReservationController extends Controller
         $totalResto = $reservations->sum(fn($r) => $r->restoTransactions->sum('total_amount'));
         $grandTotal = $groupTotal + $totalServiceCharge + $totalResto;
 
+        // ── Security: HMAC Signature + OTS untuk reservasi pertama ──
+        $firstReservation = $reservations->first();
+        $signatureStatus = 'no_signature';
+        $isValid = false;
+        $otsStatus = null;
+
+        if ($firstReservation) {
+            // Generate signature jika belum
+            $sigService = app(InvoiceSignatureService::class);
+            if (!$firstReservation->invoice_signature) {
+                $firstReservation->invoice_signature = $sigService->generate($firstReservation);
+                $firstReservation->saveQuietly();
+            }
+            $signatureStatus = $firstReservation->invoice_signature ? 'valid' : 'no_signature';
+            $isValid = ($signatureStatus === 'valid');
+
+            // OTS untuk invoice group (reservasi pertama sebagai representasi)
+            $otsService = app(OpenTimestampService::class);
+            if (!$firstReservation->ots_proof) {
+                $otsService->timestampInvoice($firstReservation, 'issued');
+                $firstReservation->refresh();
+            }
+            $otsStatus = $otsService->verifyInvoice($firstReservation);
+        }
+
+        // ── OTS untuk setiap transaksi ──
+        $otsService = app(OpenTimestampService::class);
+        $transactionsOts = [];
+        foreach ($transactions as $txn) {
+            if (!$txn->ots_proof) {
+                $otsService->timestampTransaction($txn);
+                $txn->refresh();
+            }
+            $transactionsOts[$txn->id] = $otsService->verifyTransaction($txn);
+        }
+
         return view('reservations.print-group-invoice', compact(
             'reservations', 'transactions',
             'groupTotal', 'groupPaid',
-            'totalServiceCharge', 'totalResto', 'grandTotal'
+            'totalServiceCharge', 'totalResto', 'grandTotal',
+            'signatureStatus', 'isValid', 'otsStatus', 'transactionsOts'
         ));
     }
 
