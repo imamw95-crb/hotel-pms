@@ -28,3 +28,4 @@ Thumbs.db
 .env.save
 plainTextToken
 cookies.txt
+/deploy.sh
