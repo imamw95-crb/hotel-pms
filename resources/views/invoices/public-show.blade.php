@@ -148,7 +148,7 @@
                             @if($otsConfirmed)
                                 Verified on Bitcoin Blockchain
                             @elseif($otsConfirming)
-                                Confirming to Blockchain
+                                Blockchain Proof Active
                             @elseif($otsPending)
                                 Pending Blockchain Confirmation
                             @elseif($otsTampered)
@@ -167,7 +167,7 @@
                 @elseif($otsConfirming)
                     <span class="px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[10px] font-semibold tracking-wide border border-blue-500/20">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1"></span>
-                        CONFIRMING
+                        TIMESTAMPED
                     </span>
                 @elseif($otsPending)
                     <span class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold tracking-wide border border-amber-500/20">
@@ -211,7 +211,7 @@
                                 @if($otsConfirmed)
                                     Timestamp telah dikonfirmasi di Bitcoin Blockchain.
                                 @elseif($otsConfirming)
-                                    Proof telah dikirim ke calendar, menunggu konfirmasi block Bitcoin.
+                                    Dokumen telah di-timestamp, bukti sedang dikirim ke blockchain Bitcoin.
                                 @elseif($otsPending)
                                     Proof telah dibuat, menunggu proses stamping ke blockchain.
                                 @elseif($otsTampered)
@@ -624,9 +624,9 @@
                                     Verified
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'confirming')
-                                <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-medium" title="Menunggu konfirmasi block Bitcoin">
+                                <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-medium" title="Telah di-timestamp, menunggu blockchain">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                    Confirming
+                                    Timestamped
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'pending')
                                 <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Menunggu proses stamping">
