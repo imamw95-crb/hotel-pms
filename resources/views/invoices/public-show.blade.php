@@ -548,6 +548,13 @@
                     </tr>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <tr class="bg-slate-100 font-semibold">
+                        <td colspan="4" class="p-2 text-right text-slate-600 text-[11px] uppercase tracking-wider">Total Pembayaran</td>
+                        <td class="p-2 text-right text-slate-900">Rp {{ number_format($transactions->sum('amount'), 0, ',', '.') }}</td>
+                        <td class="p-2"></td>
+                    </tr>
+                </tfoot>
             </table>
             </div>
         </div>
