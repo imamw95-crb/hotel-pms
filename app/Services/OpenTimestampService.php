@@ -245,8 +245,8 @@ class OpenTimestampService
             // Tulis hash ke file
             file_put_contents($digestFile, $hash);
 
-            // Jalankan ots stamp
-            $cmd = sprintf('%s stamp -c %s %s 2>&1', escapeshellcmd($otsBin), escapeshellarg($calendar), escapeshellarg($digestFile));
+            // Jalankan ots stamp (tanpa -c, pakai default calendars)
+            $cmd = sprintf('%s stamp %s 2>&1', escapeshellcmd($otsBin), escapeshellarg($digestFile));
             $output = [];
             $returnVar = 0;
             exec($cmd, $output, $returnVar);
