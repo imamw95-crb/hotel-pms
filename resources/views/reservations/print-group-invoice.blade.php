@@ -50,7 +50,7 @@
 <body>
     <div class="no-print" style="text-align:center; margin-bottom:20px;">
         <button onclick="window.print()" style="padding:10px 25px; background:#1a365d; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:14px;">
-            ≡ƒû¿∩╕Å Print Group Invoice
+            🖨️ Print Group Invoice
         </button>
         <a href="{{ route('reservations.show', $reservations->first()) }}" style="padding:10px 25px; background:#666; color:#fff; text-decoration:none; border-radius:4px; font-size:14px; margin-left:5px;">Kembali</a>
     </div>
@@ -274,7 +274,7 @@
 
     <div class="footer" style="text-align: center; margin-top: 8px; font-size: 10px; color: #999;">
         <p>Terima kasih atas kunjungan Anda</p>
-        <p>{{ $hotel->hotel_name ?? 'Dynamic PMS v2' }} &copy; {{ date('Y') }} ΓÇö {{ $hotel->address ?? '' }}</p>
+        <p>{{ $hotel->hotel_name ?? 'Dynamic PMS v2' }} &copy; {{ date('Y') }} — {{ $hotel->address ?? '' }}</p>
     </div>
 
     <script>
