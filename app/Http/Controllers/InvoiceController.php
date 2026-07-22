@@ -42,6 +42,11 @@ class InvoiceController extends Controller
             $signatureStatus = $isValid ? 'valid' : 'invalid';
         }
 
+        // Blok akses jika tidak ada signature atau signature tidak valid
+        if ($signatureStatus !== 'valid') {
+            abort(404);
+        }
+
         // ── OTS: Auto-timestamp jika belum ada proof ──
         $invoiceTimestamp = $this->repository->findLatestRevision($reservation->id, 'reservation');
 
