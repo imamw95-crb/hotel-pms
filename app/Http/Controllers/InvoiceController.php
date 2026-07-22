@@ -37,6 +37,13 @@ class InvoiceController extends Controller
 
         // ── Validasi OTS ──
         $otsService = app(OpenTimestampService::class);
+
+        // Auto-timestamp invoice jika belum ada proof
+        if (!$reservation->ots_proof) {
+            $otsService->timestampInvoice($reservation, 'issued');
+            $reservation->refresh();
+        }
+
         $otsStatus = $otsService->verifyInvoice($reservation);
 
         $transactions = Transaction::where('reservation_id', $reservation->id)
@@ -46,6 +53,11 @@ class InvoiceController extends Controller
         // ── OTS untuk setiap transaksi ──
         $transactionsOts = [];
         foreach ($transactions as $txn) {
+            // Auto-timestamp transaksi lama yang belum punya OTS proof
+            if (!$txn->ots_proof) {
+                $otsService->timestampTransaction($txn);
+                $txn->refresh();
+            }
             $transactionsOts[$txn->id] = $otsService->verifyTransaction($txn);
         }
 
