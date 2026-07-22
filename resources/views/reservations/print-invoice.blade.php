@@ -290,7 +290,7 @@
         }
         // 🔐 OTS: Timestamp invoice saat pertama dicetak (jika belum)
         if (!$reservation->ots_proof) {
-            app(\App\Services\OpenTimestampService::class)->timestampInvoice($reservation, 'issued');
+            app(\App\Services\OpenTimestampService::class)->timestampInvoice($reservation);
             $reservation->refresh();
         }
         $baseUrl = config('app.url');
