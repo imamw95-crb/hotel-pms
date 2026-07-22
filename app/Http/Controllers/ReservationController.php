@@ -971,6 +971,163 @@ class ReservationController extends Controller
     }
 
     /**
+     * POST /reservations/group-add-room/{bookingGroupId}
+     * Tambah kamar baru ke group booking yang sudah ada
+     */
+    public function groupAddRoom(Request $request, string $bookingGroupId)
+    {
+        $validated = $request->validate([
+            'room_ids' => 'required|array|min:1',
+            'room_ids.*' => 'exists:rooms,id',
+            'guest_name' => 'nullable|string|max:100',
+            'id_number' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:100',
+            'payment_method' => 'nullable|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'payment_type' => 'nullable|in:full,dp',
+            'dp_amount' => 'nullable|numeric|min:0',
+        ]);
+
+        // Ambil referensi dari reservasi pertama dalam grup
+        $existingReservations = Reservation::where('booking_group_id', $bookingGroupId)
+            ->whereIn('status', Reservation::ACTIVE_STATUSES)
+            ->get();
+
+        if ($existingReservations->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ditemukan reservasi aktif dalam grup ini.',
+            ], 404);
+        }
+
+        $refReservation = $existingReservations->first();
+        $checkIn = $refReservation->check_in;
+        $checkOut = $refReservation->check_out;
+        $guest = $refReservation->guest;
+
+        // Jika ada data guest baru, update atau buat guest baru
+        if (!empty($validated['guest_name'])) {
+            if (!empty($validated['id_number'])) {
+                $guest = Guest::updateOrCreate(
+                    ['id_number' => $validated['id_number']],
+                    [
+                        'guest_name' => $validated['guest_name'],
+                        'phone' => $validated['phone'] ?? null,
+                        'email' => $validated['email'] ?? null,
+                    ]
+                );
+            } else {
+                $guest = Guest::create([
+                    'guest_name' => $validated['guest_name'],
+                    'phone' => $validated['phone'] ?? null,
+                    'email' => $validated['email'] ?? null,
+                ]);
+            }
+        }
+
+        $rooms = Room::whereIn('id', $validated['room_ids'])->get();
+
+        // ── Validasi ketersediaan kamar ──
+        $bookedRoomIds = Reservation::whereIn('status', Reservation::ACTIVE_STATUSES)
+            ->where(function ($q) use ($checkIn, $checkOut) {
+                $q->where('check_in', '<', $checkOut)
+                    ->where('check_out', '>', $checkIn);
+            })
+            ->whereIn('room_id', $validated['room_ids'])
+            ->pluck('room_id')
+            ->unique()
+            ->toArray();
+
+        if (!empty($bookedRoomIds)) {
+            $conflictRooms = Room::whereIn('id', $bookedRoomIds)->pluck('room_number')->implode(', ');
+            return response()->json([
+                'success' => false,
+                'message' => 'Kamar berikut sudah dibooking untuk periode tersebut: '.$conflictRooms,
+            ], 422);
+        }
+
+        $roomPrices = $request->input('room_prices', []);
+        $days = $checkIn->diffInDays($checkOut);
+        $paymentType = $validated['payment_type'] ?? 'full';
+        $dpAmount = $validated['dp_amount'] ?? 0;
+
+        DB::transaction(function () use ($rooms, $guest, $days, $checkIn, $checkOut, $roomPrices, $paymentType, $dpAmount, $bookingGroupId, $validated) {
+            $totalAllRooms = 0;
+            $newReservations = [];
+
+            foreach ($rooms as $room) {
+                $roomCustomPrice = $roomPrices[$room->id] ?? null;
+                if ($roomCustomPrice) {
+                    $totalAmount = (float) $roomCustomPrice * $days;
+                } else {
+                    $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
+                }
+                $totalAllRooms += $totalAmount;
+
+                $reservation = Reservation::create([
+                    'booking_group_id' => $bookingGroupId,
+                    'reservation_number' => 'RES-'.strtoupper(uniqid()),
+                    'room_id' => $room->id,
+                    'guest_id' => $guest->id,
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
+                    'status' => 'pending',
+                    'total_amount' => $totalAmount,
+                    'paid_amount' => 0,
+                    'payment_method' => $validated['payment_method'] ?? null,
+                    'notes' => 'Tambah kamar ke group booking',
+                    'created_by' => auth()->id(),
+                ]);
+                $newReservations[] = $reservation;
+            }
+
+            // Cari source_type dari payment method yang dipilih
+            $paymentMethodSlug = $validated['payment_method'] ?? 'cash';
+            $sourceType = PaymentMethod::where('slug', $paymentMethodSlug)->value('source_type');
+
+            // Jika DP, buat transaksi DP
+            if ($paymentType === 'dp' && $dpAmount > 0) {
+                $dpPerRoom = $dpAmount / count($rooms);
+                foreach ($newReservations as $reservation) {
+                    $reservation->update(['paid_amount' => $dpPerRoom]);
+                    Transaction::create([
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                        'reservation_id' => $reservation->id,
+                        'type' => 'dp',
+                        'amount' => $dpPerRoom,
+                        'payment_method' => $paymentMethodSlug,
+                        'source_type' => $sourceType,
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+            } elseif ($paymentType === 'full') {
+                foreach ($newReservations as $reservation) {
+                    $reservation->update(['paid_amount' => $reservation->total_amount]);
+                    Transaction::create([
+                        'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                        'reservation_id' => $reservation->id,
+                        'type' => 'pelunasan',
+                        'amount' => $reservation->total_amount,
+                        'payment_method' => $paymentMethodSlug,
+                        'source_type' => $sourceType,
+                        'created_by' => auth()->id(),
+                    ]);
+                }
+            }
+        });
+
+        $roomNumbers = $rooms->pluck('room_number')->implode(', ');
+        $paymentLabel = $paymentType === 'dp' ? ' dengan DP Rp '.number_format($dpAmount, 0, ',', '.') : ' (Lunas)';
+        $message = "Kamar {$roomNumbers} berhasil ditambahkan ke group booking{$paymentLabel}.";
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'redirect_url' => route('reservations.show', $refReservation),
+        ]);
+    }
+
+    /**
      * GET /reservations/group-invoice/{bookingGroupId}
      * Print invoice gabungan untuk semua reservasi dalam 1 group
      */

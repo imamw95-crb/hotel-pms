@@ -162,6 +162,10 @@
                 </div>
             </form>
             @endif
+            <button type="button" onclick="openAddRoomModal()"
+                class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-plus-circle"></i> Tambah Kamar
+            </button>
             <a href="{{ route('reservations.group-invoice', $reservation->booking_group_id) }}" target="_blank"
                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                 <i class="fas fa-file-invoice"></i> Print Group Invoice
@@ -490,6 +494,102 @@
                         Batal
                     </button>
                     <span id="editRateStatus" class="text-xs"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Tambah Kamar ke Group --}}
+    <div id="addRoomModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center" onclick="if(event.target===this)closeAddRoomModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-plus-circle text-blue-500"></i> Tambah Kamar ke Group
+            </h3>
+            <div class="space-y-4">
+                <div class="bg-blue-50 rounded-lg p-3 text-sm">
+                    <p class="text-blue-700 font-medium">Periode Group: <span id="addRoomPeriod" class="font-bold"></span></p>
+                    <p class="text-blue-600 text-xs mt-1">Kamar baru akan menggunakan tanggal yang sama dengan group ini.</p>
+                </div>
+
+                {{-- Data Tamu --}}
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1 font-semibold">Data Tamu</label>
+                    <p class="text-sm text-gray-600 mb-2">Kosongkan jika ingin menggunakan data tamu yang sama dengan group.</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <input type="text" id="addRoomGuestName" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="Nama tamu">
+                        </div>
+                        <div>
+                            <input type="text" id="addRoomIdNumber" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="No. Identitas">
+                        </div>
+                        <div>
+                            <input type="text" id="addRoomPhone" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="Telepon">
+                        </div>
+                        <div>
+                            <input type="email" id="addRoomEmail" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" placeholder="Email">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Daftar Kamar Tersedia --}}
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1 font-semibold">Pilih Kamar</label>
+                    <div id="addRoomList" class="space-y-1 max-h-48 overflow-y-auto border rounded-lg p-2 bg-gray-50">
+                        <p class="text-gray-400 text-sm text-center py-4">
+                            <i class="fas fa-spinner fa-spin mr-1"></i> Memuat kamar tersedia...
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Ringkasan --}}
+                <div id="addRoomSummary" class="hidden bg-green-50 rounded-lg p-3 text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Kamar dipilih:</span>
+                        <span id="addRoomSelectedCount" class="font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total harga/malam:</span>
+                        <span id="addRoomTotalPreview" class="font-bold text-green-700">Rp 0</span>
+                    </div>
+                </div>
+
+                {{-- Pembayaran --}}
+                <div class="border-t pt-3">
+                    <label class="block text-xs text-gray-500 mb-1 font-semibold">Pembayaran (Opsional)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <select id="addRoomPaymentType" class="w-full border rounded px-2 py-1.5 text-sm" onchange="toggleAddRoomDpInput()">
+                                <option value="full">Lunas</option>
+                                <option value="dp">DP</option>
+                                <option value="none">Tidak Bayar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="addRoomPaymentMethod" class="w-full border rounded px-2 py-1.5 text-sm">
+                                <option value="">-- Metode Bayar --</option>
+                                @php $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get(); @endphp
+                                @foreach($paymentMethods as $pm)
+                                    <option value="{{ $pm->slug }}">{{ $pm->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div id="addRoomDpWrap" class="hidden mt-2">
+                        <label class="block text-xs text-gray-500 mb-1">Nominal DP (Rp)</label>
+                        <input type="number" id="addRoomDpAmount" class="w-full border rounded px-2 py-1.5 text-sm" min="0" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" onclick="submitAddRoom()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-1.5">
+                        <i class="fas fa-plus-circle"></i> Tambahkan Kamar
+                    </button>
+                    <button type="button" onclick="closeAddRoomModal()"
+                        class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                        Batal
+                    </button>
+                    <span id="addRoomStatus" class="text-xs"></span>
                 </div>
             </div>
         </div>
@@ -1211,6 +1311,203 @@
                     if (typeof Toast !== 'undefined') {
                         Toast.error('Gagal mengubah status sarapan');
                     }
+                });
+            }
+
+            // ─── Tambah Kamar ke Group Booking ───────────────────
+            var addRoomCheckIn = '{{ $reservation->check_in->format("Y-m-d") }}';
+            var addRoomCheckOut = '{{ $reservation->check_out->format("Y-m-d") }}';
+            var addRoomBookingGroupId = '{{ $reservation->booking_group_id }}';
+            var addRoomSelected = {};
+
+            function openAddRoomModal() {
+                document.getElementById('addRoomModal').classList.remove('hidden');
+                document.getElementById('addRoomStatus').textContent = '';
+                document.getElementById('addRoomPeriod').textContent = addRoomCheckIn + ' s/d ' + addRoomCheckOut;
+                addRoomSelected = {};
+                loadAddRoomAvailability();
+            }
+
+            function closeAddRoomModal() {
+                document.getElementById('addRoomModal').classList.add('hidden');
+                document.getElementById('addRoomStatus').textContent = '';
+            }
+
+            function loadAddRoomAvailability() {
+                var list = document.getElementById('addRoomList');
+                list.innerHTML = '<p class="text-gray-400 text-sm text-center py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Memuat kamar tersedia...</p>';
+
+                fetch('{{ route("booking.check-availability") }}?check_in=' + addRoomCheckIn + '&check_out=' + addRoomCheckOut)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.rooms || data.rooms.length === 0) {
+                        list.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">Tidak ada kamar tersedia.</p>';
+                        return;
+                    }
+                    var html = '';
+                    data.rooms.forEach(function(room) {
+                        var price = new Intl.NumberFormat('id-ID').format(room.price_per_night);
+                        html += '<label class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer border border-transparent hover:border-gray-200 transition">';
+                        html += '<input type="checkbox" class="add-room-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" value="' + room.id + '" data-price="' + room.price_per_night + '" data-number="' + room.room_number + '" data-type="' + (room.room_type_name || '') + '" onchange="updateAddRoomSummary()">';
+                        html += '<div class="flex-1 flex items-center justify-between">';
+                        html += '<span class="text-sm font-medium">' + room.room_number + '</span>';
+                        html += '<span class="text-xs text-gray-500">' + (room.room_type_name || '') + '</span>';
+                        html += '<span class="text-sm font-semibold text-green-700">Rp ' + price + '</span>';
+                        html += '</div>';
+                        html += '</label>';
+                    });
+                    list.innerHTML = html;
+                    updateAddRoomSummary();
+                })
+                .catch(function() {
+                    list.innerHTML = '<p class="text-red-500 text-sm text-center py-4">Gagal memuat kamar. Coba lagi.</p>';
+                });
+            }
+
+            function updateAddRoomSummary() {
+                var checkboxes = document.querySelectorAll('.add-room-checkbox:checked');
+                var summary = document.getElementById('addRoomSummary');
+                var count = document.getElementById('addRoomSelectedCount');
+                var totalPreview = document.getElementById('addRoomTotalPreview');
+                var days = 1;
+
+                // Calculate days
+                if (addRoomCheckIn && addRoomCheckOut) {
+                    var d1 = new Date(addRoomCheckIn);
+                    var d2 = new Date(addRoomCheckOut);
+                    var diffTime = d2.getTime() - d1.getTime();
+                    days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+                }
+
+                var total = 0;
+                var names = [];
+                checkboxes.forEach(function(cb) {
+                    total += parseFloat(cb.dataset.price) * days;
+                    names.push(cb.dataset.number);
+                    addRoomSelected[cb.value] = {
+                        room_id: cb.value,
+                        price: parseFloat(cb.dataset.price),
+                        room_number: cb.dataset.number
+                    };
+                });
+
+                // Remove unselected
+                document.querySelectorAll('.add-room-checkbox:not(:checked)').forEach(function(cb) {
+                    delete addRoomSelected[cb.value];
+                });
+
+                count.textContent = checkboxes.length + ' kamar';
+                totalPreview.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+
+                if (checkboxes.length > 0) {
+                    summary.classList.remove('hidden');
+                } else {
+                    summary.classList.add('hidden');
+                }
+            }
+
+            function toggleAddRoomDpInput() {
+                var type = document.getElementById('addRoomPaymentType').value;
+                var wrap = document.getElementById('addRoomDpWrap');
+                if (type === 'dp') {
+                    wrap.classList.remove('hidden');
+                } else {
+                    wrap.classList.add('hidden');
+                }
+            }
+
+            function submitAddRoom() {
+                var checkboxes = document.querySelectorAll('.add-room-checkbox:checked');
+                var status = document.getElementById('addRoomStatus');
+                var btn = document.querySelector('#addRoomModal .bg-blue-600');
+
+                if (checkboxes.length === 0) {
+                    status.textContent = '✗ Pilih minimal 1 kamar';
+                    status.className = 'text-xs text-red-600';
+                    return;
+                }
+
+                var roomIds = [];
+                var roomPrices = {};
+                checkboxes.forEach(function(cb) {
+                    roomIds.push(parseInt(cb.value));
+                    roomPrices[cb.value] = parseFloat(cb.dataset.price);
+                });
+
+                var paymentType = document.getElementById('addRoomPaymentType').value;
+                var paymentMethod = document.getElementById('addRoomPaymentMethod').value;
+                var dpAmount = document.getElementById('addRoomDpAmount').value || 0;
+
+                if (paymentType !== 'none' && !paymentMethod) {
+                    status.textContent = '✗ Pilih metode pembayaran';
+                    status.className = 'text-xs text-red-600';
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menambahkan...';
+                status.textContent = '';
+
+                var formData = new FormData();
+                formData.append('_token', '{{ csrf_token() }}');
+                roomIds.forEach(function(id) {
+                    formData.append('room_ids[]', id);
+                });
+                Object.keys(roomPrices).forEach(function(key) {
+                    formData.append('room_prices[' + key + ']', roomPrices[key]);
+                });
+
+                var guestName = document.getElementById('addRoomGuestName').value.trim();
+                var idNumber = document.getElementById('addRoomIdNumber').value.trim();
+                var phone = document.getElementById('addRoomPhone').value.trim();
+                var email = document.getElementById('addRoomEmail').value.trim();
+
+                if (guestName) formData.append('guest_name', guestName);
+                if (idNumber) formData.append('id_number', idNumber);
+                if (phone) formData.append('phone', phone);
+                if (email) formData.append('email', email);
+
+                if (paymentType !== 'none') {
+                    formData.append('payment_type', paymentType);
+                    formData.append('payment_method', paymentMethod);
+                    if (paymentType === 'dp' && dpAmount > 0) {
+                        formData.append('dp_amount', dpAmount);
+                    }
+                }
+
+                fetch('{{ route("reservations.group-add-room", $reservation->booking_group_id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    if (res.success) {
+                        status.textContent = '✓ ' + res.message;
+                        status.className = 'text-xs text-green-600';
+                        setTimeout(function() {
+                            closeAddRoomModal();
+                            if (typeof Toast !== 'undefined') Toast.success(res.message);
+                            if (res.redirect_url) {
+                                window.location.href = res.redirect_url;
+                            } else {
+                                location.reload();
+                            }
+                        }, 1000);
+                    } else {
+                        status.textContent = '✗ ' + (res.message || 'Gagal');
+                        status.className = 'text-xs text-red-600';
+                    }
+                })
+                .catch(function() {
+                    status.textContent = '✗ Gagal menambahkan kamar';
+                    status.className = 'text-xs text-red-600';
+                })
+                .finally(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-plus-circle"></i> Tambahkan Kamar';
                 });
             }
         </script>
