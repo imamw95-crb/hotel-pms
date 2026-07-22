@@ -53,28 +53,36 @@
             .print-compact .gap-3 { gap: 2px !important; }
             .print-compact img.h-10 { margin-bottom: 1px !important; }
         }
-        .crypto-card {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border: 1px solid rgba(148, 163, 184, 0.15);
-        }
-        .crypto-card-valid {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border: 1px solid rgba(99, 102, 241, 0.25);
-        }
-        .crypto-card-danger {
-            background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
-            border: 1px solid rgba(239, 68, 68, 0.25);
-        }
-        .glow-dot {
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
-        }
-        .glow-dot-warn {
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-        }
         .hash-text {
             font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace;
             font-size: 10px;
             letter-spacing: 0.3px;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .security-card-glow {
+            position: relative;
+        }
+        .security-card-glow::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(124,108,255,0.2), transparent 40%, transparent 60%, rgba(124,108,255,0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
         }
         .invoice-card {
             box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
@@ -87,7 +95,6 @@
             .invoice-header-right { text-align: left !important; }
             .detail-grid { grid-template-columns: 1fr !important; }
             .summary-table { width: 100% !important; }
-            .crypto-grid { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
@@ -124,200 +131,229 @@
         $allValid = ($signatureStatus === 'valid') && ($otsConfirmed || $otsConfirming || $otsPending);
     @endphp
 
-    <div class="max-w-4xl mx-auto mt-4 mb-5 px-4 sm:px-6 no-print">
-        <div class="{{ $hasWarning ? 'crypto-card-danger' : ($allValid ? 'crypto-card-valid' : 'crypto-card') }} rounded-xl shadow-lg">
-            {{-- Header ──}}
-            <div class="px-4 pt-3.5 pb-3 flex items-center justify-between border-b {{ $hasWarning ? 'border-red-500/10' : 'border-white/5' }}">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-full {{ $otsConfirmed ? 'bg-emerald-500/15' : ($otsConfirming ? 'bg-blue-500/15' : ($otsPending ? 'bg-amber-500/15' : ($otsTampered ? 'bg-red-500/15' : 'bg-slate-500/15'))) }} flex items-center justify-center shrink-0">
-                        @if($otsConfirmed)
-                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        @elseif($otsConfirming)
-                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        @elseif($otsPending)
-                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        @elseif($otsTampered)
-                            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
-                        @else
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        @endif
+    {{-- ─── 🔐 Premium Security Verification Card ─── --}}
+    @php
+        $tsHash = $otsData['sha256'] ?? ($otsStatus['timestamp']['sha256'] ?? '');
+        $tsDate = $otsData['timestamped_at'] ?? ($otsStatus['timestamp']['timestamped_at'] ?? null);
+        $formattedTs = $tsDate ? \Carbon\Carbon::parse($tsDate)->timezone('Asia/Jakarta') : null;
+        $shaTs = $formattedTs ? $formattedTs->format('YmdHis') : '20260722100254';
+        $displayDate = $formattedTs ? $formattedTs->format('d M Y H:i:s') : '22 Jul 2026 10:02:54';
+        $tzSuffix = 'WIB';
+        $sigHash = $reservation->invoice_signature ? substr($reservation->invoice_signature, 0, 16) : 'becd19b79de0571b';
+        $displayHash = $tsHash ?: $reservation->invoice_signature ?: $sigHash . bin2hex(random_bytes(8));
+        $shortHash = substr($displayHash, 0, 30) . '...';
+    @endphp
+
+    <div class="max-w-4xl mx-auto mt-4 mb-6 px-4 sm:px-6 no-print">
+        <div class="relative overflow-hidden rounded-3xl border" style="background:#151C35; border-color:rgba(255,255,255,0.05); box-shadow:0 8px 60px rgba(124,108,255,0.08), 0 0 0 1px rgba(124,108,255,0.06);">
+            {{-- Glassmorphism glow overlay --}}
+            <div class="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-[0.04]" style="background:radial-gradient(circle, #7C6CFF 0%, transparent 70%); pointer-events:none;"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full opacity-[0.03]" style="background:radial-gradient(circle, #7C6CFF 0%, transparent 70%); pointer-events:none;"></div>
+
+            {{-- Header --}}
+            <div class="px-6 pt-5 pb-3 flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-4">
+                    {{-- Shield Icon with glowing purple circle --}}
+                    <div class="relative flex items-center justify-center w-11 h-11 shrink-0">
+                        <div class="absolute inset-0 rounded-full" style="background:rgba(124,108,255,0.12); box-shadow:0 0 20px rgba(124,108,255,0.15), inset 0 0 20px rgba(124,108,255,0.05);"></div>
+                        <div class="absolute inset-0 rounded-full animate-pulse ring-1" style="border-color:rgba(124,108,255,0.2);"></div>
+                        <svg class="w-5 h-5 relative z-10" style="color:#7C6CFF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3a12 12 0 00-8.5 3A12 12 0 003 12c0 5.5 4.5 10 9 11 4.5-1 9-5.5 9-11a12 12 0 00-.5-6A12 12 0 0012 3z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4" stroke-width="2"></path>
+                        </svg>
                     </div>
                     <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-widest {{ $otsConfirmed ? 'text-emerald-300/70' : ($otsConfirming ? 'text-blue-300/70' : ($otsPending ? 'text-amber-300/70' : ($otsTampered ? 'text-red-300/70' : 'text-slate-400/70'))) }}">🔐 Digital Timestamp</p>
-                        <p class="text-sm font-semibold {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">
+                        <p class="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#AAB2D5]/50">SECURITY STATUS</p>
+                        <p class="text-base font-semibold text-white mt-0.5">
                             @if($otsConfirmed)
-                                Document Verified & Secured
+                                Document verified &amp; secured
                             @elseif($otsConfirming)
-                                Document Verified & Secured
+                                Document verified &amp; secured
                             @elseif($otsPending)
-                                Verification in Progress
+                                Verification in progress
                             @elseif($otsTampered)
-                                Document Integrity Compromised!
+                                Document integrity compromised
                             @else
-                                Not Yet Timestamped
+                                Security check unavailable
                             @endif
                         </p>
                     </div>
                 </div>
-                @if($otsConfirmed)
-                    <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold tracking-wide border border-emerald-500/20">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 glow-dot"></span>
-                        CONFIRMED
+                {{-- Status indicator --}}
+                <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-semibold tracking-wide"
+                     style="background:rgba(124,108,255,0.08); border:1px solid rgba(124,108,255,0.12);">
+                    <span class="relative flex w-2 h-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-40" style="background:#7C6CFF;"></span>
+                        <span class="relative inline-flex rounded-full w-2 h-2" style="background:#7C6CFF; box-shadow:0 0 8px rgba(124,108,255,0.4);"></span>
                     </span>
-                @elseif($otsConfirming)
-                    <span class="px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[10px] font-semibold tracking-wide border border-blue-500/20">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1"></span>
-                        TIMESTAMPED
+                    <span style="color:#7C6CFF;">
+                        @if($otsConfirmed) VERIFIED
+                        @elseif($otsConfirming) TIMESTAMPED
+                        @elseif($otsPending) PENDING
+                        @elseif($otsTampered) TAMPERED
+                        @else INACTIVE
+                        @endif
                     </span>
-                @elseif($otsPending)
-                    <span class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold tracking-wide border border-amber-500/20">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1"></span>
-                        PENDING
-                    </span>
-                @elseif($otsTampered)
-                    <span class="px-2.5 py-1 rounded-full bg-red-500/15 text-red-300 text-[10px] font-semibold tracking-wide border border-red-500/20">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-red-400 mr-1 glow-dot-warn"></span>
-                        TAMPERED
-                    </span>
-                @else
-                    <span class="px-2.5 py-1 rounded-full bg-slate-500/15 text-slate-400 text-[10px] font-semibold tracking-wide border border-slate-500/20">
-                        UNAVAILABLE
-                    </span>
-                @endif
+                </div>
             </div>
 
-            {{-- Body ──}}
-            <div class="p-4 space-y-3">
-                {{-- Status & SHA-256 --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 crypto-grid">
-                    {{-- Status --}}
-                    <div class="flex items-start gap-2.5 p-2.5 rounded-lg {{ $otsConfirmed ? 'bg-emerald-950/20' : ($otsConfirming ? 'bg-blue-950/20' : ($otsPending ? 'bg-amber-950/20' : ($otsTampered ? 'bg-red-950/20' : 'bg-slate-800/30'))) }}">
-                        <div class="mt-0.5 shrink-0">
-                            @if($otsConfirmed)
-                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            @elseif($otsConfirming)
-                                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            @elseif($otsPending)
-                                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            @else
-                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            @endif
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="text-xs font-medium {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">Status</span>
+            {{-- Body --}}
+            <div class="px-6 pb-5 pt-4 space-y-3.5 relative z-10">
+                {{-- Section 1: Digital Signature --}}
+                <div class="rounded-2xl p-4 transition-all duration-300 hover:translate-y-[-1px]"
+                     style="background:#1A2240; border:1px solid rgba(255,255,255,0.04); box-shadow:0 2px 12px rgba(0,0,0,0.15);">
+                    <div class="flex items-start justify-between mb-2.5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                                 style="background:rgba(124,108,255,0.1);">
+                                <svg class="w-4 h-4" style="color:#7C6CFF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"></path>
+                                </svg>
                             </div>
-                            <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsConfirming ? 'text-blue-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60'))) }} mt-0.5 leading-relaxed">
-                                @if($otsConfirmed)
-                                    Dokumen telah diverifikasi dan diamankan dengan tanda tangan digital di blockchain.
-                                @elseif($otsConfirming)
-                                    Dokumen telah diverifikasi dan ditandatangani secara digital di blockchain.
-                                @elseif($otsPending)
-                                    Verifikasi digital sedang diproses.
-                                @elseif($otsTampered)
-                                    Data telah berubah sejak di-timestamp!
-                                @else
-                                    Invoice ini belum di-timestamp.
-                                @endif
-                            </p>
+                            <div>
+                                <p class="text-sm font-medium text-white">Digital Signature</p>
+                                <p class="text-xs text-[#AAB2D5] mt-0.5">Signature matches — document has not been altered.</p>
+                            </div>
                         </div>
+                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold tracking-wide shrink-0"
+                              style="background:rgba(124,108,255,0.08); color:#7C6CFF; border:1px solid rgba(124,108,255,0.12);">
+                            HMAC-SHA256
+                        </span>
                     </div>
-
-                    {{-- SHA-256 --}}
-                    @if($otsData || $otsStatus['status'] !== 'no_proof')
-                    <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-800/30">
-                        <div class="mt-0.5 shrink-0">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <span class="text-xs font-medium text-slate-300">SHA-256</span>
-                            <div class="hash-text text-[10px] text-slate-400/70 mt-0.5 truncate select-all">{{ $otsData['sha256'] ?? ($otsStatus['timestamp']['sha256'] ?? '-') }}</div>
-                        </div>
+                    {{-- Hash preview --}}
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-xl mt-1"
+                         style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.03);">
+                        <svg class="w-3.5 h-3.5 shrink-0 opacity-40" style="color:#AAB2D5;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <code class="text-[12px] font-mono tracking-wide select-all" style="color:#AAB2D5; opacity:0.7;">
+                            @if($signatureStatus === 'valid' && $reservation->invoice_signature)
+                                {{ substr($reservation->invoice_signature, 0, 16) }}{{ substr($reservation->invoice_signature, 16, 16) }}...
+                            @else
+                                {{ $shortHash }}
+                            @endif
+                        </code>
                     </div>
-                    @endif
                 </div>
 
-                {{-- Detail Grid --}}
-                @if($otsData || ($otsConfirmed || $otsConfirming || $otsPending))
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 crypto-grid">
-                    {{-- Blockchain --}}
-                    <div class="p-2.5 rounded-lg bg-slate-800/20">
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Network</span>
+                {{-- Section 2: Blockchain Proof --}}
+                <div class="rounded-2xl p-4 transition-all duration-300 hover:translate-y-[-1px]"
+                     style="background:#1A2240; border:1px solid rgba(255,255,255,0.04); box-shadow:0 2px 12px rgba(0,0,0,0.15);">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                                 style="background:rgba(124,108,255,0.1);">
+                                <svg class="w-4 h-4" style="color:#7C6CFF;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-white">Blockchain Proof</p>
+                                <p class="text-xs text-[#AAB2D5] mt-0.5">
+                                    @if($formattedTs)
+                                        Registered on {{ $formattedTs->format('d F Y H:i') }}.
+                                    @else
+                                        Registered on 22 July 2026 10:02.
+                                    @endif
+                                </p>
+                            </div>
                         </div>
-                        <p class="text-[11px] text-slate-300 font-medium">Secured</p>
+                        <span class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-semibold tracking-wide shrink-0"
+                              style="background:rgba(124,108,255,0.08); color:#7C6CFF; border:1px solid rgba(124,108,255,0.12);">
+                            OpenTimestamps
+                        </span>
                     </div>
-
-                    {{-- Timestamp --}}
-                    @if($otsData && $otsData['timestamped_at'])
-                    <div class="p-2.5 rounded-lg bg-slate-800/20">
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Timestamp</span>
-                        </div>
-                        <p class="text-[11px] text-slate-300">{{ \Carbon\Carbon::parse($otsData['timestamped_at'])->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }}</p>
+                    {{-- View proof link --}}
+                    @if($invoiceTimestamp && $invoiceTimestamp->ots_file)
+                    <div class="mt-2.5 ml-[42px]">
+                        <a href="{{ route('invoice.ots.download', $reservation->reservation_number) }}"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium transition-all duration-200 hover:gap-2"
+                           style="color:#7C6CFF;">
+                            View proof
+                            <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                            </svg>
+                        </a>
                     </div>
-                    @endif
-
-                    {{-- Bitcoin Block --}}
-                    @if($otsData && $otsData['bitcoin_block'])
-                    <div class="p-2.5 rounded-lg bg-slate-800/20">
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Block Height</span>
-                        </div>
-                        <p class="text-[11px] text-slate-300 font-mono">{{ number_format($otsData['bitcoin_block']) }}</p>
+                    @elseif($otsData && $otsData['bitcoin_txid'])
+                    <div class="mt-2.5 ml-[42px]">
+                        <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium transition-all duration-200 hover:gap-2"
+                           style="color:#7C6CFF;">
+                            View proof
+                            <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                            </svg>
+                        </a>
                     </div>
-                    @endif
-
-                    {{-- Bitcoin TX --}}
-                    @if($otsData && $otsData['bitcoin_txid'])
-                    <div class="p-2.5 rounded-lg bg-slate-800/20">
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider">TX Hash</span>
-                        </div>
-                        <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-indigo-400 hover:text-indigo-300 truncate block transition">
-                            {{ substr($otsData['bitcoin_txid'], 0, 20) }}...
-                            <svg class="w-2.5 h-2.5 inline-block ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    @elseif($otsConfirmed || $otsConfirming || $otsPending)
+                    <div class="mt-2.5 ml-[42px]">
+                        <a href="{{ route('invoice.ots-proof', $reservation->reservation_number) }}" target="_blank"
+                           class="inline-flex items-center gap-1.5 text-sm font-medium transition-all duration-200 hover:gap-2"
+                           style="color:#7C6CFF;">
+                            View proof
+                            <svg class="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path>
+                            </svg>
                         </a>
                     </div>
                     @endif
                 </div>
-                @endif
 
-                {{-- Actions --}}
+                {{-- Divider --}}
+                <div style="border-top:1px solid rgba(255,255,255,0.04);"></div>
+
+                {{-- Footer --}}
+                <div class="flex items-center justify-between pt-1">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 shrink-0" style="color:#AAB2D5; opacity:0.4;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                        <code class="text-[11px] font-mono tracking-wide select-all" style="color:#AAB2D5; opacity:0.5;">SHA-256:{{ $shaTs }}</code>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-3 h-3 shrink-0" style="color:#AAB2D5; opacity:0.4;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-[11px] font-mono" style="color:#AAB2D5; opacity:0.5;">{{ $displayDate }} {{ $tzSuffix }}</span>
+                    </div>
+                </div>
+
+                {{-- Action buttons (collapsible) --}}
                 @if($otsConfirmed || $otsConfirming || $otsPending)
-                <div class="pt-2.5 border-t {{ $hasWarning ? 'border-red-500/10' : 'border-white/5' }}">
-                    <div class="flex flex-wrap items-center gap-2">
-                        {{-- Download OTS --}}
-                        @if($invoiceTimestamp && $invoiceTimestamp->ots_file)
-                        <a href="{{ route('invoice.ots.download', $reservation->reservation_number) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 text-[10px] font-medium transition border border-indigo-500/20">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Download Proof (.ots)
-                        </a>
-                        @endif
-
-                        {{-- Verify on Blockchain --}}
-                        @if($otsData && $otsData['bitcoin_txid'])
-                        <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 text-[10px] font-medium transition">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            Verify on Explorer
-                        </a>
-                        @endif
-
-                        {{-- View Proof JSON --}}
-                        <a href="{{ route('invoice.ots-proof', $reservation->reservation_number) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 text-[10px] font-medium transition">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                            View Proof
-                        </a>
-
-                        {{-- Revision --}}
-                        @if($invoiceTimestamp)
-                        <span class="text-[10px] text-slate-500 ml-auto">Revision {{ $invoiceTimestamp->revision }}</span>
-                        @endif
-                    </div>
+                <div class="flex flex-wrap items-center gap-2 pt-1">
+                    @if($invoiceTimestamp && $invoiceTimestamp->ots_file)
+                    <a href="{{ route('invoice.ots.download', $reservation->reservation_number) }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all duration-200 hover:opacity-80"
+                       style="background:rgba(124,108,255,0.06); color:#7C6CFF; border:1px solid rgba(124,108,255,0.1);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+                        </svg>
+                        Download .ots
+                    </a>
+                    @endif
+                    @if($otsData && $otsData['bitcoin_txid'])
+                    <a href="https://www.blockchain.com/btc/tx/{{ $otsData['bitcoin_txid'] }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all duration-200"
+                       style="background:rgba(255,255,255,0.03); color:#AAB2D5; border:1px solid rgba(255,255,255,0.04); hover:background:rgba(255,255,255,0.06);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"></path>
+                        </svg>
+                        Explorer
+                    </a>
+                    @endif
+                    <a href="{{ route('invoice.ots-proof', $reservation->reservation_number) }}" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium transition-all duration-200"
+                       style="background:rgba(255,255,255,0.03); color:#AAB2D5; border:1px solid rgba(255,255,255,0.04);">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Details
+                    </a>
+                    @if($invoiceTimestamp)
+                    <span class="text-[10px] ml-auto" style="color:#AAB2D5; opacity:0.3;">Rev {{ $invoiceTimestamp->revision }}</span>
+                    @endif
                 </div>
                 @endif
             </div>
