@@ -239,9 +239,21 @@
         </div>
     </div>
 
+    <!-- QR Code -->
+    @php
+        $firstReservation = $reservations->first();
+        $invoiceUrl = $firstReservation ? url('/invoice/' . $firstReservation->reservation_number) : '#';
+    @endphp
+    <div style="text-align: center; margin: 15px 0; padding: 10px; border-top: 1px solid #ddd;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data={{ urlencode($invoiceUrl) }}"
+             alt="QR Code"
+             style="width:100px; height:100px;">
+        <p style="font-size: 9px; color: #999; margin-top: 3px;">Scan untuk lihat invoice online</p>
+    </div>
+
     <div class="footer">
         <p>Terima kasih atas kunjungan Anda</p>
-        <p>{{ $hotel->hotel_name ?? 'Dynamic PMS v2' }} — {{ $hotel->address ?? '' }}</p>
+        <p>{{ $hotel->hotel_name ?? 'Dynamic PMS v2' }} &copy; {{ date('Y') }} — {{ $hotel->address ?? '' }}</p>
     </div>
 
     <script>

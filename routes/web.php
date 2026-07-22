@@ -57,6 +57,9 @@ Route::get('/', function () {
 Route::get('/tv/{room}', [TvController::class, 'welcome'])->name('tv.welcome');
 Route::get('/tv/{room}/status', [TvController::class, 'status'])->name('tv.status');
 
+// Public Invoice — lihat invoice online via QR code / link (tanpa auth)
+Route::get('/invoice/{reservationNumber}', [App\Http\Controllers\InvoiceController::class, 'publicShow'])->name('invoice.public');
+
 // Dashboard shortcut
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard');
 Route::post('/dashboard/auto-cancel-pending', [DashboardController::class, 'autoCancelPending'])->middleware(['auth', 'role:owner,user_manager'])->name('dashboard.auto-cancel-pending');
