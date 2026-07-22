@@ -84,6 +84,17 @@ class InvoiceTimestamp extends Model
     }
 
     /**
+     * Scope: pending atau confirming (belum confirmed).
+     */
+    public function scopeUnconfirmed(Builder $query): Builder
+    {
+        return $query->whereIn('ots_status', [
+            self::STATUS_PENDING,
+            self::STATUS_CONFIRMING,
+        ]);
+    }
+
+    /**
      * Scope: hanya yang sudah confirmed.
      */
     public function scopeConfirmed(Builder $query): Builder

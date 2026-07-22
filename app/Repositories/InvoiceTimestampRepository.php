@@ -158,11 +158,15 @@ class InvoiceTimestampRepository
     }
 
     /**
-     * Ambil semua timestamp yang masih pending untuk di-upgrade.
+     * Ambil semua timestamp yang masih pending atau confirming untuk di-upgrade.
+     * Termasuk confirming karena perlu dicek ulang apakah sudah masuk block Bitcoin.
      */
     public function getPendingTimestamps(int $limit = 50): Collection
     {
-        return InvoiceTimestamp::pending()
+        return InvoiceTimestamp::whereIn('ots_status', [
+                InvoiceTimestamp::STATUS_PENDING,
+                InvoiceTimestamp::STATUS_CONFIRMING,
+            ])
             ->orderBy('timestamped_at', 'asc')
             ->limit($limit)
             ->get();

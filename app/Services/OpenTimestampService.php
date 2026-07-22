@@ -331,30 +331,52 @@ class OpenTimestampService
             $block = $infoResult['block'] ?? null;
             $blockHash = $infoResult['block_hash'] ?? null;
 
+            if ($txid) {
+                // ✅ Sudah terkonfirmasi di Bitcoin blockchain
+                $this->repository->updateStatus(
+                    $timestamp,
+                    InvoiceTimestamp::STATUS_CONFIRMED,
+                    bitcoinTxid: $txid,
+                    bitcoinBlock: $block,
+                    bitcoinBlockHash: $blockHash,
+                    otsFile: $updatedOtsFile,
+                );
+
+                Log::info('OTS: Proof confirmed on Bitcoin', [
+                    'id' => $timestamp->id,
+                    'sha256' => $timestamp->sha256,
+                    'txid' => $txid,
+                    'block' => $block,
+                ]);
+
+                // ── Backward compatibility ──
+                $this->updateLegacyProof($timestamp);
+
+                return [
+                    'success' => true,
+                    'message' => 'Proof berhasil dikonfirmasi di Bitcoin Blockchain.',
+                    'txid' => $txid,
+                    'block' => $block,
+                ];
+            }
+
+            // ⏳ Upgrade sukses tapi belum masuk block Bitcoin — set confirming untuk retry nanti
             $this->repository->updateStatus(
                 $timestamp,
-                InvoiceTimestamp::STATUS_CONFIRMED,
-                bitcoinTxid: $txid,
-                bitcoinBlock: $block,
-                bitcoinBlockHash: $blockHash,
+                InvoiceTimestamp::STATUS_CONFIRMING,
                 otsFile: $updatedOtsFile,
             );
 
-            Log::info('OTS: Proof upgraded successfully', [
+            Log::info('OTS: Proof submitted to calendar, awaiting Bitcoin block', [
                 'id' => $timestamp->id,
                 'sha256' => $timestamp->sha256,
-                'txid' => $txid,
-                'block' => $block,
+                'info' => $infoResult['info'] ?? '',
             ]);
-
-            // ── Backward compatibility: update legacy proof ──
-            $this->updateLegacyProof($timestamp);
 
             return [
                 'success' => true,
-                'message' => 'Proof berhasil di-upgrade ke blockchain.',
-                'txid' => $txid,
-                'block' => $block,
+                'message' => 'Proof telah dikirim ke calendar, menunggu konfirmasi block Bitcoin. Cron job akan coba lagi nanti.',
+                'info' => $infoResult['info'] ?? null,
             ];
         } catch (\Exception $e) {
             Log::error('OTS: Upgrade proof failed', [
