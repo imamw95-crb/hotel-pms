@@ -576,15 +576,20 @@ class OpenTimestampService
         $currentHash = hash('sha256', json_encode($currentData));
         $match = hash_equals($timestamp->sha256, $currentHash);
 
+        $otsStatus = $timestamp->ots_status; // pending | confirming | confirmed | failed
+
         return [
             'verified' => $match,
             'status' => $match
-                ? ($timestamp->is_confirmed ? 'verified' : 'pending')
+                ? ($otsStatus === InvoiceTimestamp::STATUS_CONFIRMED ? 'verified' : $otsStatus)
                 : 'tampered',
             'message' => $match
-                ? ($timestamp->is_confirmed
-                    ? 'Dokumen telah di-timestamp blockchain dan tidak berubah.'
-                    : 'Hash cocok, menunggu konfirmasi blockchain.')
+                ? match ($otsStatus) {
+                    InvoiceTimestamp::STATUS_CONFIRMED => 'Dokumen telah di-timestamp blockchain dan tidak berubah.',
+                    InvoiceTimestamp::STATUS_CONFIRMING => 'Proof telah dikirim ke calendar, menunggu konfirmasi block Bitcoin.',
+                    InvoiceTimestamp::STATUS_FAILED => 'Proof gagal dikonfirmasi, akan dicoba ulang oleh sistem.',
+                    default => 'Hash cocok, menunggu proses stamping ke blockchain.',
+                }
                 : 'DATA TELAH BERUBAH SEJAK DI-TIMESTAMP!',
             'timestamp' => [
                 'id' => $timestamp->id,

@@ -118,9 +118,10 @@
         $otsVerifiedStatus = $otsStatus['status'] ?? 'no_proof';
         $otsTampered = $otsVerifiedStatus === 'tampered';
         $otsConfirmed = $otsVerifiedStatus === 'verified';
+        $otsConfirming = $otsVerifiedStatus === 'confirming';
         $otsPending = $otsVerifiedStatus === 'pending';
         $hasWarning = ($signatureStatus === 'invalid') || $otsTampered;
-        $allValid = ($signatureStatus === 'valid') && ($otsConfirmed || $otsPending);
+        $allValid = ($signatureStatus === 'valid') && ($otsConfirmed || $otsConfirming || $otsPending);
     @endphp
 
     <div class="max-w-4xl mx-auto mt-4 mb-5 px-4 sm:px-6 no-print">
@@ -128,9 +129,11 @@
             {{-- Header ──}}
             <div class="px-4 pt-3.5 pb-3 flex items-center justify-between border-b {{ $hasWarning ? 'border-red-500/10' : 'border-white/5' }}">
                 <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-full {{ $otsConfirmed ? 'bg-emerald-500/15' : ($otsPending ? 'bg-amber-500/15' : ($otsTampered ? 'bg-red-500/15' : 'bg-slate-500/15')) }} flex items-center justify-center shrink-0">
+                    <div class="w-7 h-7 rounded-full {{ $otsConfirmed ? 'bg-emerald-500/15' : ($otsConfirming ? 'bg-blue-500/15' : ($otsPending ? 'bg-amber-500/15' : ($otsTampered ? 'bg-red-500/15' : 'bg-slate-500/15'))) }} flex items-center justify-center shrink-0">
                         @if($otsConfirmed)
                             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        @elseif($otsConfirming)
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         @elseif($otsPending)
                             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         @elseif($otsTampered)
@@ -140,10 +143,12 @@
                         @endif
                     </div>
                     <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-widest {{ $otsConfirmed ? 'text-emerald-300/70' : ($otsPending ? 'text-amber-300/70' : ($otsTampered ? 'text-red-300/70' : 'text-slate-400/70')) }}">🔐 Digital Timestamp</p>
-                        <p class="text-sm font-semibold {{ $otsConfirmed ? 'text-emerald-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300')) }}">
+                        <p class="text-[10px] font-semibold uppercase tracking-widest {{ $otsConfirmed ? 'text-emerald-300/70' : ($otsConfirming ? 'text-blue-300/70' : ($otsPending ? 'text-amber-300/70' : ($otsTampered ? 'text-red-300/70' : 'text-slate-400/70'))) }}">🔐 Digital Timestamp</p>
+                        <p class="text-sm font-semibold {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">
                             @if($otsConfirmed)
                                 Verified on Bitcoin Blockchain
+                            @elseif($otsConfirming)
+                                Confirming to Blockchain
                             @elseif($otsPending)
                                 Pending Blockchain Confirmation
                             @elseif($otsTampered)
@@ -158,6 +163,11 @@
                     <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold tracking-wide border border-emerald-500/20">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 glow-dot"></span>
                         CONFIRMED
+                    </span>
+                @elseif($otsConfirming)
+                    <span class="px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-300 text-[10px] font-semibold tracking-wide border border-blue-500/20">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1"></span>
+                        CONFIRMING
                     </span>
                 @elseif($otsPending)
                     <span class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-semibold tracking-wide border border-amber-500/20">
@@ -181,10 +191,12 @@
                 {{-- Status & SHA-256 --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5 crypto-grid">
                     {{-- Status --}}
-                    <div class="flex items-start gap-2.5 p-2.5 rounded-lg {{ $otsConfirmed ? 'bg-emerald-950/20' : ($otsPending ? 'bg-amber-950/20' : ($otsTampered ? 'bg-red-950/20' : 'bg-slate-800/30')) }}">
+                    <div class="flex items-start gap-2.5 p-2.5 rounded-lg {{ $otsConfirmed ? 'bg-emerald-950/20' : ($otsConfirming ? 'bg-blue-950/20' : ($otsPending ? 'bg-amber-950/20' : ($otsTampered ? 'bg-red-950/20' : 'bg-slate-800/30'))) }}">
                         <div class="mt-0.5 shrink-0">
                             @if($otsConfirmed)
                                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            @elseif($otsConfirming)
+                                <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             @elseif($otsPending)
                                 <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             @else
@@ -193,13 +205,15 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="text-xs font-medium {{ $otsConfirmed ? 'text-emerald-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300')) }}">Status</span>
+                                <span class="text-xs font-medium {{ $otsConfirmed ? 'text-emerald-200' : ($otsConfirming ? 'text-blue-200' : ($otsPending ? 'text-amber-200' : ($otsTampered ? 'text-red-200' : 'text-slate-300'))) }}">Status</span>
                             </div>
-                            <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60')) }} mt-0.5 leading-relaxed">
+                            <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsConfirming ? 'text-blue-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60'))) }} mt-0.5 leading-relaxed">
                                 @if($otsConfirmed)
                                     Timestamp telah dikonfirmasi di Bitcoin Blockchain.
+                                @elseif($otsConfirming)
+                                    Proof telah dikirim ke calendar, menunggu konfirmasi block Bitcoin.
                                 @elseif($otsPending)
-                                    Proof telah dibuat, menunggu konfirmasi blockchain.
+                                    Proof telah dibuat, menunggu proses stamping ke blockchain.
                                 @elseif($otsTampered)
                                     Data telah berubah sejak di-timestamp!
                                 @else
@@ -224,7 +238,7 @@
                 </div>
 
                 {{-- Detail Grid --}}
-                @if($otsData || ($otsConfirmed || $otsPending))
+                @if($otsData || ($otsConfirmed || $otsConfirming || $otsPending))
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-2 crypto-grid">
                     {{-- Blockchain --}}
                     <div class="p-2.5 rounded-lg bg-slate-800/20">
@@ -283,7 +297,7 @@
                 @endif
 
                 {{-- Actions --}}
-                @if($otsConfirmed || $otsPending)
+                @if($otsConfirmed || $otsConfirming || $otsPending)
                 <div class="pt-2.5 border-t {{ $hasWarning ? 'border-red-500/10' : 'border-white/5' }}">
                     <div class="flex flex-wrap items-center gap-2">
                         {{-- Download OTS --}}
