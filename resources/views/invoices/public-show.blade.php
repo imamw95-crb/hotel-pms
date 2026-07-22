@@ -209,9 +209,9 @@
                             </div>
                             <p class="text-[11px] {{ $otsConfirmed ? 'text-emerald-300/60' : ($otsConfirming ? 'text-blue-300/60' : ($otsPending ? 'text-amber-300/60' : ($otsTampered ? 'text-red-300/60' : 'text-slate-400/60'))) }} mt-0.5 leading-relaxed">
                                 @if($otsConfirmed)
-                                    Dokumen telah diverifikasi dan diamankan dengan tanda tangan digital.
+                                    Dokumen telah diverifikasi dan diamankan dengan tanda tangan digital di blockchain.
                                 @elseif($otsConfirming)
-                                    Dokumen telah diverifikasi dan ditandatangani secara digital.
+                                    Dokumen telah diverifikasi dan ditandatangani secara digital di blockchain.
                                 @elseif($otsPending)
                                     Verifikasi digital sedang diproses.
                                 @elseif($otsTampered)
