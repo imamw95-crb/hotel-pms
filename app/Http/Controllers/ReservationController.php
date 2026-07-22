@@ -1041,6 +1041,25 @@ class ReservationController extends Controller
     }
 
     /**
+     * Print Registration Card gabungan untuk semua reservasi dalam 1 group
+     */
+    public function printGroupRegistrationCard(string $bookingGroupId)
+    {
+        $reservations = Reservation::with([
+            'guest', 'room', 'createdBy',
+        ])
+            ->where('booking_group_id', $bookingGroupId)
+            ->orderBy('room_id')
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ditemukan reservasi untuk group ini.');
+        }
+
+        return view('reservations.print-group-registration-card', compact('reservations'));
+    }
+
+    /**
      * Update total amount reservasi
      */
     public function updateTotal(Request $request, Reservation $reservation)

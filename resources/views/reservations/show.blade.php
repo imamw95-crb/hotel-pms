@@ -170,6 +170,11 @@
                class="bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                 <i class="fas fa-receipt"></i> Print Kwitansi Group
             </a>
+            <a href="{{ route('reservations.group-registration-card', $reservation->booking_group_id) }}"
+               onclick="window.open(this.href, 'printGroupRegCard', 'width=900,height=700,scrollbars=1'); return false;"
+               class="bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-id-card"></i> Registration Card Group
+            </a>
         </div>
     </div>
     @endif
