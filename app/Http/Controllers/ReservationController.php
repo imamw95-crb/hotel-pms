@@ -1031,7 +1031,8 @@ class ReservationController extends Controller
 
         $oldAmount = $reservation->total_amount;
         $reservation->total_amount = $validated['total_amount'];
-        $reservation->save();
+        $reservation->invoice_signature = null;
+        $reservation->saveQuietly();
 
         return response()->json([
             'success' => true,
@@ -1066,7 +1067,8 @@ class ReservationController extends Controller
         }
 
         $reservation->total_amount = $newTotal;
-        $reservation->save();
+        $reservation->invoice_signature = null;
+        $reservation->saveQuietly();
 
         return response()->json([
             'success' => true,
@@ -1166,7 +1168,8 @@ class ReservationController extends Controller
             $reservation->check_in = $newCheckIn;
             $reservation->check_out = $newCheckOut;
             $reservation->total_amount = $newTotal;
-            $reservation->save();
+            $reservation->invoice_signature = null;
+            $reservation->saveQuietly();
 
             // Catat transaction sebagai riwayat perubahan tanggal
             Transaction::create([
@@ -1230,7 +1233,8 @@ class ReservationController extends Controller
 
         // Simpan ota_reservation_number ke reservation
         $reservation->ota_reservation_number = $validated['ota_reservation_number'] ?? null;
-        $reservation->save();
+        $reservation->invoice_signature = null;
+        $reservation->saveQuietly();
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -1290,7 +1294,8 @@ class ReservationController extends Controller
             // Update total amount
             $reservation->total_amount += $additionalAmount;
             $reservation->check_out = $newCheckOut;
-            $reservation->save();
+            $reservation->invoice_signature = null;
+            $reservation->saveQuietly();
 
             // Catat transaction untuk extend (opsional, sebagai riwayat)
             if ($additionalAmount > 0) {
