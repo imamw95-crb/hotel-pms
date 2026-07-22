@@ -179,7 +179,7 @@
 @foreach($reservations as $index => $reservation)
   @php $isLast = $loop->last; @endphp
 
-  <div@if(!$isLast) class="page-break"@endif>
+  <div @if(!$isLast) class="page-break" @endif>
 
     <!-- HEADER -->
     <div class="header">
