@@ -247,44 +247,44 @@
     </div>
 
     <!-- Invoice Content -->
-    <div class="max-w-4xl mx-auto mb-8 px-4 sm:px-6">
-        <div class="bg-white rounded-xl invoice-card print:shadow-none print:rounded-none print:!p-2 print-compact">
+    <div class="max-w-4xl mx-auto mb-12 px-4 sm:px-6">
+        <div class="bg-white rounded-xl invoice-card print:shadow-none print:rounded-none print:!p-2 print-compact p-6 sm:p-8">
             <!-- Header -->
-            <div class="flex justify-between items-start border-b border-slate-200 pb-5 mb-6 invoice-header">
+            <div class="flex justify-between items-start border-b border-slate-200 pb-6 mb-8 invoice-header">
                 <div>
                     @php $hotel = \App\Models\HotelSetting::first(); @endphp
                     @if($hotel->logo_path)
                         <img src="{{ asset('storage/' . $hotel->logo_path) }}" alt="Logo" class="h-10 mb-2.5">
                     @endif
-                    <h1 class="text-xl font-bold text-slate-900">{{ strtoupper($hotel->hotel_name ?? 'DYNAMIC PMS V.2') }}</h1>
-                    @if($hotel->address)<p class="text-xs text-slate-400 mt-0.5">{{ $hotel->address }}</p>@endif
+                    <h1 class="text-2xl font-bold text-slate-900">{{ strtoupper($hotel->hotel_name ?? 'DYNAMIC PMS V.2') }}</h1>
+                    @if($hotel->address)<p class="text-sm text-slate-400 mt-1">{{ $hotel->address }}</p>@endif
                     @if($hotel->phone || $hotel->email)
-                        <p class="text-xs text-slate-400">
+                        <p class="text-sm text-slate-400">
                             @if($hotel->phone){{ $hotel->phone }}@endif
                             @if($hotel->phone && $hotel->email) &middot; @endif
                             @if($hotel->email){{ $hotel->email }}@endif
                         </p>
                     @endif
-                    @if($hotel->website)<p class="text-xs text-slate-400">{{ $hotel->website }}</p>@endif
+                    @if($hotel->website)<p class="text-sm text-slate-400">{{ $hotel->website }}</p>@endif
                 </div>
                 <div class="text-right shrink-0 invoice-header-right">
-                    <h2 class="text-base font-bold text-slate-900 tracking-tight">{{ $isGroupInvoice ? 'GROUP INVOICE' : 'INVOICE' }}</h2>
-                    <div class="mt-1 space-y-0.5">
+                    <h2 class="text-lg font-bold text-slate-900 tracking-tight">{{ $isGroupInvoice ? 'GROUP INVOICE' : 'INVOICE' }}</h2>
+                    <div class="mt-2 space-y-1">
                         @if($isGroupInvoice)
-                            <p class="text-xs text-slate-500"><span class="text-slate-400">Group No.</span> {{ $reservation->booking_group_id }}</p>
-                            <p class="text-xs text-slate-500"><span class="text-slate-400">Jumlah Kamar</span> {{ $reservations->count() }}</p>
+                            <p class="text-sm text-slate-500"><span class="text-slate-400">Group No.</span> {{ $reservation->booking_group_id }}</p>
+                            <p class="text-sm text-slate-500"><span class="text-slate-400">Jumlah Kamar</span> {{ $reservations->count() }}</p>
                         @else
-                            <p class="text-xs text-slate-500"><span class="text-slate-400">No.</span> {{ $reservation->reservation_number }}</p>
+                            <p class="text-sm text-slate-500"><span class="text-slate-400">No.</span> {{ $reservation->reservation_number }}</p>
                         @endif
-                        <p class="text-xs text-slate-500"><span class="text-slate-400">Date</span> {{ \Carbon\Carbon::now()->format('d F Y') }}</p>
+                        <p class="text-sm text-slate-500"><span class="text-slate-400">Date</span> {{ \Carbon\Carbon::now()->format('d F Y') }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Details -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 detail-grid">
-            <div class="border border-slate-200 rounded-lg p-3.5">
-                <h3 class="text-xs font-bold text-gray-800 border-b border-gray-100 pb-2 mb-2 uppercase tracking-wide">Info Tamu</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 detail-grid">
+            <div class="border border-slate-200 rounded-lg p-5">
+                <h3 class="text-sm font-bold text-gray-800 border-b border-gray-100 pb-2 mb-3 uppercase tracking-wide">Info Tamu</h3>
                 @php
                     // ── Helper masking sesuai UU PDP ──
                     function maskIdNumber($val) {
@@ -313,27 +313,27 @@
                     }
                 @endphp
                 <table class="w-full text-sm">
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Name</td><td class="text-slate-700">: {{ $reservation->guest->guest_name ?? '-' }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">ID No.</td><td class="text-slate-700">: {{ maskIdNumber($reservation->guest->id_number ?? '') }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Phone</td><td class="text-slate-700">: {{ maskPhone($reservation->guest->phone ?? '') }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Email</td><td class="text-slate-700">: {{ maskEmail($reservation->guest->email ?? '') }}</td></tr>
-                    <tr><td class="text-slate-400 w-1/3 py-0.5">Address</td><td class="text-slate-700">: {{ $reservation->guest->address ?? '-' }}</td></tr>
+                    <tr><td class="text-slate-400 w-1/3 py-1">Name</td><td class="text-slate-700">: {{ $reservation->guest->guest_name ?? '-' }}</td></tr>
+                    <tr><td class="text-slate-400 w-1/3 py-1">ID No.</td><td class="text-slate-700">: {{ maskIdNumber($reservation->guest->id_number ?? '') }}</td></tr>
+                    <tr><td class="text-slate-400 w-1/3 py-1">Phone</td><td class="text-slate-700">: {{ maskPhone($reservation->guest->phone ?? '') }}</td></tr>
+                    <tr><td class="text-slate-400 w-1/3 py-1">Email</td><td class="text-slate-700">: {{ maskEmail($reservation->guest->email ?? '') }}</td></tr>
+                    <tr><td class="text-slate-400 w-1/3 py-1">Address</td><td class="text-slate-700">: {{ $reservation->guest->address ?? '-' }}</td></tr>
                 </table>
             </div>
-            <div class="border border-slate-200 rounded-lg p-3.5">
-                <h3 class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-2.5 border-b border-slate-100">{{ $isGroupInvoice ? 'Group Info Menginap' : 'Room Information' }}</h3>
+            <div class="border border-slate-200 rounded-lg p-5">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-3 border-b border-slate-100">{{ $isGroupInvoice ? 'Group Info Menginap' : 'Room Information' }}</h3>
                 <table class="w-full text-sm">
                     @if($isGroupInvoice)
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Durasi</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Total Kamar</td><td class="text-slate-700">: {{ $reservations->count() }} kamar</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Durasi</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Total Kamar</td><td class="text-slate-700">: {{ $reservations->count() }} kamar</td></tr>
                     @else
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Room Type</td><td class="text-slate-700">: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Room No.</td><td class="text-slate-700">: {{ $reservation->room->room_number ?? '-' }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
-                        <tr><td class="text-slate-400 w-1/3 py-0.5">Nights</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Room Type</td><td class="text-slate-700">: {{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Room No.</td><td class="text-slate-700">: {{ $reservation->room->room_number ?? '-' }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y H:i') }}</td></tr>
+                        <tr><td class="text-slate-400 w-1/3 py-1">Nights</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
                     @endif
                 </table>
             </div>
@@ -341,34 +341,34 @@
 
         <!-- Items Table -->
         <div class="responsive-table">
-        <table class="w-full border-collapse mb-5 text-sm">
+        <table class="w-full border-collapse mb-6 text-sm">
             <thead>
                 <tr class="bg-slate-800 text-slate-100">
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Description</th>
-                    <th class="p-2.5 text-center font-medium text-[11px] uppercase tracking-wider">Room</th>
-                    <th class="p-2.5 text-center font-medium text-[11px] uppercase tracking-wider">Duration</th>
-                    <th class="p-2.5 text-right font-medium text-[11px] uppercase tracking-wider">Rate/Night</th>
-                    <th class="p-2.5 text-right font-medium text-[11px] uppercase tracking-wider">Total</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Description</th>
+                    <th class="p-3 text-center font-medium text-xs uppercase tracking-wider">Room</th>
+                    <th class="p-3 text-center font-medium text-xs uppercase tracking-wider">Duration</th>
+                    <th class="p-3 text-right font-medium text-xs uppercase tracking-wider">Rate/Night</th>
+                    <th class="p-3 text-right font-medium text-xs uppercase tracking-wider">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @if($isGroupInvoice)
                     @foreach($reservations as $idx => $res)
                     <tr class="{{ $idx % 2 === 0 ? 'bg-slate-50' : '' }} border-b border-slate-100">
-                        <td class="p-2.5 text-slate-700">Room {{ $res->room->room_number ?? '-' }}</td>
-                        <td class="p-2.5 text-center text-slate-600">{{ $res->room->room_number ?? '-' }}</td>
-                        <td class="p-2.5 text-center text-slate-600">{{ $res->nights }} night(s)</td>
-                        <td class="p-2.5 text-right text-slate-600">Rp {{ number_format($res->total_amount / max(1, $res->nights), 0, ',', '.') }}</td>
-                        <td class="p-2.5 text-right font-semibold text-slate-800">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
+                        <td class="p-3 text-slate-700">Room {{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-3 text-center text-slate-600">{{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-3 text-center text-slate-600">{{ $res->nights }} night(s)</td>
+                        <td class="p-3 text-right text-slate-600">Rp {{ number_format($res->total_amount / max(1, $res->nights), 0, ',', '.') }}</td>
+                        <td class="p-3 text-right font-semibold text-slate-800">Rp {{ number_format($res->total_amount, 0, ',', '.') }}</td>
                     </tr>
                     @endforeach
                 @else
                 <tr class="border-b border-slate-100">
-                    <td class="p-2.5 text-slate-700">Room {{ $reservation->room->room_number ?? '-' }}</td>
-                    <td class="p-2.5 text-center text-slate-600">{{ $reservation->room->room_number ?? '-' }}</td>
-                    <td class="p-2.5 text-center text-slate-600">{{ $reservation->nights }} night(s)</td>
-                    <td class="p-2.5 text-right text-slate-600">Rp {{ number_format($reservation->total_amount / max(1, $reservation->nights), 0, ',', '.') }}</td>
-                    <td class="p-2.5 text-right font-semibold text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
+                    <td class="p-3 text-slate-700">Room {{ $reservation->room->room_number ?? '-' }}</td>
+                    <td class="p-3 text-center text-slate-600">{{ $reservation->room->room_number ?? '-' }}</td>
+                    <td class="p-3 text-center text-slate-600">{{ $reservation->nights }} night(s)</td>
+                    <td class="p-3 text-right text-slate-600">Rp {{ number_format($reservation->total_amount / max(1, $reservation->nights), 0, ',', '.') }}</td>
+                    <td class="p-3 text-right font-semibold text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
                 </tr>
                 @endif
             </tbody>
@@ -382,31 +382,31 @@
         @endphp
         @if($allServiceCharges->count() > 0)
         <div class="responsive-table">
-        <table class="w-full border-collapse mb-5 text-sm">
+        <table class="w-full border-collapse mb-6 text-sm">
             <thead>
                 <tr class="bg-slate-800 text-slate-100">
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Other Revenue</th>
-                    <th class="p-2.5 text-center font-medium text-[11px] uppercase tracking-wider">Date</th>
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Service</th>
-                    <th class="p-2.5 text-center font-medium text-[11px] uppercase tracking-wider">Qty</th>
-                    <th class="p-2.5 text-right font-medium text-[11px] uppercase tracking-wider">Total</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Other Revenue</th>
+                    <th class="p-3 text-center font-medium text-xs uppercase tracking-wider">Date</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Service</th>
+                    <th class="p-3 text-center font-medium text-xs uppercase tracking-wider">Qty</th>
+                    <th class="p-3 text-right font-medium text-xs uppercase tracking-wider">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($allServiceCharges as $sc)
                 <tr class="border-b border-slate-100">
-                    <td class="p-2.5 text-slate-700">{{ $sc->charge_number }}</td>
-                    <td class="p-2.5 text-center text-slate-600">{{ $sc->charge_date->format('d/m/Y') }}</td>
-                    <td class="p-2.5 text-slate-600">{{ $sc->service_name }}</td>
-                    <td class="p-2.5 text-center text-slate-600">{{ $sc->quantity }} × Rp {{ number_format($sc->amount, 0, ',', '.') }}</td>
-                    <td class="p-2.5 text-right font-medium text-slate-700">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
+                    <td class="p-3 text-slate-700">{{ $sc->charge_number }}</td>
+                    <td class="p-3 text-center text-slate-600">{{ $sc->charge_date->format('d/m/Y') }}</td>
+                    <td class="p-3 text-slate-600">{{ $sc->service_name }}</td>
+                    <td class="p-3 text-center text-slate-600">{{ $sc->quantity }} × Rp {{ number_format($sc->amount, 0, ',', '.') }}</td>
+                    <td class="p-3 text-right font-medium text-slate-700">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="bg-slate-50 font-medium">
-                    <td colspan="4" class="p-2.5 text-right text-slate-500 text-[11px]">Subtotal Other Revenue</td>
-                    <td class="p-2.5 text-right text-slate-800">Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
+                    <td colspan="4" class="p-3 text-right text-slate-500 text-xs">Subtotal Other Revenue</td>
+                    <td class="p-3 text-right text-slate-800">Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -420,23 +420,23 @@
         @endphp
         @if($allRestoTransactions->count() > 0)
         <div class="responsive-table">
-        <table class="w-full border-collapse mb-5 text-sm">
+        <table class="w-full border-collapse mb-6 text-sm">
             <thead>
                 <tr class="bg-slate-800 text-slate-100">
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Resto</th>
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Transaction</th>
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Date</th>
-                    <th class="p-2.5 text-left font-medium text-[11px] uppercase tracking-wider">Items</th>
-                    <th class="p-2.5 text-right font-medium text-[11px] uppercase tracking-wider">Total</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Resto</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Transaction</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Date</th>
+                    <th class="p-3 text-left font-medium text-xs uppercase tracking-wider">Items</th>
+                    <th class="p-3 text-right font-medium text-xs uppercase tracking-wider">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($allRestoTransactions as $rt)
                 <tr class="border-b border-slate-100">
-                    <td class="p-2.5"></td>
-                    <td class="p-2.5 font-mono text-[11px] text-slate-600">{{ $rt->transaction_number }}</td>
-                    <td class="p-2.5 text-slate-600">{{ $rt->created_at->format('d/m/Y H:i') }}</td>
-                    <td class="p-2.5 text-slate-600">
+                    <td class="p-3"></td>
+                    <td class="p-3 font-mono text-xs text-slate-600">{{ $rt->transaction_number }}</td>
+                    <td class="p-3 text-slate-600">{{ $rt->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="p-3 text-slate-600">
                         @if(is_array($rt->items))
                             @foreach($rt->items as $item)
                                 {{ $item['name'] ?? $item['menu_name'] ?? 'Item' }} × {{ $item['quantity'] ?? 1 }}@if(!$loop->last), @endif
@@ -445,14 +445,14 @@
                             -
                         @endif
                     </td>
-                    <td class="p-2.5 text-right font-medium text-slate-700">Rp {{ number_format($rt->total_amount, 0, ',', '.') }}</td>
+                    <td class="p-3 text-right font-medium text-slate-700">Rp {{ number_format($rt->total_amount, 0, ',', '.') }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr class="bg-slate-50 font-medium">
-                    <td colspan="4" class="p-2.5 text-right text-slate-500 text-[11px]">Subtotal Resto</td>
-                    <td class="p-2.5 text-right text-slate-800">Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
+                    <td colspan="4" class="p-3 text-right text-slate-500 text-xs">Subtotal Resto</td>
+                    <td class="p-3 text-right text-slate-800">Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -460,60 +460,60 @@
         @endif
 
         <!-- Summary -->
-        <div class="flex justify-end mb-6">
-            <table class="w-56 text-sm summary-table">
+        <div class="flex justify-end mb-8">
+            <table class="w-64 text-sm summary-table">
                 @if($isGroupInvoice)
                 <tr>
-                    <td class="py-1.5 text-right text-slate-500">Total Kamar</td>
-                    <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($groupTotal, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right text-slate-500">Total Kamar</td>
+                    <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format($groupTotal, 0, ',', '.') }}</td>
                 </tr>
                 @else
                 <tr>
-                    <td class="py-1.5 text-right text-slate-500">Subtotal</td>
-                    <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right text-slate-500">Subtotal</td>
+                    <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format($reservation->total_amount, 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($totalServiceCharge > 0)
                 <tr>
-                    <td class="py-1.5 text-right text-slate-500">Other Revenue</td>
-                    <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right text-slate-500">Other Revenue</td>
+                    <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format($totalServiceCharge, 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 @if($totalResto > 0)
                 <tr>
-                    <td class="py-1.5 text-right text-slate-500">Resto</td>
-                    <td class="py-1.5 text-right font-medium text-slate-800">Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right text-slate-500">Resto</td>
+                    <td class="py-2 text-right font-medium text-slate-800">Rp {{ number_format($totalResto, 0, ',', '.') }}</td>
                 </tr>
                 @endif
                 <tr class="border-t border-slate-200">
-                    <td class="py-1.5 text-right font-semibold text-slate-900">Grand Total</td>
-                    <td class="py-1.5 text-right font-semibold text-slate-900">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right font-semibold text-slate-900">Grand Total</td>
+                    <td class="py-2 text-right font-semibold text-slate-900">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
-                    <td class="py-1.5 text-right text-slate-500">Paid</td>
-                    <td class="py-1.5 text-right font-medium text-emerald-600">Rp {{ number_format($isGroupInvoice ? $groupPaid : $reservation->paid_amount, 0, ',', '.') }}</td>
+                    <td class="py-2 text-right text-slate-500">Paid</td>
+                    <td class="py-2 text-right font-medium text-emerald-600">Rp {{ number_format($isGroupInvoice ? $groupPaid : $reservation->paid_amount, 0, ',', '.') }}</td>
                 </tr>
                 <tr class="bg-slate-800">
-                    <td class="px-2 py-1.5 text-right font-semibold text-white text-xs uppercase tracking-wider">Balance Due</td>
-                    <td class="px-2 py-1.5 text-right font-bold text-white">Rp {{ number_format(max(0, $grandTotal - ($isGroupInvoice ? $groupPaid : $reservation->paid_amount)), 0, ',', '.') }}</td>
+                    <td class="px-3 py-2 text-right font-semibold text-white text-xs uppercase tracking-wider">Balance Due</td>
+                    <td class="px-3 py-2 text-right font-bold text-white">Rp {{ number_format(max(0, $grandTotal - ($isGroupInvoice ? $groupPaid : $reservation->paid_amount)), 0, ',', '.') }}</td>
                 </tr>
             </table>
         </div>
 
         <!-- Payment History -->
         @if($transactions->count() > 0)
-        <div class="mb-6">
-            <h3 class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-3 border-b border-slate-200">Payment History</h3>
+        <div class="mb-8">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest pb-3 mb-4 border-b border-slate-200">Payment History</h3>
             <div class="responsive-table">
             <table class="w-full border-collapse text-sm">
                 <thead>
                     <tr class="bg-slate-50">
-                        <th class="p-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Transaction</th>
-                        <th class="p-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Date</th>
-                        <th class="p-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Type</th>
-                        <th class="p-2 text-left text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Method</th>
-                        <th class="p-2 text-right text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Amount</th>
-                        <th class="p-2 text-center text-[10px] font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                        <th class="p-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Transaction</th>
+                        <th class="p-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Date</th>
+                        <th class="p-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Type</th>
+                        <th class="p-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Method</th>
+                        <th class="p-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">Amount</th>
+                        <th class="p-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-200">
                             <span class="inline-flex items-center gap-1" title="OpenTimestamps Blockchain Proof">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                                 OTS
@@ -525,12 +525,12 @@
                     @foreach($transactions as $txn)
                     @php $txnOts = $transactionsOts[$txn->id] ?? null; @endphp
                     <tr>
-                        <td class="p-2 border-b border-slate-100 text-slate-600 font-mono text-[11px]">{{ $txn->transaction_number }}</td>
-                        <td class="p-2 border-b border-slate-100 text-slate-600">{{ $txn->created_at->format('d/m/Y H:i') }}</td>
-                        <td class="p-2 border-b border-slate-100 text-slate-700 capitalize">{{ str_replace('_', ' ', $txn->type) }}</td>
-                        <td class="p-2 border-b border-slate-100 text-slate-600">{{ ucwords(str_replace('_', ' ', $txn->payment_method)) }}</td>
-                        <td class="p-2 border-b border-slate-100 text-right font-medium text-slate-700">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>
-                        <td class="p-2 border-b border-slate-100 text-center">
+                        <td class="p-3 border-b border-slate-100 text-slate-600 font-mono text-xs">{{ $txn->transaction_number }}</td>
+                        <td class="p-3 border-b border-slate-100 text-slate-600">{{ $txn->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="p-3 border-b border-slate-100 text-slate-700 capitalize">{{ str_replace('_', ' ', $txn->type) }}</td>
+                        <td class="p-3 border-b border-slate-100 text-slate-600">{{ ucwords(str_replace('_', ' ', $txn->payment_method)) }}</td>
+                        <td class="p-3 border-b border-slate-100 text-right font-medium text-slate-700">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>
+                        <td class="p-3 border-b border-slate-100 text-center">
                             @if($txnOts && $txnOts['status'] === 'verified')
                                 <span class="inline-flex items-center gap-1 text-indigo-600 text-[10px] font-medium" title="Verified on blockchain {{ \Carbon\Carbon::parse($txnOts['timestamped_at'])->format('d/m/Y H:i') }}">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -550,9 +550,9 @@
                 </tbody>
                 <tfoot>
                     <tr class="bg-slate-100 font-semibold">
-                        <td colspan="4" class="p-2 text-right text-slate-600 text-[11px] uppercase tracking-wider">Total Pembayaran</td>
-                        <td class="p-2 text-right text-slate-900">Rp {{ number_format($transactions->sum('amount'), 0, ',', '.') }}</td>
-                        <td class="p-2"></td>
+                        <td colspan="4" class="p-3 text-right text-slate-600 text-xs uppercase tracking-wider">Total Pembayaran</td>
+                        <td class="p-3 text-right text-slate-900">Rp {{ number_format($transactions->sum('amount'), 0, ',', '.') }}</td>
+                        <td class="p-3"></td>
                     </tr>
                 </tfoot>
             </table>
@@ -561,10 +561,10 @@
         @endif
 
         <!-- Footer -->
-        <div class="text-center border-t border-slate-200 pt-4 mt-6">
-            <p class="text-sm font-medium text-slate-700 mb-1">Thank you for your stay</p>
-            <p class="text-xs text-slate-400">This invoice serves as an official payment receipt</p>
-            <div class="flex items-center justify-center gap-3 mt-2">
+        <div class="text-center border-t border-slate-200 pt-6 mt-8">
+            <p class="text-base font-medium text-slate-700 mb-2">Thank you for your stay</p>
+            <p class="text-sm text-slate-400">This invoice serves as an official payment receipt</p>
+            <div class="flex items-center justify-center gap-4 mt-3">
                 @if($signatureStatus === 'valid')
                     <span class="inline-flex items-center gap-1 text-[10px] text-indigo-500 font-medium">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
