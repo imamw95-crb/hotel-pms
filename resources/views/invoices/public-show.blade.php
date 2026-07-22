@@ -144,7 +144,7 @@
         $shortHash = substr($displayHash, 0, 30) . '...';
     @endphp
 
-    <div class="max-w-5xl mx-auto mt-4 mb-6 px-4 sm:px-6 no-print">
+    <div class="max-w-4xl mx-auto mt-4 mb-6 px-4 sm:px-6 no-print">
         <div class="relative overflow-hidden rounded-[22px] border" style="background:#161D35; border-color:rgba(255,255,255,0.06); box-shadow:0 8px 60px rgba(124,108,255,0.08), 0 0 0 1px rgba(124,108,255,0.06);">
             {{-- Glassmorphism glow overlay --}}
             <div class="absolute -top-32 -right-32 w-64 h-64 rounded-full opacity-[0.04]" style="background:radial-gradient(circle, #7C6CFF 0%, transparent 70%); pointer-events:none;"></div>
