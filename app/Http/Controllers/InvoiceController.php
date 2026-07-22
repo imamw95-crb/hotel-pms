@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Transaction;
+use App\Services\InvoiceSignatureService;
 
 class InvoiceController extends Controller
 {
@@ -11,7 +12,7 @@ class InvoiceController extends Controller
      * Tampilkan invoice secara publik (via QR code / link)
      * GET /invoice/{reservationNumber}
      */
-    public function publicShow($reservationNumber)
+    public function publicShow($reservationNumber, InvoiceSignatureService $signatureService)
     {
         $reservation = Reservation::with([
             'guest', 'room', 'room.roomType', 'createdBy',
@@ -20,6 +21,16 @@ class InvoiceController extends Controller
         ])
             ->where('reservation_number', $reservationNumber)
             ->firstOrFail();
+
+        // ── Validasi HMAC Signature ──
+        $signature = request('sig');
+        $isValid = false;
+        $signatureStatus = 'no_signature';
+
+        if ($signature && $reservation->invoice_signature) {
+            $isValid = $signatureService->verify($reservation, $signature);
+            $signatureStatus = $isValid ? 'valid' : 'invalid';
+        }
 
         $transactions = Transaction::where('reservation_id', $reservation->id)
             ->orderBy('created_at', 'desc')
@@ -31,7 +42,8 @@ class InvoiceController extends Controller
 
         return view('invoices.public-show', compact(
             'reservation', 'transactions',
-            'totalServiceCharge', 'totalResto', 'grandTotal'
+            'totalServiceCharge', 'totalResto', 'grandTotal',
+            'signatureStatus', 'isValid'
         ));
     }
 }

@@ -28,6 +28,23 @@
         </div>
     </nav>
 
+    {{-- Signature Validation Badge --}}
+    @if($signatureStatus === 'valid')
+        <div class="max-w-4xl mx-auto mb-2 p-3 bg-green-100 border border-green-300 text-green-800 rounded-lg flex items-center gap-2 text-sm no-print">
+            <svg class="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div><strong>Dokumen Valid</strong> — Invoice ini telah ditandatangani secara kriptografi dan tidak diubah sejak diterbitkan.</div>
+        </div>
+    @elseif($signatureStatus === 'invalid')
+        <div class="max-w-4xl mx-auto mb-2 p-3 bg-red-100 border border-red-300 text-red-800 rounded-lg flex items-center gap-2 text-sm no-print">
+            <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div><strong>Peringatan!</strong> Tanda tangan digital invoice ini <strong>tidak valid</strong> — data telah diubah sejak diterbitkan.</div>
+        </div>
+    @endif
+
     <!-- Invoice Content -->
     <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg my-6 p-8 print:shadow-none print:my-0 print:p-4">
         <!-- Header -->
@@ -59,11 +76,38 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div class="border border-gray-200 rounded-lg p-3">
                 <h3 class="text-xs font-bold text-gray-800 border-b border-gray-100 pb-2 mb-2 uppercase tracking-wide">Info Tamu</h3>
+                @php
+                    // ── Helper masking sesuai UU PDP ──
+                    function maskIdNumber($val) {
+                        if (!$val) return '-';
+                        $len = strlen($val);
+                        if ($len <= 4) return str_repeat('*', $len);
+                        return substr($val, 0, 2) . str_repeat('*', $len - 4) . substr($val, -2);
+                    }
+                    function maskPhone($val) {
+                        if (!$val) return '-';
+                        $len = strlen($val);
+                        if ($len <= 4) return str_repeat('*', $len);
+                        return str_repeat('*', $len - 4) . substr($val, -4);
+                    }
+                    function maskEmail($val) {
+                        if (!$val) return '-';
+                        $parts = explode('@', $val);
+                        $name = $parts[0] ?? '';
+                        $domain = $parts[1] ?? '';
+                        if (strlen($name) <= 2) {
+                            $masked = substr($name, 0, 1) . str_repeat('*', max(1, strlen($name) - 1));
+                        } else {
+                            $masked = substr($name, 0, 2) . str_repeat('*', strlen($name) - 2);
+                        }
+                        return $masked . '@' . $domain;
+                    }
+                @endphp
                 <table class="w-full text-sm">
                     <tr><td class="text-gray-500 w-1/3 py-0.5">Nama</td><td>: {{ $reservation->guest->guest_name ?? '-' }}</td></tr>
-                    <tr><td class="text-gray-500 w-1/3 py-0.5">No. Identitas</td><td>: {{ $reservation->guest->id_number ?? '-' }}</td></tr>
-                    <tr><td class="text-gray-500 w-1/3 py-0.5">Telepon</td><td>: {{ $reservation->guest->phone ?? '-' }}</td></tr>
-                    <tr><td class="text-gray-500 w-1/3 py-0.5">Email</td><td>: {{ $reservation->guest->email ?? '-' }}</td></tr>
+                    <tr><td class="text-gray-500 w-1/3 py-0.5">No. Identitas</td><td>: {{ maskIdNumber($reservation->guest->id_number ?? '') }}</td></tr>
+                    <tr><td class="text-gray-500 w-1/3 py-0.5">Telepon</td><td>: {{ maskPhone($reservation->guest->phone ?? '') }}</td></tr>
+                    <tr><td class="text-gray-500 w-1/3 py-0.5">Email</td><td>: {{ maskEmail($reservation->guest->email ?? '') }}</td></tr>
                     <tr><td class="text-gray-500 w-1/3 py-0.5">Alamat</td><td>: {{ $reservation->guest->address ?? '-' }}</td></tr>
                 </table>
             </div>
@@ -238,6 +282,11 @@
         <div class="text-center text-xs text-gray-400 border-t border-gray-200 pt-4 mt-5">
             <p class="text-gray-600 text-sm font-medium mb-1">Terima kasih atas kunjungan Anda</p>
             <p>Invoice ini sah sebagai bukti tagihan pembayaran</p>
+            @if($signatureStatus === 'valid')
+                <p class="text-green-600 font-medium mt-1">✅ Ditandatangani secara digital (HMAC-SHA256)</p>
+            @elseif($signatureStatus === 'invalid')
+                <p class="text-red-600 font-medium mt-1">❌ Tanda tangan digital TIDAK VALID</p>
+            @endif
             <p>{{ $hotel->hotel_name ?? 'Dynamic PMS v2' }} &copy; {{ date('Y') }}</p>
         </div>
     </div>

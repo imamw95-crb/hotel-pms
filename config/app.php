@@ -99,6 +99,18 @@ return [
 
     'key' => env('APP_KEY'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invoice Secret Key (HMAC Signature)
+    |--------------------------------------------------------------------------
+    |
+    | Secret key untuk menandatangani invoice online menggunakan HMAC-SHA256.
+    | Jika tidak diisi, akan menggunakan APP_KEY sebagai fallback.
+    |
+    */
+
+    'invoice_secret' => env('INVOICE_SECRET_KEY'),
+
     'previous_keys' => [
         ...array_filter(
             explode(',', (string) env('APP_PREVIOUS_KEYS', ''))

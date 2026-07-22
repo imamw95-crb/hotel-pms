@@ -83,12 +83,17 @@
     <!-- Details -->
     <div class="details">
         <div class="details-box">
+            @php
+                function maskId($v) { if (!$v) return '-'; $l = strlen($v); return $l <= 4 ? str_repeat('*', $l) : substr($v,0,2).str_repeat('*',$l-4).substr($v,-2); }
+                function maskPh($v) { if (!$v) return '-'; $l = strlen($v); return $l <= 4 ? str_repeat('*', $l) : str_repeat('*',$l-4).substr($v,-4); }
+                function maskEm($v) { if (!$v) return '-'; $p = explode('@',$v); $n = $p[0]??''; $d = $p[1]??''; return (strlen($n)<=2 ? substr($n,0,1).str_repeat('*',max(1,strlen($n)-1)) : substr($n,0,2).str_repeat('*',strlen($n)-2)).'@'.$d; }
+            @endphp
             <h3>Info Tamu</h3>
             <table>
                 <tr><td>Nama</td><td>: {{ $reservation->guest->guest_name ?? '-' }}</td></tr>
-                <tr><td>No. Identitas</td><td>: {{ $reservation->guest->id_number ?? '-' }}</td></tr>
-                <tr><td>Telepon</td><td>: {{ $reservation->guest->phone ?? '-' }}</td></tr>
-                <tr><td>Email</td><td>: {{ $reservation->guest->email ?? '-' }}</td></tr>
+                <tr><td>No. Identitas</td><td>: {{ maskId($reservation->guest->id_number ?? '') }}</td></tr>
+                <tr><td>Telepon</td><td>: {{ maskPh($reservation->guest->phone ?? '') }}</td></tr>
+                <tr><td>Email</td><td>: {{ maskEm($reservation->guest->email ?? '') }}</td></tr>
                 <tr><td>Alamat</td><td>: {{ $reservation->guest->address ?? '-' }}</td></tr>
             </table>
         </div>
@@ -276,9 +281,14 @@
         </div>
     </div>
 
-    <!-- QR Code -->
+    <!-- QR Code — dengan HMAC Signature -->
     @php
-        $invoiceUrl = config('app.url') . '/invoice/' . $reservation->reservation_number;
+        $sigService = app(\App\Services\InvoiceSignatureService::class);
+        if (!$reservation->invoice_signature) {
+            $reservation->invoice_signature = $sigService->generate($reservation);
+            $reservation->saveQuietly();
+        }
+        $invoiceUrl = url('/invoice/' . $reservation->reservation_number . '?sig=' . $reservation->invoice_signature);
     @endphp
     <div style="text-align: center; margin: 8px 0 5px;">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode($invoiceUrl) }}"
