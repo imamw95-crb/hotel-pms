@@ -162,7 +162,7 @@
                             @if($otsConfirmed || $otsConfirming)
                                 Document verified &amp; secured
                             @elseif($otsPending)
-                                Verification in progress
+                                Document timestamped &amp; secured
                             @elseif($otsTampered)
                                 Document integrity compromised
                             @else
@@ -180,7 +180,7 @@
                     <span style="color:#7C6CFF;">
                         @if($otsConfirmed) VERIFIED
                         @elseif($otsConfirming) TIMESTAMPED
-                        @elseif($otsPending) PENDING
+                        @elseif($otsPending) TIMESTAMPED
                         @elseif($otsTampered) TAMPERED
                         @else INACTIVE
                         @endif
@@ -639,9 +639,9 @@
                                     TIMESTAMPED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'pending')
-                                <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Menunggu proses stamping">
+                                <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Telah di-timestamp">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    Pending
+                                    TIMESTAMPED
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'tampered')
                                 <span class="inline-flex items-center gap-1 text-red-500 text-[10px] font-medium">
