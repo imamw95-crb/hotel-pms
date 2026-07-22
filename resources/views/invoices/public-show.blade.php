@@ -619,15 +619,27 @@
                         <td class="p-3 border-b border-slate-100 text-right font-medium text-slate-700">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>
                         <td class="p-3 border-b border-slate-100 text-center">
                             @if($txnOts && $txnOts['status'] === 'verified')
-                                <span class="inline-flex items-center gap-1 text-indigo-600 text-[10px] font-medium" title="Verified on blockchain {{ \Carbon\Carbon::parse($txnOts['timestamped_at'])->format('d/m/Y H:i') }}">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                <span class="inline-flex items-center gap-1 text-emerald-600 text-[10px] font-medium" title="Verified on blockchain {{ \Carbon\Carbon::parse($txnOts['timestamp']['confirmed_at'] ?? $txnOts['timestamped_at'])->format('d/m/Y H:i') }}">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     Verified
+                                </span>
+                            @elseif($txnOts && $txnOts['status'] === 'confirming')
+                                <span class="inline-flex items-center gap-1 text-blue-500 text-[10px] font-medium" title="Menunggu konfirmasi block Bitcoin">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Confirming
+                                </span>
+                            @elseif($txnOts && $txnOts['status'] === 'pending')
+                                <span class="inline-flex items-center gap-1 text-amber-500 text-[10px] font-medium" title="Menunggu proses stamping">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Pending
                                 </span>
                             @elseif($txnOts && $txnOts['status'] === 'tampered')
                                 <span class="inline-flex items-center gap-1 text-red-500 text-[10px] font-medium">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
                                     Modified
                                 </span>
+                            @elseif($txnOts && $txnOts['status'] === 'no_proof')
+                                <span class="text-slate-300 text-xs">—</span>
                             @else
                                 <span class="text-slate-300 text-xs">—</span>
                             @endif
