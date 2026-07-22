@@ -608,7 +608,7 @@ class NightAuditController extends Controller
 
         $otaBookings = $allNewBookings->filter(fn ($r) => ! empty($r['ota_source']) && $r['ota_source'] !== 'website')->values();
         $webBookings = $allNewBookings->filter(fn ($r) => $r['ota_source'] === 'website' || (empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods)))->values();
-        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website')->values();
+        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website' && $r['status'] !== 'cancelled')->values();
 
         // ─── Room Type Summary ─────────────────────────────────────
         $roomTypeSummary = Room::selectRaw("
