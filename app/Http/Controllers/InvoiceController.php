@@ -1,19 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Transaction;
-use App\Services\InvoiceSignatureService;
+use App\Repositories\InvoiceTimestampRepository;
 use App\Services\OpenTimestampService;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
+    public function __construct(
+        private readonly OpenTimestampService $otsService,
+        private readonly InvoiceTimestampRepository $repository,
+    ) {}
+
     /**
      * Tampilkan invoice secara publik (via QR code / link)
      * GET /invoice/{reservationNumber}
      */
-    public function publicShow($reservationNumber, InvoiceSignatureService $signatureService)
+    public function publicShow($reservationNumber)
     {
         $reservation = Reservation::with([
             'guest', 'room', 'room.roomType', 'createdBy',
@@ -29,28 +37,32 @@ class InvoiceController extends Controller
         $signatureStatus = 'no_signature';
 
         if ($signature && $reservation->invoice_signature) {
-            // Bandingkan 16 karakter pertama (short signature di QR)
             $storedShort = substr($reservation->invoice_signature, 0, 16);
             $isValid = hash_equals($storedShort, $signature);
             $signatureStatus = $isValid ? 'valid' : 'invalid';
         }
 
-        // ── Validasi OTS ──
-        $otsService = app(OpenTimestampService::class);
+        // ── OTS: Auto-timestamp jika belum ada proof ──
+        $invoiceTimestamp = $this->repository->findLatestRevision($reservation->id, 'reservation');
 
-        // Auto-timestamp invoice jika belum ada proof
-        if (!$reservation->ots_proof) {
-            $otsService->timestampInvoice($reservation, 'issued');
-            $reservation->refresh();
+        if (! $invoiceTimestamp) {
+            try {
+                $this->otsService->timestampInvoice($reservation);
+                $invoiceTimestamp = $this->repository->findLatestRevision($reservation->id, 'reservation');
+            } catch (\Exception $e) {
+                Log::error('Invoice: auto-timestamp failed', [
+                    'reservation' => $reservation->reservation_number,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        $otsStatus = $otsService->verifyInvoice($reservation);
+        $otsStatus = $this->otsService->verifyInvoice($reservation);
 
         // ── Cek apakah ini bagian dari booking group ──
-        $isGroupInvoice = !empty($reservation->booking_group_id);
+        $isGroupInvoice = ! empty($reservation->booking_group_id);
 
         if ($isGroupInvoice) {
-            // Load semua reservasi dalam group yang sama
             $reservations = Reservation::with([
                 'guest', 'room', 'room.roomType', 'createdBy',
                 'serviceCharges', 'serviceCharges.createdBy',
@@ -60,7 +72,6 @@ class InvoiceController extends Controller
                 ->orderBy('room_id')
                 ->get();
 
-            // Ambil semua transaction IDs untuk group
             $reservationIds = $reservations->pluck('id');
             $transactions = Transaction::whereIn('reservation_id', $reservationIds)
                 ->orderBy('created_at', 'desc')
@@ -69,17 +80,24 @@ class InvoiceController extends Controller
             // ── OTS untuk setiap transaksi ──
             $transactionsOts = [];
             foreach ($transactions as $txn) {
-                if (!$txn->ots_proof) {
-                    $otsService->timestampTransaction($txn);
-                    $txn->refresh();
+                $txnTimestamp = $this->repository->findLatestRevision($txn->id, 'transaction');
+                if (! $txnTimestamp) {
+                    try {
+                        $this->otsService->timestampTransaction($txn);
+                    } catch (\Exception $e) {
+                        Log::error('Invoice: auto-timestamp transaction failed', [
+                            'transaction' => $txn->transaction_number,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
-                $transactionsOts[$txn->id] = $otsService->verifyTransaction($txn);
+                $transactionsOts[$txn->id] = $this->otsService->verifyTransaction($txn);
             }
 
             $groupTotal = $reservations->sum('total_amount');
             $groupPaid = $reservations->sum('paid_amount');
-            $totalServiceCharge = $reservations->sum(fn($r) => $r->serviceCharges->sum('total_amount'));
-            $totalResto = $reservations->sum(fn($r) => $r->restoTransactions->sum('total_amount'));
+            $totalServiceCharge = $reservations->sum(fn ($r) => $r->serviceCharges->sum('total_amount'));
+            $totalResto = $reservations->sum(fn ($r) => $r->restoTransactions->sum('total_amount'));
             $grandTotal = $groupTotal + $totalServiceCharge + $totalResto;
 
             return view('invoices.public-show', compact(
@@ -87,7 +105,7 @@ class InvoiceController extends Controller
                 'groupTotal', 'groupPaid',
                 'totalServiceCharge', 'totalResto', 'grandTotal',
                 'signatureStatus', 'isValid',
-                'otsStatus', 'transactionsOts',
+                'otsStatus', 'invoiceTimestamp', 'transactionsOts',
                 'isGroupInvoice'
             ));
         }
@@ -99,12 +117,18 @@ class InvoiceController extends Controller
         // ── OTS untuk setiap transaksi ──
         $transactionsOts = [];
         foreach ($transactions as $txn) {
-            // Auto-timestamp transaksi lama yang belum punya OTS proof
-            if (!$txn->ots_proof) {
-                $otsService->timestampTransaction($txn);
-                $txn->refresh();
+            $txnTimestamp = $this->repository->findLatestRevision($txn->id, 'transaction');
+            if (! $txnTimestamp) {
+                try {
+                    $this->otsService->timestampTransaction($txn);
+                } catch (\Exception $e) {
+                    Log::error('Invoice: auto-timestamp transaction failed', [
+                        'transaction' => $txn->transaction_number,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
-            $transactionsOts[$txn->id] = $otsService->verifyTransaction($txn);
+            $transactionsOts[$txn->id] = $this->otsService->verifyTransaction($txn);
         }
 
         $totalServiceCharge = $reservation->serviceCharges->sum('total_amount');
@@ -115,7 +139,7 @@ class InvoiceController extends Controller
             'reservation', 'transactions',
             'totalServiceCharge', 'totalResto', 'grandTotal',
             'signatureStatus', 'isValid',
-            'otsStatus', 'transactionsOts',
+            'otsStatus', 'invoiceTimestamp', 'transactionsOts',
             'isGroupInvoice'
         ));
     }
@@ -128,18 +152,39 @@ class InvoiceController extends Controller
     {
         $reservation = Reservation::where('reservation_number', $reservationNumber)->firstOrFail();
 
-        if (!$reservation->ots_proof) {
+        $timestamp = $this->repository->findLatestRevision($reservation->id, 'reservation');
+
+        if (! $timestamp) {
+            // Fallback ke legacy
+            if ($reservation->ots_proof) {
+                $proof = json_decode($reservation->ots_proof, true);
+                return response()->json([
+                    'success' => true,
+                    'data' => $proof,
+                    'message' => 'OTS proof (legacy) — Invoice ' . $reservation->reservation_number,
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'OTS proof belum tersedia untuk invoice ini.',
             ], 404);
         }
 
-        $proof = json_decode($reservation->ots_proof, true);
-
         return response()->json([
             'success' => true,
-            'data' => $proof,
+            'data' => [
+                'id' => $timestamp->id,
+                'revision' => $timestamp->revision,
+                'sha256' => $timestamp->sha256,
+                'ots_status' => $timestamp->ots_status,
+                'calendar' => $timestamp->calendar,
+                'bitcoin_txid' => $timestamp->bitcoin_txid,
+                'bitcoin_block' => $timestamp->bitcoin_block,
+                'timestamped_at' => $timestamp->timestamped_at?->toIso8601String(),
+                'confirmed_at' => $timestamp->confirmed_at?->toIso8601String(),
+                'has_ots_file' => ! empty($timestamp->ots_file),
+            ],
             'message' => 'OTS proof — Invoice ' . $reservation->reservation_number,
         ]);
     }
@@ -155,18 +200,35 @@ class InvoiceController extends Controller
             ->where('reservation_id', $reservation->id)
             ->firstOrFail();
 
-        if (!$transaction->ots_proof) {
+        $timestamp = $this->repository->findLatestRevision($transaction->id, 'transaction');
+
+        if (! $timestamp) {
+            if ($transaction->ots_proof) {
+                $proof = json_decode($transaction->ots_proof, true);
+                return response()->json([
+                    'success' => true,
+                    'data' => $proof,
+                    'message' => 'OTS proof (legacy) — Transaksi ' . $transaction->transaction_number,
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'OTS proof belum tersedia untuk transaksi ini.',
             ], 404);
         }
 
-        $proof = json_decode($transaction->ots_proof, true);
-
         return response()->json([
             'success' => true,
-            'data' => $proof,
+            'data' => [
+                'id' => $timestamp->id,
+                'revision' => $timestamp->revision,
+                'sha256' => $timestamp->sha256,
+                'ots_status' => $timestamp->ots_status,
+                'calendar' => $timestamp->calendar,
+                'timestamped_at' => $timestamp->timestamped_at?->toIso8601String(),
+                'confirmed_at' => $timestamp->confirmed_at?->toIso8601String(),
+            ],
             'message' => 'OTS proof — Transaksi ' . $transaction->transaction_number,
         ]);
     }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AllotmentApiController;
 use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\OpenTimestampController;
 use App\Http\Controllers\Api\PromoPriceApiController;
 use App\Http\Controllers\Api\ReservationApiController;
 use App\Http\Controllers\Api\RoomTypePriceApiController;
@@ -112,6 +113,34 @@ Route::middleware(['api', 'api.key'])->group(function () {
     // ========== DASHBOARD STATS ==========
 
     Route::get('/stats', [ReservationApiController::class, 'stats']);
+    // ========== OPEN TIMESTAMPS (OTS) ==========
+
+    // Timestamp invoice
+    Route::post('/ots/timestamp/invoice/{reservation}', [OpenTimestampController::class, 'timestampInvoice']);
+
+    // Timestamp transaksi
+    Route::post('/ots/timestamp/transaction/{transaction}', [OpenTimestampController::class, 'timestampTransaction']);
+
+    // Verifikasi invoice
+    Route::get('/ots/verify/invoice/{reservation}', [OpenTimestampController::class, 'verifyInvoice']);
+
+    // Verifikasi transaksi
+    Route::get('/ots/verify/transaction/{transaction}', [OpenTimestampController::class, 'verifyTransaction']);
+
+    // Download proof
+    Route::get('/ots/proof/{invoiceTimestamp}', [OpenTimestampController::class, 'downloadProof']);
+
+    // Upgrade proof ke blockchain
+    Route::post('/ots/upgrade/{invoiceTimestamp}', [OpenTimestampController::class, 'upgradeProof']);
+
+    // Daftar pending timestamps
+    Route::get('/ots/pending', [OpenTimestampController::class, 'pendingTimestamps']);
+
+    // Buat revision baru
+    Route::post('/ots/revision/invoice/{reservation}', [OpenTimestampController::class, 'createRevision']);
+
+    // Riwayat timestamp
+    Route::get('/ots/history/invoice/{reservation}', [OpenTimestampController::class, 'invoiceHistory']);
 });
 
 /*

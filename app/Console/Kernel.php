@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\AutoCancelPendingBookingCommand::class,
         Commands\BlockMigrateFreshCommand::class,
         Commands\BlockMigrateResetCommand::class,
+        Commands\OtsUpgradeCommand::class,
     ];
 
     /**
@@ -60,6 +61,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(15)
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
+
+        // ─── OTS Proof Upgrader ──────────────────────────────
+        // Upgrade proof OTS yang masih pending ke blockchain Bitcoin
+        $schedule->command('ots:upgrade --limit=20')
+            ->hourly()
+            ->withoutOverlapping(60)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/ots-upgrade.log'));
     }
 
     /**

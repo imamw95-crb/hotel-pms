@@ -228,7 +228,7 @@ class ReservationController extends Controller
             if ($reservation->paid_amount >= $reservation->total_amount) {
                 $reservation->paid_date = now();
                 // ≡ƒöÉ OTS: Timestamp final invoice
-                $otsService->timestampInvoice($reservation, 'final');
+                $otsService->timestampInvoice($reservation);
             } else {
                 // ≡ƒöÉ OTS: Reset proof lama karena data berubah (DP/Tambahan)
                 $otsService->resetInvoiceProof($reservation);
@@ -904,8 +904,8 @@ class ReservationController extends Controller
                 $res->payment_method = $validated['payment_method'];
                 $res->save();
 
-                // ≡ƒöÉ OTS: Timestamp final invoice
-                $otsService->timestampInvoice($res, 'final');
+                // ── OTS: Timestamp final invoice
+                $otsService->timestampInvoice($res);
 
                 $totalPaid += $sisa;
                 $paidCount++;
