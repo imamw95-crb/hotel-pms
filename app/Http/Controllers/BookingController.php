@@ -130,6 +130,12 @@ class BookingController extends Controller
             return back()->with('error', "Kamar {$room->room_number} sudah dipesan untuk periode tersebut.")->withInput();
         }
 
+        // Cek duplikasi nomor OTA — warning saja, tidak blocking
+        $otaNumber = $validated['ota_reservation_number'] ?? null;
+        if ($otaNumber && Reservation::where('ota_reservation_number', $otaNumber)->exists()) {
+            session()->flash('warning', "Nomor OTA '{$otaNumber}' sudah digunakan oleh booking lain.");
+        }
+
         if (!empty($validated['id_number'])) {
             $guest = Guest::updateOrCreate(
                 ['id_number' => $validated['id_number']],

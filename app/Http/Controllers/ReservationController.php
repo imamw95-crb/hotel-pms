@@ -1430,6 +1430,12 @@ class ReservationController extends Controller
 
         $reservation->guest->update($validated);
 
+        // Cek duplikasi nomor OTA — warning saja, tidak blocking
+        $otaNumber = $validated['ota_reservation_number'] ?? null;
+        if ($otaNumber && Reservation::where('ota_reservation_number', $otaNumber)->where('id', '!=', $reservation->id)->exists()) {
+            session()->flash('warning', "Nomor OTA '{$otaNumber}' sudah digunakan oleh booking lain.");
+        }
+
         // Simpan ota_reservation_number ke reservation
         $reservation->ota_reservation_number = $validated['ota_reservation_number'] ?? null;
         $reservation->invoice_signature = null;
