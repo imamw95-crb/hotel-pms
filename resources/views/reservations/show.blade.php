@@ -1475,7 +1475,7 @@
                     }
                 }
 
-                fetch('{{ route("reservations.group-add-room", $reservation->booking_group_id) }}', {
+                fetch('{{ $reservation->booking_group_id ? route("reservations.group-add-room", $reservation->booking_group_id) : "" }}', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
