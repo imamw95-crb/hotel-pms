@@ -166,7 +166,24 @@ class RoomRackController extends Controller
         ]);
 
         $room = Room::findOrFail($request->room_id);
-        $isAvailable = $room->isAvailable($request->check_in, $request->check_out, $request->exclude_reservation_id);
+
+        // Gunakan datetime asli dari reservasi agar back-to-back (check-out 12:00, check-in 14:00)
+        // tidak salah dianggap bentrok — lihat #isAvailable yang pakai strict < dan >
+        if ($request->exclude_reservation_id) {
+            $reservation = Reservation::find($request->exclude_reservation_id);
+            if ($reservation) {
+                $checkIn = $reservation->check_in->format('Y-m-d H:i:s');
+                $checkOut = $reservation->check_out->format('Y-m-d H:i:s');
+            } else {
+                $checkIn = $request->check_in;
+                $checkOut = $request->check_out;
+            }
+        } else {
+            $checkIn = $request->check_in;
+            $checkOut = $request->check_out;
+        }
+
+        $isAvailable = $room->isAvailable($checkIn, $checkOut, $request->exclude_reservation_id);
 
         return response()->json([
             'success' => true,
