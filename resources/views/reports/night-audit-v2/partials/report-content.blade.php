@@ -777,6 +777,7 @@
                     <th class="text-center p-2 font-bold text-xs">TIPE</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-center p-2 font-bold text-xs">MLM</th>
                     <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
                     <th class="text-center p-2 font-bold text-xs">OTA</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
@@ -792,6 +793,13 @@
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-center">
+                        @if(($res['nights'] ?? 0) > 2)
+                            <span class="px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700" title="Lebih dari 2 malam">{{ $res['nights'] }}</span>
+                        @else
+                            <span class="text-xs text-gray-500">{{ $res['nights'] ?? '-' }}</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
                     <td class="p-2 text-center text-xs">
                         <span class="px-1 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800">{{ $res['ota_source'] }}</span>
@@ -818,7 +826,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-purple-50 border-t-2 border-purple-300">
-                    <td colspan="6" class="p-2 text-right font-bold text-xs text-purple-800">TOTAL OTA BOOKING</td>
+                    <td colspan="7" class="p-2 text-right font-bold text-xs text-purple-800">TOTAL OTA BOOKING</td>
                     <td class="p-2 text-right font-bold text-xs text-purple-700">Rp {{ number_format(collect($otaBookings)->sum('total_amount'), 0, ',', '.') }}</td>
                     <td colspan="3"></td>
                 </tr>
@@ -852,6 +860,7 @@
                     <th class="text-center p-2 font-bold text-xs">TIPE</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-center p-2 font-bold text-xs">MLM</th>
                     <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
                     <th class="text-center p-2 font-bold text-xs">PEMBAYARAN</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
@@ -867,6 +876,13 @@
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-center">
+                        @if(($res['nights'] ?? 0) > 2)
+                            <span class="px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700" title="Lebih dari 2 malam">{{ $res['nights'] }}</span>
+                        @else
+                            <span class="text-xs text-gray-500">{{ $res['nights'] ?? '-' }}</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
                     <td class="p-2 text-center text-xs">
                         <span class="px-1 py-0.5 rounded text-xs font-bold bg-cyan-100 text-cyan-800">{{ ucwords(str_replace('_', ' ', $res['payment_method'] ?? '-')) }}</span>
@@ -893,7 +909,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-blue-50 border-t-2 border-blue-300">
-                    <td colspan="6" class="p-2 text-right font-bold text-xs text-blue-800">TOTAL WEB BOOKING</td>
+                    <td colspan="7" class="p-2 text-right font-bold text-xs text-blue-800">TOTAL WEB BOOKING</td>
                     <td class="p-2 text-right font-bold text-xs text-blue-700">Rp {{ number_format(collect($webBookings)->sum('total_amount'), 0, ',', '.') }}</td>
                     <td colspan="3"></td>
                 </tr>
@@ -927,6 +943,7 @@
                     <th class="text-center p-2 font-bold text-xs">TIPE</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
                     <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-center p-2 font-bold text-xs">MLM</th>
                     <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
                     <th class="text-center p-2 font-bold text-xs">STATUS</th>
                     <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
@@ -941,6 +958,13 @@
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-center">
+                        @if(($res['nights'] ?? 0) > 2)
+                            <span class="px-1.5 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700" title="Lebih dari 2 malam">{{ $res['nights'] }}</span>
+                        @else
+                            <span class="text-xs text-gray-500">{{ $res['nights'] ?? '-' }}</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
                     <td class="p-2 text-center">
                         <span class="px-2 py-1 rounded text-xs font-bold
@@ -964,7 +988,7 @@
             </tbody>
             <tfoot>
                 <tr class="bg-green-50 border-t-2 border-green-300">
-                    <td colspan="6" class="p-2 text-right font-bold text-xs text-green-800">TOTAL DIRECT BOOKING</td>
+                    <td colspan="7" class="p-2 text-right font-bold text-xs text-green-800">TOTAL DIRECT BOOKING</td>
                     <td class="p-2 text-right font-bold text-xs text-green-700">Rp {{ number_format(collect($directBookings)->sum('total_amount'), 0, ',', '.') }}</td>
                     <td colspan="2"></td>
                 </tr>

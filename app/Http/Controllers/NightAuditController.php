@@ -599,6 +599,7 @@ class NightAuditController extends Controller
                 'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y'),
                 'check_out' => $r->check_out->format('d/m/Y'),
+                'nights' => $r->nights,
                 'total_amount' => $r->total_amount,
                 'status' => $r->status,
                 'include_breakfast' => $r->include_breakfast,
@@ -608,7 +609,13 @@ class NightAuditController extends Controller
 
         $otaBookings = $allNewBookings->filter(fn ($r) => ! empty($r['ota_source']) && $r['ota_source'] !== 'website')->values();
         $webBookings = $allNewBookings->filter(fn ($r) => $r['ota_source'] === 'website' || (empty($r['ota_source']) && in_array($r['payment_method'], $webPaymentMethods)))->values();
-        $directBookings = $allNewBookings->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website' && $r['status'] !== 'cancelled')->values();
+        $directBookings = $allNewBookings
+            ->filter(fn ($r) => empty($r['ota_source']) && ! in_array($r['payment_method'], $webPaymentMethods) && $r['ota_source'] !== 'website' && $r['status'] !== 'cancelled')
+            ->filter(function ($r) use ($date) {
+                // Hanya tampilkan yang check_in-nya = tanggal audit (hari H)
+                return $r['check_in'] === Carbon::parse($date)->format('d/m/Y');
+            })
+            ->values();
 
         // ─── Room Type Summary ─────────────────────────────────────
         $roomTypeSummary = Room::selectRaw("
