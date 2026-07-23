@@ -221,9 +221,9 @@
                             <span style="font-size:13px; font-weight:500; color:#1e293b;">Blockchain proof</span>
                         </div>
                         <span style="font-size:10px; font-weight:500; padding:2px 8px; border-radius:999px; @if($otsConfirmed) background:#9FE1CB; color:#04342C; @elseif($otsPending || $otsConfirming) background:#FAC775; color:#412402; @else background:#f1f5f9; color:#64748b; @endif">
-                            @if($otsConfirmed) Verified
-                            @elseif($otsConfirming) Confirming
-                            @elseif($otsPending) Pending
+                            @if($otsConfirmed) VERIFIED
+                            @elseif($otsConfirming) CONFIRMING
+                            @elseif($otsPending) TIMESTAMPED
                             @else N/A
                             @endif
                         </span>
