@@ -11,12 +11,14 @@
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Check-in</label>
                 <input type="date" name="check_in" value="{{ $checkIn }}"
-                    class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-[140px]">
+                    class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-[140px]"
+                    onchange="this.form.submit()">
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Check-out</label>
                 <input type="date" name="check_out" value="{{ $checkOut }}"
-                    class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-[140px]">
+                    class="border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-[140px]"
+                    onchange="this.form.submit()">
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Tipe Kamar</label>
