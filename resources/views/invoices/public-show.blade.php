@@ -220,10 +220,10 @@
                             <i class="bi bi-link-45deg" style="font-size:16px; color:#854F0B;" aria-hidden="true"></i>
                             <span style="font-size:13px; font-weight:500; color:#1e293b;">Blockchain proof</span>
                         </div>
-                        <span style="font-size:10px; font-weight:500; padding:2px 8px; border-radius:999px; @if($otsConfirmed) background:#9FE1CB; color:#04342C; @elseif($otsPending || $otsConfirming) background:#FAC775; color:#412402; @else background:#f1f5f9; color:#64748b; @endif">
+                        <span style="font-size:10px; font-weight:500; padding:2px 8px; border-radius:999px; @if($otsConfirmed) background:#9FE1CB; color:#04342C; @elseif($otsPending || $otsConfirming || $invoiceTimestamp) background:#FAC775; color:#412402; @else background:#f1f5f9; color:#64748b; @endif">
                             @if($otsConfirmed) VERIFIED
                             @elseif($otsConfirming) CONFIRMING
-                            @elseif($otsPending) TIMESTAMPED
+                            @elseif($otsPending || $invoiceTimestamp) TIMESTAMPED
                             @else N/A
                             @endif
                         </span>
@@ -636,7 +636,7 @@
                         Signature Invalid
                     </span>
                 @endif
-                @if(isset($otsStatus) && in_array($otsStatus['status'], ['verified', 'confirming', 'pending']))
+                @if($signatureStatus === 'valid')
                     <span class="inline-flex items-center gap-1 text-[10px] text-indigo-500 font-medium">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                         OpenTimestamps
