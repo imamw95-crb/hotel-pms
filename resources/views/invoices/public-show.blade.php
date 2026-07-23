@@ -177,7 +177,7 @@
     @endphp
 
     <div class="max-w-4xl mx-auto mt-4 mb-5 px-4 sm:px-6 no-print">
-        <div style="background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; padding: 1.5rem; max-width: 680px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="background: #fff; border-radius: 12px; border: 0.5px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
 
             <div style="display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:0.5px solid #e2e8f0;">
                 <i class="bi bi-lock" style="font-size:16px; color:#64748b;" aria-hidden="true"></i>
