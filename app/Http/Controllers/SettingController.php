@@ -32,6 +32,7 @@ class SettingController extends Controller
             'website' => 'nullable|string|max:200',
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'theme' => 'nullable|in:light,dark,system',
+            'cutoff_time' => 'nullable|date_format:H:i',
         ]);
 
         $setting = HotelSetting::first();
@@ -80,6 +81,7 @@ class SettingController extends Controller
         $setting->email = $validated['email'] ?? null;
         $setting->address = $validated['address'] ?? null;
         $setting->website = $validated['website'] ?? null;
+        $setting->cutoff_time = $validated['cutoff_time'] ?? '06:00';
         if (isset($validated['theme'])) {
             $setting->theme = $validated['theme'];
         }

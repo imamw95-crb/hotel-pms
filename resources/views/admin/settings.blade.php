@@ -113,6 +113,23 @@
             @enderror
         </div>
 
+        {{-- Cutoff Time --}}
+        <div class="p-6 border-b">
+            <label for="cutoff_time" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-clock text-blue-500 mr-1"></i> Business Date Cutoff Time
+            </label>
+            <p class="text-xs text-gray-400 mb-3">
+                Check-in sebelum jam ini dianggap masuk <strong>business date hari sebelumnya</strong>.
+                Default: <code>06:00</code> (standar hotel industry).
+            </p>
+            <input type="time" name="cutoff_time" id="cutoff_time"
+                   value="{{ old('cutoff_time', $setting->cutoff_time ?? '06:00') }}"
+                   class="w-40 border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+            @error('cutoff_time')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Tema Aplikasi --}}
         <div class="p-6 border-b">
             <label class="block text-sm font-semibold text-gray-700 mb-3">
