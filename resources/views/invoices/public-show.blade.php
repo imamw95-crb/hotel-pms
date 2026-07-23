@@ -340,6 +340,7 @@
                 <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest pb-2 mb-3 border-b border-slate-100">{{ $isGroupInvoice ? 'Group Info Menginap' : 'Room Information' }}</h3>
                 <table class="w-full text-sm">
                     @if($isGroupInvoice)
+                        <tr><td class="text-slate-400 w-1/3 py-1">Tipe Kamar</td><td class="text-slate-700">: {{ $reservations->pluck('room.roomType.name')->unique()->implode(', ') ?: '-' }}</td></tr>
                         <tr><td class="text-slate-400 w-1/3 py-1">Check-in</td><td class="text-slate-700">: {{ $reservation->check_in->format('d/m/Y') }}</td></tr>
                         <tr><td class="text-slate-400 w-1/3 py-1">Check-out</td><td class="text-slate-700">: {{ $reservation->check_out->format('d/m/Y') }}</td></tr>
                         <tr><td class="text-slate-400 w-1/3 py-1">Durasi</td><td class="text-slate-700">: {{ $reservation->nights }} night(s)</td></tr>
