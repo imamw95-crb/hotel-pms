@@ -105,7 +105,7 @@ var RestoForm = {
                        ' class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required oninput="RestoForm._calculate()">' +
             '</div>' +
             '<div class="w-32">' +
-                '<input type="number" name="items[' + index + '][price]" placeholder="Harga" min="0" step="500"' +
+                '<input type="number" name="items[' + index + '][price]" placeholder="Harga" min="0"' +
                        ' class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-right focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required oninput="RestoForm._calculate()">' +
             '</div>' +
             '<div class="w-28 text-right py-2 text-sm font-semibold item-subtotal">Rp 0</div>' +

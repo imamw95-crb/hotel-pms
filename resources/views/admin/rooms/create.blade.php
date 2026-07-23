@@ -49,21 +49,21 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Weekday (Rp)</label>
-                    <input type="number" name="price_weekday" value="{{ old('price_weekday') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" min="0" step="1000" placeholder="Senin–Jumat">
+                    <input type="number" name="price_weekday" value="{{ old('price_weekday') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" min="0" placeholder="Senin–Jumat">
                     @error('price_weekday')
                         <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Weekend (Rp)</label>
-                    <input type="number" name="price_weekend" value="{{ old('price_weekend') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" min="0" step="1000" placeholder="Sabtu–Minggu">
+                    <input type="number" name="price_weekend" value="{{ old('price_weekend') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" min="0" placeholder="Sabtu–Minggu">
                     @error('price_weekend')
                         <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Default <span class="text-red-500">*</span></label>
-                    <input type="number" name="price_per_night" value="{{ old('price_per_night') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required min="0" step="1000" placeholder="Fallback harga">
+                    <input type="number" name="price_per_night" value="{{ old('price_per_night') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" required min="0" placeholder="Fallback harga">
                     @error('price_per_night')
                         <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
                     @enderror

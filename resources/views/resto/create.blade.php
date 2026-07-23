@@ -91,7 +91,7 @@
                     </label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
-                        <input type="number" name="tax" id="tax" value="{{ old('tax', 0) }}" min="0" step="1000"
+                        <input type="number" name="tax" id="tax" value="{{ old('tax', 0) }}" min="0"
                                class="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-right"
                                oninput="RestoForm._calculate()">
                     </div>
@@ -102,7 +102,7 @@
                     </label>
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">Rp</span>
-                        <input type="number" name="discount" id="discount" value="{{ old('discount', 0) }}" min="0" step="1000"
+                        <input type="number" name="discount" id="discount" value="{{ old('discount', 0) }}" min="0"
                                class="w-full border border-gray-300 rounded-lg pl-12 pr-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-right"
                                oninput="RestoForm._calculate()">
                     </div>

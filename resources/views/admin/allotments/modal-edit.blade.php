@@ -46,7 +46,7 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">Harga Spesial (Rp)</label>
             <input type="number" name="price" value="{{ old('price', $allotment->price) }}"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                min="0" step="1000" placeholder="Kosongkan untuk pakai harga master">
+                min="0" placeholder="Kosongkan untuk pakai harga master">
             <p class="text-xs text-gray-400 mt-1">Harga per malam untuk allotment ini. Kosongkan = pakai harga master kamar ({{ number_format($allotment->getEffectivePrice(), 0, ',', '.') }}).</p>
             @error('price')
                 <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
