@@ -372,7 +372,7 @@
                 @if($isGroupInvoice)
                     @foreach($reservations as $idx => $res)
                     <tr class="{{ $idx % 2 === 0 ? 'bg-slate-50' : '' }} border-b border-slate-100">
-                        <td class="p-3 text-slate-700">Room {{ $res->room->room_number ?? '-' }}</td>
+                        <td class="p-3 text-slate-700">{{ $res->room->roomType->name ?? $res->room->room_type_name ?? '-' }}</td>
                         <td class="p-3 text-center text-slate-600">{{ $res->room->room_number ?? '-' }}</td>
                         <td class="p-3 text-center text-slate-600">{{ $res->nights }} night(s)</td>
                         <td class="p-3 text-right text-slate-600">Rp {{ number_format($res->total_amount / max(1, $res->nights), 0, ',', '.') }}</td>
@@ -381,7 +381,7 @@
                     @endforeach
                 @else
                 <tr class="border-b border-slate-100">
-                    <td class="p-3 text-slate-700">Room {{ $reservation->room->room_number ?? '-' }}</td>
+                    <td class="p-3 text-slate-700">{{ $reservation->room->roomType->name ?? $reservation->room->room_type_name ?? '-' }}</td>
                     <td class="p-3 text-center text-slate-600">{{ $reservation->room->room_number ?? '-' }}</td>
                     <td class="p-3 text-center text-slate-600">{{ $reservation->nights }} night(s)</td>
                     <td class="p-3 text-right text-slate-600">Rp {{ number_format($reservation->total_amount / max(1, $reservation->nights), 0, ',', '.') }}</td>
