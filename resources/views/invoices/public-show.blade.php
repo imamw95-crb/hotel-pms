@@ -475,6 +475,39 @@
         </div>
         @endif
 
+        {{-- ── Payment Status Notification ── --}}
+        @php
+            $totalPaid = $isGroupInvoice ? $groupPaid : $reservation->paid_amount;
+            $balance = max(0, $grandTotal - $totalPaid);
+        @endphp
+        <div class="mb-6">
+            @if($balance > 0 && $totalPaid > 0)
+            <div class="flex items-center gap-3 p-4 rounded-lg border" style="background:#FFF7ED; border-color:#FED7AA;">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background:#FED7AA;">
+                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-orange-800 text-sm">Dibayar Sebagian</p>
+                    <p class="text-xs text-orange-600/80 mt-0.5">Pembayaran belum lunas — sisa <strong>Rp {{ number_format($balance, 0, ',', '.') }}</strong> perlu dibayarkan.</p>
+                </div>
+            </div>
+            @elseif($balance == 0 && $totalPaid > 0)
+            <div class="flex items-center gap-3 p-4 rounded-lg border" style="background:#F0FDF4; border-color:#BBF7D0;">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style="background:#BBF7D0;">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-emerald-800 text-sm">Lunas</p>
+                    <p class="text-xs text-emerald-600/80 mt-0.5">Pembayaran sudah lunas — terima kasih.</p>
+                </div>
+            </div>
+            @endif
+        </div>
+
         <!-- Summary -->
         <div class="flex justify-end mb-8">
             <table class="w-64 text-sm summary-table">
