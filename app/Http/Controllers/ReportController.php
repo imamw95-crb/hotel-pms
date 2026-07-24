@@ -92,6 +92,7 @@ class ReportController extends Controller
             ->get();
 
         $newBookings = Reservation::whereDate('created_at', $date)
+            ->where('status', '!=', 'cancelled')
             ->with(['guest', 'room'])
             ->get();
 
