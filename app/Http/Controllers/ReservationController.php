@@ -199,7 +199,7 @@ class ReservationController extends Controller
                     'amount' => $otaPaidAmount,
                     'payment_method' => $validated['payment_method'],
                     'source_type' => $sourceType,
-                    'notes' => 'OTA '.$validated['payment_method'].' ΓÇö '.str_replace('_', ' ', $otaPaymentStatus),
+                    'notes' => 'OTA: '.str_replace(['ota_', '_'], ['', ' '], $validated['payment_method']).' - '.str_replace('_', ' ', $otaPaymentStatus ?? 'unpaid'),
                     'created_by' => auth()->id(),
                 ]);
                 // ≡ƒöÉ OTS: Timestamp receipt OTA
