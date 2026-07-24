@@ -428,21 +428,23 @@ class NightAuditController extends Controller
             ]);
 
         // Revenue
-        $revenueToday = Transaction::whereDate('created_at', $date)
+        $revenueToday = Transaction::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
             })
             ->sum('amount');
-        $restoRevenueToday = RestoTransaction::whereDate('created_at', $date)->sum('total_amount');
-        $serviceChargeRevenueToday = ServiceCharge::whereDate('charge_date', $date)->sum('total_amount');
+        $restoRevenueToday = RestoTransaction::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
+        $serviceChargeRevenueToday = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)->sum('total_amount');
         $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
 
         // ─── OTA payment method list ───────────────────────────────
         $otaPaymentMethods = ['ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment'];
 
         // Revenue by method with details
-        $transactions = Transaction::whereDate('created_at', $date)
+        $transactions = Transaction::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
@@ -472,7 +474,8 @@ class NightAuditController extends Controller
             });
         });
 
-        $revenueByMethod = Transaction::whereDate('created_at', $date)
+        $revenueByMethod = Transaction::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
@@ -497,7 +500,8 @@ class NightAuditController extends Controller
 
         // Resto transactions
         $restoTransactions = RestoTransaction::with(['guest'])
-            ->whereDate('created_at', $date)
+            ->where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($t) => [
@@ -510,14 +514,15 @@ class NightAuditController extends Controller
                 'total_amount' => $t->total_amount,
             ]);
 
-        $restoRevenueByMethod = RestoTransaction::whereDate('created_at', $date)
+        $restoRevenueByMethod = RestoTransaction::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
         // Other revenues
         $serviceCharges = ServiceCharge::with(['guest', 'reservation.room'])
-            ->whereDate('charge_date', $date)
+            ->where('charge_date', '>=', $bizStart)
+            ->where('charge_date', '<', $bizEnd)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($s) => [
@@ -530,17 +535,18 @@ class NightAuditController extends Controller
                 'total_amount' => $s->total_amount,
             ]);
 
-        $serviceChargeByMethod = ServiceCharge::whereDate('charge_date', $date)
+        $serviceChargeByMethod = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)
             ->whereNotNull('payment_method')
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
         // ─── Deposits (Key Card Deposit) ─────────────────────────────
-        $depositRevenueToday = Deposit::whereDate('created_at', $date)->sum('total_amount');
+        $depositRevenueToday = Deposit::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
 
         $depositList = Deposit::with(['guest', 'reservation.room', 'createdBy'])
-            ->whereDate('created_at', $date)
+            ->where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($d) => [
@@ -556,20 +562,21 @@ class NightAuditController extends Controller
                 'created_at' => $d->created_at->format('H:i'),
             ]);
 
-        $depositByMethod = Deposit::whereDate('created_at', $date)
+        $depositByMethod = Deposit::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
-        $cashDeposits = Deposit::whereDate('created_at', $date)
+        $cashDeposits = Deposit::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)
             ->where('payment_method', 'cash')
             ->sum('total_amount');
 
         // ─── Expenses (Pengeluaran) ─────────────────────────────────
-        $expensesToday = Expense::whereDate('expense_date', $date)->sum('amount');
+        $expensesToday = Expense::where('expense_date', '>=', $bizStart)->where('expense_date', '<', $bizEnd)->sum('amount');
 
         $expensesList = Expense::with('createdBy')
-            ->whereDate('expense_date', $date)
+            ->where('expense_date', '>=', $bizStart)
+            ->where('expense_date', '<', $bizEnd)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($e) => [
@@ -581,13 +588,14 @@ class NightAuditController extends Controller
                 'created_by' => $e->createdBy?->name ?? '-',
             ]);
 
-        $expensesByMethod = Expense::whereDate('expense_date', $date)
+        $expensesByMethod = Expense::where('expense_date', '>=', $bizStart)->where('expense_date', '<', $bizEnd)
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
 
         // ─── Cash Flow (Ringkasan Kas) ──────────────────────────────
-        $cashRevenue = Transaction::whereDate('created_at', $date)
+        $cashRevenue = Transaction::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where('payment_method', 'cash')
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
@@ -595,7 +603,7 @@ class NightAuditController extends Controller
             })
             ->sum('amount');
 
-        $cashExpenses = Expense::whereDate('expense_date', $date)
+        $cashExpenses = Expense::where('expense_date', '>=', $bizStart)->where('expense_date', '<', $bizEnd)
             ->where('payment_method', 'cash')
             ->sum('amount');
 
@@ -626,7 +634,8 @@ class NightAuditController extends Controller
         // New bookings — split OTA vs Web vs Direct
         $webPaymentMethods = ['bank_transfer', 'credit_card', 'debit_card', 'virtual_account', 'ewallet', 'qris'];
 
-        $allNewBookings = Reservation::whereDate('created_at', $date)
+        $allNewBookings = Reservation::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where('status', '!=', 'cancelled')
             ->with(['guest', 'room'])
             ->get()
