@@ -431,7 +431,7 @@ class NightAuditController extends Controller
         $revenueToday = Transaction::whereDate('created_at', $date)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', '!=', 'checked_out'));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
             })
             ->sum('amount');
         $restoRevenueToday = RestoTransaction::whereDate('created_at', $date)->sum('total_amount');
@@ -445,7 +445,7 @@ class NightAuditController extends Controller
         $transactions = Transaction::whereDate('created_at', $date)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', '!=', 'checked_out'));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
             })
             ->with(['reservation.guest', 'reservation.room'])
             ->orderBy('payment_method')
@@ -475,7 +475,7 @@ class NightAuditController extends Controller
         $revenueByMethod = Transaction::whereDate('created_at', $date)
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', '!=', 'checked_out'));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
             })
             ->selectRaw('payment_method, SUM(amount) as total')
             ->groupBy('payment_method')
@@ -591,7 +591,7 @@ class NightAuditController extends Controller
             ->where('payment_method', 'cash')
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', '!=', 'checked_out'));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
             })
             ->sum('amount');
 
