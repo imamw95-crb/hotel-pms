@@ -469,6 +469,8 @@ class NightAuditController extends Controller
 
                 return [
                     'transaction_number' => $t->transaction_number,
+                    'reservation_id' => $t->reservation?->id,
+                    'reservation_number' => $t->reservation?->reservation_number,
                     'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
                     'room_number' => $t->reservation?->room?->room_number ?? '-',
                     'room_type' => $t->reservation?->room?->room_type_name ?? '-',

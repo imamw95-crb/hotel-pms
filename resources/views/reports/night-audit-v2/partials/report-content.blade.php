@@ -223,6 +223,7 @@
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200">
                         <th class="text-left p-1 font-bold">No. Transaksi</th>
+                        <th class="text-left p-1 font-bold">No. Res</th>
                         <th class="text-left p-1 font-bold">Nama Tamu</th>
                         <th class="text-center p-1 font-bold">Kamar</th>
                         <th class="text-center p-1 font-bold">Tipe Kamar</th>
@@ -236,6 +237,13 @@
                     @foreach($transactions as $txn)
                     <tr class="border-b border-gray-100">
                         <td class="p-1 font-medium">{{ $txn['transaction_number'] ?? '-' }}</td>
+                        <td class="p-1">
+                            @if(!empty($txn['reservation_id']))
+                                <a href="{{ route('reservations.show', $txn['reservation_id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">{{ $txn['reservation_number'] }}</a>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
                         <td class="p-1">{{ $txn['guest_name'] ?? '-' }}</td>
                         <td class="p-1 text-center">{{ $txn['room_number'] ?? '-' }}</td>
                         <td class="p-1 text-center text-xs text-gray-600">{{ $txn['room_type'] ?? '-' }}</td>
