@@ -25,6 +25,11 @@ class ServiceChargeController extends Controller
             $query->whereDate('charge_date', '<=', $dateTo);
         }
 
+        $paymentMethod = $request->get('payment_method');
+        if ($paymentMethod) {
+            $query->where('payment_method', $paymentMethod);
+        }
+
         $search = $request->get('search');
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -42,7 +47,10 @@ class ServiceChargeController extends Controller
         $totalToday = ServiceCharge::whereDate('charge_date', today())->sum('total_amount');
         $totalPeriod = $query->sum('total_amount');
 
-        return view('service-charge.index', compact('charges', 'dateFrom', 'dateTo', 'search', 'totalToday', 'totalPeriod'));
+        // Payment methods for filter
+        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)->orderBy('name')->get();
+
+        return view('service-charge.index', compact('charges', 'dateFrom', 'dateTo', 'search', 'totalToday', 'totalPeriod', 'paymentMethods', 'paymentMethod'));
     }
 
     /**

@@ -515,7 +515,7 @@ class NightAuditController extends Controller
         }
 
         $restoRevenueToday = RestoTransaction::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
-        $serviceChargeRevenueToday = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)->sum('total_amount');
+        $serviceChargeRevenueToday = ServiceCharge::where('charge_date', '>=', $calendarStart)->where('charge_date', '<', $calendarEnd)->sum('total_amount');
         $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
 
         // Resto transactions
@@ -540,9 +540,12 @@ class NightAuditController extends Controller
             ->pluck('total', 'payment_method');
 
         // Other revenues
+        $calendarStart = Carbon::parse($date)->startOfDay()->format('Y-m-d H:i:s');
+        $calendarEnd = Carbon::parse($date)->addDay()->startOfDay()->format('Y-m-d H:i:s');
+
         $serviceCharges = ServiceCharge::with(['guest', 'reservation.room'])
-            ->where('charge_date', '>=', $bizStart)
-            ->where('charge_date', '<', $bizEnd)
+            ->where('charge_date', '>=', $calendarStart)
+            ->where('charge_date', '<', $calendarEnd)
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn ($s) => [
@@ -555,7 +558,7 @@ class NightAuditController extends Controller
                 'total_amount' => $s->total_amount,
             ]);
 
-        $serviceChargeByMethod = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)
+        $serviceChargeByMethod = ServiceCharge::where('charge_date', '>=', $calendarStart)->where('charge_date', '<', $calendarEnd)
             ->whereNotNull('payment_method')
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')

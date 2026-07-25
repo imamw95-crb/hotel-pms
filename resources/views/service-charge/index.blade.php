@@ -47,6 +47,17 @@
                 <input type="date" name="date_to" value="{{ $dateTo }}"
                        class="border rounded px-3 py-2 text-sm">
             </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-1">Metode Pembayaran</label>
+                <select name="payment_method" class="border rounded px-3 py-2 text-sm">
+                    <option value="">Semua Metode</option>
+                    @foreach($paymentMethods as $pm)
+                        <option value="{{ $pm->slug }}" {{ ($paymentMethod ?? '') === $pm->slug ? 'selected' : '' }}>
+                            {{ $pm->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-gray-700 text-sm font-bold mb-1">Cari</label>
                 <input type="text" name="search" value="{{ $search }}"
@@ -56,7 +67,7 @@
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
                 <i class="fas fa-search mr-1"></i> Filter
             </button>
-            @if($dateFrom || $dateTo || $search)
+            @if($dateFrom || $dateTo || $search || $paymentMethod)
                 <a href="{{ route('service-charge.index') }}" class="text-gray-500 hover:text-gray-700 text-sm px-3 py-2">
                     <i class="fas fa-times mr-1"></i> Reset
                 </a>
@@ -74,6 +85,7 @@
                     <th class="text-left p-3 font-semibold">Tamu</th>
                     <th class="text-left p-3 font-semibold">Layanan</th>
                     <th class="text-center p-3 font-semibold">Qty</th>
+                    <th class="text-left p-3 font-semibold">Metode</th>
                     <th class="text-right p-3 font-semibold">Total</th>
                     <th class="text-center p-3 font-semibold w-24">Aksi</th>
                 </tr>
@@ -91,6 +103,18 @@
                     </td>
                     <td class="p-3">{{ $charge->service_name }}</td>
                     <td class="p-3 text-center">{{ $charge->quantity }} × Rp {{ number_format($charge->amount, 0, ',', '.') }}</td>
+                    <td class="p-3">
+                        @if($charge->payment_method)
+                            <span class="px-2 py-1 rounded text-xs font-bold
+                                @if(str_contains($charge->payment_method, 'edc')) bg-purple-100 text-purple-800
+                                @elseif($charge->payment_method === 'cash') bg-green-100 text-green-800
+                                @else bg-blue-100 text-blue-800 @endif">
+                                {{ ucwords(str_replace('_', ' ', $charge->payment_method)) }}
+                            </span>
+                        @else
+                            <span class="text-gray-400 text-xs">—</span>
+                        @endif
+                    </td>
                     <td class="p-3 text-right font-bold">Rp {{ number_format($charge->total_amount, 0, ',', '.') }}</td>
                     <td class="p-3 text-center">
                         <a href="{{ route('service-charge.show', $charge) }}"
@@ -102,7 +126,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="p-8 text-center text-gray-400">
+                    <td colspan="8" class="p-8 text-center text-gray-400">
                         <i class="fas fa-receipt text-3xl mb-2 block"></i>
                         Belum ada other revenue.
                     </td>
