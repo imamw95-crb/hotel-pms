@@ -480,6 +480,7 @@ class NightAuditController extends Controller
 
                 return [
                     'transaction_number' => $t->transaction_number,
+                    'created_at' => $t->created_at->format('d/m/Y H:i'),
                     'reservation_id' => $t->reservation?->id,
                     'reservation_number' => $t->reservation?->reservation_number,
                     'guest_name' => $t->reservation?->guest?->guest_name ?? '-',

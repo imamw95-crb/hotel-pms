@@ -239,6 +239,7 @@
                         <td class="p-1 font-medium">
                             @if(($txn['type'] ?? '') === 'dp')
                                 <span class="inline-block px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 mr-1">DP</span>
+                                <span class="text-xs text-gray-500 mr-1">{{ $txn['created_at'] ?? '' }}</span>
                             @endif
                             {{ $txn['transaction_number'] ?? '-' }}
                         </td>
