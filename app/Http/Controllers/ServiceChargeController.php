@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\ServiceCharge;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class ServiceChargeController extends Controller
@@ -115,6 +117,21 @@ class ServiceChargeController extends Controller
             'notes' => $validated['notes'] ?? null,
             'created_by' => auth()->id(),
         ]);
+
+        // ─── Sync ke Transaction (Master Payment) ───────────────
+        if (! empty($validated['payment_method']) && ! empty($validated['reservation_id'])) {
+            $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+
+            Transaction::create([
+                'reservation_id' => $validated['reservation_id'],
+                'type' => 'additional',
+                'amount' => $totalAmount,
+                'payment_method' => $validated['payment_method'],
+                'source_type' => $sourceType,
+                'notes' => $validated['service_name'].($validated['notes'] ? ' - '.$validated['notes'] : ''),
+                'created_by' => auth()->id(),
+            ]);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
