@@ -402,6 +402,7 @@ class NightAuditController extends Controller
             ->with(['guest', 'room'])
             ->get()
             ->map(fn ($r) => [
+                'id' => $r->id,
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -409,6 +410,9 @@ class NightAuditController extends Controller
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
                 'include_breakfast' => $r->include_breakfast,
+                'total_amount' => $r->total_amount,
+                'paid_amount' => $r->paid_amount,
+                'balance' => $r->total_amount - $r->paid_amount,
             ]);
 
         // Check-outs today (business date)
@@ -418,6 +422,7 @@ class NightAuditController extends Controller
             ->with(['guest', 'room'])
             ->get()
             ->map(fn ($r) => [
+                'id' => $r->id,
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -425,6 +430,9 @@ class NightAuditController extends Controller
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
                 'include_breakfast' => $r->include_breakfast,
+                'total_amount' => $r->total_amount,
+                'paid_amount' => $r->paid_amount,
+                'balance' => $r->total_amount - $r->paid_amount,
             ]);
 
         // Revenue
@@ -621,6 +629,7 @@ class NightAuditController extends Controller
             ->orderBy('check_out', 'asc')
             ->get()
             ->map(fn ($r) => [
+                'id' => $r->id,
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -629,6 +638,9 @@ class NightAuditController extends Controller
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'total_nights' => $r->nights,
                 'include_breakfast' => $r->include_breakfast,
+                'total_amount' => $r->total_amount,
+                'paid_amount' => $r->paid_amount,
+                'balance' => $r->total_amount - $r->paid_amount,
             ]);
 
         // New bookings — split OTA vs Web vs Direct
@@ -640,6 +652,7 @@ class NightAuditController extends Controller
             ->with(['guest', 'room'])
             ->get()
             ->map(fn ($r) => [
+                'id' => $r->id,
                 'reservation_number' => $r->reservation_number,
                 'guest_name' => $r->guest->guest_name ?? '-',
                 'room_number' => $r->room->room_number ?? '-',
@@ -649,6 +662,7 @@ class NightAuditController extends Controller
                 'check_out' => $r->check_out->format('d/m/Y'),
                 'nights' => $r->nights,
                 'total_amount' => $r->total_amount,
+                'paid_amount' => $r->paid_amount,
                 'status' => $r->status,
                 'include_breakfast' => $r->include_breakfast,
                 'ota_source' => $r->ota_source,

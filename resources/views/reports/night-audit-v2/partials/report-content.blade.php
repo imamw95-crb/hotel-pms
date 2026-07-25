@@ -621,8 +621,15 @@
                 </thead>
                 <tbody>
                     @foreach($checkinsToday ?? [] as $res)
-                    <tr class="border-b border-gray-100">
-                        <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                    <tr class="border-b border-gray-100 {{ ($res['balance'] ?? 0) > 0 ? 'bg-red-50/50' : '' }}">
+                        <td class="p-2 font-medium text-xs">
+                            <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                {{ $res['reservation_number'] ?? '-' }}
+                            </a>
+                            @if(($res['balance'] ?? 0) > 0)
+                                <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                            @endif
+                        </td>
                         <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                         <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                         <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
@@ -670,8 +677,15 @@
                 </thead>
                 <tbody>
                     @foreach($checkoutsToday ?? [] as $res)
-                    <tr class="border-b border-gray-100">
-                        <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                    <tr class="border-b border-gray-100 {{ ($res['balance'] ?? 0) > 0 ? 'bg-red-50/50' : '' }}">
+                        <td class="p-2 font-medium text-xs">
+                            <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                {{ $res['reservation_number'] ?? '-' }}
+                            </a>
+                            @if(($res['balance'] ?? 0) > 0)
+                                <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                            @endif
+                        </td>
                         <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                         <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                         <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
@@ -724,8 +738,15 @@
             </thead>
             <tbody>
                 @foreach($inHouseGuests ?? [] as $res)
-                <tr class="border-b border-gray-100">
-                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                <tr class="border-b border-gray-100 {{ ($res['balance'] ?? 0) > 0 ? 'bg-red-50/50' : '' }}">
+                    <td class="p-2 font-medium text-xs">
+                        <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res['reservation_number'] ?? '-' }}
+                        </a>
+                        @if(($res['balance'] ?? 0) > 0)
+                            <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
@@ -786,8 +807,15 @@
             </thead>
             <tbody>
                 @foreach($otaBookings ?? [] as $res)
-                <tr class="border-b border-gray-100">
-                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                <tr class="border-b border-gray-100 {{ (($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0 ? 'bg-red-50/50' : '' }}">
+                    <td class="p-2 font-medium text-xs">
+                        <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res['reservation_number'] ?? '-' }}
+                        </a>
+                        @if((($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0)
+                            <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
@@ -869,8 +897,15 @@
             </thead>
             <tbody>
                 @foreach($webBookings ?? [] as $res)
-                <tr class="border-b border-gray-100">
-                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                <tr class="border-b border-gray-100 {{ (($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0 ? 'bg-red-50/50' : '' }}">
+                    <td class="p-2 font-medium text-xs">
+                        <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res['reservation_number'] ?? '-' }}
+                        </a>
+                        @if((($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0)
+                            <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
@@ -951,8 +986,15 @@
             </thead>
             <tbody>
                 @foreach($directBookings ?? [] as $res)
-                <tr class="border-b border-gray-100">
-                    <td class="p-2 font-medium text-xs">{{ $res['reservation_number'] ?? '-' }}</td>
+                <tr class="border-b border-gray-100 {{ (($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0 ? 'bg-red-50/50' : '' }}">
+                    <td class="p-2 font-medium text-xs">
+                        <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res['reservation_number'] ?? '-' }}
+                        </a>
+                        @if((($res['total_amount'] ?? 0) - ($res['paid_amount'] ?? 0)) > 0)
+                            <br><span class="inline-block mt-0.5 px-1 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Belum Lunas</span>
+                        @endif
+                    </td>
                     <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
                     <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
                     <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
