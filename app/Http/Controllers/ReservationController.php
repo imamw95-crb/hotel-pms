@@ -146,8 +146,8 @@ class ReservationController extends Controller
     }
 
     /**
-     * Input Pembayaran ΓÇö 1 Form Universal
-     * Handle: OTA paid, OTA partial, cash, DP, pelunasan ΓÇö semua dari 1 input
+     * Input Pembayaran — 1 Form Universal
+     * Handle: OTA paid, OTA partial, cash, DP, pelunasan — semua dari 1 input
      */
     public function addPayment(Request $request, Reservation $reservation)
     {
@@ -616,7 +616,7 @@ class ReservationController extends Controller
     }
 
     /**
-     * AI Auto-Reservation ΓÇö Create reservation from natural language input.
+     * AI Auto-Reservation — Create reservation from natural language input.
      * AI parses the input, finds available room, and creates the reservation.
      *
      * Flow: INPUT ΓåÆ AI PARSE ΓåÆ VALIDATE ΓåÆ CHECK ROOM ΓåÆ CREATE RESERVATION ΓåÆ DONE
@@ -781,7 +781,7 @@ class ReservationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Γ£à Reservasi berhasil dibuat: {$reservation->reservation_number} untuk {$aiData['guest_name']} ΓÇö {$roomInfo}",
+                'message' => "✅ Reservasi berhasil dibuat: {$reservation->reservation_number} untuk {$aiData['guest_name']} — {$roomInfo}",
                 'reservation' => $reservation,
                 'ai_data' => $aiData,
             ]);
@@ -813,7 +813,7 @@ class ReservationController extends Controller
     }
 
     /**
-     * Print Invoice ΓÇö gabung kamar + service charge + resto dalam 1 invoice
+     * Print Invoice — gabung kamar + service charge + resto dalam 1 invoice
      */
     public function printInvoice(Reservation $reservation)
     {
@@ -918,7 +918,7 @@ class ReservationController extends Controller
                 foreach ($reservations as $res) {
                     if ($res->paid_amount >= $res->total_amount) {
                         $messageNotif = sprintf(
-                            '≡ƒÆ░ Pelunasan Group ΓÇö %s ΓÇö Rp %s via %s',
+                            '💰 Pelunasan Group — %s — Rp %s via %s',
                             $res->guest?->guest_name ?? '-',
                             number_format($res->total_amount, 0, ',', '.'),
                             $validated['payment_method']
@@ -940,7 +940,7 @@ class ReservationController extends Controller
                 ]);
             }
 
-            $message = "Γ£à Pelunasan group berhasil: {$paidCount} kamar, total Rp ".number_format($totalPaid, 0, ',', '.');
+            $message = "✅ Pelunasan group berhasil: {$paidCount} kamar, total Rp ".number_format($totalPaid, 0, ',', '.');
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -1455,7 +1455,7 @@ class ReservationController extends Controller
     }
 
     /**
-     * Extend masa menginap ΓÇö perpanjang check-out date
+     * Extend masa menginap — perpanjang check-out date
      */
     public function extendStay(Request $request, Reservation $reservation)
     {
@@ -1515,7 +1515,7 @@ class ReservationController extends Controller
                     'amount' => $additionalAmount,
                     'payment_method' => $paymentMethodSlug,
                     'source_type' => $sourceType,
-                    'notes' => 'Extend menginap dari '.$oldCheckOut->format('d/m/Y').' ke '.$newCheckOut->format('d/m/Y').' ΓÇö tambahan Rp '.number_format($additionalAmount, 0, ',', '.'),
+                    'notes' => 'Extend menginap dari '.$oldCheckOut->format('d/m/Y').' ke '.$newCheckOut->format('d/m/Y').' — tambahan Rp '.number_format($additionalAmount, 0, ',', '.'),
                     'created_by' => auth()->id(),
                 ]);
             }
