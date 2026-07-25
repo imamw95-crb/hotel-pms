@@ -435,24 +435,33 @@ class NightAuditController extends Controller
                 'balance' => $r->total_amount - $r->paid_amount,
             ]);
 
-        // Revenue
-        $revenueToday = Transaction::where('created_at', '>=', $bizStart)
-            ->where('created_at', '<', $bizEnd)
-            ->where(function ($q) {
-                $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
-            })
-            ->sum('amount');
-        $restoRevenueToday = RestoTransaction::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
-        $serviceChargeRevenueToday = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)->sum('total_amount');
-        $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
-
         // ─── OTA payment method list ───────────────────────────────
         $otaPaymentMethods = ['ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment'];
 
-        // Revenue by method with details
-        $transactions = Transaction::where('created_at', '>=', $bizStart)
-            ->where('created_at', '<', $bizEnd)
+        // ─── Cari reservasi yang check-in hari ini ─────────────────
+        // Semua transaksi (termasuk DP lama) dari reservasi ini ikut ditampilkan
+        $todayCheckinResIds = Reservation::where('check_in', '>=', $bizStart)
+            ->where('check_in', '<', $bizEnd)
+            ->whereIn('status', ['checked_in', 'pending', 'menunggu_pembayaran'])
+            ->pluck('id');
+
+        // ─── Revenue Transactions ──────────────────────────────────
+        // Include ALL transactions from today's check-in reservations (including past DP),
+        // plus today's transactions from other active sources
+        $transactions = Transaction::where(function ($q) use ($todayCheckinResIds, $bizStart, $bizEnd) {
+            // Semua transaksi dari reservasi yg check-in hari ini (DP lama ikut)
+            if ($todayCheckinResIds->isNotEmpty()) {
+                $q->whereIn('reservation_id', $todayCheckinResIds);
+            }
+            // Plus transaksi hari ini dari sumber lain (standalone, in-house lain, dll)
+            $q->orWhere(function ($sub) use ($bizStart, $bizEnd, $todayCheckinResIds) {
+                $sub->where('created_at', '>=', $bizStart)
+                    ->where('created_at', '<', $bizEnd);
+                if ($todayCheckinResIds->isNotEmpty()) {
+                    $sub->whereNotIn('reservation_id', $todayCheckinResIds);
+                }
+            });
+        })
             ->where(function ($q) {
                 $q->whereDoesntHave('reservation')
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
@@ -461,6 +470,8 @@ class NightAuditController extends Controller
             ->orderBy('payment_method')
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $revenueToday = $transactions->sum('amount');
 
         $transactionsByMethod = $transactions->groupBy('payment_method')->map(function ($txns) use ($otaPaymentMethods) {
             return $txns->map(function ($t) use ($otaPaymentMethods) {
@@ -484,15 +495,9 @@ class NightAuditController extends Controller
             });
         });
 
-        $revenueByMethod = Transaction::where('created_at', '>=', $bizStart)
-            ->where('created_at', '<', $bizEnd)
-            ->where(function ($q) {
-                $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
-            })
-            ->selectRaw('payment_method, SUM(amount) as total')
-            ->groupBy('payment_method')
-            ->pluck('total', 'payment_method');
+        $revenueByMethod = $transactions->groupBy('payment_method')->mapWithKeys(function ($txns, $method) {
+            return [$method => $txns->sum('amount')];
+        });
 
         // ─── Revenue by Source Category (Cash, OTA, Web) ──────────
 
@@ -507,6 +512,10 @@ class NightAuditController extends Controller
         if ($webRevenueToday < 0) {
             $webRevenueToday = 0;
         }
+
+        $restoRevenueToday = RestoTransaction::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
+        $serviceChargeRevenueToday = ServiceCharge::where('charge_date', '>=', $bizStart)->where('charge_date', '<', $bizEnd)->sum('total_amount');
+        $totalRevenue = $revenueToday + $restoRevenueToday + $serviceChargeRevenueToday;
 
         // Resto transactions
         $restoTransactions = RestoTransaction::with(['guest'])

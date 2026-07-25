@@ -235,8 +235,13 @@
                 </thead>
                 <tbody>
                     @foreach($transactions as $txn)
-                    <tr class="border-b border-gray-100">
-                        <td class="p-1 font-medium">{{ $txn['transaction_number'] ?? '-' }}</td>
+                    <tr class="border-b border-gray-100 {{ ($txn['type'] ?? '') === 'dp' ? 'bg-amber-50/50' : '' }}">
+                        <td class="p-1 font-medium">
+                            @if(($txn['type'] ?? '') === 'dp')
+                                <span class="inline-block px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 mr-1">DP</span>
+                            @endif
+                            {{ $txn['transaction_number'] ?? '-' }}
+                        </td>
                         <td class="p-1">
                             @if(!empty($txn['reservation_id']))
                                 <a href="{{ route('reservations.show', $txn['reservation_id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium">{{ $txn['reservation_number'] }}</a>
