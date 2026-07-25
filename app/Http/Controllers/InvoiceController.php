@@ -31,6 +31,12 @@ class InvoiceController extends Controller
             ->where('reservation_number', $reservationNumber)
             ->firstOrFail();
 
+        // ── Auto-generate signature jika belum ada ──
+        if (! $reservation->invoice_signature) {
+            $reservation->invoice_signature = app(\App\Services\InvoiceSignatureService::class)->generate($reservation);
+            $reservation->saveQuietly();
+        }
+
         // ── Validasi HMAC Signature ──
         $signature = request('sig');
         $isValid = false;
@@ -42,10 +48,8 @@ class InvoiceController extends Controller
             $signatureStatus = $isValid ? 'valid' : 'invalid';
         }
 
-        // Blok akses jika tidak ada signature atau signature tidak valid
-        if ($signatureStatus !== 'valid') {
-            abort(404);
-        }
+        // Jangan blok akses — tampilkan invoice dgn status signature yg sesuai
+        // (valid = verified, invalid = data mungkin berubah, no_signature = tanpa sig)
 
         // ── OTS: Auto-timestamp jika belum ada proof ──
         $invoiceTimestamp = $this->repository->findLatestRevision($reservation->id, 'reservation');

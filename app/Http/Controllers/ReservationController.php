@@ -1227,7 +1227,6 @@ class ReservationController extends Controller
 
         $oldAmount = $reservation->total_amount;
         $reservation->total_amount = $validated['total_amount'];
-        $reservation->invoice_signature = null;
         app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
@@ -1264,7 +1263,6 @@ class ReservationController extends Controller
         }
 
         $reservation->total_amount = $newTotal;
-        $reservation->invoice_signature = null;
         app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
@@ -1366,7 +1364,6 @@ class ReservationController extends Controller
             $reservation->check_in = $newCheckIn;
             $reservation->check_out = $newCheckOut;
             $reservation->total_amount = $newTotal;
-            $reservation->invoice_signature = null;
             app(OpenTimestampService::class)->resetInvoiceProof($reservation);
             $reservation->saveQuietly();
 
@@ -1438,7 +1435,6 @@ class ReservationController extends Controller
 
         // Simpan ota_reservation_number ke reservation
         $reservation->ota_reservation_number = $validated['ota_reservation_number'] ?? null;
-        $reservation->invoice_signature = null;
         app(OpenTimestampService::class)->resetInvoiceProof($reservation);
         $reservation->saveQuietly();
 
@@ -1500,7 +1496,6 @@ class ReservationController extends Controller
             // Update total amount
             $reservation->total_amount += $additionalAmount;
             $reservation->check_out = $newCheckOut;
-            $reservation->invoice_signature = null;
             app(OpenTimestampService::class)->resetInvoiceProof($reservation);
             $reservation->saveQuietly();
 

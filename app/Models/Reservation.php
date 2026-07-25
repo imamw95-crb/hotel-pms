@@ -49,6 +49,16 @@ class Reservation extends Model
                 $model->reservation_number = 'RES-'.strtoupper(uniqid());
             }
         });
+        static::created(function ($model) {
+            if (empty($model->invoice_signature)) {
+                try {
+                    $model->invoice_signature = app(\App\Services\InvoiceSignatureService::class)->generate($model);
+                    $model->saveQuietly();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Gagal generate invoice_signature: '.$e->getMessage());
+                }
+            }
+        });
     }
 
     public function room(): BelongsTo
