@@ -40,6 +40,7 @@
             <a href="#section-other" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium">Other Revenue</a>
             <a href="#section-deposit" class="px-2 py-1 rounded bg-teal-100 text-teal-800 hover:bg-teal-200 font-medium">Deposit</a>
             <a href="#section-cashflow" class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 hover:bg-yellow-200 font-medium">Cash Flow</a>
+            <a href="#section-edc" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">EDC</a>
             <a href="#section-checkin" class="px-2 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium">Check-in</a>
             <a href="#section-checkout" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium">Check-out</a>
             <a href="#section-inhouse" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">In-House</a>
@@ -604,6 +605,86 @@
         </div>
         </div>{{-- /.section-body --}}
     </div>
+
+    {{-- EDC Settlement --}}
+    @if(($edcGrandTotal ?? 0) > 0)
+    <div id="section-edc" class="mb-6 collapsible-section">
+        <div class="flex items-center justify-between cursor-pointer select-none border-b-2 border-purple-700 pb-1 mb-3 section-toggle" onclick="toggleSection(this)">
+            <h2 class="text-lg font-bold uppercase text-purple-700">
+                <i class="fas fa-credit-card text-purple-500 mr-2"></i>EDC Settlement
+            </h2>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-purple-700">Rp {{ number_format($edcGrandTotal ?? 0, 0, ',', '.') }}</span>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+            </div>
+        </div>
+        <div class="section-body">
+
+        <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="bg-purple-50 border-2 border-purple-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">EDC Kamar</div>
+                <div class="text-2xl font-bold text-purple-700">Rp {{ number_format($edcRoomTotal ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Transaksi kamar via EDC</div>
+            </div>
+            <div class="bg-purple-50 border-2 border-purple-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">EDC Other Revenue</div>
+                <div class="text-2xl font-bold text-purple-700">Rp {{ number_format($edcScTotal ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Service charge via EDC</div>
+            </div>
+            <div class="bg-indigo-50 border-2 border-indigo-400 rounded-lg p-4 text-center">
+                <div class="text-xs uppercase text-gray-500 font-bold">Total EDC</div>
+                <div class="text-2xl font-bold text-indigo-700">Rp {{ number_format($edcGrandTotal ?? 0, 0, ',', '.') }}</div>
+                <div class="text-xs text-gray-400 mt-1">Total settlement EDC hari ini</div>
+            </div>
+        </div>
+
+        @if(count($edcSettlementList ?? []) > 0)
+        <table class="w-full text-xs mb-2">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-200">
+                    <th class="text-left p-1 font-bold">Sumber</th>
+                    <th class="text-left p-1 font-bold">No. Transaksi</th>
+                    <th class="text-left p-1 font-bold">Tamu</th>
+                    <th class="text-center p-1 font-bold">Kamar</th>
+                    <th class="text-left p-1 font-bold">Deskripsi</th>
+                    <th class="text-left p-1 font-bold">Metode</th>
+                    <th class="text-right p-1 font-bold">Nominal (Rp)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($edcSettlementList ?? [] as $edc)
+                <tr class="border-b border-gray-100">
+                    <td class="p-1">
+                        <span class="px-1 py-0.5 rounded text-xs font-bold
+                            @if($edc['source'] === 'Kamar') bg-blue-100 text-blue-800
+                            @else bg-purple-100 text-purple-800 @endif">
+                            {{ $edc['source'] }}
+                        </span>
+                    </td>
+                    <td class="p-1 font-medium">{{ $edc['transaction_number'] ?? '-' }}</td>
+                    <td class="p-1">{{ $edc['guest_name'] ?? '-' }}</td>
+                    <td class="p-1 text-center">{{ $edc['room_number'] ?? '-' }}</td>
+                    <td class="p-1">{{ $edc['description'] ?? '-' }}</td>
+                    <td class="p-1">
+                        <span class="px-1 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800">
+                            {{ ucwords(str_replace('_', ' ', $edc['payment_method'] ?? '-')) }}
+                        </span>
+                    </td>
+                    <td class="p-1 text-right font-bold">Rp {{ number_format($edc['amount'] ?? 0, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-purple-50 border-t-2 border-purple-300">
+                    <td colspan="6" class="p-2 text-right font-bold text-purple-800">TOTAL EDC SETTLEMENT</td>
+                    <td class="p-2 text-right font-bold text-purple-700">Rp {{ number_format($edcGrandTotal ?? 0, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        @endif
+        </div>{{-- /.section-body --}}
+    </div>
+    @endif
 
     <hr class="mb-6 border-t border-gray-300">
 

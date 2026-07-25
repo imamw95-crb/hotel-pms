@@ -714,6 +714,43 @@ class NightAuditController extends Controller
             ->get()
             ->keyBy('room_type_name');
 
+        // ─── EDC Settlement (Room Transactions + Service Charges) ──
+        $edcMethods = ['edc_bca_room', 'edc_mandiri_room'];
+        $edcRoomTransactions = $transactions->filter(fn ($t) => in_array($t->payment_method, $edcMethods));
+        $edcRoomTotal = $edcRoomTransactions->sum('amount');
+        $edcScTotal = collect($serviceCharges ?? [])->whereIn('payment_method', $edcMethods)->sum('total_amount');
+        $edcGrandTotal = $edcRoomTotal + $edcScTotal;
+
+        $edcSettlementList = collect();
+        // Room EDC transactions
+        foreach ($edcRoomTransactions as $t) {
+            $edcSettlementList->push([
+                'source' => 'Kamar',
+                'transaction_number' => $t->transaction_number,
+                'reservation_number' => $t->reservation?->reservation_number ?? '-',
+                'guest_name' => $t->reservation?->guest?->guest_name ?? '-',
+                'room_number' => $t->reservation?->room?->room_number ?? '-',
+                'description' => $t->type,
+                'payment_method' => $t->payment_method,
+                'amount' => $t->amount,
+            ]);
+        }
+        // SC EDC transactions
+        foreach ($serviceCharges ?? [] as $sc) {
+            if (in_array($sc['payment_method'], $edcMethods)) {
+                $edcSettlementList->push([
+                    'source' => 'Other Revenue',
+                    'transaction_number' => $sc['charge_number'],
+                    'reservation_number' => $sc['guest_name'], // guest name as fallback
+                    'guest_name' => $sc['guest_name'],
+                    'room_number' => $sc['room_number'],
+                    'description' => $sc['service_name'],
+                    'payment_method' => $sc['payment_method'],
+                    'amount' => $sc['total_amount'],
+                ]);
+            }
+        }
+
         return compact(
             'totalRooms', 'occupiedRooms', 'availableRooms', 'maintenanceRooms', 'occupancyRate',
             'revenueToday', 'restoRevenueToday', 'serviceChargeRevenueToday', 'totalRevenue',
@@ -726,7 +763,8 @@ class NightAuditController extends Controller
             'cashRevenue', 'cashExpenses', 'cashFlowBalance',
             'checkinsToday', 'checkoutsToday', 'inHouseGuests',
             'otaBookings', 'webBookings', 'directBookings',
-            'roomTypeSummary'
+            'roomTypeSummary',
+            'edcSettlementList', 'edcRoomTotal', 'edcScTotal', 'edcGrandTotal',
         );
     }
 }
