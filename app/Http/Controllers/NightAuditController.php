@@ -742,17 +742,15 @@ class NightAuditController extends Controller
             })
             ->values();
 
-        // ─── All Reservations (for current business date) ─────────
+        // ─── All Reservations (fokus per tanggal dipilih) ─────────
         $allReservations = Reservation::with(['guest', 'room'])
             ->where(function ($q) use ($bizStart, $bizEnd) {
-                // Reservasi yg check_in hari ini
+                // Reservasi yg check_in di tanggal ini
                 $q->where('check_in', '>=', $bizStart)->where('check_in', '<', $bizEnd)
-                  // Atau check_out hari ini
+                  // Atau check_out di tanggal ini
                   ->orWhere('check_out', '>=', $bizStart)->where('check_out', '<', $bizEnd)
-                  // Atau dibuat hari ini
-                  ->orWhere('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)
-                  // Atau masih in-house (checked_in)
-                  ->orWhere('status', 'checked_in');
+                  // Atau dibuat di tanggal ini
+                  ->orWhere('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd);
             })
             ->where('status', '!=', 'cancelled')
             ->orderBy('check_in', 'desc')
