@@ -40,7 +40,7 @@
             <a href="#section-other" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium">Other Revenue</a>
             <a href="#section-deposit" class="px-2 py-1 rounded bg-teal-100 text-teal-800 hover:bg-teal-200 font-medium">Deposit</a>
             <a href="#section-cashflow" class="px-2 py-1 rounded bg-yellow-100 text-yellow-800 hover:bg-yellow-200 font-medium">Cash Flow</a>
-            <a href="#section-edc" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">EDC</a>
+            @if(($edcGrandTotal ?? 0) > 0)<a href="#section-edc" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">EDC</a>@endif
             <a href="#section-checkin" class="px-2 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium">Check-in</a>
             <a href="#section-checkout" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium">Check-out</a>
             <a href="#section-inhouse" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">In-House</a>
