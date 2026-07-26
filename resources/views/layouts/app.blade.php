@@ -480,5 +480,218 @@
             if (typeof BookingNotifications !== 'undefined') BookingNotifications.init();
         });
     </script>
+
+    {{-- Custom Confirmation Modal --}}
+    <div id="customModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 id="modalTitle" class="text-lg font-bold text-gray-800"></h3>
+            </div>
+            <!-- Body -->
+            <div class="px-6 py-6 text-center">
+                <div id="modalIcon" class="mb-4"></div>
+                <div id="modalMessage" class="text-gray-600 text-sm leading-relaxed"></div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-2">
+                <button id="modalCancel" class="px-4 py-2 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"></button>
+                <button id="modalConfirm" class="px-6 py-2 rounded text-white font-bold transition"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== GLOBAL CONFIRMATION MODAL ==========
+        function showModal({ title, message, type = 'info', onConfirm = null, confirmText = 'Ya', cancelText = 'Batal' }) {
+            const overlay = document.getElementById('customModal');
+            if (!overlay) return;
+            const iconMap = {
+                info: '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>',
+                success: '<i class="fas fa-check-circle text-green-500 text-4xl"></i>',
+                warning: '<i class="fas fa-exclamation-triangle text-yellow-500 text-4xl"></i>',
+                error: '<i class="fas fa-times-circle text-red-500 text-4xl"></i>',
+                confirm: '<i class="fas fa-question-circle text-yellow-500 text-4xl"></i>'
+            };
+            const btnColorMap = {
+                info: 'bg-blue-600 hover:bg-blue-700',
+                success: 'bg-green-600 hover:bg-green-700',
+                warning: 'bg-yellow-600 hover:bg-yellow-700',
+                error: 'bg-red-600 hover:bg-red-700',
+                confirm: 'bg-blue-600 hover:bg-blue-700'
+            };
+
+            document.getElementById('modalIcon').innerHTML = iconMap[type] || iconMap.info;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').innerHTML = message.replace(/\n/g, '<br>');
+
+            const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.getElementById('modalCancel');
+
+            if (onConfirm) {
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.textContent = cancelText;
+                confirmBtn.textContent = confirmText;
+                confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
+                confirmBtn.onclick = () => { closeCustomModal(); onConfirm(); };
+                cancelBtn.onclick = closeCustomModal;
+            } else {
+                cancelBtn.classList.add('hidden');
+                confirmBtn.textContent = 'OK';
+                confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
+                confirmBtn.onclick = closeCustomModal;
+            }
+
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function closeCustomModal() {
+            const overlay = document.getElementById('customModal');
+            if (!overlay) return;
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+
+        // Close modal on overlay click
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'customModal') closeCustomModal();
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeCustomModal();
+        });
+
+        // ===== CONFIRM CHECK-IN =====
+        function confirmCheckin(id, resNumber, guestName, roomNumber, checkIn) {
+            showModal({
+                title: 'Konfirmasi Check-in',
+                message: '<div class="text-left bg-gray-50 rounded-lg p-3 space-y-2 text-sm">' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Reservasi:</span><span class="font-bold text-blue-600">' + resNumber + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Tamu:</span><span class="font-bold">' + guestName + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Kamar:</span><span class="font-bold">' + roomNumber + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Check-in:</span><span class="font-bold">' + checkIn + '</span></div>' +
+                    '</div>' +
+                    '<p class="mt-3 text-sm">Pastikan data tamu sudah benar. Lanjutkan check-in?</p>',
+                type: 'confirm',
+                confirmText: 'Ya, Check-in',
+                cancelText: 'Batal',
+                onConfirm: function() {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("reservations.checkin", "__ID__") }}'.replace('__ID__', id);
+                    var csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', form.action, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', csrf.value);
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    if (data.message) Toast.success(data.message);
+                                    if (data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } else {
+                                    Toast.error(data.message || 'Gagal check-in');
+                                }
+                            } catch(e) {
+                                Toast.error('Response tidak valid');
+                            }
+                        } else {
+                            Toast.error('Terjadi kesalahan server');
+                        }
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.onerror = function() {
+                        Toast.error('Koneksi gagal. Silakan coba lagi.');
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.send(new FormData(form));
+                }
+            });
+        }
+
+        // ===== CONFIRM CHECK-OUT =====
+        function confirmCheckout(id, resNumber, guestName, roomNumber, roomType) {
+            showModal({
+                title: 'Konfirmasi Check-out',
+                message: '<div class="text-left bg-gray-50 rounded-lg p-3 space-y-2 text-sm">' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Reservasi:</span><span class="font-bold text-blue-600">' + resNumber + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Tamu:</span><span class="font-bold">' + guestName + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Kamar:</span><span class="font-bold">' + roomNumber + '</span></div>' +
+                    (roomType ? '<div class="flex justify-between"><span class="text-gray-500">Tipe Kamar:</span><span class="font-bold">' + roomType + '</span></div>' : '') +
+                    '</div>' +
+                    '<p class="mt-3 text-sm text-red-600 font-semibold">⚠ Status kamar akan berubah menjadi <strong>Available</strong> setelah checkout.</p>' +
+                    '<p class="text-sm">Lanjutkan checkout?</p>',
+                type: 'confirm',
+                confirmText: 'Ya, Check-out',
+                cancelText: 'Batal',
+                onConfirm: function() {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("reservations.checkout", "__ID__") }}'.replace('__ID__', id);
+                    var csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', form.action, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', csrf.value);
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    if (data.message) Toast.success(data.message);
+                                    if (data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } else {
+                                    Toast.error(data.message || 'Gagal checkout');
+                                }
+                            } catch(e) {
+                                Toast.error('Response tidak valid');
+                            }
+                        } else {
+                            Toast.error('Terjadi kesalahan server');
+                        }
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.onerror = function() {
+                        Toast.error('Koneksi gagal. Silakan coba lagi.');
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.send(new FormData(form));
+                }
+            });
+        }
+    </script>
+
 </body>
 </html>

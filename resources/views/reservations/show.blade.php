@@ -403,6 +403,34 @@
                         @endif
                     </button>
                 </p></div>
+                @if($reservation->checkedInBy)
+                <div>
+                    <span class="text-gray-500 text-sm">Check-in Oleh</span>
+                    <p class="font-medium text-sm flex items-center gap-1.5">
+                        <span class="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">
+                            {{ substr($reservation->checkedInBy->name ?? 'U', 0, 1) }}
+                        </span>
+                        {{ $reservation->checkedInBy->name ?? '-' }}
+                        @if($reservation->checked_in_at)
+                            <span class="text-xs text-gray-400 font-normal">· {{ $reservation->checked_in_at->format('d/m/Y H:i') }}</span>
+                        @endif
+                    </p>
+                </div>
+                @endif
+                @if($reservation->checkedOutBy)
+                <div>
+                    <span class="text-gray-500 text-sm">Check-out Oleh</span>
+                    <p class="font-medium text-sm flex items-center gap-1.5">
+                        <span class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center text-xs font-bold">
+                            {{ substr($reservation->checkedOutBy->name ?? 'U', 0, 1) }}
+                        </span>
+                        {{ $reservation->checkedOutBy->name ?? '-' }}
+                        @if($reservation->checked_out_at)
+                            <span class="text-xs text-gray-400 font-normal">· {{ $reservation->checked_out_at->format('d/m/Y H:i') }}</span>
+                        @endif
+                    </p>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -1712,12 +1740,9 @@
                 <i class="fas fa-id-card mr-1"></i> Registration Card
             </a>
             @if(in_array($reservation->status, ['pending', 'menunggu_pembayaran']))
-                <form action="{{ route('reservations.checkin', $reservation) }}" method="POST" data-ajax="true">
-                    @csrf
-                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                        <i class="fas fa-sign-in-alt mr-1"></i> Check-in
-                    </button>
-                </form>
+                <button type="button" onclick="confirmCheckin({{ $reservation->id }}, '{{ $reservation->reservation_number }}', '{{ addslashes($reservation->guest->guest_name) }}', '{{ $reservation->room->room_number }}', '{{ $reservation->check_in->format('d/m/Y H:i') }}')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <i class="fas fa-sign-in-alt mr-1"></i> Check-in
+                </button>
                 <form action="{{ route('reservations.cancel', $reservation) }}" method="POST" data-ajax="true">
                     @csrf
                     <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
@@ -1731,12 +1756,9 @@
                 </a>
             @endif
             @if($reservation->status === 'checked_in')
-                <form action="{{ route('reservations.checkout', $reservation) }}" method="POST" data-ajax="true" data-refresh="true">
-                    @csrf
-                    <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
-                        <i class="fas fa-sign-out-alt mr-1"></i> Check-out
-                    </button>
-                </form>
+                <button type="button" onclick="confirmCheckout({{ $reservation->id }}, '{{ $reservation->reservation_number }}', '{{ addslashes($reservation->guest->guest_name ?? '') }}', '{{ $reservation->room->room_number ?? '' }}', '{{ $reservation->room->room_type_name ?? '' }}')" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Check-out
+                </button>
             @endif
         </div>
     </div>

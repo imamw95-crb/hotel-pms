@@ -116,7 +116,7 @@ class ReservationController extends Controller
     public function show(Reservation $reservation)
     {
         $reservation->load([
-            'guest', 'room', 'createdBy',
+            'guest', 'room', 'createdBy', 'checkedInBy', 'checkedOutBy',
             'serviceCharges', 'serviceCharges.createdBy',
             'restoTransactions', 'restoTransactions.createdBy',
         ]);
@@ -302,7 +302,11 @@ class ReservationController extends Controller
             return back()->with('error', 'Hanya reservasi dengan status pending/menunggu pembayaran yang bisa di-check-in.');
         }
 
-        $reservation->update(['status' => 'checked_in']);
+        $reservation->update([
+            'status' => 'checked_in',
+            'checked_in_by' => Auth::id(),
+            'checked_in_at' => now(),
+        ]);
         $reservation->room->update(['status' => 'occupied']);
 
         // Check if request is AJAX
@@ -365,6 +369,8 @@ class ReservationController extends Controller
         $reservation->update([
             'status' => 'checked_out',
             'check_out' => $checkoutTime,
+            'checked_out_by' => Auth::id(),
+            'checked_out_at' => now(),
         ]);
         $reservation->room->update(['status' => 'available']);
 
@@ -454,7 +460,7 @@ class ReservationController extends Controller
         $dateFrom = $request->input('date_from', Carbon::yesterday()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::today()->format('Y-m-d'));
 
-        $reservations = Reservation::with(['guest', 'room'])
+        $reservations = Reservation::with(['guest', 'room', 'checkedInBy'])
             ->where('status', 'checked_in')
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($sub) use ($search) {

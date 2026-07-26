@@ -125,13 +125,9 @@
                                class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-100 transition" title="Detail">
                                 <i class="fas fa-eye text-xs"></i>
                             </a>
-                            <form action="{{ route('reservations.checkout', $res) }}" method="POST" class="inline"
-                                onsubmit="return confirm('Check-out kamar {{ $res->room->room_number ?? '' }}?')">
-                                @csrf
-                                <button type="submit" class="w-8 h-8 bg-yellow-50 text-yellow-600 rounded-lg flex items-center justify-center hover:bg-yellow-100 transition" title="Check-out">
-                                    <i class="fas fa-sign-out-alt text-xs"></i>
-                                </button>
-                            </form>
+                            <button type="button" onclick="confirmCheckout({{ $res->id }}, '{{ $res->reservation_number }}', '{{ addslashes($res->guest->guest_name ?? '') }}', '{{ $res->room->room_number ?? '' }}', '{{ $res->room->room_type_name ?? '' }}')" class="w-8 h-8 bg-yellow-50 text-yellow-600 rounded-lg flex items-center justify-center hover:bg-yellow-100 transition" title="Check-out">
+                                <i class="fas fa-sign-out-alt text-xs"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>

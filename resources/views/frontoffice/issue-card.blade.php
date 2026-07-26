@@ -315,65 +315,6 @@
             });
     }
 
-    // ========== CUSTOM MODAL ==========
-    function showModal({ title, message, type = 'info', onConfirm = null, confirmText = 'Ya', cancelText = 'Batal' }) {
-        const overlay = document.getElementById('customModal');
-        const iconMap = {
-            info: '<i class="fas fa-info-circle text-blue-500 text-4xl"></i>',
-            success: '<i class="fas fa-check-circle text-green-500 text-4xl"></i>',
-            warning: '<i class="fas fa-exclamation-triangle text-yellow-500 text-4xl"></i>',
-            error: '<i class="fas fa-times-circle text-red-500 text-4xl"></i>',
-            confirm: '<i class="fas fa-question-circle text-yellow-500 text-4xl"></i>'
-        };
-        const btnColorMap = {
-            info: 'bg-blue-600 hover:bg-blue-700',
-            success: 'bg-green-600 hover:bg-green-700',
-            warning: 'bg-yellow-600 hover:bg-yellow-700',
-            error: 'bg-red-600 hover:bg-red-700',
-            confirm: 'bg-blue-600 hover:bg-blue-700'
-        };
-
-        document.getElementById('modalIcon').innerHTML = iconMap[type] || iconMap.info;
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMessage').innerHTML = message.replace(/\n/g, '<br>');
-
-        const confirmBtn = document.getElementById('modalConfirm');
-        const cancelBtn = document.getElementById('modalCancel');
-
-        if (onConfirm) {
-            cancelBtn.classList.remove('hidden');
-            cancelBtn.textContent = cancelText;
-            confirmBtn.textContent = confirmText;
-            confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
-            confirmBtn.onclick = () => { closeCustomModal(); onConfirm(); };
-            cancelBtn.onclick = closeCustomModal;
-        } else {
-            cancelBtn.classList.add('hidden');
-            confirmBtn.textContent = 'OK';
-            confirmBtn.className = 'px-6 py-2 rounded text-white font-bold ' + (btnColorMap[type] || btnColorMap.info);
-            confirmBtn.onclick = closeCustomModal;
-        }
-
-        overlay.classList.remove('hidden');
-        overlay.classList.add('flex');
-    }
-
-    function closeCustomModal() {
-        const overlay = document.getElementById('customModal');
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-    }
-
-    // Close modal on overlay click
-    document.getElementById('customModal').addEventListener('click', function(e) {
-        if (e.target === this) closeCustomModal();
-    });
-
-    // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeCustomModal();
-    });
-
     // ========== CHECKOUT ==========
     function doCheckout() {
         const resId = document.getElementById('reservationId').value;
@@ -719,24 +660,4 @@
         });
     }
 </script>
-
-<!-- Custom Modal -->
-<div id="customModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
-        <!-- Header -->
-        <div class="px-6 py-4 border-b bg-gray-50">
-            <h3 id="modalTitle" class="text-lg font-bold text-gray-800"></h3>
-        </div>
-        <!-- Body -->
-        <div class="px-6 py-6 text-center">
-            <div id="modalIcon" class="mb-4"></div>
-            <div id="modalMessage" class="text-gray-600 text-sm leading-relaxed"></div>
-        </div>
-        <!-- Footer -->
-        <div class="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-2">
-            <button id="modalCancel" class="px-4 py-2 rounded bg-gray-300 text-gray-700 font-bold hover:bg-gray-400 transition"></button>
-            <button id="modalConfirm" class="px-6 py-2 rounded text-white font-bold transition"></button>
-        </div>
-    </div>
-</div>
 @endsection

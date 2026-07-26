@@ -102,23 +102,16 @@
 
             {{-- Check-in (pending & menunggu_pembayaran) --}}
             @if(in_array($res->status, ['pending', 'menunggu_pembayaran']))
-                <form action="{{ route('reservations.checkin', $res) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="bg-green-50 text-green-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-green-100 transition text-xs font-medium whitespace-nowrap" title="Check-in">
-                        <i class="fas fa-sign-in-alt text-[10px]"></i> <span>Check-in</span>
-                    </button>
-                </form>
+                <button type="button" onclick="confirmCheckin({{ $res->id }}, '{{ $res->reservation_number }}', '{{ addslashes($res->guest->guest_name) }}', '{{ $res->room->room_number }}', '{{ $res->check_in ? \Carbon\Carbon::parse($res->check_in)->format('d/m/Y H:i') : '-' }}')" class="bg-green-50 text-green-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-green-100 transition text-xs font-medium whitespace-nowrap" title="Check-in">
+                    <i class="fas fa-sign-in-alt text-[10px]"></i> <span>Check-in</span>
+                </button>
             @endif
 
             {{-- Checkout (checked_in) --}}
             @if($res->status === 'checked_in')
-                <form action="{{ route('reservations.checkout', $res) }}" method="POST" class="inline"
-                    onsubmit="return confirm('Check-out kamar {{ $res->room->room_number ?? '' }}? Status kamar akan berubah menjadi Available.')">
-                    @csrf
-                    <button type="submit" class="bg-amber-50 text-amber-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-amber-100 transition text-xs font-medium whitespace-nowrap" title="Check-out">
-                        <i class="fas fa-sign-out-alt text-[10px]"></i> <span>Checkout</span>
-                    </button>
-                </form>
+                <button type="button" onclick="confirmCheckout({{ $res->id }}, '{{ $res->reservation_number }}', '{{ addslashes($res->guest->guest_name ?? '') }}', '{{ $res->room->room_number ?? '' }}', '{{ $res->room->room_type_name ?? '' }}')" class="bg-amber-50 text-amber-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-amber-100 transition text-xs font-medium whitespace-nowrap" title="Check-out">
+                    <i class="fas fa-sign-out-alt text-[10px]"></i> <span>Checkout</span>
+                </button>
             @endif
 
             {{-- Pindah Kamar (pending & checked_in) --}}

@@ -252,7 +252,11 @@ class ReservationApiController extends Controller
             ], 422);
         }
 
-        $reservation->update(['status' => 'checked_in']);
+        $reservation->update([
+            'status' => 'checked_in',
+            'checked_in_by' => auth()->id(),
+            'checked_in_at' => now(),
+        ]);
         $reservation->room->update(['status' => 'occupied']);
 
         return response()->json([
@@ -294,6 +298,8 @@ class ReservationApiController extends Controller
         $reservation->update([
             'status' => 'checked_out',
             'check_out' => $checkoutTime,
+            'checked_out_by' => auth()->id(),
+            'checked_out_at' => now(),
         ]);
         $reservation->room->update(['status' => 'available']);
 

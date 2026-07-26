@@ -29,12 +29,15 @@ class Reservation extends Model
         'room_id', 'guest_id', 'check_in', 'check_out',
         'number_of_cards', 'status', 'total_amount', 'paid_amount', 'paid_date', 'payment_method', 'notes', 'created_by',
         'custom_room_rate', 'include_breakfast', 'room_type_name',
+        'checked_in_by', 'checked_out_by', 'checked_in_at', 'checked_out_at',
     ];
 
     protected $casts = [
         'check_in' => 'datetime',
         'check_out' => 'datetime',
         'paid_date' => 'datetime',
+        'checked_in_at' => 'datetime',
+        'checked_out_at' => 'datetime',
         'total_amount' => 'decimal:2',
         'custom_room_rate' => 'decimal:2',
         'paid_amount' => 'decimal:2',
@@ -74,6 +77,16 @@ class Reservation extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function checkedInBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_in_by');
+    }
+
+    public function checkedOutBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_out_by');
     }
 
     public function transactions(): HasMany

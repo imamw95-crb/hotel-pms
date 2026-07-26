@@ -72,6 +72,7 @@
                     <th class="text-left p-3 text-sm font-semibold">Check-out</th>
                     <th class="text-left p-3 text-sm font-semibold">Total</th>
                     <th class="text-left p-3 text-sm font-semibold">Status</th>
+                    <th class="text-left p-3 text-sm font-semibold">Check-in Oleh</th>
                     <th class="text-left p-3 text-sm font-semibold">Aksi</th>
                 </tr>
             </thead>
@@ -105,23 +106,32 @@
                             <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-bold">CHECKED IN</span>
                         @endif
                     </td>
+                    <td class="p-3 text-sm">
+                        @if($res->checkedInBy)
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-5 h-5 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-[10px] font-bold">
+                                    {{ substr($res->checkedInBy->name ?? 'U', 0, 1) }}
+                                </span>
+                                <span>{{ $res->checkedInBy->name }}</span>
+                            </div>
+                        @else
+                            <span class="text-gray-400">-</span>
+                        @endif
+                    </td>
                     <td class="p-3">
                         <div class="flex space-x-1">
                             <a href="{{ route('reservations.show', $res) }}" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Detail">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <form action="{{ route('reservations.checkout', $res) }}" method="POST" class="inline" onsubmit="return confirm('Check-out kamar {{ $res->room->room_number ?? '' }}? Status kamar akan berubah menjadi Available.')">
-                                @csrf
-                                <button type="submit" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600" title="Check-out">
-                                    <i class="fas fa-sign-out-alt"></i> Checkout
-                                </button>
-                            </form>
+                            <button type="button" onclick="confirmCheckout({{ $res->id }}, '{{ $res->reservation_number }}', '{{ addslashes($res->guest->guest_name ?? '') }}', '{{ $res->room->room_number ?? '' }}', '{{ $res->room->room_type_name ?? '' }}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600" title="Check-out">
+                                <i class="fas fa-sign-out-alt"></i> Checkout
+                            </button>
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="p-8 text-center text-gray-500">
+                    <td colspan="9" class="p-8 text-center text-gray-500">
                         <i class="fas fa-check-circle text-4xl mb-2 text-green-400"></i>
                         <p>Tidak ada kamar yang perlu di-checkout</p>
                     </td>
@@ -131,4 +141,5 @@
         </table>
     </div>
 </div>
+
 @endsection

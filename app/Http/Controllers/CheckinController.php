@@ -105,6 +105,8 @@ class CheckinController extends Controller
             'total_amount' => $totalAmount,
             'paid_amount' => $request->payment_amount ?? 0,
             'created_by' => auth()->id(),
+            'checked_in_by' => auth()->id(),
+            'checked_in_at' => now(),
         ]);
 
         if ($request->payment_amount > 0) {
