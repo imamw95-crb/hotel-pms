@@ -462,9 +462,12 @@ class NightAuditController extends Controller
                 }
             });
         })
-            ->where(function ($q) {
+            ->where(function ($q) use ($bizStart, $bizEnd) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
+                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
+                      ->where('check_out', '>=', $bizStart)
+                      ->where('check_out', '<', $bizEnd));
             })
             ->with(['reservation.guest', 'reservation.room'])
             ->orderBy('payment_method')
@@ -651,9 +654,12 @@ class NightAuditController extends Controller
         $cashRevenue = Transaction::where('created_at', '>=', $bizStart)
             ->where('created_at', '<', $bizEnd)
             ->where('payment_method', 'cash')
-            ->where(function ($q) {
+            ->where(function ($q) use ($bizStart, $bizEnd) {
                 $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']));
+                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
+                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
+                      ->where('check_out', '>=', $bizStart)
+                      ->where('check_out', '<', $bizEnd));
             })
             ->sum('amount');
 
