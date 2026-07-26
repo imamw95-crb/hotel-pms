@@ -212,6 +212,7 @@
                 'refund' => 'Refund',
                 'tambahan' => 'Tambahan',
                 'ota_payment' => 'OTA Payment',
+                'edc_payment' => 'EDC Payment',
             ];
         @endphp
         @foreach($transactionsByMethod ?? [] as $method => $transactions)
@@ -263,6 +264,7 @@
                                 @elseif(($txn['type'] ?? '') === 'additional' || ($txn['type'] ?? '') === 'tambahan') bg-orange-100 text-orange-800
                                 @elseif(($txn['type'] ?? '') === 'refund') bg-rose-100 text-rose-800
                                 @elseif(($txn['type'] ?? '') === 'ota_payment') bg-purple-100 text-purple-800
+                                @elseif(($txn['type'] ?? '') === 'edc_payment') bg-purple-100 text-purple-800
                                 @else bg-gray-100 text-gray-800 @endif">
                                 {{ $typeLabels[$txn['type'] ?? ''] ?? ucwords(str_replace('_', ' ', $txn['type'] ?? '-')) }}
                             </span>
@@ -276,6 +278,7 @@
                                     'Cash' => 'bg-green-100 text-green-800',
                                     'OTA' => 'bg-purple-100 text-purple-800',
                                     'Web' => 'bg-blue-100 text-blue-800',
+                                    'Other Revenue' => 'bg-orange-100 text-orange-800',
                                 ];
                                 $srcColor = $srcColors[$txn['source'] ?? ''] ?? 'bg-gray-100 text-gray-800';
                             @endphp
