@@ -442,7 +442,7 @@ class NightAuditController extends Controller
         // Semua transaksi (termasuk DP lama) dari reservasi ini ikut ditampilkan
         $todayCheckinResIds = Reservation::where('check_in', '>=', $bizStart)
             ->where('check_in', '<', $bizEnd)
-            ->whereIn('status', ['checked_in', 'pending', 'menunggu_pembayaran'])
+            ->where('status', '!=', 'cancelled')
             ->pluck('id');
 
         // ─── Revenue Transactions ──────────────────────────────────
@@ -467,7 +467,10 @@ class NightAuditController extends Controller
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
                   ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
                       ->where('check_out', '>=', $bizStart)
-                      ->where('check_out', '<', $bizEnd));
+                      ->where('check_out', '<', $bizEnd))
+                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
+                      ->where('check_in', '>=', $bizStart)
+                      ->where('check_in', '<', $bizEnd));
             })
             ->with(['reservation.guest', 'reservation.room'])
             ->orderBy('payment_method')
@@ -659,7 +662,10 @@ class NightAuditController extends Controller
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
                   ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
                       ->where('check_out', '>=', $bizStart)
-                      ->where('check_out', '<', $bizEnd));
+                      ->where('check_out', '<', $bizEnd))
+                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
+                      ->where('check_in', '>=', $bizStart)
+                      ->where('check_in', '<', $bizEnd));
             })
             ->sum('amount');
 
