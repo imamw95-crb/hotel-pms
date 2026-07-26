@@ -1598,6 +1598,7 @@
                             <th class="text-left p-2 font-bold">Tanggal</th>
                             <th class="text-left p-2 font-bold">Layanan</th>
                             <th class="text-center p-2 font-bold">Qty</th>
+                            <th class="text-left p-2 font-bold">Metode</th>
                             <th class="text-right p-2 font-bold">Total</th>
                             <th class="text-center p-2 font-bold">Aksi</th>
                         </tr>
@@ -1609,6 +1610,18 @@
                             <td class="p-2 text-gray-600">{{ $sc->charge_date->format('d/m/Y') }}</td>
                             <td class="p-2">{{ $sc->service_name }}</td>
                             <td class="p-2 text-center">{{ $sc->quantity }} × Rp {{ number_format($sc->amount, 0, ',', '.') }}</td>
+                            <td class="p-2">
+                                @if($sc->payment_method)
+                                    <span class="px-2 py-0.5 rounded text-xs font-bold
+                                        @if(str_contains($sc->payment_method, 'edc')) bg-purple-100 text-purple-800
+                                        @elseif($sc->payment_method === 'cash') bg-green-100 text-green-800
+                                        @else bg-blue-100 text-blue-800 @endif">
+                                        {{ ucwords(str_replace('_', ' ', $sc->payment_method)) }}
+                                    </span>
+                                @else
+                                    <span class="text-gray-400 text-xs">—</span>
+                                @endif
+                            </td>
                             <td class="p-2 text-right font-bold">Rp {{ number_format($sc->total_amount, 0, ',', '.') }}</td>
                             <td class="p-2 text-center">
                                 <a href="{{ route('service-charge.show', $sc) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm" title="Lihat / Print">
@@ -1620,7 +1633,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-blue-50 border-t-2 font-bold">
-                            <td colspan="4" class="p-2 text-right">TOTAL OTHER REVENUE</td>
+                            <td colspan="5" class="p-2 text-right">TOTAL OTHER REVENUE</td>
                             <td class="p-2 text-right text-blue-700">Rp {{ number_format($reservation->serviceCharges->sum('total_amount'), 0, ',', '.') }}</td>
                             <td></td>
                         </tr>
