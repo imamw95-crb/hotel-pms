@@ -742,10 +742,10 @@ class NightAuditController extends Controller
             })
             ->values();
 
-        // ─── All Reservations (menginap di tanggal ini) ──────────
+        // ─── All Reservations (check-in di tanggal ini) ──────────
         $allReservations = Reservation::with(['guest', 'room'])
+            ->where('check_in', '>=', $bizStart)
             ->where('check_in', '<', $bizEnd)
-            ->where('check_out', '>', $bizStart)
             ->where('status', '!=', 'cancelled')
             ->orderBy('check_in', 'desc')
             ->get()
