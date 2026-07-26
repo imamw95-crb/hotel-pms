@@ -496,43 +496,9 @@ class NightAuditController extends Controller
             });
         });
 
-        // ─── Gabungkan Service Charge ke Detail per Metode ──────
-        $edcMethods = ['edc_bca_room', 'edc_mandiri_room'];
-        foreach ($serviceCharges ?? [] as $sc) {
-            $method = $sc['payment_method'] ?? 'unknown';
-            if (empty($method) || $method === 'unknown') continue;
-
-            $scItem = [
-                'transaction_number' => $sc['charge_number'],
-                'created_at' => '',
-                'reservation_id' => null,
-                'reservation_number' => '',
-                'guest_name' => $sc['guest_name'],
-                'room_number' => $sc['room_number'],
-                'room_type' => '',
-                'type' => in_array($method, $edcMethods) ? 'edc_payment' : 'additional',
-                'notes' => $sc['service_name'],
-                'status' => '-',
-                'amount' => $sc['total_amount'],
-                'source' => 'Other Revenue',
-                'ota_source' => null,
-            ];
-
-            if (! isset($transactionsByMethod[$method])) {
-                $transactionsByMethod[$method] = collect();
-            }
-            $transactionsByMethod[$method]->push($scItem);
-        }
-
         $revenueByMethod = $transactions->groupBy('payment_method')->mapWithKeys(function ($txns, $method) {
             return [$method => $txns->sum('amount')];
         });
-
-        // ─── Gabungkan Service Charge ke Revenue by Method ──────
-        foreach ($serviceCharges ?? [] as $sc) {
-            $method = $sc['payment_method'] ?? 'unknown';
-            $revenueByMethod[$method] = ($revenueByMethod[$method] ?? 0) + $sc['total_amount'];
-        }
 
         // ─── Revenue by Source Category (Cash, OTA, Web) ──────────
 
@@ -596,6 +562,38 @@ class NightAuditController extends Controller
             ->selectRaw('payment_method, SUM(total_amount) as total')
             ->groupBy('payment_method')
             ->pluck('total', 'payment_method');
+
+        // ─── Gabungkan Service Charge ke Revenue & Detail ──────
+        $edcMethods = ['edc_bca_room', 'edc_mandiri_room'];
+        foreach ($serviceCharges ?? [] as $sc) {
+            $method = $sc['payment_method'] ?? 'unknown';
+            if (empty($method) || $method === 'unknown') continue;
+
+            // Tambah ke revenueByMethod
+            $revenueByMethod[$method] = ($revenueByMethod[$method] ?? 0) + $sc['total_amount'];
+
+            // Tambah ke transactionsByMethod (tabel detail)
+            $scItem = [
+                'transaction_number' => $sc['charge_number'],
+                'created_at' => '',
+                'reservation_id' => null,
+                'reservation_number' => '',
+                'guest_name' => $sc['guest_name'],
+                'room_number' => $sc['room_number'],
+                'room_type' => '',
+                'type' => in_array($method, $edcMethods) ? 'edc_payment' : 'additional',
+                'notes' => $sc['service_name'],
+                'status' => '-',
+                'amount' => $sc['total_amount'],
+                'source' => 'Other Revenue',
+                'ota_source' => null,
+            ];
+
+            if (! isset($transactionsByMethod[$method])) {
+                $transactionsByMethod[$method] = collect();
+            }
+            $transactionsByMethod[$method]->push($scItem);
+        }
 
         // ─── Deposits (Key Card Deposit) ─────────────────────────────
         $depositRevenueToday = Deposit::where('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)->sum('total_amount');
