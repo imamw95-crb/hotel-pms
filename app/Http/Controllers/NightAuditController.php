@@ -395,11 +395,14 @@ class NightAuditController extends Controller
         // ─── Business Date Range ───────────────────────────────────
         [$bizStart, $bizEnd] = $this->getBusinessDateRange($date);
 
-        // Check-ins today (business date)
-        $checkinsToday = Reservation::where('check_in', '>=', $bizStart)
-            ->where('check_in', '<', $bizEnd)
-            ->where('status', 'checked_in')
-            ->with(['guest', 'room'])
+        // ─── Base Reservations (satu query, dipake untuk check-in/out/all) ─
+        $todayReservations = Reservation::with(['guest', 'room'])
+            ->where(function ($q) use ($bizStart, $bizEnd) {
+                $q->where('check_in', '>=', $bizStart)->where('check_in', '<', $bizEnd)
+                  ->orWhere('check_out', '>=', $bizStart)->where('check_out', '<', $bizEnd);
+            })
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('check_in', 'desc')
             ->get()
             ->map(fn ($r) => [
                 'id' => $r->id,
@@ -408,32 +411,33 @@ class NightAuditController extends Controller
                 'room_number' => $r->room->room_number ?? '-',
                 'room_type' => $r->room->room_type_name ?? '-',
                 'check_in' => $r->check_in->format('d/m/Y H:i'),
+                'check_in_raw' => $r->check_in,
                 'check_out' => $r->check_out->format('d/m/Y H:i'),
-                'include_breakfast' => $r->include_breakfast,
+                'check_out_raw' => $r->check_out,
+                'nights' => $r->nights,
                 'total_amount' => $r->total_amount,
                 'paid_amount' => $r->paid_amount,
                 'balance' => $r->total_amount - $r->paid_amount,
+                'status' => $r->status,
+                'include_breakfast' => $r->include_breakfast,
+                'ota_source' => $r->ota_source,
+                'payment_method' => $r->payment_method,
+                'created_at' => $r->created_at->format('d/m/Y H:i'),
             ]);
 
-        // Check-outs today (business date)
-        $checkoutsToday = Reservation::where('check_out', '>=', $bizStart)
-            ->where('check_out', '<', $bizEnd)
-            ->where('status', 'checked_out')
-            ->with(['guest', 'room'])
-            ->get()
-            ->map(fn ($r) => [
-                'id' => $r->id,
-                'reservation_number' => $r->reservation_number,
-                'guest_name' => $r->guest->guest_name ?? '-',
-                'room_number' => $r->room->room_number ?? '-',
-                'room_type' => $r->room->room_type_name ?? '-',
-                'check_in' => $r->check_in->format('d/m/Y H:i'),
-                'check_out' => $r->check_out->format('d/m/Y H:i'),
-                'include_breakfast' => $r->include_breakfast,
-                'total_amount' => $r->total_amount,
-                'paid_amount' => $r->paid_amount,
-                'balance' => $r->total_amount - $r->paid_amount,
-            ]);
+        // Check-ins = dari base, filter check_in di range & status checked_in
+        $checkinsToday = $todayReservations
+            ->filter(fn ($r) => $r['check_in_raw'] >= Carbon::parse($bizStart)
+                && $r['check_in_raw'] < Carbon::parse($bizEnd)
+                && $r['status'] === 'checked_in')
+            ->values();
+
+        // Check-outs = dari base, filter check_out di range & status checked_out
+        $checkoutsToday = $todayReservations
+            ->filter(fn ($r) => $r['check_out_raw'] >= Carbon::parse($bizStart)
+                && $r['check_out_raw'] < Carbon::parse($bizEnd)
+                && $r['status'] === 'checked_out')
+            ->values();
 
         // ─── OTA payment method list ───────────────────────────────
         $otaPaymentMethods = ['ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment'];
@@ -742,31 +746,11 @@ class NightAuditController extends Controller
             })
             ->values();
 
-        // ─── All Reservations (check-in di tanggal ini) ──────────
-        $allReservations = Reservation::with(['guest', 'room'])
-            ->where('check_in', '>=', $bizStart)
-            ->where('check_in', '<', $bizEnd)
-            ->where('status', '!=', 'cancelled')
-            ->orderBy('check_in', 'desc')
-            ->get()
-            ->map(fn ($r) => [
-                'id' => $r->id,
-                'reservation_number' => $r->reservation_number,
-                'guest_name' => $r->guest->guest_name ?? '-',
-                'room_number' => $r->room->room_number ?? '-',
-                'room_type' => $r->room->room_type_name ?? '-',
-                'check_in' => $r->check_in->format('d/m/Y H:i'),
-                'check_out' => $r->check_out->format('d/m/Y H:i'),
-                'nights' => $r->nights,
-                'total_amount' => $r->total_amount,
-                'paid_amount' => $r->paid_amount,
-                'balance' => $r->total_amount - $r->paid_amount,
-                'status' => $r->status,
-                'include_breakfast' => $r->include_breakfast,
-                'ota_source' => $r->ota_source,
-                'payment_method' => $r->payment_method,
-                'created_at' => $r->created_at->format('d/m/Y H:i'),
-            ]);
+        // ─── All Reservations = filter dari base (check-in di range) ─
+        $allReservations = $todayReservations
+            ->filter(fn ($r) => $r['check_in_raw'] >= Carbon::parse($bizStart)
+                && $r['check_in_raw'] < Carbon::parse($bizEnd))
+            ->values();
 
         // ─── Room Type Summary ─────────────────────────────────────
         $roomTypeSummary = Room::selectRaw("
