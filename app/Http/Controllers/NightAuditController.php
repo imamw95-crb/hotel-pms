@@ -395,11 +395,12 @@ class NightAuditController extends Controller
         // ─── Business Date Range ───────────────────────────────────
         [$bizStart, $bizEnd] = $this->getBusinessDateRange($date);
 
-        // ─── Base Reservations (satu query, dipake untuk check-in/out/all) ─
+        // ─── Base Reservations (satu query, dipake untuk check-in/out/inhouse/all) ─
         $todayReservations = Reservation::with(['guest', 'room'])
             ->where(function ($q) use ($bizStart, $bizEnd) {
                 $q->where('check_in', '>=', $bizStart)->where('check_in', '<', $bizEnd)
-                  ->orWhere('check_out', '>=', $bizStart)->where('check_out', '<', $bizEnd);
+                  ->orWhere('check_out', '>=', $bizStart)->where('check_out', '<', $bizEnd)
+                  ->orWhere('status', 'checked_in');
             })
             ->where('status', '!=', 'cancelled')
             ->orderBy('check_in', 'desc')
@@ -679,31 +680,28 @@ class NightAuditController extends Controller
 
         $cashFlowBalance = ($cashRevenue + $cashDeposits) - $cashExpenses;
 
-        // In-house guests
-        $inHouseGuests = Reservation::where(function ($q) use ($date) {
-            $q->where('status', 'checked_in')
-                ->orWhere(function ($sub) use ($date) {
-                    $sub->where('status', 'checked_out')
-                        ->whereDate('check_out', $date);
-                });
-        })
-            ->with(['guest', 'room'])
-            ->orderBy('check_out', 'asc')
-            ->get()
+        // In-house guests = dari base (checked_in atau checked_out hari ini)
+        $inHouseGuests = $todayReservations
+            ->filter(fn ($r) => $r['status'] === 'checked_in'
+                || ($r['status'] === 'checked_out'
+                    && $r['check_out_raw'] >= Carbon::parse($bizStart)
+                    && $r['check_out_raw'] < Carbon::parse($bizEnd)))
+            ->sortBy(fn ($r) => $r['check_out_raw'])
             ->map(fn ($r) => [
-                'id' => $r->id,
-                'reservation_number' => $r->reservation_number,
-                'guest_name' => $r->guest->guest_name ?? '-',
-                'room_number' => $r->room->room_number ?? '-',
-                'room_type' => $r->room->room_type_name ?? '-',
-                'check_in' => $r->check_in->format('d/m/Y'),
-                'check_out' => $r->check_out->format('d/m/Y'),
-                'total_nights' => $r->nights,
-                'include_breakfast' => $r->include_breakfast,
-                'total_amount' => $r->total_amount,
-                'paid_amount' => $r->paid_amount,
-                'balance' => $r->total_amount - $r->paid_amount,
-            ]);
+                'id' => $r['id'],
+                'reservation_number' => $r['reservation_number'],
+                'guest_name' => $r['guest_name'],
+                'room_number' => $r['room_number'],
+                'room_type' => $r['room_type'],
+                'check_in' => $r['check_in_raw']->format('d/m/Y'),
+                'check_out' => $r['check_out_raw']->format('d/m/Y'),
+                'total_nights' => $r['nights'],
+                'include_breakfast' => $r['include_breakfast'],
+                'total_amount' => $r['total_amount'],
+                'paid_amount' => $r['paid_amount'],
+                'balance' => $r['balance'],
+            ])
+            ->values();
 
         // New bookings — split OTA vs Web vs Direct
         $webPaymentMethods = ['bank_transfer', 'credit_card', 'debit_card', 'virtual_account', 'ewallet', 'qris'];
