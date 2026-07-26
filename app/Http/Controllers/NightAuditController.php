@@ -742,6 +742,40 @@ class NightAuditController extends Controller
             })
             ->values();
 
+        // ─── All Reservations (for current business date) ─────────
+        $allReservations = Reservation::with(['guest', 'room'])
+            ->where(function ($q) use ($bizStart, $bizEnd) {
+                // Reservasi yg check_in hari ini
+                $q->where('check_in', '>=', $bizStart)->where('check_in', '<', $bizEnd)
+                  // Atau check_out hari ini
+                  ->orWhere('check_out', '>=', $bizStart)->where('check_out', '<', $bizEnd)
+                  // Atau dibuat hari ini
+                  ->orWhere('created_at', '>=', $bizStart)->where('created_at', '<', $bizEnd)
+                  // Atau masih in-house (checked_in)
+                  ->orWhere('status', 'checked_in');
+            })
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('check_in', 'desc')
+            ->get()
+            ->map(fn ($r) => [
+                'id' => $r->id,
+                'reservation_number' => $r->reservation_number,
+                'guest_name' => $r->guest->guest_name ?? '-',
+                'room_number' => $r->room->room_number ?? '-',
+                'room_type' => $r->room->room_type_name ?? '-',
+                'check_in' => $r->check_in->format('d/m/Y H:i'),
+                'check_out' => $r->check_out->format('d/m/Y H:i'),
+                'nights' => $r->nights,
+                'total_amount' => $r->total_amount,
+                'paid_amount' => $r->paid_amount,
+                'balance' => $r->total_amount - $r->paid_amount,
+                'status' => $r->status,
+                'include_breakfast' => $r->include_breakfast,
+                'ota_source' => $r->ota_source,
+                'payment_method' => $r->payment_method,
+                'created_at' => $r->created_at->format('d/m/Y H:i'),
+            ]);
+
         // ─── Room Type Summary ─────────────────────────────────────
         $roomTypeSummary = Room::selectRaw("
                 room_type_name,
@@ -807,6 +841,7 @@ class NightAuditController extends Controller
             'cashRevenue', 'cashExpenses', 'cashFlowBalance',
             'checkinsToday', 'checkoutsToday', 'inHouseGuests',
             'otaBookings', 'webBookings', 'directBookings',
+            'allReservations',
             'roomTypeSummary',
             'edcSettlementList', 'edcRoomTotal', 'edcScTotal', 'edcGrandTotal',
         );

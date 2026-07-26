@@ -47,6 +47,7 @@
             <a href="#section-ota" class="px-2 py-1 rounded bg-purple-100 text-purple-800 hover:bg-purple-200 font-medium">OTA</a>
             <a href="#section-web" class="px-2 py-1 rounded bg-blue-100 text-blue-800 hover:bg-blue-200 font-medium">Web</a>
             <a href="#section-direct" class="px-2 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium">Direct</a>
+            <a href="#section-all-reservations" class="px-2 py-1 rounded bg-gray-100 text-gray-800 hover:bg-gray-200 font-medium">All Reservations</a>
             <button onclick="expandAll()" class="px-2 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium ml-1" title="Expand all sections"><i class="fas fa-expand-alt mr-0.5"></i>Expand All</button>
             <button onclick="collapseAll()" class="px-2 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium" title="Collapse all sections"><i class="fas fa-compress-alt mr-0.5"></i>Collapse All</button>
         </div>
@@ -1136,6 +1137,109 @@
         </table>
         @else
         <p class="text-gray-400 text-center py-4 text-sm italic">Tidak ada direct booking</p>
+        @endif
+        </div>{{-- /.section-body --}}
+    </div>
+
+    <!-- All Reservations -->
+    <div id="section-all-reservations" class="mb-6 collapsible-section">
+        <div class="flex items-center justify-between cursor-pointer select-none border-b-2 border-gray-800 pb-1 mb-3 section-toggle" onclick="toggleSection(this)">
+            <h2 class="text-lg font-bold uppercase text-gray-700">
+                <i class="fas fa-list text-gray-500 mr-2"></i>All Reservations
+            </h2>
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-bold text-gray-700">{{ count($allReservations ?? []) }} reservasi</span>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+            </div>
+        </div>
+        <div class="section-body">
+        @if(count($allReservations ?? []) > 0)
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-100 border-b border-gray-300">
+                    <th class="text-left p-2 font-bold text-xs">NO. RES</th>
+                    <th class="text-left p-2 font-bold text-xs">NAMA TAMU</th>
+                    <th class="text-center p-2 font-bold text-xs">KAMAR</th>
+                    <th class="text-center p-2 font-bold text-xs">TIPE</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-IN</th>
+                    <th class="text-center p-2 font-bold text-xs">CHECK-OUT</th>
+                    <th class="text-center p-2 font-bold text-xs">MLM</th>
+                    <th class="text-right p-2 font-bold text-xs">NOMINAL (Rp)</th>
+                    <th class="text-right p-2 font-bold text-xs">DIBAYAR (Rp)</th>
+                    <th class="text-right p-2 font-bold text-xs">SISA (Rp)</th>
+                    <th class="text-center p-2 font-bold text-xs">STATUS</th>
+                    <th class="text-center p-2 font-bold text-xs">SARAPAN</th>
+                    <th class="text-center p-2 font-bold text-xs">DIBUAT</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($allReservations ?? [] as $res)
+                <tr class="border-b border-gray-100
+                    @if(($res['status'] ?? '') === 'checked_out') bg-blue-50/30
+                    @elseif(($res['status'] ?? '') === 'checked_in') bg-green-50/30
+                    @elseif(($res['balance'] ?? 0) > 0) bg-red-50/30
+                    @endif">
+                    <td class="p-2 font-medium text-xs">
+                        <a href="{{ route('reservations.show', $res['id']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                            {{ $res['reservation_number'] ?? '-' }}
+                        </a>
+                    </td>
+                    <td class="p-2 text-xs">{{ $res['guest_name'] ?? '-' }}</td>
+                    <td class="p-2 text-center font-bold text-xs">{{ $res['room_number'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs text-gray-600">{{ $res['room_type'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_in'] ?? '-' }}</td>
+                    <td class="p-2 text-center text-xs">{{ $res['check_out'] ?? '-' }}</td>
+                    <td class="p-2 text-center">
+                        <span class="px-1.5 py-0.5 rounded text-xs font-bold
+                            @if(($res['nights'] ?? 0) > 2) bg-red-100 text-red-700
+                            @else bg-gray-100 text-gray-700 @endif">
+                            {{ $res['nights'] ?? 0 }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-right font-bold text-xs">Rp {{ number_format($res['total_amount'] ?? 0, 0, ',', '.') }}</td>
+                    <td class="p-2 text-right text-xs text-green-700">Rp {{ number_format($res['paid_amount'] ?? 0, 0, ',', '.') }}</td>
+                    <td class="p-2 text-right text-xs font-bold
+                        @if(($res['balance'] ?? 0) > 0) text-red-600
+                        @else text-gray-400 @endif">
+                        Rp {{ number_format($res['balance'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td class="p-2 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold
+                            @if(($res['status'] ?? '') === 'checked_in') bg-green-100 text-green-800
+                            @elseif(($res['status'] ?? '') === 'checked_out') bg-blue-100 text-blue-800
+                            @elseif(($res['status'] ?? '') === 'pending') bg-indigo-100 text-indigo-800
+                            @elseif(($res['status'] ?? '') === 'menunggu_pembayaran') bg-yellow-100 text-yellow-800
+                            @else bg-gray-100 text-gray-800 @endif">
+                            {{ $statusLabels[$res['status'] ?? ''] ?? strtoupper(str_replace('_', ' ', $res['status'] ?? '-')) }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center text-xs">
+                        @if(!empty($res['include_breakfast']))
+                            <span class="px-1 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800"><i class="fas fa-coffee"></i><span class="print-only">Ya</span></span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
+                    </td>
+                    <td class="p-2 text-center text-xs text-gray-500">{{ $res['created_at'] ?? '-' }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr class="bg-gray-100 border-t-2 border-gray-400">
+                    <td colspan="7" class="p-2 text-right font-bold text-xs text-gray-800">TOTAL</td>
+                    <td class="p-2 text-right font-bold text-xs text-gray-800">Rp {{ number_format(collect($allReservations)->sum('total_amount'), 0, ',', '.') }}</td>
+                    <td class="p-2 text-right font-bold text-xs text-green-700">Rp {{ number_format(collect($allReservations)->sum('paid_amount'), 0, ',', '.') }}</td>
+                    <td class="p-2 text-right font-bold text-xs
+                        @if(collect($allReservations)->sum('balance') > 0) text-red-600
+                        @else text-gray-400 @endif">
+                        Rp {{ number_format(collect($allReservations)->sum('balance'), 0, ',', '.') }}
+                    </td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+        @else
+        <p class="text-gray-400 text-center py-4 text-sm italic">Tidak ada reservasi</p>
         @endif
         </div>{{-- /.section-body --}}
     </div>
