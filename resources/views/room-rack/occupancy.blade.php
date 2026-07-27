@@ -12,17 +12,24 @@
                 {{ $start->format('M j') }} — {{ $end->format('M j, Y') }}
             </h2>
             <div class="flex flex-wrap items-center gap-2">
-                <form method="GET" action="{{ route('room-rack.occupancy') }}" class="flex items-center gap-1">
+                <form method="GET" action="{{ route('room-rack.occupancy') }}" class="flex items-center gap-2">
                     <input type="date" name="start_date" value="{{ $start->format('Y-m-d') }}"
                            class="text-xs border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
                            onchange="this.form.submit()">
+                    <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer select-none bg-gray-50 border rounded px-2 py-1.5 hover:bg-gray-100">
+                        <input type="checkbox" name="show_checked_out" value="1"
+                               onchange="this.form.submit()"
+                               {{ $showCheckedOut ? 'checked' : '' }}
+                               class="rounded border-gray-300 text-amber-500 focus:ring-amber-400">
+                        <span>🟡 Checked Out</span>
+                    </label>
                 </form>
                 <div class="flex items-center gap-1">
-                    <a href="{{ route('room-rack.occupancy', ['start_date' => $start->copy()->subDays(7)->format('Y-m-d')]) }}"
+                    <a href="{{ route('room-rack.occupancy', ['start_date' => $start->copy()->subDays(7)->format('Y-m-d'), 'show_checked_out' => $showCheckedOut ? '1' : '0']) }}"
                        class="px-3 py-1.5 border rounded text-xs hover:bg-gray-50">&larr; Prev 7</a>
-                    <a href="{{ route('room-rack.occupancy', ['start_date' => now()->format('Y-m-d')]) }}"
+                    <a href="{{ route('room-rack.occupancy', ['start_date' => now()->format('Y-m-d'), 'show_checked_out' => $showCheckedOut ? '1' : '0']) }}"
                        class="px-3 py-1.5 bg-blue-600 text-white rounded text-xs hover:bg-blue-700">Today</a>
-                    <a href="{{ route('room-rack.occupancy', ['start_date' => $start->copy()->addDays(7)->format('Y-m-d')]) }}"
+                    <a href="{{ route('room-rack.occupancy', ['start_date' => $start->copy()->addDays(7)->format('Y-m-d'), 'show_checked_out' => $showCheckedOut ? '1' : '0']) }}"
                        class="px-3 py-1.5 border rounded text-xs hover:bg-gray-50">Next 7 &rarr;</a>
                 </div>
             </div>

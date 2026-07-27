@@ -125,7 +125,7 @@ $occupancyRate = $totalCells > 0 ? round(($totalOccupiedNights / $totalCells) * 
                         @foreach($row['days'] as $cell)
                             @php
                                 $bg = match($cell['status']) {
-                                    'occupied' => $cell['is_checkin'] ? 'bg-emerald-300' : ($cell['is_checkout'] ? 'bg-amber-300' : 'bg-red-400'),
+                                    'occupied' => $cell['is_checked_out'] ? 'bg-yellow-300' : ($cell['is_checkin'] ? 'bg-emerald-300' : ($cell['is_checkout'] ? 'bg-amber-300' : 'bg-red-400')),
                                     'maintenance' => 'bg-indigo-200',
                                     'dirty' => 'bg-amber-100',
                                     'out_of_order' => 'bg-gray-300',
@@ -155,6 +155,9 @@ $occupancyRate = $totalCells > 0 ? round(($totalOccupiedNights / $totalCells) * 
                                         $tooltipText .= "\n📝 " . $b->notes;
                                     }
                                     if ($cell['is_checkin']) $tooltipText .= "\n✓ Check-in today";
+                                    if ($cell['is_checked_out']) {
+                                        $tooltipText .= "\n✔ Previously Checked Out";
+                                    }
                                     if ($cell['is_checkout']) {
                                         $tooltipText .= "\n✓ Check-out today (after 12:00)";
                                         $tooltipText .= "\n⬇ Room available for same-day booking";
@@ -181,7 +184,7 @@ $occupancyRate = $totalCells > 0 ? round(($totalOccupiedNights / $totalCells) * 
                                            data-check-in="{{ $cell['booking']->check_in->format('Y-m-d') }}"
                                            data-check-out="{{ $cell['booking']->check_out->format('Y-m-d') }}"
                                            data-room-id="{{ $room->id }}"
-                                           class="block w-full h-full occupancy-drag {{ $cell['is_checkin'] ? 'text-emerald-900' : ($cell['is_checkout'] ? 'text-amber-900' : 'text-white') }} hover:ring-2 hover:ring-inset hover:ring-white/50 rounded"
+                                           class="block w-full h-full occupancy-drag {{ $cell['is_checked_out'] ? 'text-yellow-900' : ($cell['is_checkin'] ? 'text-emerald-900' : ($cell['is_checkout'] ? 'text-amber-900' : 'text-white')) }} hover:ring-2 hover:ring-inset hover:ring-white/50 rounded"
                                            ondragstart="onOccupancyDragStart(event)">
                                             <div class="font-medium leading-tight">
                                                 {{ $guestName }}
@@ -197,7 +200,7 @@ $occupancyRate = $totalCells > 0 ? round(($totalOccupiedNights / $totalCells) * 
                                                 @endif
                                             </div>
                                             @if($guestNotes)
-                                                <div class="text-[9px] leading-tight truncate {{ $cell['is_checkin'] ? 'text-emerald-800' : ($cell['is_checkout'] ? 'text-amber-800' : 'text-white/80') }}">
+                                                <div class="text-[9px] leading-tight truncate {{ $cell['is_checked_out'] ? 'text-yellow-800' : ($cell['is_checkin'] ? 'text-emerald-800' : ($cell['is_checkout'] ? 'text-amber-800' : 'text-white/80')) }}">
                                                     📝 {{ $guestNotes }}
                                                 </div>
                                             @endif
@@ -255,6 +258,10 @@ $occupancyRate = $totalCells > 0 ? round(($totalOccupiedNights / $totalCells) * 
             <span class="flex items-center gap-1">
                 <span class="inline-block w-2.5 h-2.5 rounded bg-amber-300"></span>
                 <span>Check-out</span>
+            </span>
+            <span class="flex items-center gap-1">
+                <span class="inline-block w-2.5 h-2.5 rounded bg-yellow-300"></span>
+                <span>Previously Checked Out</span>
             </span>
             <span class="flex items-center gap-1">
                 <span class="inline-block w-2.5 h-2.5 rounded bg-amber-100"></span>

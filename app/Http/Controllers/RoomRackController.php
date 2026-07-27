@@ -127,12 +127,16 @@ class RoomRackController extends Controller
             : Carbon::today();
         $end = $start->copy()->addDays(6);
 
-        $data = $this->availability->getOccupancyCalendar($start, $end);
+        $showCheckedOut = $request->boolean('show_checked_out', true);
+
+        $data = $this->availability->getOccupancyCalendar($start, $end, $showCheckedOut);
+        $data['showCheckedOut'] = $showCheckedOut;
 
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'view' => view('room-rack.partials.occupancy-calendar', array_merge($data, ['start' => $start, 'end' => $end]))->render(),
+                'showCheckedOut' => $showCheckedOut,
             ]);
         }
 

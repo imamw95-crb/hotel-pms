@@ -109,10 +109,13 @@ class AvailabilityService
      * Generate occupancy calendar data for a date range.
      * Returns per-room, per-day occupancy status.
      */
-    public function getOccupancyCalendar(Carbon $startDate, Carbon $endDate): array
+    public function getOccupancyCalendar(Carbon $startDate, Carbon $endDate, bool $showCheckedOut = true): array
     {
         $rooms = Room::with(['roomType'])->orderBy('room_number')->get();
-        $statuses = array_merge(Reservation::ACTIVE_STATUSES, ['checked_out']);
+        $statuses = Reservation::ACTIVE_STATUSES;
+        if ($showCheckedOut) {
+            $statuses[] = 'checked_out';
+        }
 
         $reservations = Reservation::with(['guest'])
             ->whereIn('status', $statuses)
@@ -162,11 +165,13 @@ class AvailabilityService
                 if ($booking) {
                     $isCheckin = $booking->check_in->format('Y-m-d') === $dayDateStr;
                     $isCheckout = $booking->check_out->format('Y-m-d') === $dayDateStr;
+                    $isCheckedOut = $booking->status === 'checked_out';
                     $row['days'][] = [
                         'status' => 'occupied',
                         'booking' => $booking,
                         'is_checkin' => $isCheckin,
                         'is_checkout' => $isCheckout,
+                        'is_checked_out' => $isCheckedOut,
                     ];
                 } else {
                     // Check for active OOO on this day
