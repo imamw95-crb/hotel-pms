@@ -599,6 +599,7 @@
             if (refreshTimer) clearInterval(refreshTimer);
         });
     })();
+</script>
 
 <style>
     @keyframes slideDown {
