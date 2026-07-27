@@ -112,8 +112,10 @@ class AvailabilityService
     public function getOccupancyCalendar(Carbon $startDate, Carbon $endDate): array
     {
         $rooms = Room::with(['roomType'])->orderBy('room_number')->get();
+        $statuses = array_merge(Reservation::ACTIVE_STATUSES, ['checked_out']);
+
         $reservations = Reservation::with(['guest'])
-            ->whereIn('status', Reservation::ACTIVE_STATUSES)
+            ->whereIn('status', $statuses)
             ->where('check_in', '<', $endDate->copy()->addDay())
             ->where('check_out', '>', $startDate)
             ->get()
