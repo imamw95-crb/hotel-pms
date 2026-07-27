@@ -124,7 +124,7 @@ class RoomRackController extends Controller
     {
         $start = $request->input('start_date')
             ? Carbon::parse($request->input('start_date'))
-            : Carbon::today();
+            : Carbon::yesterday();
         $end = $start->copy()->addDays(6);
 
         $showCheckedOut = $request->boolean('show_checked_out', true);
