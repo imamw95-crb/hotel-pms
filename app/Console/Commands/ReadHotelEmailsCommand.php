@@ -237,6 +237,46 @@ class ReadHotelEmailsCommand extends Command
                 $roomCount = count($allAiData);
                 $this->info("  ✅ AI: {$roomCount} room(s) detected");
 
+                // ═══ STEP 4b: CROSS-CHECK ROOM COUNT WITH EMAIL TEXT ═══
+                $expectedRooms = $this->detectExpectedRoomCount($subject, $body);
+                if ($expectedRooms > 1 && $roomCount < $expectedRooms) {
+                    $this->warn("  ⚠️ Room count mismatch: email suggests {$expectedRooms} rooms, AI returned {$roomCount}. Will retry AI parsing...");
+                    Log::warning('OTA email room count mismatch', [
+                        'subject' => $subject,
+                        'sender' => $sender,
+                        'expected_rooms' => $expectedRooms,
+                        'ai_returned' => $roomCount,
+                        'ai_data' => $allAiData,
+                    ]);
+
+                    // Retry with a stronger prompt hint
+                    $retryHint = "CRITICAL: This booking is for {$expectedRooms} rooms. You MUST return exactly {$expectedRooms} objects in the JSON array, each with the same reservation_id. Do NOT combine rooms into one object.";
+                    $allAiData = $openRouter->parseBookingEmail($body, $subject, $otaSource, $retryHint);
+
+                    if (! $allAiData || ! is_array($allAiData) || count($allAiData) === 0) {
+                        $this->error('  ❌ AI retry also failed');
+                        Log::error('OTA email AI retry failed', [
+                            'subject' => $subject,
+                            'expected_rooms' => $expectedRooms,
+                        ]);
+                        $parser->markFailed($uid, $sender, $subject, $otaSource, 'AI parsing failed after retry', $body);
+                        $failed++;
+                        continue;
+                    }
+
+                    $roomCount = count($allAiData);
+                    $this->info("  ✅ AI retry: {$roomCount} room(s) detected");
+
+                    if ($expectedRooms > 1 && $roomCount < $expectedRooms) {
+                        $this->warn("  ⚠️ Still only {$roomCount} rooms — proceeding with what AI returned");
+                        Log::warning('OTA email AI retry still incomplete', [
+                            'subject' => $subject,
+                            'expected_rooms' => $expectedRooms,
+                            'ai_returned_after_retry' => $roomCount,
+                        ]);
+                    }
+                }
+
                 // ═══ STEP 5-9: PROCESS EACH ROOM ═══
                 $successResults = [];
                 $roomErrors = [];
@@ -412,6 +452,38 @@ class ReadHotelEmailsCommand extends Command
         }
 
         return true;
+    }
+
+    /**
+     * Detect expected room count from email subject/body.
+     * Uses keyword patterns to estimate how many rooms the email describes.
+     * Returns 1 if unclear (safe default — better to miss than overbook).
+     */
+    private function detectExpectedRoomCount(string $subject, string $body): int
+    {
+        $text = strtolower($subject.' '.$body);
+
+        // Explicit quantity patterns: "x 2", "2x", "2 kamar", "2 room(s)", "(x2)"
+        $patterns = [
+            '/(\d+)\s*x\s*(kamar|room|unit)/i',     // "2x kamar", "2 room"
+            '/(kamar|room|unit)\s*x\s*(\d+)/i',      // "kamar x 2"
+            '/(\d+)\s*(kamar|room)\b/i',              // "2 kamar", "3 rooms"
+            '/\(x\s*(\d+)\)/i',                        // "(x 2)"
+            '/quantity[:\s]+(\d+)/i',                  // "quantity: 2"
+            '/(\d+)\s*(pax|guest|tamu)\s*(kamar|room)/i', // "2 tamu 2 kamar"
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $matches)) {
+                // Find the numeric match (might be in group 1 or 2)
+                $count = (int) ($matches[1] ?? $matches[2] ?? 0);
+                if ($count >= 2 && $count <= 10) {
+                    return $count;
+                }
+            }
+        }
+
+        return 1; // Default: assume 1 room
     }
 
     /**

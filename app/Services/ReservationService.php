@@ -25,32 +25,34 @@ class ReservationService
 
         $room = Room::findOrFail($data['room_id']);
 
-        // Lock the room row to avoid race conditions on availability check
-        $room->lockForUpdate();
+        // ── Semua operasi dalam satu transaksi agar lockForUpdate() benar-benar mengunci ──
+        return DB::transaction(function () use ($data, $checkIn, $checkOut, $room) {
+            // Lock the room row to prevent race conditions.
+            // lockForUpdate() re-fetches the row WITH a row-level lock inside the transaction.
+            $room->lockForUpdate();
 
-        if (! $room->isAvailable($checkIn, $checkOut)) {
-            throw new Exception("Kamar {$room->room_number} tidak tersedia untuk periode tersebut.");
-        }
-
-        // Determine if we need to track allotment (API / website)
-        $otaSource = $data['ota_source'] ?? 'api';
-        $trackAllotment = in_array($otaSource, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
-        $roomTypeId = $room->room_type_id;
-
-        if ($roomTypeId && $trackAllotment) {
-            // Lock allotment rows for the date range
-            Allotment::where('room_type_id', $roomTypeId)
-                ->whereBetween('date', [$checkIn->toDateString(), $checkOut->copy()->subDay()->toDateString()])
-                ->lockForUpdate()
-                ->get();
-
-            $unavailable = Allotment::checkAvailabilityInRange($roomTypeId, $checkIn, $checkOut, Allotment::CHANNEL_API);
-            if (! empty($unavailable)) {
-                throw new Exception('Allotment tidak tersedia pada tanggal: '.implode(', ', $unavailable));
+            if (! $room->isAvailable($checkIn, $checkOut)) {
+                throw new Exception("Kamar {$room->room_number} tidak tersedia untuk periode tersebut.");
             }
-        }
 
-        return DB::transaction(function () use ($data, $checkIn, $checkOut, $room, $trackAllotment, $roomTypeId, $otaSource) {
+            // Determine if we need to track allotment (API / website)
+            $otaSource = $data['ota_source'] ?? 'api';
+            $trackAllotment = in_array($otaSource, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+            $roomTypeId = $room->room_type_id;
+
+            if ($roomTypeId && $trackAllotment) {
+                // Lock allotment rows for the date range (inside transaction = lock really holds)
+                Allotment::where('room_type_id', $roomTypeId)
+                    ->whereBetween('date', [$checkIn->toDateString(), $checkOut->copy()->subDay()->toDateString()])
+                    ->lockForUpdate()
+                    ->get();
+
+                $unavailable = Allotment::checkAvailabilityInRange($roomTypeId, $checkIn, $checkOut, Allotment::CHANNEL_API);
+                if (! empty($unavailable)) {
+                    throw new Exception('Allotment tidak tersedia pada tanggal: '.implode(', ', $unavailable));
+                }
+            }
+
             // Guest handling — updateOrCreate with composite key (name + phone) to prevent collision
             $guest = Guest::updateOrCreate(
                 [

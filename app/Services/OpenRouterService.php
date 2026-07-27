@@ -28,11 +28,15 @@ class OpenRouterService
      * Parse OTA email content into structured booking data.
      * Returns an array of bookings — single item for 1 room, multiple for multi-room.
      *
+     * @param  string  $emailBody    Email body text
+     * @param  string  $emailSubject Email subject line
+     * @param  string  $otaSource    OTA source (tiket.com, traveloka.com, etc.)
+     * @param  string  $extraHint    Optional extra hint appended to prompt (e.g., for retry)
      * @return array[]|null Array of booking arrays, or null on failure
      */
-    public function parseBookingEmail(string $emailBody, string $emailSubject = '', string $otaSource = ''): ?array
+    public function parseBookingEmail(string $emailBody, string $emailSubject = '', string $otaSource = '', string $extraHint = ''): ?array
     {
-        $prompt = $this->buildPrompt($emailBody, $emailSubject, $otaSource);
+        $prompt = $this->buildPrompt($emailBody, $emailSubject, $otaSource, $extraHint);
 
         try {
             $response = Http::withHeaders([
@@ -77,13 +81,28 @@ class OpenRouterService
 
             // Always return as array of bookings
             if ($parsed === null) {
+                Log::error('OpenRouter extractJson failed', [
+                    'content_snippet' => Str::limit($content, 500),
+                    'model' => $this->model,
+                ]);
                 return null;
             }
 
             // If single object (associative), wrap in array
             if (! isset($parsed[0]) || ! is_array($parsed[0])) {
-                return [$parsed];
+                $parsed = [$parsed];
             }
+
+            // Log full AI response for debugging (truncated)
+            Log::info('OpenRouter AI response parsed', [
+                'room_count' => count($parsed),
+                'reservation_ids' => collect($parsed)->pluck('reservation_id')->unique()->values()->toArray(),
+                'guest_names' => collect($parsed)->pluck('guest_name')->toArray(),
+                'room_types' => collect($parsed)->pluck('room_type')->toArray(),
+                'checkins' => collect($parsed)->pluck('checkin_date')->toArray(),
+                'checkouts' => collect($parsed)->pluck('checkout_date')->toArray(),
+                'model' => $this->model,
+            ]);
 
             return $parsed;
         } catch (\Exception $e) {
@@ -95,40 +114,53 @@ class OpenRouterService
         }
     }
 
-    private function buildPrompt(string $emailBody, string $emailSubject, string $otaSource): string
+    private function buildPrompt(string $emailBody, string $emailSubject, string $otaSource, string $extraHint = ''): string
     {
         // Limit body length to control token usage
         $emailBody = Str::limit($emailBody, 4000);
 
+        $hintSection = $extraHint ? "\n\n{$extraHint}\n" : '';
+
         return <<<PROMPT
 You are a hotel OTA booking parser. Extract booking info from the email below.
 
+CRITICAL: Count the number of rooms FIRST before extracting data.
+Look for patterns like:
+- "2 Kamar", "2 Room", "2x", "x 2", "2 Kamar Deluxe" → means 2 separate room entries
+- Multiple guest names listed → each is a separate room
+- "Booking for 2 rooms" / "Pemesanan 2 kamar"
+- Room type repeated with quantity (e.g., "Deluxe (2)" or "Deluxe x 2")
+
 Return ONLY valid JSON array — no markdown, no explanation.
 
-Single room example:
+Single room example (the array has 1 object):
 [{"reservation_id":"HTL-123","guest_name":"Budi Santoso","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"}]
 
-Multi-room example (2 rooms, different guest names):
+Multi-room example (the array has 2 objects, same reservation_id, different guest_name):
 [
   {"reservation_id":"HTL-456","guest_name":"Siti Rahma","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"},
   {"reservation_id":"HTL-456","guest_name":"Ahmad Fauzi","checkin_date":"2026-06-02","checkout_date":"2026-06-04","room_type":"Deluxe","guest_count":2,"total_price":500000,"payment_method":"tiket.com","payment_date":"2026-06-01","status":"confirmed","ota_source":"{$otaSource}"}
 ]
 
+Important: For multi-room bookings, ALWAYS return one JSON object per room.
+If the email says "2 rooms" / "2 kamar" / "x 2" / "quantity: 2", you MUST return 2 objects.
+If guest names are not listed per room, use the same guest name for all rooms.
+
 Rules:
 - ALWAYS return an array, even for 1 room: [{...}]
 - status: cancelled|modified|confirmed
 - Dates: YYYY-MM-DD format
-- reservation_id = OTA booking reference number (same for all rooms in one booking)
-- guest_name = guest name for THIS room (if one name covers all, use same name for each room)
+- reservation_id = OTA booking reference number (same for ALL rooms in one booking)
+- guest_name = guest name for THIS room (if one name covers all, repeat same name for each room)
 - room_type = room type for THIS room
 - guest_count = number of guests for THIS room
-- total_price = price for THIS room (not total of all rooms). If only grand total given, divide by room count.
+- total_price = price for THIS ROOM ONLY (not grand total). If only grand total given, divide by room count.
 - payment_method: tiket.com|traveloka.com|ota_payment|bank_transfer|credit_card|cash|"" (empty if unknown)
   * "pay at hotel" / "bayar di hotel" / unpaid → cash
   * OTA already collected (paid, confirmed payment) → OTA source name
 - payment_date: YYYY-MM-DD. Default = checkin_date.
 
-Email Subject: {$emailSubject}
+{$hintSection}Email Subject: {$emailSubject}
 
 Email Body:
 {$emailBody}
