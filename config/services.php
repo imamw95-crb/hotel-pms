@@ -57,7 +57,7 @@ return [
     */
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
-        'model' => env('OPENROUTER_MODEL', 'qwen/qwen3-8b'),
+        'model' => env('OPENROUTER_MODEL', 'poolside/laguna-xs-2.1:free'),
         'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
         'timeout' => env('OPENROUTER_TIMEOUT', 120),
     ],

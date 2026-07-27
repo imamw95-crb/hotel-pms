@@ -22,7 +22,7 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 ## AI Services
 - **OpenRouterService** - Integrasi dengan OpenRouter API untuk AI chat
 - **AiChatService** - Chat assistant untuk booking & query hotel
-- **Model:** openrouter/owl-alpha
+- **Model:** poolside/laguna-xs-2.1:free
 - **Endpoint:** POST /api/ai/chat
 
 ## Ignore These Folders Completely
