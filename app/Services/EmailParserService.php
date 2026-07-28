@@ -56,19 +56,19 @@ class EmailParserService
     {
         $text = strtolower($subject.' '.$body);
 
-        // Cancellation keywords
-        $cancelKeywords = ['cancel', 'cancelled', 'cancellation', 'void', 'refunded'];
-        foreach ($cancelKeywords as $keyword) {
-            if (Str::contains($text, $keyword)) {
-                return 'cancellation';
-            }
-        }
-
-        // Chat/notification keywords (skip before booking check)
+        // Chat/notification keywords (skip first — highest priority)
         $chatKeywords = ['unread chat', 'unreplied chat', 'chat notification', 'new chat', 'chat message', 'guest message', 'reminder', 'pemeliharaan', 'maintenance', 'weekly report', 'otp', 'otp token', 'peringatan', 'payment completed', 'payment received', 'payment confirmed', 'payment successful', 'pembayaran berhasil', 'pembayaran diterima'];
         foreach ($chatKeywords as $keyword) {
             if (Str::contains($text, $keyword)) {
                 return 'unknown';
+            }
+        }
+
+        // Booking keywords (checked before cancellation — "Cancel" appears in cancellation policy of booking emails)
+        $bookingKeywords = ['new booking', 'new reservation', 'booking confirmed', 'booking prepaid', 'itinerary'];
+        foreach ($bookingKeywords as $keyword) {
+            if (Str::contains($text, $keyword)) {
+                return 'booking';
             }
         }
 
@@ -80,9 +80,17 @@ class EmailParserService
             }
         }
 
-        // Booking keywords
-        $bookingKeywords = ['booking', 'reservation', 'confirmed', 'new booking', 'new reservation'];
-        foreach ($bookingKeywords as $keyword) {
+        // Cancellation keywords (use specific phrases to avoid matching "Cancel" in cancellation policy of booking emails)
+        $cancelKeywords = ['cancelled', 'cancellation', 'booking cancelled', 'reservation cancelled', 'void', 'refunded', 'pembatalan'];
+        foreach ($cancelKeywords as $keyword) {
+            if (Str::contains($text, $keyword)) {
+                return 'cancellation';
+            }
+        }
+
+        // Fallback: if still contains generic "booking" or "reservation", treat as booking
+        $fallbackKeywords = ['booking', 'reservation', 'confirmed'];
+        foreach ($fallbackKeywords as $keyword) {
             if (Str::contains($text, $keyword)) {
                 return 'booking';
             }
