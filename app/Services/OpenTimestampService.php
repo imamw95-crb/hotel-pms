@@ -527,13 +527,13 @@ class OpenTimestampService
             // # Transaction id 5eb18048fae5b1ed...
             // verify BitcoinBlockHeaderAttestation(959105)
             // # Bitcoin block merkle root f3e277...
-            if (preg_match('/Transaction id:\s*(\S+)/i', $line, $m)) {
+            if (preg_match('/Transaction id\s*(\S+)/i', $line, $m)) {
                 $result['txid'] = $m[1];
             }
             if (preg_match('/BitcoinBlockHeaderAttestation\((\d+)\)/i', $line, $m)) {
                 $result['block'] = (int) $m[1];
             }
-            if (preg_match('/Bitcoin block merkle root:\s*(\S+)/i', $line, $m)) {
+            if (preg_match('/Bitcoin block merkle root\s*(\S+)/i', $line, $m)) {
                 $result['block_hash'] = $m[1];
             }
         }
