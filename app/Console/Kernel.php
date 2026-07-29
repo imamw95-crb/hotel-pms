@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         Commands\BlockMigrateFreshCommand::class,
         Commands\BlockMigrateResetCommand::class,
         Commands\OtsUpgradeCommand::class,
+        Commands\SchedulerHeartbeatCommand::class,
     ];
 
     /**
@@ -30,23 +31,8 @@ class Kernel extends ConsoleKernel
         // Writes a timestamp every minute so monitoring can detect
         // if the Laravel scheduler (cron) is actually running.
         // If this stops updating → cron job is dead.
-        $schedule->call(function () {
-            $heartbeatFile = storage_path('logs/scheduler-heartbeat.log');
-            $dir = dirname($heartbeatFile);
-            if (! is_dir($dir)) {
-                mkdir($dir, 0775, true);
-            }
-            file_put_contents(
-                $heartbeatFile,
-                now()->format('Y-m-d H:i:s').PHP_EOL,
-                FILE_APPEND | LOCK_EX
-            );
-            // Keep only last ~100 lines to prevent unbounded growth
-            $lines = file($heartbeatFile);
-            if (count($lines) > 100) {
-                file_put_contents($heartbeatFile, implode('', array_slice($lines, -100)));
-            }
-        })->everyMinute();
+        $schedule->command('scheduler:heartbeat')
+            ->everyMinute();
 
         // ─── OTA Email Autopilot ──────────────────────────────
         $schedule->command('hotel:read-emails --limit=5')
