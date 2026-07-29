@@ -17,6 +17,7 @@
                            class="text-xs border rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
                            onchange="this.form.submit()">
                     <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer select-none bg-gray-50 border rounded px-2 py-1.5 hover:bg-gray-100">
+                        <input type="hidden" name="show_checked_out" value="0">
                         <input type="checkbox" name="show_checked_out" value="1"
                                onchange="this.form.submit()"
                                {{ $showCheckedOut ? 'checked' : '' }}
