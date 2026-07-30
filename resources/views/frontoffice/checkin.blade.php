@@ -7,14 +7,16 @@
 <div class="bg-white rounded-lg shadow p-6">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold">Daftar Tamu Siap Check-in</h2>
-        <div class="flex gap-2">
-            <button id="btnBatchCheckin" onclick="batchCheckin()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 flex items-center font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <i class="fas fa-sign-in-alt mr-2"></i> <span id="batchCheckinCount">0</span> Check-in <strong>ALL</strong>
-            </button>
-            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
-                <i class="fas fa-print mr-2"></i> Print
-            </button>
-        </div>
+        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
+            <i class="fas fa-print mr-2"></i> Print
+        </button>
+    </div>
+
+    <!-- Batch Check-in Button -->
+    <div class="mb-4">
+        <button id="btnBatchCheckin" onclick="batchCheckin()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 flex items-center font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <i class="fas fa-sign-in-alt mr-2"></i> <span id="batchCheckinCount">0</span> Check-in <strong>ALL</strong>
+        </button>
     </div>
 
     <form method="GET" action="{{ route('checkin.index') }}" class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
