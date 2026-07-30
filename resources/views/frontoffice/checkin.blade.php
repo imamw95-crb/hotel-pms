@@ -58,7 +58,7 @@
             <thead>
                 <tr class="bg-gray-100 text-gray-700">
                     <th class="px-4 py-3 border border-gray-200 w-10">
-                        <input type="checkbox" id="checkAll" onchange="toggleAllCheckboxes(this)" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
+                        <input type="checkbox" id="checkAll" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
                     </th>
                     <th class="px-4 py-3 border border-gray-200">No. Reservasi</th>
                     <th class="px-4 py-3 border border-gray-200">Nama Tamu</th>
@@ -72,7 +72,7 @@
                 @forelse($pendingReservations as $reservation)
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 border border-gray-200 text-center">
-                            <input type="checkbox" name="checkin_ids[]" value="{{ $reservation->id }}" class="checkin-checkbox w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer" onchange="updateBatchCheckinBtn()">
+                            <input type="checkbox" name="checkin_ids[]" value="{{ $reservation->id }}" class="checkin-checkbox w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
                         </td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->reservation_number }}</td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->guest->guest_name }}</td>

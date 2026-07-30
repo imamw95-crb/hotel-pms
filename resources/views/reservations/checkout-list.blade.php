@@ -73,7 +73,7 @@
             <thead class="bg-gray-100">
                 <tr>
                     <th class="text-left p-3 text-sm font-semibold w-10">
-                        <input type="checkbox" id="checkAll" onchange="toggleAllCheckboxes(this)" class="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer">
+                        <input type="checkbox" id="checkAll" class="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer">
                     </th>
                     <th class="text-left p-3 text-sm font-semibold">No. Reservasi</th>
                     <th class="text-left p-3 text-sm font-semibold">Nama Tamu</th>
@@ -93,7 +93,7 @@
                 @endphp
                 <tr class="border-b hover:bg-gray-50 {{ $isDueOut ? 'bg-amber-50' : '' }}">
                     <td class="p-3 text-center">
-                        <input type="checkbox" name="checkout_ids[]" value="{{ $res->id }}" class="checkout-checkbox w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer" onchange="updateBatchCheckoutBtn()">
+                        <input type="checkbox" name="checkout_ids[]" value="{{ $res->id }}" class="checkout-checkbox w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer">
                     </td>
                     <td class="p-3 font-medium text-blue-600">{{ $res->reservation_number }}</td>
                     <td class="p-3">

@@ -627,27 +627,50 @@
             });
         }
 
-        // ===== BATCH CHECK-IN =====
-        function toggleAllCheckboxes(master) {
-            var isChecked = master.checked;
-            var checkboxes = document.querySelectorAll('.checkin-checkbox, .checkout-checkbox');
-            checkboxes.forEach(function(cb) {
-                cb.checked = isChecked;
-            });
-            updateBatchCheckinBtn();
-            if (typeof updateBatchCheckoutBtn === 'function') updateBatchCheckoutBtn();
-        }
+        // ===== BATCH SELECT ALL / CHECKBOX HANDLERS (event delegation) =====
+        document.addEventListener('change', function(e) {
+            // Select All master checkbox
+            if (e.target && e.target.id === 'checkAll') {
+                var isChecked = e.target.checked;
+                var tbody = e.target.closest('table')?.querySelector('tbody');
+                if (tbody) {
+                    var checkboxes = tbody.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(function(cb) { cb.checked = isChecked; });
+                }
+                refreshBatchButtons();
+                return;
+            }
 
-        function updateBatchCheckinBtn() {
-            var checked = document.querySelectorAll('.checkin-checkbox:checked');
-            var btn = document.getElementById('btnBatchCheckin');
-            var count = document.getElementById('batchCheckinCount');
-            if (checked.length > 0) {
-                btn.disabled = false;
-                count.textContent = checked.length;
-            } else {
-                btn.disabled = true;
-                count.textContent = '0';
+            // Individual checkin checkbox
+            if (e.target && e.target.classList.contains('checkin-checkbox')) {
+                refreshBatchButtons();
+                return;
+            }
+
+            // Individual checkout checkbox
+            if (e.target && e.target.classList.contains('checkout-checkbox')) {
+                refreshBatchButtons();
+                return;
+            }
+        });
+
+        function refreshBatchButtons() {
+            // Check-in
+            var ciChecked = document.querySelectorAll('.checkin-checkbox:checked');
+            var ciBtn = document.getElementById('btnBatchCheckin');
+            var ciCount = document.getElementById('batchCheckinCount');
+            if (ciBtn) {
+                ciBtn.disabled = ciChecked.length === 0;
+                if (ciCount) ciCount.textContent = ciChecked.length;
+            }
+
+            // Checkout
+            var coChecked = document.querySelectorAll('.checkout-checkbox:checked');
+            var coBtn = document.getElementById('btnBatchCheckout');
+            var coCount = document.getElementById('batchCheckoutCount');
+            if (coBtn) {
+                coBtn.disabled = coChecked.length === 0;
+                if (coCount) coCount.textContent = coChecked.length;
             }
         }
 
@@ -728,19 +751,6 @@
         }
 
         // ===== BATCH CHECK-OUT =====
-        function updateBatchCheckoutBtn() {
-            var checked = document.querySelectorAll('.checkout-checkbox:checked');
-            var btn = document.getElementById('btnBatchCheckout');
-            var count = document.getElementById('batchCheckoutCount');
-            if (checked.length > 0) {
-                btn.disabled = false;
-                count.textContent = checked.length;
-            } else {
-                btn.disabled = true;
-                count.textContent = '0';
-            }
-        }
-
         function batchCheckout() {
             var checked = document.querySelectorAll('.checkout-checkbox:checked');
             if (checked.length === 0) {
