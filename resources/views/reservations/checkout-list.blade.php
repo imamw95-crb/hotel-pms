@@ -61,7 +61,7 @@
 
 <!-- Batch Checkout Button -->
 <div class="mb-4">
-    <button id="btnBatchCheckout" onclick="batchCheckout()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 flex items-center font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+    <button id="btnBatchCheckout" onclick="batchCheckout()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 flex items-center font-semibold shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
         <i class="fas fa-sign-out-alt mr-2"></i> <span id="batchCheckoutCount">0</span> Checkout <strong>ALL</strong>
     </button>
 </div>
