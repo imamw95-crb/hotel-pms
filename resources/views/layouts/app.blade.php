@@ -662,15 +662,32 @@
             var ids = Array.from(checked).map(function(cb) { return cb.value; });
             var count = ids.length;
 
+            // Build detail list from table rows
+            var detailHtml = '';
+            checked.forEach(function(cb) {
+                var row = cb.closest('tr');
+                if (row) {
+                    var cells = row.querySelectorAll('td');
+                    if (cells.length >= 5) {
+                        var resNum = cells[1]?.textContent?.trim() || '-';
+                        var guest = cells[2]?.textContent?.trim() || '-';
+                        var roomNum = cells[3]?.textContent?.trim() || '-';
+                        detailHtml += '<div class="flex justify-between text-sm py-1 border-b border-gray-100 last:border-0">' +
+                            '<span class="text-blue-600 font-medium">' + resNum + '</span>' +
+                            '<span>' + guest + ' <span class="text-gray-400">(' + roomNum + ')</span></span>' +
+                            '</div>';
+                    }
+                }
+            });
+
             showModal({
-                title: 'Konfirmasi Batch Check-in',
-                message: '<div class="text-center">' +
-                    '<div class="text-3xl font-bold text-green-600 mb-3">' + count + '</div>' +
-                    '<p class="text-gray-700">reservasi akan di-check-in secara bersamaan.</p>' +
-                    '<p class="mt-2 text-sm text-gray-500">Status kamar akan berubah menjadi <strong>Occupied</strong>.</p>' +
-                    '</div>',
+                title: 'Konfirmasi Batch Check-in (' + count + ' reservasi)',
+                message: '<div class="text-left bg-gray-50 rounded-lg p-3 space-y-1 text-sm max-h-60 overflow-y-auto mb-3">' +
+                    detailHtml +
+                    '</div>' +
+                    '<p class="text-sm text-gray-600">' + count + ' reservasi akan di-check-in. Status kamar menjadi <strong>Occupied</strong>.</p>',
                 type: 'confirm',
-                confirmText: 'Ya, Check-in Semua',
+                confirmText: 'Ya, Check-in ALL',
                 cancelText: 'Batal',
                 onConfirm: function() {
                     var xhr = new XMLHttpRequest();
@@ -736,15 +753,32 @@
             var ids = Array.from(checked).map(function(cb) { return cb.value; });
             var count = ids.length;
 
+            // Build detail list from table rows
+            var detailHtml = '';
+            checked.forEach(function(cb) {
+                var row = cb.closest('tr');
+                if (row) {
+                    var cells = row.querySelectorAll('td');
+                    if (cells.length >= 5) {
+                        var resNum = cells[1]?.textContent?.trim() || '-';
+                        var guest = cells[2]?.textContent?.trim() || '-';
+                        var roomNum = cells[3]?.textContent?.trim() || '-';
+                        detailHtml += '<div class="flex justify-between text-sm py-1 border-b border-gray-100 last:border-0">' +
+                            '<span class="text-blue-600 font-medium">' + resNum + '</span>' +
+                            '<span>' + guest + ' <span class="text-gray-400">(' + roomNum + ')</span></span>' +
+                            '</div>';
+                    }
+                }
+            });
+
             showModal({
-                title: 'Konfirmasi Batch Check-out',
-                message: '<div class="text-center">' +
-                    '<div class="text-3xl font-bold text-yellow-600 mb-3">' + count + '</div>' +
-                    '<p class="text-gray-700">reservasi akan di-check-out secara bersamaan.</p>' +
-                    '<p class="mt-2 text-sm text-red-600 font-semibold">⚠ Status kamar akan berubah menjadi <strong>Available</strong> dan tugas pembersihan akan dibuat.</p>' +
-                    '</div>',
+                title: 'Konfirmasi Batch Check-out (' + count + ' reservasi)',
+                message: '<div class="text-left bg-gray-50 rounded-lg p-3 space-y-1 text-sm max-h-60 overflow-y-auto mb-3">' +
+                    detailHtml +
+                    '</div>' +
+                    '<p class="text-sm text-red-600 font-semibold">⚠ ' + count + ' reservasi akan di-check-out. Status kamar menjadi <strong>Available</strong> dan tugas pembersihan dibuat.</p>',
                 type: 'confirm',
-                confirmText: 'Ya, Check-out Semua',
+                confirmText: 'Ya, Check-out ALL',
                 cancelText: 'Batal',
                 onConfirm: function() {
                     var xhr = new XMLHttpRequest();

@@ -8,8 +8,8 @@
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold">Daftar Tamu Siap Check-in</h2>
         <div class="flex gap-2">
-            <button id="btnBatchCheckin" onclick="batchCheckin()" class="hidden bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 flex items-center" disabled>
-                <i class="fas fa-sign-in-alt mr-2"></i> <span id="batchCheckinCount">0</span> Check-in Terpilih
+            <button id="btnBatchCheckin" onclick="batchCheckin()" class="hidden bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 flex items-center font-semibold shadow" disabled>
+                <i class="fas fa-sign-in-alt mr-2"></i> <span id="batchCheckinCount">0</span> Check-in <strong>ALL</strong>
             </button>
             <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
                 <i class="fas fa-print mr-2"></i> Print
