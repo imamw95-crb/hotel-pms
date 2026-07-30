@@ -231,9 +231,26 @@
                     <div style="font-size:11px; color:#94a3b8; margin-top:2px;">OpenTimestamps · REV {{ $invoiceTimestamp ? $invoiceTimestamp->revision : '0' }}</div>
                     <div style="font-size:11px; color:#64748b; margin-top:8px;">
                         @if($formattedTs)
-                            {{ $formattedTs->format('d M Y H:i:s') }} {{ $tzSuffix }} — Timestamp created, waiting for blockchain submission.
+                            {{ $formattedTs->format('d M Y H:i:s') }} {{ $tzSuffix }} —
+                            @if($otsConfirmed)
+                                Document has been verified on the Bitcoin blockchain.
+                            @elseif($otsConfirming)
+                                Timestamp created, waiting for blockchain submission.
+                            @elseif($otsPending)
+                                Timestamp created, pending submission to blockchain.
+                            @elseif($otsTampered)
+                                ⚠️ DATA HAS BEEN ALTERED SINCE TIMESTAMPING!
+                            @else
+                                Timestamp created, waiting for blockchain submission.
+                            @endif
                         @else
-                            23 Jul 2026 07:23:56 WIB — Timestamp created, waiting for blockchain submission.
+                            @if($otsConfirmed)
+                                Verified on the Bitcoin blockchain.
+                            @elseif($otsConfirming)
+                                23 Jul 2026 07:23:56 WIB — Timestamp created, waiting for blockchain submission.
+                            @else
+                                23 Jul 2026 07:23:56 WIB — Timestamp created, waiting for blockchain submission.
+                            @endif
                         @endif
                     </div>
                     <div style="font-family: 'SF Mono', 'Cascadia Code', 'Courier New', monospace; font-size:10px; color:#64748b; background:#f8fafc; border-radius:6px; padding:6px 8px; margin-top:8px; word-break:break-all;">SHA-256:{{ $shaTs }}</div>
