@@ -59,12 +59,22 @@
     </form>
 </div>
 
+<!-- Batch Checkout Button -->
+<div class="mb-4">
+    <button id="btnBatchCheckout" onclick="batchCheckout()" class="hidden bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 flex items-center font-semibold shadow" disabled>
+        <i class="fas fa-sign-out-alt mr-2"></i> <span id="batchCheckoutCount">0</span> Checkout Terpilih
+    </button>
+</div>
+
 <!-- Tabel Checkout -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="overflow-x-auto">
         <table class="min-w-full">
             <thead class="bg-gray-100">
                 <tr>
+                    <th class="text-left p-3 text-sm font-semibold w-10">
+                        <input type="checkbox" id="checkAll" onchange="toggleAllCheckboxes(this)" class="w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer">
+                    </th>
                     <th class="text-left p-3 text-sm font-semibold">No. Reservasi</th>
                     <th class="text-left p-3 text-sm font-semibold">Nama Tamu</th>
                     <th class="text-left p-3 text-sm font-semibold">Kamar</th>
@@ -82,6 +92,9 @@
                     $isDueOut = $res->check_out <= \Carbon\Carbon::today()->setTime(12, 0, 0);
                 @endphp
                 <tr class="border-b hover:bg-gray-50 {{ $isDueOut ? 'bg-amber-50' : '' }}">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" name="checkout_ids[]" value="{{ $res->id }}" class="checkout-checkbox w-4 h-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 cursor-pointer" onchange="updateBatchCheckoutBtn()">
+                    </td>
                     <td class="p-3 font-medium text-blue-600">{{ $res->reservation_number }}</td>
                     <td class="p-3">
                         <div class="font-medium">{{ $res->guest->guest_name ?? '-' }}</div>
@@ -131,7 +144,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" class="p-8 text-center text-gray-500">
+                    <td colspan="10" class="p-8 text-center text-gray-500">
                         <i class="fas fa-check-circle text-4xl mb-2 text-green-400"></i>
                         <p>Tidak ada kamar yang perlu di-checkout</p>
                     </td>

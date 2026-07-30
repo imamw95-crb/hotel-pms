@@ -627,6 +627,164 @@
             });
         }
 
+        // ===== BATCH CHECK-IN =====
+        function toggleAllCheckboxes(master) {
+            var isChecked = master.checked;
+            var checkboxes = document.querySelectorAll('.checkin-checkbox, .checkout-checkbox');
+            checkboxes.forEach(function(cb) {
+                cb.checked = isChecked;
+            });
+            updateBatchCheckinBtn();
+            if (typeof updateBatchCheckoutBtn === 'function') updateBatchCheckoutBtn();
+        }
+
+        function updateBatchCheckinBtn() {
+            var checked = document.querySelectorAll('.checkin-checkbox:checked');
+            var btn = document.getElementById('btnBatchCheckin');
+            var count = document.getElementById('batchCheckinCount');
+            if (checked.length > 0) {
+                btn.classList.remove('hidden');
+                btn.disabled = false;
+                count.textContent = checked.length;
+            } else {
+                btn.classList.add('hidden');
+                btn.disabled = true;
+            }
+        }
+
+        function batchCheckin() {
+            var checked = document.querySelectorAll('.checkin-checkbox:checked');
+            if (checked.length === 0) {
+                Toast.warning('Pilih reservasi yang akan di-check-in.');
+                return;
+            }
+
+            var ids = Array.from(checked).map(function(cb) { return cb.value; });
+            var count = ids.length;
+
+            showModal({
+                title: 'Konfirmasi Batch Check-in',
+                message: '<div class="text-center">' +
+                    '<div class="text-3xl font-bold text-green-600 mb-3">' + count + '</div>' +
+                    '<p class="text-gray-700">reservasi akan di-check-in secara bersamaan.</p>' +
+                    '<p class="mt-2 text-sm text-gray-500">Status kamar akan berubah menjadi <strong>Occupied</strong>.</p>' +
+                    '</div>',
+                type: 'confirm',
+                confirmText: 'Ya, Check-in Semua',
+                cancelText: 'Batal',
+                onConfirm: function() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '{{ route("checkin.batch") }}', true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    Toast.success(data.message);
+                                    if (data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } else {
+                                    Toast.error(data.message || 'Gagal check-in');
+                                }
+                            } catch(e) {
+                                Toast.error('Response tidak valid');
+                            }
+                        } else {
+                            Toast.error('Terjadi kesalahan server');
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        Toast.error('Koneksi gagal. Silakan coba lagi.');
+                    };
+
+                    xhr.send(JSON.stringify({ ids: ids }));
+                }
+            });
+        }
+
+        // ===== BATCH CHECK-OUT =====
+        function updateBatchCheckoutBtn() {
+            var checked = document.querySelectorAll('.checkout-checkbox:checked');
+            var btn = document.getElementById('btnBatchCheckout');
+            var count = document.getElementById('batchCheckoutCount');
+            if (checked.length > 0) {
+                btn.classList.remove('hidden');
+                btn.disabled = false;
+                count.textContent = checked.length;
+            } else {
+                btn.classList.add('hidden');
+                btn.disabled = true;
+            }
+        }
+
+        function batchCheckout() {
+            var checked = document.querySelectorAll('.checkout-checkbox:checked');
+            if (checked.length === 0) {
+                Toast.warning('Pilih reservasi yang akan di-check-out.');
+                return;
+            }
+
+            var ids = Array.from(checked).map(function(cb) { return cb.value; });
+            var count = ids.length;
+
+            showModal({
+                title: 'Konfirmasi Batch Check-out',
+                message: '<div class="text-center">' +
+                    '<div class="text-3xl font-bold text-yellow-600 mb-3">' + count + '</div>' +
+                    '<p class="text-gray-700">reservasi akan di-check-out secara bersamaan.</p>' +
+                    '<p class="mt-2 text-sm text-red-600 font-semibold">⚠ Status kamar akan berubah menjadi <strong>Available</strong> dan tugas pembersihan akan dibuat.</p>' +
+                    '</div>',
+                type: 'confirm',
+                confirmText: 'Ya, Check-out Semua',
+                cancelText: 'Batal',
+                onConfirm: function() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '{{ route("reservations.batch-checkout") }}', true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    Toast.success(data.message);
+                                    if (data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } else {
+                                    Toast.error(data.message || 'Gagal checkout');
+                                }
+                            } catch(e) {
+                                Toast.error('Response tidak valid');
+                            }
+                        } else {
+                            Toast.error('Terjadi kesalahan server');
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        Toast.error('Koneksi gagal. Silakan coba lagi.');
+                    };
+
+                    xhr.send(JSON.stringify({ ids: ids }));
+                }
+            });
+        }
+
         // ===== CONFIRM CHECK-OUT =====
         function confirmCheckout(id, resNumber, guestName, roomNumber, roomType) {
             showModal({

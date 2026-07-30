@@ -144,4 +144,63 @@ class CheckinController extends Controller
 
         return view('frontoffice.checkin-success', compact('reservation'));
     }
+
+    /**
+     * Batch check-in — check-in multiple reservations at once.
+     */
+    public function batchCheckin(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:reservations,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $processed = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            try {
+                $reservation = Reservation::with('room')->find($id);
+                if (! $reservation) {
+                    $errors[] = "Reservasi #{$id} tidak ditemukan.";
+                    continue;
+                }
+                if (! in_array($reservation->status, Reservation::PENDING_STATUSES)) {
+                    $errors[] = "Reservasi {$reservation->reservation_number} statusnya {$reservation->status}, bukan pending.";
+                    continue;
+                }
+
+                $reservation->update([
+                    'status' => 'checked_in',
+                    'checked_in_by' => auth()->id(),
+                    'checked_in_at' => now(),
+                ]);
+                $reservation->room->update(['status' => 'occupied']);
+                $processed++;
+            } catch (\Exception $e) {
+                $errors[] = "Reservasi #{$id}: {$e->getMessage()}";
+            }
+        }
+
+        $message = "{$processed} reservasi berhasil di-check-in.";
+        if (! empty($errors)) {
+            $message .= ' ' . implode(', ', $errors);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => $processed > 0,
+                'message' => $message,
+                'processed' => $processed,
+                'errors' => $errors,
+                'redirect_url' => route('checkin.index'),
+            ]);
+        }
+
+        return redirect()->route('checkin.index')->with(
+            $processed > 0 ? 'success' : 'error',
+            $message
+        );
+    }
 }

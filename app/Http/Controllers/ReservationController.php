@@ -1743,4 +1743,104 @@ class ReservationController extends Controller
             return back()->with('error', 'Gagal menghapus pembayaran: '.$e->getMessage());
         }
     }
+
+    /**
+     * Batch check-out — check-out multiple reservations at once.
+     */
+    public function batchCheckout(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:reservations,id',
+        ]);
+
+        $ids = $request->input('ids');
+        $processed = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            try {
+                $reservation = Reservation::with('room')->find($id);
+                if (! $reservation) {
+                    $errors[] = "Reservasi #{$id} tidak ditemukan.";
+                    continue;
+                }
+                if ($reservation->status !== 'checked_in') {
+                    $errors[] = "Reservasi {$reservation->reservation_number} statusnya {$reservation->status}, bukan checked_in.";
+                    continue;
+                }
+
+                // Set check-out ke jam 12:00 siang hari ini
+                $checkoutTime = Carbon::today()->setTime(12, 0, 0);
+
+                // Decrement allotment
+                try {
+                    $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+                    if ($reservation->room->room_type_id && $trackAllotment) {
+                        Allotment::decrementBooked(
+                            $reservation->room->room_type_id,
+                            $reservation->check_in,
+                            $reservation->check_out,
+                            Allotment::CHANNEL_API
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to decrement allotment for {$reservation->reservation_number}: " . $e->getMessage());
+                }
+
+                $reservation->update([
+                    'status' => 'checked_out',
+                    'check_out' => $checkoutTime,
+                    'checked_out_by' => Auth::id(),
+                    'checked_out_at' => now(),
+                ]);
+                $reservation->room->update(['status' => 'available']);
+
+                // Auto-create housekeeping cleaning task
+                try {
+                    $existing = HousekeepingTask::where('room_id', $reservation->room_id)
+                        ->where('task_type', 'cleaning')
+                        ->whereIn('status', ['pending', 'in_progress'])
+                        ->exists();
+
+                    if (! $existing) {
+                        HousekeepingTask::create([
+                            'room_id' => $reservation->room_id,
+                            'task_type' => 'cleaning',
+                            'priority' => 'normal',
+                            'description' => 'Auto-generated from check-out: ' . ($reservation->guest->guest_name ?? '') . ' (' . $reservation->reservation_number . ')',
+                            'status' => 'pending',
+                            'created_by' => Auth::id(),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("Failed to create housekeeping task for {$reservation->reservation_number}: " . $e->getMessage());
+                }
+
+                $processed++;
+            } catch (\Exception $e) {
+                $errors[] = "Reservasi #{$id}: {$e->getMessage()}";
+            }
+        }
+
+        $message = "{$processed} reservasi berhasil di-check-out.";
+        if (! empty($errors)) {
+            $message .= ' ' . implode(', ', $errors);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => $processed > 0,
+                'message' => $message,
+                'processed' => $processed,
+                'errors' => $errors,
+                'redirect_url' => route('checkout.index'),
+            ]);
+        }
+
+        return redirect()->route('checkout.index')->with(
+            $processed > 0 ? 'success' : 'error',
+            $message
+        );
+    }
 }

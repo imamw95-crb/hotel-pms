@@ -7,9 +7,14 @@
 <div class="bg-white rounded-lg shadow p-6">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold">Daftar Tamu Siap Check-in</h2>
-        <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
-            <i class="fas fa-print mr-2"></i> Print
-        </button>
+        <div class="flex gap-2">
+            <button id="btnBatchCheckin" onclick="batchCheckin()" class="hidden bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 flex items-center" disabled>
+                <i class="fas fa-sign-in-alt mr-2"></i> <span id="batchCheckinCount">0</span> Check-in Terpilih
+            </button>
+            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center">
+                <i class="fas fa-print mr-2"></i> Print
+            </button>
+        </div>
     </div>
 
     <form method="GET" action="{{ route('checkin.index') }}" class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
@@ -52,6 +57,9 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-gray-100 text-gray-700">
+                    <th class="px-4 py-3 border border-gray-200 w-10">
+                        <input type="checkbox" id="checkAll" onchange="toggleAllCheckboxes(this)" class="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer">
+                    </th>
                     <th class="px-4 py-3 border border-gray-200">No. Reservasi</th>
                     <th class="px-4 py-3 border border-gray-200">Nama Tamu</th>
                     <th class="px-4 py-3 border border-gray-200">Kamar</th>
@@ -63,6 +71,9 @@
             <tbody>
                 @forelse($pendingReservations as $reservation)
                     <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 border border-gray-200 text-center">
+                            <input type="checkbox" name="checkin_ids[]" value="{{ $reservation->id }}" class="checkin-checkbox w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer" onchange="updateBatchCheckinBtn()">
+                        </td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->reservation_number }}</td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->guest->guest_name }}</td>
                         <td class="px-4 py-3 border border-gray-200">{{ $reservation->room->room_number }}</td>
@@ -76,7 +87,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-6 text-center text-gray-600">Tidak ada tamu yang siap check-in.</td>
+                        <td colspan="7" class="px-4 py-6 text-center text-gray-600">Tidak ada tamu yang siap check-in.</td>
                     </tr>
                 @endforelse
             </tbody>

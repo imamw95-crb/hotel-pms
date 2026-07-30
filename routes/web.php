@@ -111,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
     // Checkin
     Route::get('/checkin', [CheckinController::class, 'index'])->middleware('permission:checkin')->name('checkin.index');
     Route::post('/checkin', [CheckinController::class, 'process'])->middleware('permission:checkin')->name('checkin.process');
+    Route::post('/checkin/batch', [CheckinController::class, 'batchCheckin'])->middleware('permission:checkin')->name('checkin.batch');
     Route::get('/checkin/success/{id}', [CheckinController::class, 'success'])->middleware('permission:checkin')->name('checkin.success');
 
     // Issue Card
@@ -140,6 +141,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->middleware('permission:checkin')->name('reservations.checkin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->middleware('permission:checkout')->name('reservations.checkout');
+    Route::post('/reservations/batch-checkout', [ReservationController::class, 'batchCheckout'])->middleware('permission:checkout')->name('reservations.batch-checkout');
     Route::get('/checkout', [ReservationController::class, 'checkoutList'])->middleware('permission:checkout')->name('checkout.index');
     Route::post('/rooms/{room}/checkout', [ReservationController::class, 'checkoutByRoom'])->middleware('permission:checkout')->name('rooms.checkout');
     Route::post('/reservations/{reservation}/add-payment', [ReservationController::class, 'addPayment'])->middleware('permission:add_payment')->name('reservations.add-payment');
