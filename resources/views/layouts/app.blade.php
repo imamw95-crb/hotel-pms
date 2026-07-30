@@ -643,12 +643,11 @@
             var btn = document.getElementById('btnBatchCheckin');
             var count = document.getElementById('batchCheckinCount');
             if (checked.length > 0) {
-                btn.classList.remove('hidden');
                 btn.disabled = false;
                 count.textContent = checked.length;
             } else {
-                btn.classList.add('hidden');
                 btn.disabled = true;
+                count.textContent = '0';
             }
         }
 
@@ -734,12 +733,11 @@
             var btn = document.getElementById('btnBatchCheckout');
             var count = document.getElementById('batchCheckoutCount');
             if (checked.length > 0) {
-                btn.classList.remove('hidden');
                 btn.disabled = false;
                 count.textContent = checked.length;
             } else {
-                btn.classList.add('hidden');
                 btn.disabled = true;
+                count.textContent = '0';
             }
         }
 
