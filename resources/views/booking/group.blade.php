@@ -137,7 +137,7 @@
         </div>
 
         <div class="flex justify-end space-x-2">
-            <button type="button" onclick="closeModal()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</button>
+            <button type="button" onclick="history.back()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Batal</button>
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" id="btnSubmit" disabled>Booking Group</button>
         </div>
     </form>

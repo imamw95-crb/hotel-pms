@@ -36,9 +36,11 @@ class BookingGroupController extends Controller
             'id_number' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
+            'address' => 'nullable|string|max:255',
             'check_in' => 'required|date',
             'check_out' => 'required|date|after:check_in',
             'price_per_night' => 'nullable|numeric|min:0',
+            'include_breakfast' => 'nullable|boolean',
             'payment_method' => 'nullable|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'payment_type' => 'nullable|in:full,dp',
             'dp_amount' => 'nullable|numeric|min:0',
@@ -81,6 +83,7 @@ class BookingGroupController extends Controller
                     'guest_name' => $validated['guest_name'],
                     'phone' => $validated['phone'] ?? null,
                     'email' => $validated['email'] ?? null,
+                    'address' => $validated['address'] ?? null,
                 ]
             );
         } else {
@@ -88,6 +91,7 @@ class BookingGroupController extends Controller
                 'guest_name' => $validated['guest_name'],
                 'phone' => $validated['phone'] ?? null,
                 'email' => $validated['email'] ?? null,
+                'address' => $validated['address'] ?? null,
             ]);
         }
 
@@ -105,8 +109,8 @@ class BookingGroupController extends Controller
             foreach ($rooms as $room) {
                 // If custom price provided, use flat rate; otherwise use weekday/weekend dynamic pricing
                 $roomCustomPrice = $roomPrices[$room->id] ?? $customPrice;
-                if ($roomCustomPrice) {
-                    $totalAmount = $roomCustomPrice * $days;
+                if (is_numeric($roomCustomPrice) && (float) $roomCustomPrice > 0) {
+                    $totalAmount = (float) $roomCustomPrice * $days;
                 } else {
                     $totalAmount = $room->calculateTotalForRange($checkIn, $checkOut);
                 }
@@ -123,6 +127,7 @@ class BookingGroupController extends Controller
                     'total_amount' => $totalAmount,
                     'paid_amount' => 0,
                     'payment_method' => $validated['payment_method'] ?? null,
+                    'include_breakfast' => $validated['include_breakfast'] ?? true,
                     'notes' => $validated['notes'] ?? 'Booking grup',
                     'created_by' => auth()->id(),
                 ]);
@@ -135,7 +140,7 @@ class BookingGroupController extends Controller
 
             // Jika DP, buat transaksi DP
             if ($paymentType === 'dp' && $dpAmount > 0) {
-                $dpPerRoom = $dpAmount / count($rooms);
+                $dpPerRoom = round($dpAmount / count($rooms), 2);
                 foreach ($reservations as $reservation) {
                     $reservation->update(['paid_amount' => $dpPerRoom]);
                     Transaction::create([

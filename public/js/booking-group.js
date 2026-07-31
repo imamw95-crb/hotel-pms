@@ -10,17 +10,40 @@
 (function() {
     'use strict';
 
-    var checkInEl = document.getElementById('checkIn');
-    var checkOutEl = document.getElementById('checkOut');
-    var roomsContainer = document.getElementById('roomsContainer');
-    var roomInfo = document.getElementById('roomInfo');
-    var statusEl = document.getElementById('availabilityStatus');
-    var selectedRoomsSection = document.getElementById('selectedRoomsSection');
-    var selectedRoomsTable = document.getElementById('selectedRoomsTable');
-    var totalPerNightEl = document.getElementById('totalPerNight');
-    var btnSubmit = document.getElementById('btnSubmit');
-    var bulkPriceInput = document.getElementById('bulkPrice');
+    var checkInEl = null;
+    var checkOutEl = null;
+    var roomsContainer = null;
+    var roomInfo = null;
+    var statusEl = null;
+    var selectedRoomsSection = null;
+    var selectedRoomsTable = null;
+    var totalPerNightEl = null;
+    var btnSubmit = null;
+    var bulkPriceInput = null;
+    var formEl = null;
     var apiUrl = '';
+
+    // ── Scope lookups ke dalam form (hindari konflik ID duplikat modal vs halaman) ──
+    function byId(id) {
+        if (formEl) return formEl.querySelector('#' + id);
+        return document.getElementById(id);
+    }
+
+    // ── Bersihkan pilihan kamar saat tanggal berubah ──
+    function clearSelection() {
+        selectedRooms = {};
+        var scope = formEl || document;
+        var checkboxes = scope.querySelectorAll('.room-checkbox');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = false;
+            var label = checkboxes[i].closest('label');
+            if (label) {
+                label.classList.remove('bg-blue-50', 'border-blue-300');
+                label.classList.add('border-transparent');
+            }
+        }
+        renderSelectedRooms();
+    }
 
     var selectedRooms = {};
     var availableRoomsData = [];
@@ -76,7 +99,7 @@
         if (statusEl) statusEl.classList.add('hidden');
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', apiUrl + '?check_in=' + ci + '&check_out=' + co, true);
+        xhr.open('GET', apiUrl + '?check_in=' + ci + '&check_out=' + co + '&_=' + Date.now(), true);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
@@ -180,6 +203,7 @@
         var ci = checkInEl ? checkInEl.value : '';
         var co = checkOutEl ? checkOutEl.value : '';
         var totalAll = 0;
+        var totalPerNightSum = 0;
 
         for (var i = 0; i < rooms.length; i++) {
             var room = rooms[i];
@@ -201,6 +225,9 @@
 
             totalAll += roomTotal;
 
+            var perNightPrice = hasCustomPrice ? customPrice : Number(room.price_weekday || room.default_price);
+            totalPerNightSum += perNightPrice;
+
             var wd = Number(room.price_weekend || room.default_price);
             var tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100';
@@ -209,7 +236,7 @@
                 '<td class="p-2 text-gray-600">' + room.room_type_name + '</td>' +
                 '<td class="p-2 text-center text-gray-400 text-xs">Wd ' + Number(room.price_weekday || room.default_price).toLocaleString('id-ID') + '<br>We ' + wd.toLocaleString('id-ID') + '</td>' +
                 '<td class="p-2 text-center">' +
-                    '<input type="number" name="room_prices[' + room.id + ']" value="' + (hasCustomPrice ? customPrice : Number(room.price_weekday || room.default_price)) + '" min="0" step="any" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="BookingGroup.updateRoomPrice(' + room.id + ', this.value)">' +
+                    '<input type="number" name="room_prices[' + room.id + ']" value="' + (hasCustomPrice ? customPrice : '') + '" min="0" step="any" class="w-28 border rounded px-2 py-1 text-center text-sm room-price-input" data-room-id="' + room.id + '" onchange="BookingGroup.updateRoomPrice(' + room.id + ', this.value)">' +
                 '</td>' +
                 '<td class="p-2 text-center">' +
                     '<button type="button" onclick="BookingGroup.removeRoom(' + room.id + ')" class="text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>' +
@@ -218,10 +245,14 @@
         }
 
         // Update total tagihan
-        var totalTagihanEl = document.getElementById('totalTagihanGroup');
+        var totalTagihanEl = byId('totalTagihanGroup');
         if (totalTagihanEl) {
             totalTagihanEl.textContent = 'Rp ' + totalAll.toLocaleString('id-ID');
             totalTagihanEl.dataset.total = totalAll;
+        }
+        // Total per malam (footer halaman penuh)
+        if (totalPerNightEl) {
+            totalPerNightEl.textContent = 'Rp ' + totalPerNightSum.toLocaleString('id-ID');
         }
         updateSisaBayar();
     }
@@ -238,7 +269,7 @@
     function removeRoom(roomId) {
         delete selectedRooms[roomId];
         // Uncheck the checkbox
-        var checkbox = document.querySelector('.room-checkbox[value="' + roomId + '"]');
+        var checkbox = (formEl || document).querySelector('.room-checkbox[value="' + roomId + '"]');
         if (checkbox) {
             checkbox.checked = false;
             var label = checkbox.closest('label');
@@ -262,9 +293,9 @@
 
     // ── Toggle DP fields ──
     function toggleDpFields() {
-        var dpSection = document.getElementById('dpAmountSection');
-        var dpInput = document.getElementById('dpAmount');
-        var dpRadio = document.querySelector('input[name="payment_type"][value="dp"]');
+        var dpSection = byId('dpAmountSection');
+        var dpInput = byId('dpAmount');
+        var dpRadio = formEl ? formEl.querySelector('input[name="payment_type"][value="dp"]') : document.querySelector('input[name="payment_type"][value="dp"]');
         var isDp = dpRadio && dpRadio.checked;
 
         if (!dpSection || !dpInput) return;
@@ -282,9 +313,9 @@
 
     // ── Update remaining balance ──
     function updateSisaBayar() {
-        var dpInput = document.getElementById('dpAmount');
-        var totalEl = document.getElementById('totalTagihanGroup');
-        var sisaEl = document.getElementById('sisaBayarGroup');
+        var dpInput = byId('dpAmount');
+        var totalEl = byId('totalTagihanGroup');
+        var sisaEl = byId('sisaBayarGroup');
 
         if (!totalEl || !sisaEl) return;
 
@@ -296,6 +327,19 @@
 
     // ── Initialize ──
     function init() {
+        // Scope lookups ke dalam form booking group (modal maupun halaman penuh)
+        formEl = document.getElementById('bookingGroupForm');
+        checkInEl = byId('checkIn');
+        checkOutEl = byId('checkOut');
+        roomsContainer = byId('roomsContainer');
+        roomInfo = byId('roomInfo');
+        statusEl = byId('availabilityStatus');
+        selectedRoomsSection = byId('selectedRoomsSection');
+        selectedRoomsTable = byId('selectedRoomsTable');
+        totalPerNightEl = byId('totalPerNight');
+        btnSubmit = byId('btnSubmit');
+        bulkPriceInput = byId('bulkPrice');
+
         // Get API URL from meta tag
         var metaEl = document.querySelector('meta[name="booking-check-url"]');
         if (metaEl) {
@@ -326,6 +370,7 @@
                         checkOutEl.value = '';
                     }
                 }
+                clearSelection(); // kamar terpilih ikut mengikuti tanggal baru
                 checkAvailability();
             });
         }
@@ -333,6 +378,7 @@
         if (checkOutEl) {
             checkOutEl.addEventListener('change', function() {
                 if (checkInEl && checkInEl.value && this.value > checkInEl.value) {
+                    clearSelection(); // kamar terpilih ikut mengikuti tanggal baru
                     checkAvailability();
                 }
             });

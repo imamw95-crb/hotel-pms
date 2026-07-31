@@ -1093,7 +1093,7 @@ class ReservationController extends Controller
 
             // Jika DP, buat transaksi DP
             if ($paymentType === 'dp' && $dpAmount > 0) {
-                $dpPerRoom = $dpAmount / count($rooms);
+                $dpPerRoom = round($dpAmount / count($rooms), 2);
                 foreach ($newReservations as $reservation) {
                     $reservation->update(['paid_amount' => $dpPerRoom]);
                     Transaction::create([

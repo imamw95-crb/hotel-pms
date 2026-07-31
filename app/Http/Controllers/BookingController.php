@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guest;
+use App\Models\OutOfOrder;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Room;
@@ -65,8 +66,19 @@ class BookingController extends Controller
             ->pluck('room_id')
             ->toArray();
 
-        // Kamar yang tersedia = semua kamar - kamar yang sudah di-booking
-        $availableRooms = $allRooms->whereNotIn('id', $bookedRoomIds)->values();
+        // Kamar dengan Out of Order aktif di periode tsb juga tidak tersedia
+        $oooRoomIds = OutOfOrder::where('status', OutOfOrder::STATUS_ACTIVE)
+            ->where('start_date', '<=', $checkOutDate->format('Y-m-d'))
+            ->where(function ($q) use ($checkInDate) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $checkInDate->format('Y-m-d'));
+            })
+            ->pluck('room_id');
+
+        // Kamar yang tersedia = semua kamar - kamar yang sudah di-booking - kamar out of order
+        $availableRooms = $allRooms->whereNotIn('id', $bookedRoomIds)
+            ->whereNotIn('id', $oooRoomIds)
+            ->values();
 
         return response()->json([
             'rooms' => $availableRooms,
