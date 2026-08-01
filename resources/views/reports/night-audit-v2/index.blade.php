@@ -137,6 +137,7 @@
                         <th class="text-center p-2 font-bold">Occupied</th>
                         <th class="text-center p-2 font-bold">Okupansi</th>
                         <th class="text-right p-2 font-bold">Total Revenue</th>
+                        <th class="text-right p-2 font-bold">Cash</th>
                         <th class="text-center p-2 font-bold">Di-lock oleh</th>
                         <th class="text-center p-2 font-bold">Waktu Lock</th>
                         <th class="text-center p-2 font-bold">Aksi</th>
@@ -150,6 +151,7 @@
                         <td class="p-2 text-center">{{ $log->occupied_rooms }}</td>
                         <td class="p-2 text-center">{{ $log->occupancy_rate }}%</td>
                         <td class="p-2 text-right font-semibold">Rp {{ number_format($log->total_revenue, 0, ',', '.') }}</td>
+                        <td class="p-2 text-right">Rp {{ number_format($log->snapshot_data['cashFlowBalance'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-2 text-center">{{ $log->lockedBy?->name ?? '-' }}</td>
                         <td class="p-2 text-center">{{ $log->locked_at?->format('d/m/Y H:i') ?? '-' }}</td>
                         <td class="p-2 text-center">
