@@ -225,6 +225,7 @@
             </div>
             <div class="mt-3 ml-2">
                 <p class="text-sm text-gray-700"><i class="fas fa-calendar-alt text-indigo-400 mr-1"></i> <strong>Occupancy Calendar</strong> — Kalender okupansi harian untuk melihat tren tingkat hunian.</p>
+                <p class="text-sm text-gray-700 mt-2"><i class="fas fa-arrows-alt text-indigo-400 mr-1"></i> <strong>Drag & Drop Pindah Kamar</strong> — Di Occupancy Calendar, seret booking tamu dari kamar occupied ke kamar available lain. Sistem otomatis cek ketersediaan, tampilkan konfirmasi, lalu pindahkan kamar.</p>
             </div>
         </div>
     </div>
@@ -263,6 +264,13 @@
                 <li>Untuk setiap kamar: pilih kamar, isi data tamu, atur harga</li>
                 <li>Klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Simpan</span></li>
             </ol>
+            <p class="text-sm text-gray-700 mt-2 mb-1"><strong>Fitur Group:</strong></p>
+            <ul class="list-disc ml-5 space-y-1 text-sm text-gray-700">
+                <li><strong>Pelunasan Group</strong> — bayar sisa tagihan semua reservasi dalam group sekaligus</li>
+                <li><strong>Tambah Kamar</strong> — tambah kamar baru ke group yang sudah ada</li>
+                <li><strong>Invoice / Kwitansi / Registration Card Group</strong> — cetak dokumen gabungan seluruh group</li>
+                <li><strong>Ubah Tanggal Group</strong> — ganti tanggal check-in/out semua reservasi dalam group sekaligus</li>
+            </ul>
             <h4 class="font-bold text-sm mb-2 mt-4">📌 Booking OTA</h4>
             <p class="text-sm text-gray-700 mb-2">Untuk reservasi yang berasal dari OTA (Booking.com, Tiket.com, Traveloka) yang perlu dicatat manual ke sistem.</p>
             <ol class="list-decimal ml-5 space-y-1.5 text-sm text-gray-700">
@@ -294,6 +302,9 @@
                 <li>Klik tombol <span class="bg-green-600 text-white px-2 py-0.5 rounded text-xs">Check-in</span></li>
                 <li>Sistem otomatis mengubah: status reservasi → <code>checked_in</code>, status kamar → <strong>Occupied</strong></li>
             </ol>
+            <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                <p><i class="fas fa-layer-group text-blue-500 mr-1"></i> <strong>Batch Check-in:</strong> Centang beberapa reservasi lalu klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Batch Check-in</span> untuk memproses banyak reservasi sekaligus.</p>
+            </div>
         </div>
     </div>
 
@@ -316,6 +327,9 @@
                 <li>Konfirmasi — sistem mengubah status kamar menjadi <strong>Available</strong></li>
             </ol>
             <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                <p><i class="fas fa-layer-group text-blue-500 mr-1"></i> <strong>Batch Check-out:</strong> Centang beberapa reservasi lalu klik <span class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">Batch Check-out</span> untuk memproses banyak reservasi sekaligus.</p>
+            </div>
+            <div class="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
                 <p><i class="fas fa-info-circle text-blue-500 mr-1"></i> Sebelum check-out, pastikan semua <strong>Other Revenue</strong> dan <strong>Deposit</strong> sudah terproses.</p>
             </div>
         </div>
@@ -336,7 +350,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-3">
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-semibold text-gray-700 mb-1"><i class="fas fa-user text-blue-400 mr-1"></i> Info Tamu</p>
-                    <p class="text-gray-600 text-xs">Nama, No. Identitas, Telepon, Email</p>
+                    <p class="text-gray-600 text-xs">Nama, No. Identitas, Telepon, Email, Tempat & Tanggal Lahir</p>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-semibold text-gray-700 mb-1"><i class="fas fa-bed text-green-400 mr-1"></i> Info Kamar</p>
@@ -348,7 +362,7 @@
                 </div>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <p class="font-semibold text-gray-700 mb-1"><i class="fas fa-print text-purple-400 mr-1"></i> Cetak Dokumen</p>
-                    <p class="text-gray-600 text-xs">Kwitansi & Invoice — format siap print</p>
+                    <p class="text-gray-600 text-xs">Kwitansi & Invoice — format siap print, dilengkapi QR Code untuk akses invoice online</p>
                 </div>
             </div>
             <p class="text-sm text-gray-700"><i class="fas fa-globe text-purple-400 mr-1"></i> Jika reservasi dari <strong>OTA</strong> (Booking.com, Tiket.com, Traveloka), akan tampil Info OTA dengan nomor reservasi OTA dan status pembayaran.</p>
@@ -1117,6 +1131,68 @@
                     </summary>
                     <div class="mt-3 text-gray-600">
                         <p>Di halaman laporan, klik tombol <span class="bg-green-100 text-green-700 px-1.5 rounded text-xs">Export CSV</span>. File akan terdownload otomatis. Bisa dibuka dengan Excel atau Google Sheets.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara mengubah tanggal semua reservasi dalam satu group?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600 space-y-1">
+                        <p>Buka <strong>Detail Reservasi Group</strong> → klik tombol <span class="bg-orange-100 text-orange-700 px-1.5 rounded text-xs">Ubah Tanggal Group</span> → set tanggal baru → preview total → simpan.</p>
+                        <p>Sistem otomatis mengubah tanggal <strong>semua reservasi</strong> dalam group, menghitung ulang total, dan menyesuaikan allotment.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara melihat invoice online / scan QR?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600 space-y-1">
+                        <p>Setiap reservasi punya invoice online yang bisa diakses tanpa login via link <code>/invoice/{nomor_reservasi}</code>.</p>
+                        <p>QR Code muncul di footer invoice print — tamu bisa scan untuk membuka invoice online.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Apa itu OpenTimestamps (OTS)?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>OTS adalah bukti integritas invoice via blockchain. Setiap invoice di-hash (SHA256) dan proof-nya dikirim ke blockchain Bitcoin sehingga invoice terbukti tidak diubah. Bisa di-download & diverifikasi di halaman invoice online.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara check-in/out banyak reservasi sekaligus?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Di halaman <strong>Check-in</strong> atau <strong>Check-out</strong>, centang beberapa reservasi lalu klik <span class="bg-blue-100 text-blue-700 px-1.5 rounded text-xs">Batch Check-in</span> / <span class="bg-blue-100 text-blue-700 px-1.5 rounded text-xs">Batch Check-out</span> untuk memproses semuanya sekaligus.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Bagaimana cara memperpanjang masa menginap (extend stay)?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Buka <strong>Detail Reservasi</strong> tamu yang sedang check-in → klik <span class="bg-blue-100 text-blue-700 px-1.5 rounded text-xs">Extend Stay</span> → tambah jumlah malam → simpan. Total tagihan menyesuaikan otomatis.</p>
+                    </div>
+                </details>
+
+                <details class="bg-gray-50 rounded-lg p-4 border border-gray-200 group">
+                    <summary class="font-semibold text-gray-800 cursor-pointer flex items-center justify-between">
+                        <span>❓ Apa itu Auto-Cancel Pending?</span>
+                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                    </summary>
+                    <div class="mt-3 text-gray-600">
+                        <p>Tombol di Dashboard untuk otomatis membatalkan reservasi <code>pending</code> yang sudah melewati batas waktu (no-show), sehingga kamar kembali tersedia.</p>
                     </div>
                 </details>
             </div>

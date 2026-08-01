@@ -1,6 +1,6 @@
 # ?? Hotel PMS � Tutorial & Dokumentasi
 
-**Versi:** 2.3 | **Update:** Juli 2026 | **Stack:** Laravel 13 / PHP 8.3 / MySQL / Blade + Tailwind
+**Versi:** 2.4 | **Update:** Agustus 2026 | **Stack:** Laravel 13 / PHP 8.3 / MySQL / Blade + Tailwind
 
 ---
 
@@ -11,13 +11,14 @@
 4. [Navigasi Menu](#-navigasi-menu)
 5. [Quick Start � Instalasi](#-quick-start)
 6. [Fitur Step-by-Step](#-fitur-lengkap)
-7. [Allotment Kamar](#-allotment-kamar)
-8. [Permission & Role](#-permission--role)
-9. [Model, API & Struktur Project](#-model--api--struktur)
-10. [Troubleshooting](#-troubleshooting)
-11. [Glossary](#-glossary)
-12. [Latihan Mandiri](#-latihan-mandiri)
-13. [Deployment & Support](#-deployment--support)
+7. [Fitur Baru (Update Terbaru)](#-fitur-baru-update-terbaru)
+8. [Allotment Kamar](#-allotment-kamar)
+9. [Permission & Role](#-permission--role)
+10. [Model, API & Struktur Project](#-model--api--struktur)
+11. [Troubleshooting](#-troubleshooting)
+12. [Glossary](#-glossary)
+13. [Latihan Mandiri](#-latihan-mandiri)
+14. [Deployment & Support](#-deployment--support)
 
 ---
 
@@ -319,6 +320,180 @@ Saat tambah pembayaran, jumlah OTA + hotel bisa diisi terpisah.
 
 ---
 
+## ?? Fitur Baru (Update Terbaru)
+
+Bagian ini mendokumentasikan fitur-fitur terbaru yang ditambahkan setelah versi 2.3.
+
+### 24. ?? Booking Group (Reservasi Kelompok)
+
+Membuat beberapa reservasi kamar sekaligus dalam satu group (misal: rombongan, tour, keluarga besar).
+
+**Cara:** Booking Group ? Isi data tamu utama ? Pilih beberapa kamar ? Tentukan tanggal (CI 14:00, CO 12:00) ? Harga per kamar (bisa custom atau dinamis weekday/weekend) ? DP per kamar ? **Simpan**.
+
+**Fitur Group:**
+- **Pelunasan Group:** Bayar sisa tagihan semua reservasi dalam group sekaligus.
+- **Tambah Kamar:** Tambah kamar baru ke group yang sudah ada.
+- **Invoice / Kwitansi / Registration Card Group:** Cetak dokumen gabungan untuk seluruh group.
+- **Ubah Tanggal Group:** Ganti tanggal check-in/check-out SEMUA reservasi dalam group sekaligus (lihat #25).
+
+> **Tips:** Harga dinamis otomatis menghitung weekday/weekend. Jika isi harga custom, itu yang dipakai; jika kosong, sistem hitung otomatis.
+> **Latihan:** Buat group 2 kamar untuk 3 malam, lalu cetak invoice group.
+
+---
+
+### 25. ?? Ubah Tanggal Group (Change Group Dates)
+
+Mengubah tanggal check-in/check-out untuk **semua reservasi dalam satu booking group** sekaligus, tanpa harus ubah satu per satu.
+
+**Cara:** Buka detail reservasi group ? Klik tombol **"Ubah Tanggal Group"** (oranye) ? Set tanggal baru ? Preview total ? **Simpan**.
+
+**Yang terjadi otomatis:**
+- Semua reservasi (status pending/menunggu_pembayaran/checked_in) ikut berubah tanggalnya.
+- Sistem validasi ketersediaan semua kamar (back-to-back tetap aman).
+- Allotment tanggal lama dikurangi, tanggal baru ditambah (untuk channel API).
+- Total dihitung ulang (custom rate × malam ATAU dinamis weekday/weekend).
+- Invoice proof (OTS) di-reset, dan dicatat transaksi `adjustment` berisi riwayat perubahan tanggal.
+
+> **Akses:** Butuh permission `change_room` (sama seperti pindah kamar).
+> **Latihan:** Buat group 2 kamar, ubah tanggal dari 02-05 Agu menjadi 04-08 Agu, verifikasi kedua reservasi ikut berubah.
+
+---
+
+### 26. ?? Room Rack & Occupancy Calendar (Drag & Drop)
+
+**Room Rack:** Tampilan grid semua kamar per tanggal untuk melihat okupansi sekaligus.
+
+**Fitur:**
+- **Occupancy Calendar:** Kalender okupansi per kamar.
+- **Drag & Drop Pindah Kamar:** Seret booking tamu dari kamar occupied ke kamar available lain ? sistem cek ketersediaan via AJAX ? konfirmasi modal ? kamar dipindahkan.
+- **Forecast:** Prediksi okupansi ke depan.
+- **Check Availability:** Cek ketersediaan kamar untuk tanggal tertentu.
+
+> **Latihan:** Buka Room Rack ? Occupancy ? seret booking dari kamar 0101 ke 0102 (yang available) ? konfirmasi.
+
+---
+
+### 27. ?? Public Invoice & QR Code
+
+Setiap reservasi punya invoice online yang bisa diakses publik (tanpa login) via link atau QR code.
+
+**Cara akses:** `GET /invoice/{nomor_reservasi}` ? tampil invoice lengkap.
+
+**QR Code:** Muncul di footer invoice print (individu & group). QR mengarah ke `/invoice/{nomor_reservasi}`. Tamu bisa scan untuk lihat invoice online.
+
+> **Tips:** QR memakai `api.qrserver.com` (jangan ganti ke Google Charts — diblokir CORS).
+> **Latihan:** Cetak invoice reservasi, scan QR-nya, verifikasi invoice online terbuka.
+
+---
+
+### 28. ?? OpenTimestamps (OTS) — Bukti Integritas Invoice
+
+Sistem menandatangani invoice dengan **OpenTimestamps** untuk membuktikan invoice tidak diubah (tamper-proof).
+
+**Alur:** Setiap invoice/transaksi di-hash (SHA256) ? proof dikirim ke blockchain Bitcoin ? status `pending` ? `confirming` ? `confirmed`.
+
+**Fitur:**
+- **Download OTS Proof:** Unduh bukti OTS per invoice atau per transaksi.
+- **Verify:** `GET /ots/verify/{sha256}` ? cek keaslian proof.
+- **Cron:** `php artisan ots:upgrade --limit=20` berjalan tiap jam untuk upgrade status.
+
+> **Latihan:** Buka invoice online ? download OTS proof ? verifikasi hash-nya.
+
+---
+
+### 29. ?? Guest Place & Date of Birth
+
+Data tamu kini menyimpan **tempat lahir** (`place_of_birth`) dan **tanggal lahir** (`date_of_birth`).
+
+**Diisi saat:** Buat reservasi, booking, atau CRUD guest. Ditampilkan di detail reservasi & registration card.
+
+> **Latihan:** Buat reservasi baru, isi tempat & tanggal lahir tamu, cek tampil di registration card.
+
+---
+
+### 30. ?? Night Audit v2 (Preview, Draft, Lock, History)
+
+Versi baru night audit dengan alur lebih terkontrol.
+
+**Alur:**
+1. **Preview:** Lihat ringkasan data (occupied, CI/CO, pendapatan) sebelum disimpan.
+2. **Save Draft:** Simpan sebagai draft (belum final).
+3. **Lock:** Kunci night audit (final, tidak bisa diubah).
+4. **History:** Lihat riwayat night audit sebelumnya + export.
+
+> **Latihan:** Buka Night Audit v2 ? Preview ? Save Draft ? Lock ? cek history.
+
+---
+
+### 31. ?? Laporan Tambahan
+
+| Laporan | Route | Export |
+|---------|-------|--------|
+| Expense (Pengeluaran) | Reports ? Expenses | CSV / Print |
+| Monthly Compliance | Reports ? Compliance | CSV / Print |
+| OTA Report | Reports ? OTA | CSV |
+| MHS Audit | Reports ? MHS Audit | - |
+
+**Expense Report:** Rekap pengeluaran hotel per periode.
+**Compliance Report:** Laporan kepatuhan bulanan hotel.
+**OTA Report:** Rekap booking dari OTA (Tiket.com/Traveloka).
+**MHS Audit:** Audit aktivitas issue card MHS.
+
+> **Latihan:** Buka Compliance Report bulan ini, export CSV.
+
+---
+
+### 32. ?? TV Welcome Screen
+
+Layar sambutan tamu di TV kamar (publik, tanpa login).
+
+**Route:** `GET /tv/{room}` ? tampil welcome screen. `GET /tv/{room}/status` ? status kamar.
+
+**Setting:** Admin ? TV Settings ? atur tampilan (nama hotel, logo, pesan).
+
+> **Latihan:** Buka `/tv/101` di browser, lihat welcome screen.
+
+---
+
+### 33. ?? Batch Check-in / Check-out
+
+Proses check-in atau check-out **banyak reservasi sekaligus**.
+
+**Batch Check-in:** Halaman Check-in ? pilih beberapa reservasi ? **Batch Check-in**.
+**Batch Check-out:** Halaman Check-out ? pilih beberapa ? **Batch Check-out**.
+
+> **Latihan:** Pilih 3 reservasi yang sudah waktunya check-out, lakukan batch check-out.
+
+---
+
+### 34. ?? Breakfast Toggle & Extend Stay
+
+**Breakfast:** Tombol toggle sarapan di detail reservasi ? menambah/mengurangi biaya sarapan ke tagihan.
+
+**Extend Stay:** Perpanjang masa menginap tamu yang sedang check-in (tambah malam).
+
+> **Latihan:** Buka reservasi check-in ? toggle breakfast ? extend stay 1 malam.
+
+---
+
+### 35. ?? Auto-Cancel Pending
+
+Dashboard punya tombol **Auto-Cancel Pending** untuk otomatis membatalkan reservasi `pending` yang sudah melewati batas waktu (no-show).
+
+> **Latihan:** Klik Auto-Cancel Pending di dashboard, cek reservasi pending yang dibatalkan.
+
+---
+
+### 36. ?? Payment Method Management (Owner)
+
+Kelola master metode pembayaran (tunai, transfer, QRIS, kartu, dll).
+
+**Cara:** Admin ? Payment Methods ? Tambah/Edit/Hapus metode.
+
+> **Latihan:** Tambah metode "QRIS", lalu gunakan saat tambah pembayaran reservasi.
+
+---
+
 ## ?? Allotment Kamar
 
 Mengatur kuota kamar yang tampil di website publik (`theicon.id`). Fitur ini penting agar tipe kamar yang stoknya terbatas atau sedang tidak aktif tidak muncul di website.
@@ -458,6 +633,12 @@ Route::group(['middleware' => ['role:owner']], function () { ... });
 | LostFound | lost_founds | ? Reservation (opsional) |
 | HotelSetting | hotel_settings | - |
 | PaymentMethod | payment_methods | hasMany Transaction |
+| InvoiceTimestamp | invoice_timestamps | - (OTS proof) |
+| HousekeepingTaskLog | housekeeping_task_logs | ? HousekeepingTask |
+| HousekeepingTaskChecklist | housekeeping_task_checklists | ? HousekeepingTask |
+| MHSLog | mhs_logs | - |
+| ProcessedEmail | processed_emails | - (OTA dedup) |
+| RoomTypeDatePrice | room_type_date_prices | ? RoomType (promo) |
 
 ### Business Logic Penting
 - **Check-in:** 14:00 | **Check-out:** 12:00
@@ -476,6 +657,10 @@ Route::group(['middleware' => ['role:owner']], function () { ... });
 | BookingSyncService / ImapService / EmailParserService / BookingMapperService | OTA Integration |
 | MHSBridgeService | Issue card MHS |
 | HousekeepingService | Logika housekeeping (auto-assign, timer) |
+| OpenTimestampService | OpenTimestamps (OTS) proof & verify |
+| BookingNotificationService | Notifikasi booking |
+| InvoiceSignatureService | Tanda tangan invoice |
+| AiActionService | Aksi AI (auto-reservasi) |
 
 ### API Endpoints (Auth: `X-API-Key`)
 
@@ -506,6 +691,9 @@ Route::group(['middleware' => ['role:owner']], function () { ... });
 | POST | `/api/ai/chat` | AI Chat |
 | POST | `/api/v1/api-keys` | Generate API Key |
 | GET | `/api/v1/api-keys` | List API Keys |
+| GET | `/api/ots/invoices/{id}` | Detail OTS invoice |
+| GET | `/api/ots/transactions/{id}` | Detail OTS transaksi |
+| POST | `/api/ots/upgrade` | Upgrade status OTS |
 
 ### Struktur Project
 
@@ -535,6 +723,10 @@ hotel-pms/
 | 6 | **Kamar tidak muncul** | `php artisan db:seed --class=RoomSeeder` |
 | 7 | **Menu tidak lengkap** | Login sebagai `owner` |
 | 8 | **Chart tidak tampil** | `npm run build` atau refresh |
+| 9 | **QR invoice tidak muncul** | Pastikan pakai `api.qrserver.com` (bukan Google Charts) |
+| 10 | **OTS status stuck pending** | Jalankan `php artisan ots:upgrade` |
+| 11 | **AI OTA gagal parse** | Cek `OPENROUTER_MODEL` di .env, retry dari OTA Email Log |
+| 12 | **Drag & drop pindah kamar gagal** | Pastikan kamar tujuan available & tidak back-to-back false conflict |
 
 **Common Mistakes:**
 - ? Lupa `migrate` ? data tidak muncul
@@ -542,6 +734,8 @@ hotel-pms/
 - ? Tidak pakai `with()` ? N+1 query (lambat)
 - ? Lupa filter status `cancelled` di query
 - ? Tidak backup sebelum migrasi ? data hilang
+- ? Mengubah tanggal group tapi lupa cek ketersediaan semua kamar
+- ? Menyimpan file dengan encoding non-UTF-8 ? emoji/special char rusak (jadi `??`)
 
 **Debugging flow:** Error ? Cek `storage/logs/laravel.log` ? SQL error? ? `migrate:fresh --seed` | PHP error? ? `composer update` | JS error? ? F12 console ? Refresh & clear cache.
 
@@ -561,6 +755,11 @@ hotel-pms/
 | **Eloquent** | ORM Laravel |
 | **Blade** | Template engine Laravel |
 | **Eager Loading** | Load relasi DB sekaligus (`with()`) |
+| **OTS** | OpenTimestamps — bukti integritas invoice via blockchain |
+| **Booking Group** | Kelompok beberapa reservasi dalam satu transaksi |
+| **Room Rack** | Grid okupansi semua kamar per tanggal |
+| **Allotment** | Kuota kamar yang tampil di website/API |
+| **QRIS** | Metode pembayaran QR Indonesia |
 
 ---
 
@@ -581,6 +780,13 @@ hotel-pms/
 ### ? Expert
 **G.** Dapatkan API Key ? coba `curl -H "X-API-Key: key" http://localhost:8000/api/rooms` ? buat reservasi via API.  
 **H.** `php artisan cache:clear` ? hapus isi `storage/logs/` ? akses URL salah ? cek log ? identifikasi error.
+
+### ?? Fitur Baru
+**I.** Buat booking group 2 kamar ? ubah tanggal group ? verifikasi semua reservasi ikut berubah + transaksi `adjustment` tercatat.  
+**J.** Buka Room Rack ? Occupancy ? drag & drop pindah kamar ? verifikasi kamar berpindah.  
+**K.** Cetak invoice ? scan QR ? buka invoice online ? download OTS proof ? verifikasi.  
+**L.** Buat reservasi dengan tempat & tanggal lahir tamu ? cek registration card.  
+**M.** Jalankan Night Audit v2: Preview ? Save Draft ? Lock ? cek history & export.
 
 ---
 
