@@ -108,6 +108,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/booking-group', [BookingGroupController::class, 'create'])->middleware('permission:create_booking_group')->name('booking.group.create');
     Route::post('/booking-group', [BookingGroupController::class, 'store'])->middleware('permission:create_booking_group')->name('booking.group.store');
 
+    // Group Booking — ganti tanggal semua reservasi dalam group
+    Route::get('/reservations/group/{bookingGroupId}/change-dates', [ReservationController::class, 'showGroupChangeDates'])->middleware('permission:change_room')->name('reservations.group-change-dates');
+    Route::post('/reservations/group/{bookingGroupId}/change-dates', [ReservationController::class, 'updateGroupDates'])->middleware('permission:change_room')->name('reservations.group-change-dates.store');
+
     // Checkin
     Route::get('/checkin', [CheckinController::class, 'index'])->middleware('permission:checkin')->name('checkin.index');
     Route::post('/checkin', [CheckinController::class, 'process'])->middleware('permission:checkin')->name('checkin.process');

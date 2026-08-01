@@ -1843,4 +1843,209 @@ class ReservationController extends Controller
             $message
         );
     }
+
+    /**
+     * Tampilkan data group booking untuk form ganti tanggal.
+     * GET /reservations/group/{bookingGroupId}/change-dates
+     */
+    public function showGroupChangeDates(string $bookingGroupId)
+    {
+        $reservations = Reservation::with(['guest', 'room'])
+            ->where('booking_group_id', $bookingGroupId)
+            ->whereIn('status', Reservation::CHANGEABLE_STATUSES)
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada reservasi aktif dalam group ini.',
+            ], 404);
+        }
+
+        $refReservation = $reservations->first();
+
+        return response()->json([
+            'success'              => true,
+            'booking_group_id'     => $bookingGroupId,
+            'current_check_in'     => $refReservation->check_in->format('Y-m-d'),
+            'current_check_out'    => $refReservation->check_out->format('Y-m-d'),
+            'reservations'         => $reservations->map(function ($res) {
+                return [
+                    'id'                  => $res->id,
+                    'reservation_number'  => $res->reservation_number,
+                    'room_number'         => $res->room->room_number ?? '-',
+                    'room_id'             => $res->room_id,
+                    'guest_name'          => $res->guest->guest_name ?? '-',
+                    'total_amount'        => $res->total_amount,
+                    'nights'              => $res->nights,
+                ];
+            }),
+            'total_group'         => $reservations->sum('total_amount'),
+        ]);
+    }
+
+    /**
+     * Update check-in & check-out untuk SEMUA reservasi dalam 1 group booking.
+     * POST /reservations/group/{bookingGroupId}/change-dates
+     */
+    public function updateGroupDates(Request $request, string $bookingGroupId)
+    {
+        $validated = $request->validate([
+            'check_in'  => 'required|date',
+            'check_out' => 'required|date|after:check_in',
+        ]);
+
+        $newCheckIn  = Carbon::parse($validated['check_in'])->setTime(14, 0, 0);
+        $newCheckOut = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+
+        // Validasi: minimal 1 malam
+        if ($newCheckOut->lte($newCheckIn)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Check-out harus setelah check-in (minimal 1 malam).',
+            ], 422);
+        }
+
+        // Ambil semua reservasi aktif dalam group
+        $reservations = Reservation::with('room')
+            ->where('booking_group_id', $bookingGroupId)
+            ->whereIn('status', Reservation::CHANGEABLE_STATUSES)
+            ->get();
+
+        if ($reservations->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada reservasi aktif dalam group ini.',
+            ], 404);
+        }
+
+        // ── Validasi: semua kamar harus tersedia di tanggal baru ──
+        foreach ($reservations as $reservation) {
+            $room = $reservation->room;
+            if (! $room) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kamar tidak ditemukan untuk reservasi {$reservation->reservation_number}.",
+                ], 422);
+            }
+
+            $isAvailable = $room->isAvailable(
+                $newCheckIn->format('Y-m-d H:i:s'),
+                $newCheckOut->format('Y-m-d H:i:s'),
+                $reservation->id
+            );
+
+            if (! $isAvailable) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Kamar {$room->room_number} tidak tersedia untuk periode tersebut (ada reservasi lain).",
+                ], 422);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalNewAmount = 0;
+            $totalOldAmount = 0;
+
+            foreach ($reservations as $reservation) {
+                $room = $reservation->room;
+                $oldCheckIn  = $reservation->check_in;
+                $oldCheckOut = $reservation->check_out;
+                $oldTotal    = $reservation->total_amount;
+                $totalOldAmount += $oldTotal;
+
+                // Decrement allotment di tanggal lama
+                try {
+                    $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+                    if ($reservation->room->room_type_id && $trackAllotment) {
+                        Allotment::decrementBooked(
+                            $reservation->room->room_type_id,
+                            $oldCheckIn,
+                            $oldCheckOut,
+                            Allotment::CHANNEL_API
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to decrement allotment on group date change: '.$e->getMessage());
+                }
+
+                // Hitung ulang total
+                $rate = $reservation->custom_room_rate ?? 0;
+                if ($rate <= 0) {
+                    $newTotal = $room->calculateTotalForRange($newCheckIn->copy()->startOfDay(), $newCheckOut->copy()->startOfDay());
+                } else {
+                    $nights = max(1, (int) $newCheckIn->startOfDay()->diffInDays($newCheckOut->startOfDay()));
+                    $newTotal = $rate * $nights;
+                }
+
+                // Update reservasi
+                $reservation->check_in     = $newCheckIn;
+                $reservation->check_out    = $newCheckOut;
+                $reservation->total_amount = $newTotal;
+                app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+                $reservation->saveQuietly();
+
+                $totalNewAmount += $newTotal;
+
+                // Increment allotment di tanggal baru
+                try {
+                    $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+                    if ($reservation->room->room_type_id && $trackAllotment) {
+                        Allotment::incrementBooked(
+                            $reservation->room->room_type_id,
+                            $newCheckIn,
+                            $newCheckOut,
+                            Allotment::CHANNEL_API
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to increment allotment on group date change: '.$e->getMessage());
+                }
+
+                // Catat transaction audit per reservasi
+                Transaction::create([
+                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                    'reservation_id'     => $reservation->id,
+                    'type'               => 'adjustment',
+                    'amount'             => 0,
+                    'payment_method'     => $reservation->payment_method ?? 'cash',
+                    'source_type'        => 'internal',
+                    'notes'              => 'Ubah tanggal GROUP: check-in '.$oldCheckIn->format('d/m/Y').' -> '.$newCheckIn->format('d/m/Y').', check-out '.$oldCheckOut->format('d/m/Y').' -> '.$newCheckOut->format('d/m/Y').'. Total baru: Rp '.number_format($newTotal, 0, ',', '.'),
+                    'created_by'         => auth()->id(),
+                ]);
+            }
+
+            DB::commit();
+
+            $diffAmount = $totalNewAmount - $totalOldAmount;
+            $diffLabel  = '';
+            if ($diffAmount > 0) {
+                $diffLabel = '(+Rp '.number_format(abs($diffAmount), 0, ',', '.').')';
+            } elseif ($diffAmount < 0) {
+                $diffLabel = '(-Rp '.number_format(abs($diffAmount), 0, ',', '.').')';
+            }
+
+            return response()->json([
+                'success'           => true,
+                'message'           => 'Tanggal group booking berhasil diperbarui. Total baru: Rp '.number_format($totalNewAmount, 0, ',', '.').' '.$diffLabel,
+                'booking_group_id'  => $bookingGroupId,
+                'new_check_in'      => $newCheckIn->format('d/m/Y H:i'),
+                'new_check_out'     => $newCheckOut->format('d/m/Y H:i'),
+                'total_new'         => $totalNewAmount,
+                'total_old'         => $totalOldAmount,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal update group dates: '.$e->getMessage(), [
+                'booking_group_id' => $bookingGroupId,
+                'error'             => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui tanggal group: '.$e->getMessage(),
+            ], 500);
+        }
+    }
 }

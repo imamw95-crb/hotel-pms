@@ -166,6 +166,10 @@
                 class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                 <i class="fas fa-plus-circle"></i> Tambah Kamar
             </button>
+            <button type="button" onclick="openGroupChangeDatesModal()"
+                class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-calendar-alt"></i> Ubah Tanggal Group
+            </button>
             <a href="{{ route('reservations.group-invoice', $reservation->booking_group_id) }}" target="_blank"
                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5">
                 <i class="fas fa-file-invoice"></i> Print Group Invoice
@@ -523,6 +527,64 @@
                     </button>
                     <span id="editRateStatus" class="text-xs"></span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Ubah Tanggal Group Booking --}}
+    <div id="groupChangeDatesModal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center" onclick="if(event.target===this)closeGroupChangeDatesModal()">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+            <h3 class="font-bold text-lg mb-4 border-b pb-2 flex items-center gap-2">
+                <i class="fas fa-calendar-alt text-orange-500"></i> Ubah Tanggal Group Booking
+            </h3>
+
+            <div id="groupChangeDatesError" class="hidden mb-3 p-3 bg-red-50 text-red-700 text-sm rounded-lg"></div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Check-in Baru <span class="text-red-500">*</span></label>
+                    <input type="date" id="groupChangeCheckIn"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Check-out Baru <span class="text-red-500">*</span></label>
+                    <input type="date" id="groupChangeCheckOut"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                </div>
+
+                <!-- Preview Ringkasan -->
+                <div id="groupChangePreview" class="hidden bg-orange-50 rounded-lg p-3 text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Jumlah Kamar:</span>
+                        <span id="groupChangeRoomCount" class="font-bold"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Lama:</span>
+                        <span id="groupChangeOldTotal" class="font-bold text-gray-700"></span>
+                    </div>
+                    <div class="flex justify-between border-t pt-1 mt-1">
+                        <span class="text-gray-700 font-semibold">Total Baru:</span>
+                        <span id="groupChangeNewTotal" class="font-bold text-orange-700"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Selisih:</span>
+                        <span id="groupChangeDiff" class="font-bold"></span>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" id="groupChangeBookingGroupId" value="">
+
+            <div class="flex items-center gap-2 pt-4">
+                <button type="button" onclick="submitGroupChangeDates()"
+                    class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-700 transition flex items-center gap-1.5">
+                    <i class="fas fa-save"></i> Simpan Perubahan
+                </button>
+                <button type="button" onclick="closeGroupChangeDatesModal()"
+                    class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
+                    Batal
+                </button>
+                <span id="groupChangeDatesStatus" class="text-xs"></span>
             </div>
         </div>
     </div>
@@ -910,6 +972,167 @@
             .finally(function() {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Simpan Harga';
+            });
+        }
+
+        // ─── Modal Ubah Tanggal Group Booking ───
+        var groupBookingData = null;
+
+        document.getElementById('groupChangeCheckIn')?.addEventListener('change', updateGroupChangeDatesPreview);
+        document.getElementById('groupChangeCheckOut')?.addEventListener('change', updateGroupChangeDatesPreview);
+
+        function updateGroupChangeDatesPreview() {
+            var ci = document.getElementById('groupChangeCheckIn').value;
+            var co = document.getElementById('groupChangeCheckOut').value;
+            var preview = document.getElementById('groupChangePreview');
+
+            if (!ci || !co) {
+                preview.classList.add('hidden');
+                return;
+            }
+
+            var d1 = new Date(ci);
+            var d2 = new Date(co);
+            if (d2 <= d1) {
+                preview.classList.add('hidden');
+                return;
+            }
+
+            if (!groupBookingData) return;
+
+            var nights = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+            var roomCount = groupBookingData.reservations.length;
+
+            var newTotal = 0;
+            groupBookingData.reservations.forEach(function(res) {
+                var oldNights = res.nights > 0 ? res.nights : 1;
+                var avgRate = res.total_amount / oldNights;
+                newTotal += avgRate * nights;
+            });
+
+            var oldTotal = groupBookingData.total_group;
+            var diff = newTotal - oldTotal;
+
+            document.getElementById('groupChangeRoomCount').textContent = roomCount + ' kamar';
+            document.getElementById('groupChangeOldTotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(oldTotal);
+            document.getElementById('groupChangeNewTotal').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(newTotal));
+
+            var diffEl = document.getElementById('groupChangeDiff');
+            if (diff > 0) {
+                diffEl.textContent = '+Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(diff));
+                diffEl.className = 'font-bold text-red-600';
+            } else if (diff < 0) {
+                diffEl.textContent = '-Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(Math.abs(diff)));
+                diffEl.className = 'font-bold text-green-600';
+            } else {
+                diffEl.textContent = 'Rp 0';
+                diffEl.className = 'font-bold text-gray-600';
+            }
+
+            preview.classList.remove('hidden');
+        }
+
+        function openGroupChangeDatesModal() {
+            var bookingGroupId = '{{ $reservation->booking_group_id }}';
+            if (!bookingGroupId) {
+                if (typeof Toast !== 'undefined') Toast.error('Bukan group booking.');
+                return;
+            }
+
+            var status = document.getElementById('groupChangeDatesStatus');
+            var errorEl = document.getElementById('groupChangeDatesError');
+            status.textContent = '';
+            errorEl?.classList.add('hidden');
+
+            fetch('{{ route("reservations.group-change-dates", ":id") }}'.replace(':id', bookingGroupId), {
+                method: 'GET',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res.success) {
+                    status.textContent = '✗ ' + (res.message || 'Gagal memuat data');
+                    status.className = 'text-xs text-red-600';
+                    return;
+                }
+
+                groupBookingData = res;
+                document.getElementById('groupChangeBookingGroupId').value = bookingGroupId;
+                document.getElementById('groupChangeCheckIn').value = res.current_check_in;
+                document.getElementById('groupChangeCheckOut').value = res.current_check_out;
+
+                document.getElementById('groupChangePreview').classList.add('hidden');
+                document.getElementById('groupChangeDatesModal').classList.remove('hidden');
+                updateGroupChangeDatesPreview();
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal memuat data group';
+                status.className = 'text-xs text-red-600';
+            });
+        }
+
+        function closeGroupChangeDatesModal() {
+            document.getElementById('groupChangeDatesModal').classList.add('hidden');
+            document.getElementById('groupChangeDatesStatus').textContent = '';
+            groupBookingData = null;
+        }
+
+        function submitGroupChangeDates() {
+            var ci = document.getElementById('groupChangeCheckIn');
+            var co = document.getElementById('groupChangeCheckOut');
+            var status = document.getElementById('groupChangeDatesStatus');
+            var btn = document.querySelector('#groupChangeDatesModal .bg-orange-600');
+            var bookingGroupId = document.getElementById('groupChangeBookingGroupId').value;
+
+            if (!ci.value || !co.value) {
+                status.textContent = '✗ Pilih tanggal check-in dan check-out';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+            if (new Date(co.value) <= new Date(ci.value)) {
+                status.textContent = '✗ Check-out harus setelah check-in';
+                status.className = 'text-xs text-red-600';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+            status.textContent = '';
+
+            fetch('{{ route("reservations.group-change-dates.store", ":id") }}'.replace(':id', bookingGroupId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ check_in: ci.value, check_out: co.value }),
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res.success) {
+                    status.textContent = '✓ ' + res.message;
+                    status.className = 'text-xs text-green-600';
+                    setTimeout(function() {
+                        closeGroupChangeDatesModal();
+                        if (typeof Toast !== 'undefined') Toast.success(res.message);
+                        location.reload();
+                    }, 1500);
+                } else {
+                    status.textContent = '✗ ' + (res.message || 'Gagal');
+                    status.className = 'text-xs text-red-600';
+                }
+            })
+            .catch(function() {
+                status.textContent = '✗ Gagal menyimpan perubahan';
+                status.className = 'text-xs text-red-600';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
             });
         }
     </script>
