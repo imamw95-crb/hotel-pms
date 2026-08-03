@@ -124,7 +124,8 @@
 
             {{-- Cancel (pending & menunggu_pembayaran) --}}
             @if(in_array($res->status, ['pending', 'menunggu_pembayaran']))
-                <form action="{{ route('reservations.cancel', $res) }}" method="POST" class="inline">
+                <form action="{{ route('reservations.cancel', $res) }}" method="POST" class="inline"
+                      onsubmit="return (typeof confirmCancelReservation === 'function') ? true : confirm('Batalkan reservasi ini?')">
                     @csrf
                     <input type="hidden" name="confirm_refund" value="0">
                     <button type="submit" class="bg-red-50 text-red-600 rounded-lg px-2.5 py-1.5 flex items-center gap-1 hover:bg-red-100 transition text-xs font-medium whitespace-nowrap" title="Cancel"
