@@ -1968,7 +1968,9 @@
                 </button>
                 <form action="{{ route('reservations.cancel', $reservation) }}" method="POST" data-ajax="true">
                     @csrf
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    <input type="hidden" name="confirm_refund" value="0">
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                            onclick="return confirmCancelReservation(event, this, '{{ $reservation->reservation_number }}', {{ (float) $reservation->paid_amount }}, {{ (float) $reservation->total_amount }})">
                         <i class="fas fa-times mr-1"></i> Cancel
                     </button>
                 </form>

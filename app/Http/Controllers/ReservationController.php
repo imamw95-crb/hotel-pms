@@ -260,10 +260,26 @@ class ReservationController extends Controller
         }
     }
 
-    public function cancel(Reservation $reservation)
+    public function cancel(Request $request, Reservation $reservation)
     {
         if ($reservation->status === 'checked_in') {
             return back()->with('error', 'Reservasi yang sudah check-in tidak bisa dibatalkan.');
+        }
+
+        // ── Cek pembayaran sebelum membatalkan ──
+        // Jika sudah ada pembayaran (DP/lunas), wajib konfirmasi dulu bahwa refund sudah diurus.
+        if ($reservation->paid_amount > 0 && ! $request->boolean('confirm_refund')) {
+            $sisa = max(0, $reservation->total_amount - $reservation->paid_amount);
+            $msg = 'Booking sudah dibayar Rp '.number_format($reservation->paid_amount, 0, ',', '.')
+                .' dari Rp '.number_format($reservation->total_amount, 0, ',', '.')
+                .' (sisa Rp '.number_format($sisa, 0, ',', '.').'). '
+                .'Konfirmasi dulu bahwa refund sudah diurus sebelum membatalkan.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg]);
+            }
+
+            return back()->with('error', $msg);
         }
 
         // Decrement allotment booked count

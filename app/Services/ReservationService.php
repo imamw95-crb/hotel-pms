@@ -126,13 +126,25 @@ class ReservationService
     /**
      * Cancel a reservation.
      */
-    public function cancel(Reservation $reservation): void
+    public function cancel(Reservation $reservation, bool $confirmRefund = false): void
     {
         if ($reservation->status === 'checked_in') {
             throw new Exception('Reservasi yang sudah check‑in tidak dapat dibatalkan.');
         }
         if ($reservation->status === 'cancelled') {
             throw new Exception('Reservasi sudah dibatalkan.');
+        }
+
+        // ── Cek pembayaran sebelum membatalkan ──
+        // Jika sudah ada pembayaran (DP/lunas), wajib konfirmasi dulu bahwa refund sudah diurus.
+        if ($reservation->paid_amount > 0 && ! $confirmRefund) {
+            $sisa = max(0, $reservation->total_amount - $reservation->paid_amount);
+            throw new Exception(
+                'Booking sudah dibayar Rp '.number_format($reservation->paid_amount, 0, ',', '.')
+                .' dari Rp '.number_format($reservation->total_amount, 0, ',', '.')
+                .' (sisa Rp '.number_format($sisa, 0, ',', '.').'). '
+                .'Konfirmasi dulu bahwa refund sudah diurus sebelum membatalkan.'
+            );
         }
 
         $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);

@@ -224,7 +224,7 @@ class ReservationApiController extends Controller
     public function cancel(Reservation $reservation)
     {
         try {
-            app(ReservationService::class)->cancel($reservation);
+            app(ReservationService::class)->cancel($reservation, request()->boolean('confirm_refund'));
             $reservation->load(['guest', 'room']);
             return response()->json([
                 'success' => true,

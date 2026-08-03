@@ -521,3 +521,32 @@ window.DataTable = DataTable;
 window.DarkMode = DarkMode;
 window.openModal = function(url, opts) { Modal.open(url, opts || {}); };
 window.closeModal = function() { Modal.close(); };
+
+/**
+ * Konfirmasi pembatalan reservasi — cek pembayaran dulu.
+ * Jika sudah ada pembayaran (paid > 0), tampilkan peringatan refund.
+ * Saat disetujui, set input hidden confirm_refund=1 agar backend mengizinkan pembatalan.
+ */
+function confirmCancelReservation(event, btn, reservationNumber, paidAmount, totalAmount) {
+    paidAmount = Number(paidAmount) || 0;
+    totalAmount = Number(totalAmount) || 0;
+    var msg;
+    if (paidAmount > 0) {
+        var sisa = Math.max(0, totalAmount - paidAmount);
+        msg = '⚠️ Reservasi ' + reservationNumber + ' SUDAH dibayar:\n'
+            + '  Terbayar : Rp ' + paidAmount.toLocaleString('id-ID') + '\n'
+            + '  Total    : Rp ' + totalAmount.toLocaleString('id-ID') + '\n'
+            + '  Sisa     : Rp ' + sisa.toLocaleString('id-ID') + '\n\n'
+            + 'Pastikan REFUND sudah diurus sebelum membatalkan.\n\n'
+            + 'Lanjut batalkan?';
+    } else {
+        msg = 'Batalkan reservasi ' + reservationNumber + '?';
+    }
+    if (!window.confirm(msg)) {
+        if (event && event.preventDefault) event.preventDefault();
+        return false;
+    }
+    var cr = btn && btn.form ? btn.form.querySelector('input[name="confirm_refund"]') : null;
+    if (cr) cr.value = '1';
+    return true;
+}
