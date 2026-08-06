@@ -1985,6 +1985,11 @@
                     <i class="fas fa-sign-out-alt mr-1"></i> Check-out
                 </button>
             @endif
+            @if($reservation->status === 'checked_out')
+                <button type="button" onclick="confirmRecheckin({{ $reservation->id }}, '{{ $reservation->reservation_number }}', '{{ addslashes($reservation->guest->guest_name ?? '') }}', '{{ $reservation->room->room_number ?? '' }}', '{{ $reservation->check_out ? $reservation->check_out->format('d/m/Y H:i') : '-' }}', '{{ $reservation->check_in ? $reservation->check_in->format('Y-m-d') : '' }}')" class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700">
+                    <i class="fas fa-undo mr-1"></i> Check-in Ulang
+                </button>
+            @endif
         </div>
     </div>
 </div>

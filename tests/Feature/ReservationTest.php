@@ -115,4 +115,55 @@ class ReservationTest extends TestCase
         $response->assertSessionHas('error');
         $this->assertEquals('checked_in', $reservation->fresh()->status);
     }
+
+    public function test_recheckin_checked_out_reservation()
+    {
+        $room = Room::factory()->create(['status' => 'available']);
+        $reservation = Reservation::factory()->checkedOut()->create([
+            'room_id' => $room->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->post("/reservations/{$reservation->id}/recheckin");
+
+        $response->assertSessionHas('success');
+        $this->assertEquals('checked_in', $reservation->fresh()->status);
+        $this->assertEquals('occupied', $room->fresh()->status);
+        $this->assertNotNull($reservation->fresh()->checked_in_at);
+        $this->assertEquals($this->user->id, $reservation->fresh()->checked_in_by);
+    }
+
+    public function test_cannot_recheckin_non_checked_out_reservation()
+    {
+        $reservation = Reservation::factory()->checkedIn()->create();
+
+        $response = $this->actingAs($this->user)
+            ->post("/reservations/{$reservation->id}/recheckin");
+
+        $response->assertSessionHas('error');
+        $this->assertEquals('checked_in', $reservation->fresh()->status);
+    }
+
+    public function test_recheckin_with_new_check_in_date()
+    {
+        $room = Room::factory()->create(['status' => 'available']);
+        $reservation = Reservation::factory()->checkedOut()->create([
+            'room_id' => $room->id,
+        ]);
+        $newCheckIn = '2026-08-10';
+        $newCheckOut = '2026-08-12';
+
+        $response = $this->actingAs($this->user)
+            ->post("/reservations/{$reservation->id}/recheckin", [
+                'check_in' => $newCheckIn,
+                'check_out' => $newCheckOut,
+            ]);
+
+        $response->assertSessionHas('success');
+        $fresh = $reservation->fresh();
+        $this->assertEquals('checked_in', $fresh->status);
+        $this->assertEquals($newCheckIn, $fresh->check_in->format('Y-m-d'));
+        $this->assertEquals($newCheckOut, $fresh->check_out->format('Y-m-d'));
+        $this->assertEquals('occupied', $room->fresh()->status);
+    }
 }

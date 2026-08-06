@@ -144,6 +144,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/toggle-breakfast', [ReservationController::class, 'toggleBreakfast'])->name('reservations.toggle-breakfast');
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('permission:cancel_reservation')->name('reservations.cancel');
     Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->middleware('permission:checkin')->name('reservations.checkin');
+    Route::post('/reservations/{reservation}/recheckin', [ReservationController::class, 'recheckin'])->middleware('permission:checkin')->name('reservations.recheckin');
     Route::post('/reservations/{reservation}/checkout', [ReservationController::class, 'checkout'])->middleware('permission:checkout')->name('reservations.checkout');
     Route::post('/reservations/batch-checkout', [ReservationController::class, 'batchCheckout'])->middleware('permission:checkout')->name('reservations.batch-checkout');
     Route::get('/checkout', [ReservationController::class, 'checkoutList'])->middleware('permission:checkout')->name('checkout.index');

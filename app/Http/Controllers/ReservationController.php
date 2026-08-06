@@ -339,6 +339,78 @@ class ReservationController extends Controller
     }
 
     /**
+     * Check-in Ulang — re-open reservasi yang sudah check-out kembali ke status checked_in.
+     * Status kamar dikembalikan ke occupied & allotment booked di-increment ulang (kebalikan dari check-out).
+     * Tanggal check-in/check-out opsional untuk menyesuaikan jika tamu kembali di tanggal berbeda.
+     */
+    public function recheckin(Request $request, Reservation $reservation)
+    {
+        if ($reservation->status !== 'checked_out') {
+            return back()->with('error', 'Hanya reservasi dengan status checked_out yang bisa di-check-in ulang.');
+        }
+
+        $validated = $request->validate([
+            'check_in' => 'nullable|date',
+            'check_out' => 'nullable|date',
+        ]);
+
+        $checkIn = $reservation->check_in;
+        $checkOut = $reservation->check_out;
+
+        if (! empty($validated['check_in'])) {
+            $checkIn = Carbon::parse($validated['check_in'])->setTime(14, 0, 0);
+        }
+        if (! empty($validated['check_out'])) {
+            $checkOut = Carbon::parse($validated['check_out'])->setTime(12, 0, 0);
+        }
+
+        if ($checkOut->lte($checkIn)) {
+            return back()->with('error', 'Tanggal check-out harus setelah tanggal check-in.');
+        }
+
+        // Cek konflik kamar (abaikan reservasi ini sendiri)
+        if (! $reservation->room->isAvailable($checkIn, $checkOut, $reservation->id)) {
+            return back()->with('error', 'Kamar sudah dipesan / tidak tersedia untuk tanggal tersebut.');
+        }
+
+        // Kembalikan allotment booked count (kebalikan dari decrement saat check-out)
+        try {
+            $trackAllotment = in_array($reservation->ota_source, [Allotment::CHANNEL_API, Allotment::CHANNEL_WEBSITE, null, '']);
+            if ($reservation->room->room_type_id && $trackAllotment) {
+                Allotment::incrementBooked(
+                    $reservation->room->room_type_id,
+                    $checkIn,
+                    $checkOut,
+                    Allotment::CHANNEL_API
+                );
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to increment allotment on recheckin: '.$e->getMessage());
+        }
+
+        $reservation->update([
+            'status' => 'checked_in',
+            'check_in' => $checkIn,
+            'check_out' => $checkOut,
+            'checked_in_by' => Auth::id(),
+            'checked_in_at' => now(),
+        ]);
+        $reservation->room->update(['status' => 'occupied']);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Check-in ulang berhasil untuk kamar {$reservation->room->room_number}.",
+                'redirect_url' => route('reservations.show', $reservation),
+                'reservation' => $reservation,
+            ]);
+        }
+
+        return redirect()->route('reservations.show', $reservation)
+            ->with('success', "Check-in ulang berhasil untuk kamar {$reservation->room->room_number}.");
+    }
+
+    /**
      * Toggle include_breakfast (AJAX)
      */
     public function toggleBreakfast(Reservation $reservation)

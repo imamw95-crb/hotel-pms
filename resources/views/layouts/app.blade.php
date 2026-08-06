@@ -891,6 +891,84 @@
                 }
             });
         }
+
+        // ===== CONFIRM CHECK-IN ULANG (re-check-in reservasi checked_out) =====
+        function confirmRecheckin(id, resNumber, guestName, roomNumber, checkOut, checkIn) {
+            showModal({
+                title: 'Konfirmasi Check-in Ulang',
+                message: '<div class="text-left bg-gray-50 rounded-lg p-3 space-y-2 text-sm">' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Reservasi:</span><span class="font-bold text-blue-600">' + resNumber + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Tamu:</span><span class="font-bold">' + guestName + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Kamar:</span><span class="font-bold">' + roomNumber + '</span></div>' +
+                    '<div class="flex justify-between"><span class="text-gray-500">Check-out terakhir:</span><span class="font-bold">' + checkOut + '</span></div>' +
+                    '</div>' +
+                    '<div class="text-left mt-3">' +
+                    '<label class="block text-xs text-gray-500 mb-1">Tanggal Check-in (kosongkan untuk pakai tanggal lama)</label>' +
+                    '<input type="date" id="recheckinDate" value="' + (checkIn || '') + '" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm">' +
+                    '</div>' +
+                    '<p class="mt-3 text-sm text-emerald-600 font-semibold">Status kamar akan kembali menjadi <strong>Occupied</strong> dan allotment dihitung ulang.</p>' +
+                    '<p class="text-sm">Lanjutkan check-in ulang?</p>',
+                type: 'confirm',
+                confirmText: 'Ya, Check-in Ulang',
+                cancelText: 'Batal',
+                onConfirm: function() {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ route("reservations.recheckin", "__ID__") }}'.replace('__ID__', id);
+                    var csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = '{{ csrf_token() }}';
+                    form.appendChild(csrf);
+
+                    var recheckinDate = document.getElementById('recheckinDate');
+                    if (recheckinDate && recheckinDate.value) {
+                        var di = document.createElement('input');
+                        di.type = 'hidden';
+                        di.name = 'check_in';
+                        di.value = recheckinDate.value;
+                        form.appendChild(di);
+                    }
+                    document.body.appendChild(form);
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', form.action, true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('X-CSRF-TOKEN', csrf.value);
+
+                    xhr.onload = function() {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                if (data.success) {
+                                    if (data.message) Toast.success(data.message);
+                                    if (data.redirect_url) {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                } else {
+                                    Toast.error(data.message || 'Gagal check-in ulang');
+                                }
+                            } catch(e) {
+                                Toast.error('Response tidak valid');
+                            }
+                        } else {
+                            Toast.error('Terjadi kesalahan server');
+                        }
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.onerror = function() {
+                        Toast.error('Koneksi gagal. Silakan coba lagi.');
+                        document.body.removeChild(form);
+                    };
+
+                    xhr.send(new FormData(form));
+                }
+            });
+        }
     </script>
 
 </body>
