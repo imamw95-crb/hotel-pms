@@ -14,11 +14,32 @@
         </a>
     </div>
 
+    <form method="GET" action="{{ route('booking-group-masters.index') }}" class="flex flex-wrap items-center gap-2 mb-4">
+        <i class="fas fa-search text-gray-400"></i>
+        <div class="flex-1 min-w-[220px] max-w-sm">
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari kode, nama grup, atau deskripsi..."
+                   class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+            <i class="fas fa-magnifying-glass mr-1"></i> Cari
+        </button>
+        @if(request('search'))
+            <a href="{{ route('booking-group-masters.index') }}" class="text-gray-500 hover:text-gray-700 text-sm px-2 py-2">
+                <i class="fas fa-times mr-1"></i> Reset
+            </a>
+        @endif
+    </form>
+
     @if($masters->isEmpty())
         <div class="text-center py-12 text-gray-400">
             <i class="fas fa-layer-group text-4xl mb-3 block"></i>
-            <p class="text-lg font-medium">Belum ada master group</p>
-            <p class="text-sm">Klik "Tambah Master Group" untuk membuat master grup & master harga booking group.</p>
+            @if(request('search'))
+                <p class="text-lg font-medium">Tidak ada hasil untuk "{{ request('search') }}"</p>
+                <p class="text-sm">Coba kata kunci lain atau klik "Reset" untuk menampilkan semua master group.</p>
+            @else
+                <p class="text-lg font-medium">Belum ada master group</p>
+                <p class="text-sm">Klik "Tambah Master Group" untuk membuat master grup & master harga booking group.</p>
+            @endif
         </div>
     @else
         <div class="overflow-x-auto">

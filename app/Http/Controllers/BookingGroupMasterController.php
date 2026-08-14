@@ -12,13 +12,22 @@ class BookingGroupMasterController extends Controller
     /**
      * Daftar master grup beserta master harga per tipe kamar.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->query('search');
+
         $masters = BookingGroupMaster::with(['prices.roomType', 'creator'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
             ->orderBy('code')
             ->get();
 
-        return view('admin.booking-group-masters.index', compact('masters'));
+        return view('admin.booking-group-masters.index', compact('masters', 'search'));
     }
 
     /**
