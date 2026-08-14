@@ -322,6 +322,105 @@
         }
     }
 
+    // ── Master group select: jadikan searchable dropdown ──
+    function enhanceMasterSelect() {
+        if (!masterGroupSelect) return;
+        if (masterGroupSelect.dataset.searchable === '1') return;
+        masterGroupSelect.dataset.searchable = '1';
+
+        var wrapper = document.createElement('div');
+        wrapper.className = 'relative';
+        masterGroupSelect.parentNode.insertBefore(wrapper, masterGroupSelect);
+        masterGroupSelect.style.display = 'none';
+        wrapper.appendChild(masterGroupSelect);
+
+        var trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'w-full border rounded px-3 py-2 text-left text-sm bg-white flex items-center justify-between';
+        trigger.innerHTML = '<span class="truncate text-gray-700"></span><span class="text-gray-400 ml-2"><i class="fas fa-chevron-down text-xs"></i></span>';
+
+        var panel = document.createElement('div');
+        panel.className = 'hidden absolute z-40 mt-1 w-full bg-white border rounded-lg shadow-lg';
+
+        var search = document.createElement('input');
+        search.type = 'text';
+        search.className = 'w-full border-b px-3 py-2 text-sm';
+        search.placeholder = 'Cari master group...';
+
+        var list = document.createElement('ul');
+        list.className = 'max-h-60 overflow-y-auto py-1';
+
+        panel.appendChild(search);
+        panel.appendChild(list);
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(panel);
+
+        function labelOf(opt) { return opt.textContent.trim(); }
+
+        function render(filter) {
+            list.innerHTML = '';
+            var shown = 0;
+            for (var i = 0; i < masterGroupSelect.options.length; i++) {
+                var opt = masterGroupSelect.options[i];
+                var label = labelOf(opt);
+                if (filter && label.toLowerCase().indexOf(filter.toLowerCase()) === -1) continue;
+                shown++;
+                var li = document.createElement('li');
+                li.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 ' +
+                    (opt.selected ? 'bg-blue-50 font-medium text-blue-700' : 'text-gray-700');
+                if (opt.value === '') li.classList.add('text-gray-400');
+                li.textContent = label;
+                li.addEventListener('click', (function(opt) {
+                    return function() {
+                        masterGroupSelect.value = opt.value;
+                        masterGroupSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        syncTrigger();
+                        closePanel();
+                    };
+                })(opt));
+                list.appendChild(li);
+            }
+            if (shown === 0) {
+                var empty = document.createElement('li');
+                empty.className = 'px-3 py-2 text-sm text-gray-400';
+                empty.textContent = 'Tidak ada hasil';
+                list.appendChild(empty);
+            }
+        }
+
+        function syncTrigger() {
+            var idx = masterGroupSelect.selectedIndex;
+            var label = idx >= 0 ? labelOf(masterGroupSelect.options[idx]) : '';
+            trigger.querySelector('span').textContent = label;
+        }
+
+        function openPanel() {
+            render(search.value);
+            panel.classList.remove('hidden');
+            search.focus();
+        }
+
+        function closePanel() {
+            panel.classList.add('hidden');
+        }
+
+        trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (panel.classList.contains('hidden')) openPanel(); else closePanel();
+        });
+
+        search.addEventListener('input', function() {
+            render(this.value);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) closePanel();
+        });
+
+        masterGroupSelect.addEventListener('change', syncTrigger);
+        syncTrigger();
+    }
+
     // ── Toggle DP fields ──
     function toggleDpFields() {
         var dpSection = byId('dpAmountSection');
@@ -434,6 +533,9 @@
                 renderSelectedRooms();
             });
         }
+
+        // ── Master group select: jadikan searchable dropdown ──
+        enhanceMasterSelect();
 
         // ── Auto-trigger if dates pre-filled ──
         if (checkInEl && checkInEl.value && checkOutEl && checkOutEl.value) {
