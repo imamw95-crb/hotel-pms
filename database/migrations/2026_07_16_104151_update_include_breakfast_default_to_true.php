@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reservations', function (Blueprint $table) {
-            $table->boolean('include_breakfast')->default(true)->change();
-        });
+        // Kolom include_breakfast ditambahkan oleh 2026_07_20_000006.
+        // Lewati jika belum ada (misal migrasi fresh) agar tidak gagal.
+        if (Schema::hasColumn('reservations', 'include_breakfast')) {
+            Schema::table('reservations', function (Blueprint $table) {
+                $table->boolean('include_breakfast')->default(true)->change();
+            });
+        }
     }
 
     /**

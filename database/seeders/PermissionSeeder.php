@@ -19,6 +19,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'Edit Booking', 'slug' => 'edit_booking', 'group' => 'booking', 'description' => 'Dapat mengubah booking'],
             ['name' => 'Delete Booking', 'slug' => 'delete_booking', 'group' => 'booking', 'description' => 'Dapat menghapus booking'],
             ['name' => 'Create Booking Group', 'slug' => 'create_booking_group', 'group' => 'booking', 'description' => 'Dapat membuat booking group'],
+            ['name' => 'Manage Booking Group Masters', 'slug' => 'manage_booking_group_masters', 'group' => 'booking', 'description' => 'Dapat mengelola master group & master harga booking group'],
 
             // Reservation Permissions
             ['name' => 'View Reservations', 'slug' => 'view_reservations', 'group' => 'reservation', 'description' => 'Dapat melihat daftar reservasi'],
@@ -97,6 +98,7 @@ class PermissionSeeder extends Seeder
             'checkin', 'checkout', 'issue_card', 'reissue_card',
             'view_rooms', 'create_room', 'edit_room', 'delete_room', 'view_room_dashboard', 'manage_rooms', 'change_room',
             'view_room_types', 'create_room_type', 'edit_room_type', 'delete_room_type',
+            'create_booking_group', 'manage_booking_group_masters',
             'view_reports', 'manage_guests',
             'view_service_charges', 'create_service_charge',
             'view_housekeeping', 'create_housekeeping_task', 'update_housekeeping_status', 'assign_housekeeping_task', 'delete_housekeeping_task',
@@ -128,6 +130,7 @@ class PermissionSeeder extends Seeder
             'manage_users',
             'create_user',
             'edit_user',
+            'manage_booking_group_masters',
             'delete_user',
             'view_reports',
             'manage_promo_prices',

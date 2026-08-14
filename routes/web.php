@@ -9,6 +9,7 @@ use App\Http\Controllers\AllotmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BookingGroupController;
+use App\Http\Controllers\BookingGroupMasterController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepositController;
@@ -212,6 +213,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/allotments/{allotment}/edit', [AllotmentController::class, 'edit'])->name('allotments.edit');
     Route::put('/allotments/{allotment}', [AllotmentController::class, 'update'])->name('allotments.update');
     Route::delete('/allotments/{allotment}', [AllotmentController::class, 'destroy'])->name('allotments.destroy');
+
+    // Master Group & Harga Booking Group
+    Route::resource('booking-group-masters', BookingGroupMasterController::class)->middleware('permission:manage_booking_group_masters');
 
     // Guests
     Route::resource('guests', GuestController::class)->middleware('permission:manage_guests');

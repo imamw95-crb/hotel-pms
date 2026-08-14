@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BookingGroupMaster;
 use App\Models\Guest;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
@@ -16,15 +17,21 @@ class BookingGroupController extends Controller
 {
     public function create()
     {
+        // Master group aktif beserta master harga per tipe kamar (untuk isi otomatis harga)
+        $masters = BookingGroupMaster::with('prices')
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
         if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'view' => view('booking.modal-group')->render(),
+                'view' => view('booking.modal-group', compact('masters'))->render(),
             ]);
         }
         $rooms = Room::where('status', 'available')->orderBy('room_number')->get();
 
-        return view('booking.group', compact('rooms'));
+        return view('booking.group', compact('rooms', 'masters'));
     }
 
     public function store(Request $request)

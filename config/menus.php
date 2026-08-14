@@ -119,6 +119,11 @@ return [
                     'permission' => 'create_booking_group',
                     'modal' => true,
                 ],
+                [
+                    'label' => 'Master Group & Harga',
+                    'route' => 'booking-group-masters.index',
+                    'permission' => 'manage_booking_group_masters',
+                ],
             ],
         ],
 

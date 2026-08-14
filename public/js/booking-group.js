@@ -20,6 +20,7 @@
     var totalPerNightEl = null;
     var btnSubmit = null;
     var bulkPriceInput = null;
+    var masterGroupSelect = null;
     var formEl = null;
     var apiUrl = '';
 
@@ -174,12 +175,17 @@
             selectedRooms[roomId] = {
                 id: room.id,
                 room_number: room.room_number,
+                room_type_id: room.room_type_id,
                 room_type_name: room.room_type_name || 'Standard',
                 default_price: room.price_per_night,
                 price: room.price_per_night,
                 price_weekday: wd,
-                price_weekend: we
+                price_weekend: we,
+                masterPriceApplied: false
             };
+            // Jika master group dipilih, langsung isi harga sesuai tipe kamar
+            var selectedMasterId = masterGroupSelect ? (parseInt(masterGroupSelect.value) || 0) : 0;
+            if (selectedMasterId) applyMasterPrices(selectedMasterId);
         } else {
             delete selectedRooms[roomId];
         }
@@ -211,7 +217,7 @@
 
             // Check if custom price is set (user edited the price input)
             var customPrice = parseInt(room.price) || 0;
-            var hasCustomPrice = customPrice > 0 && customPrice !== Number(room.default_price);
+            var hasCustomPrice = customPrice > 0 && (room.masterPriceApplied || customPrice !== Number(room.default_price));
 
             if (hasCustomPrice && ci && co) {
                 var days = Math.ceil((new Date(co) - new Date(ci)) / 86400000);
@@ -261,6 +267,7 @@
     function updateRoomPrice(roomId, price) {
         if (selectedRooms[roomId]) {
             selectedRooms[roomId].price = parseInt(price) || 0;
+            selectedRooms[roomId].masterPriceApplied = false;
             renderSelectedRooms();
         }
     }
@@ -287,8 +294,32 @@
         var roomIds = Object.keys(selectedRooms);
         for (var i = 0; i < roomIds.length; i++) {
             selectedRooms[roomIds[i]].price = price;
+            selectedRooms[roomIds[i]].masterPriceApplied = false;
         }
         renderSelectedRooms();
+    }
+
+    // ── Apply master group prices to selected rooms (by room type) ──
+    function applyMasterPrices(masterId) {
+        if (!window.BookingGroupMasters) return;
+        var master = null;
+        for (var i = 0; i < window.BookingGroupMasters.length; i++) {
+            if (window.BookingGroupMasters[i].id === masterId) {
+                master = window.BookingGroupMasters[i];
+                break;
+            }
+        }
+        if (!master) return;
+
+        var roomIds = Object.keys(selectedRooms);
+        for (var j = 0; j < roomIds.length; j++) {
+            var room = selectedRooms[roomIds[j]];
+            var price = master.prices[room.room_type_id];
+            if (price) {
+                room.price = price;
+                room.masterPriceApplied = true;
+            }
+        }
     }
 
     // ── Toggle DP fields ──
@@ -339,6 +370,7 @@
         totalPerNightEl = byId('totalPerNight');
         btnSubmit = byId('btnSubmit');
         bulkPriceInput = byId('bulkPrice');
+        masterGroupSelect = byId('masterGroupSelect');
 
         // Get API URL from meta tag
         var metaEl = document.querySelector('meta[name="booking-check-url"]');
@@ -393,6 +425,14 @@
         var paymentRadios = document.querySelectorAll('input[name="payment_type"]');
         for (var r = 0; r < paymentRadios.length; r++) {
             paymentRadios[r].addEventListener('change', toggleDpFields);
+        }
+
+        // ── Master group select: isi harga otomatis per tipe kamar ──
+        if (masterGroupSelect) {
+            masterGroupSelect.addEventListener('change', function() {
+                applyMasterPrices(parseInt(this.value) || 0);
+                renderSelectedRooms();
+            });
         }
 
         // ── Auto-trigger if dates pre-filled ──

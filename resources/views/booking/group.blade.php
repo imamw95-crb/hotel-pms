@@ -24,6 +24,20 @@
             </div>
         </div>
 
+        {{-- Pilih Master Group (opsional) — isi otomatis master harga per tipe kamar --}}
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">
+                Master Group & Harga
+                <span class="text-xs font-normal text-gray-500">(opsional — isi otomatis harga per tipe kamar)</span>
+            </label>
+            <select id="masterGroupSelect" class="w-full border rounded px-3 py-2">
+                <option value="">-- Tanpa Master Group --</option>
+                @foreach($masters as $master)
+                    <option value="{{ $master->id }}">{{ $master->code }} - {{ $master->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
         <!-- Pilih Kamar (filter otomatis by tanggal) -->
         <div class="mb-4">
             <label class="block text-gray-700 font-bold mb-2">Pilih Kamar (bisa lebih dari satu)</label>
@@ -144,5 +158,11 @@
 </div>
 
 <meta name="booking-check-url" content="{{ route('booking.check-availability') }}">
+<script>
+    window.BookingGroupMasters = @json($masters->map(fn($m) => [
+        'id' => $m->id,
+        'prices' => $m->prices->mapWithKeys(fn($p) => [(int) $p->room_type_id => (float) $p->price_per_night]),
+    ]));
+</script>
 <script src="{{ asset('js/booking-group.js') }}"></script>
 @endsection
