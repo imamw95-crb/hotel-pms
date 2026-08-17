@@ -147,6 +147,124 @@ class ServiceChargeController extends Controller
     }
 
     /**
+     * Form edit other revenue (via modal).
+     */
+    public function edit(Request $request, ServiceCharge $serviceCharge)
+    {
+        $serviceCharge->load(['guest', 'reservation.room', 'createdBy']);
+
+        $guests = Guest::orderBy('guest_name')->get();
+
+        $reservations = Reservation::with(['guest', 'room'])
+            ->whereIn('status', Reservation::ACTIVE_STATUSES)
+            ->orWhere('id', $serviceCharge->reservation_id)
+            ->orderBy('check_in', 'desc')
+            ->get();
+
+        // AJAX via modal: return JSON with rendered modal view (no layout)
+        if ($request->expectsJson()) {
+            $view = view('service-charge.modal-edit', compact('serviceCharge', 'guests', 'reservations'))->render();
+
+            return response()->json([
+                'success' => true,
+                'view' => $view,
+            ]);
+        }
+
+        return view('service-charge.modal-edit', compact('serviceCharge', 'guests', 'reservations'));
+    }
+
+    /**
+     * Update other revenue.
+     */
+    public function update(Request $request, ServiceCharge $serviceCharge)
+    {
+        $validated = $request->validate([
+            'reservation_id' => 'nullable|exists:reservations,id',
+            'guest_id' => 'nullable|exists:guests,id',
+            'service_name' => 'required|string|max:200',
+            'description' => 'nullable|string|max:500',
+            'amount' => 'required|numeric|min:0',
+            'quantity' => 'required|integer|min:1',
+            'charge_date' => 'required|date',
+            'payment_method' => 'nullable|string|max:50',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        // Simpan nilai lama untuk sinkronisasi transaksi (sebelum update)
+        $oldReservationId = $serviceCharge->getOriginal('reservation_id');
+        $oldTotal = $serviceCharge->getOriginal('total_amount');
+        $oldPaymentMethod = $serviceCharge->getOriginal('payment_method');
+
+        $totalAmount = $validated['amount'] * $validated['quantity'];
+
+        $serviceCharge->update([
+            'reservation_id' => $validated['reservation_id'] ?? null,
+            'guest_id' => $validated['guest_id'] ?? null,
+            'service_name' => $validated['service_name'],
+            'description' => $validated['description'] ?? null,
+            'amount' => $validated['amount'],
+            'quantity' => $validated['quantity'],
+            'total_amount' => $totalAmount,
+            'charge_date' => $validated['charge_date'],
+            'payment_method' => $validated['payment_method'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        // ─── Sync ke Transaction (Master Payment) ───────────────
+        // Cari transaksi "additional" yang kemungkinan terkait (best-effort)
+        $transaction = null;
+        if ($oldReservationId) {
+            $transaction = Transaction::where('reservation_id', $oldReservationId)
+                ->where('type', 'additional')
+                ->where('amount', $oldTotal)
+                ->where('payment_method', $oldPaymentMethod)
+                ->latest('id')
+                ->first();
+        }
+
+        if (! empty($validated['payment_method']) && ! empty($validated['reservation_id'])) {
+            $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+            $notes = $validated['service_name'].($validated['notes'] ? ' - '.$validated['notes'] : '');
+
+            if ($transaction) {
+                $transaction->update([
+                    'reservation_id' => $validated['reservation_id'],
+                    'amount' => $totalAmount,
+                    'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
+                    'notes' => $notes,
+                ]);
+            } else {
+                Transaction::create([
+                    'reservation_id' => $validated['reservation_id'],
+                    'type' => 'additional',
+                    'amount' => $totalAmount,
+                    'payment_method' => $validated['payment_method'],
+                    'source_type' => $sourceType,
+                    'notes' => $notes,
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        } elseif ($transaction) {
+            // Metode pembayaran dihapus → hapus transaksi terkait
+            $transaction->delete();
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Other revenue berhasil diperbarui.',
+                'redirect_url' => route('service-charge.show', $serviceCharge),
+                'charge' => $serviceCharge,
+            ]);
+        }
+
+        return redirect()->route('service-charge.show', $serviceCharge)
+            ->with('success', 'Other revenue berhasil diperbarui.');
+    }
+
+    /**
      * Detail & print other revenue.
      */
     public function show(ServiceCharge $serviceCharge)

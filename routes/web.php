@@ -399,6 +399,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/service-charge', [ServiceChargeController::class, 'index'])->name('service-charge.index');
         Route::get('/service-charge/create', [ServiceChargeController::class, 'create'])->name('service-charge.create');
         Route::post('/service-charge', [ServiceChargeController::class, 'store'])->name('service-charge.store');
+        Route::get('/service-charge/{serviceCharge}/edit', [ServiceChargeController::class, 'edit'])->name('service-charge.edit');
+        Route::put('/service-charge/{serviceCharge}', [ServiceChargeController::class, 'update'])->name('service-charge.update');
         Route::get('/service-charge/{serviceCharge}', [ServiceChargeController::class, 'show'])->name('service-charge.show');
     });
 

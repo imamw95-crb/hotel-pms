@@ -117,11 +117,19 @@
                     </td>
                     <td class="p-3 text-right font-bold">Rp {{ number_format($charge->total_amount, 0, ',', '.') }}</td>
                     <td class="p-3 text-center">
-                        <a href="{{ route('service-charge.show', $charge) }}"
-                           class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                           title="Lihat / Print">
-                            <i class="fas fa-eye mr-1"></i> Lihat
-                        </a>
+                        <div class="flex items-center justify-center gap-3">
+                            <a href="{{ route('service-charge.show', $charge) }}"
+                               class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                               title="Lihat / Print">
+                                <i class="fas fa-eye mr-1"></i> Lihat
+                            </a>
+                            <button type="button"
+                                    onclick="ServiceChargeForm.openEdit('{{ route('service-charge.edit', $charge) }}')"
+                                    class="text-amber-600 hover:text-amber-800 text-sm font-medium"
+                                    title="Edit">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 @empty

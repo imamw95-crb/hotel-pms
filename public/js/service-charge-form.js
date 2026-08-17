@@ -73,6 +73,14 @@ var ServiceChargeForm = {
         xhr.send();
     },
 
+    /**
+     * Buka modal edit other revenue (reuse open() — server mengembalikan
+     * modal-edit yang sudah terisi nilai lama).
+     */
+    openEdit: function(url) {
+        ServiceChargeForm.open(url);
+    },
+
     _extractForm: function(html) {
         var parser = document.createElement('div');
         parser.innerHTML = html;
