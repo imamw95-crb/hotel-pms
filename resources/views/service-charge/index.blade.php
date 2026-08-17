@@ -155,11 +155,5 @@
 @endsection
 
 @section('scripts')
-<script>
-window.ServiceChargeForm = {
-    open(url) {
-        Modal.open(url);
-    }
-};
-</script>
+{{-- ServiceChargeForm (open/openEdit) sudah didefinisikan di public/js/service-charge-form.js (dimuat di layouts/app) --}}
 @endsection
