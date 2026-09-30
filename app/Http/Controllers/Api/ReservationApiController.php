@@ -398,11 +398,22 @@ class ReservationApiController extends Controller
         $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
         $otaPaidAmount = $validated['ota_paid_amount'] ?? 0;
 
-        $totalInput = $hotelAmount + $otaPaidAmount;
-        if ($totalInput > $reservation->total_amount) {
+        // Sisa tagihan + hanya SELISIH ota_paid_amount yang dihitung (cegah dobel)
+        $sisaBayar = max(0, $reservation->total_amount - $reservation->paid_amount);
+        $otaDelta = max(0, $otaPaidAmount - (float) ($reservation->ota_paid_amount ?? 0));
+
+        if ($sisaBayar <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Total pembayaran (OTA + Hotel) melebihi total tagihan.',
+                'message' => 'Reservasi sudah lunas — tidak ada sisa tagihan.',
+            ], 422);
+        }
+
+        $totalInput = $hotelAmount + $otaDelta;
+        if ($totalInput > $sisaBayar) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Total pembayaran melebihi sisa tagihan (Rp '.number_format($sisaBayar, 0, ',', '.').').',
             ], 422);
         }
 
@@ -415,13 +426,13 @@ class ReservationApiController extends Controller
 
             $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
 
-            if ($otaPaidAmount > 0) {
+            if ($otaDelta > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
                 Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $otaTxnType,
-                    'amount' => $otaPaidAmount,
+                    'amount' => $otaDelta,
                     'payment_method' => $validated['payment_method'],
                     'source_type' => $sourceType,
                     'notes' => 'OTA '.$validated['payment_method'].' — '.str_replace('_', ' ', $otaPaymentStatus),
@@ -441,7 +452,10 @@ class ReservationApiController extends Controller
                 ]);
             }
 
-            $reservation->paid_amount += ($otaPaidAmount + $hotelAmount);
+            $reservation->paid_amount = min(
+                (float) $reservation->total_amount,
+                (float) $reservation->paid_amount + $otaDelta + $hotelAmount
+            );
 
             if ($reservation->paid_amount >= $reservation->total_amount) {
                 $reservation->paid_date = now();

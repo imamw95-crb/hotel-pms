@@ -168,12 +168,21 @@ class ReservationController extends Controller
         $otaPaidAmount = $validated['ota_paid_amount'] ?? 0;
 
         // Hitung sisa bayar (total - sudah dibayar sebelumnya)
-        $sisaBayar = $reservation->total_amount - $reservation->paid_amount;
+        $sisaBayar = max(0, $reservation->total_amount - $reservation->paid_amount);
 
-        // Validasi: total hotel payment + OTA payment tidak boleh melebihi sisa bayar
-        $totalInput = $hotelAmount + $otaPaidAmount;
-        if ($totalInput > $reservation->total_amount) {
-            return back()->with('error', 'Total pembayaran (OTA + Hotel) melebihi total tagihan (Rp '.number_format($reservation->total_amount, 0, ',', '.').')');
+        if ($sisaBayar <= 0) {
+            return back()->with('error', 'Reservasi sudah lunas — tidak ada sisa tagihan yang bisa dibayar.');
+        }
+
+        // Nominal OTA yang sudah pernah tercatat. Form mengirim ulang nilai ota_paid_amount
+        // yang lama, jadi hanya SELISIH-nya yang dihitung agar tidak dobel.
+        $otaPaidBefore = (float) ($reservation->ota_paid_amount ?? 0);
+        $otaDelta = max(0, $otaPaidAmount - $otaPaidBefore);
+
+        // Validasi: pembayaran baru tidak boleh melebihi sisa bayar
+        $totalInput = $hotelAmount + $otaDelta;
+        if ($totalInput > $sisaBayar) {
+            return back()->with('error', 'Total pembayaran (Rp '.number_format($totalInput, 0, ',', '.').') melebihi sisa tagihan (Rp '.number_format($sisaBayar, 0, ',', '.').').');
         }
 
         // Cari source_type dari payment method yang dipilih
@@ -190,13 +199,13 @@ class ReservationController extends Controller
             $otsService = app(OpenTimestampService::class);
 
             // 2. Buat transaction untuk OTA payment (jika ada)
-            if ($otaPaidAmount > 0) {
+            if ($otaDelta > 0) {
                 $otaTxnType = ($otaPaidAmount >= $reservation->total_amount) ? 'pelunasan' : 'dp';
                 $otaTxn = Transaction::create([
                     'transaction_number' => 'TRX-'.strtoupper(uniqid()),
                     'reservation_id' => $reservation->id,
                     'type' => $otaTxnType,
-                    'amount' => $otaPaidAmount,
+                    'amount' => $otaDelta,
                     'payment_method' => $validated['payment_method'],
                     'source_type' => $sourceType,
                     'notes' => 'OTA: '.str_replace(['ota_', '_'], ['', ' '], $validated['payment_method']).' - '.str_replace('_', ' ', $otaPaymentStatus ?? 'unpaid'),
@@ -222,7 +231,11 @@ class ReservationController extends Controller
             }
 
             // 4. Update paid_amount di reservasi (OTA + Hotel)
-            $reservation->paid_amount += ($otaPaidAmount + $hotelAmount);
+            //    Cegah paid_amount melebihi total tagihan (lebih bayar)
+            $reservation->paid_amount = min(
+                (float) $reservation->total_amount,
+                (float) $reservation->paid_amount + $otaDelta + $hotelAmount
+            );
 
             // 5. Jika sudah lunas, update paid_date & timestamp final invoice
             if ($reservation->paid_amount >= $reservation->total_amount) {

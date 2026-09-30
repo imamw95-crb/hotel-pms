@@ -182,12 +182,23 @@ class BookingController extends Controller
         }
 
         // Hitung DP jika ada
-        $paymentType = $validated['payment_type'] ?? 'full';
+        $paymentType = $validated['payment_type'] ?? null;
         $dpAmount = ($paymentType === 'dp') ? (float) ($validated['dp_amount'] ?? 0) : 0;
-        $paymentMethod = $validated['payment_method'] ?? null;
+        $paymentMethod = ! empty($validated['payment_method']) ? $validated['payment_method'] : null;
 
-        // Jika full payment (lunas), set paid_amount = total_amount
-        $initialPaid = ($paymentType === 'full') ? $totalAmount : $dpAmount;
+        // paid_amount HANYA diisi kalau metode pembayaran benar-benar dipilih
+        // (artinya ada uang masuk + transaksi ikut tercatat).
+        // Tanpa metode bayar → paid_amount = 0, supaya tidak jadi "pembayaran hantu"
+        // yang menyebabkan lebih bayar saat pembayaran asli diinput.
+        if (! $paymentMethod) {
+            $initialPaid = 0;
+        } elseif ($paymentType === 'full') {
+            $initialPaid = $totalAmount;
+        } elseif ($paymentType === 'dp') {
+            $initialPaid = min($dpAmount, $totalAmount);
+        } else {
+            $initialPaid = 0;
+        }
 
         $reservation = Reservation::create([
             'reservation_number' => 'RES-'.strtoupper(uniqid()),
