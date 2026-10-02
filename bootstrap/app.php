@@ -49,7 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Konfirmasi proof OpenTimestamps ke blockchain Bitcoin.
         // WAJIB ada di sini: schedule() di App\Console\Kernel TIDAK dipakai
         // lagi sejak bootstrap/app.php pakai withSchedule() (Laravel 11+).
-        $schedule->command('ots:upgrade --limit=100')
+        $schedule->command('ots:upgrade --limit=100 --retry-failed')
             ->everyTenMinutes()
             ->withoutOverlapping(10)
             ->runInBackground()

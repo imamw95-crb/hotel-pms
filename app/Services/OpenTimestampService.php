@@ -287,9 +287,12 @@ class OpenTimestampService
             ];
         }
 
-        // Simpan .ots ke temp file untuk upgrade
+        // Simpan .ots ke temp file untuk upgrade.
+        // Nama HARUS unik per proses (PID): jika cron dan batch manual jalan
+        // bersamaan, file yang sama akan dihapus proses lain di blok finally
+        // sehingga upgrade gagal palsu ("Failed to open stream").
         $tmpDir = sys_get_temp_dir();
-        $otsFilePath = $tmpDir . '/ots_upgrade_' . $timestamp->id . '.ots';
+        $otsFilePath = $tmpDir . '/ots_upgrade_' . $timestamp->id . '_' . getmypid() . '.ots';
         file_put_contents($otsFilePath, base64_decode($otsFileContent));
 
         try {
@@ -428,7 +431,8 @@ class OpenTimestampService
     {
         $otsBin = $this->getOtsBinPath();
         $tmpDir = sys_get_temp_dir();
-        $digestFile = $tmpDir . '/ots_digest_' . $timestamp->id . '.txt';
+        // Suffix PID → aman dari tabrakan file saat ada proses paralel.
+        $digestFile = $tmpDir . '/ots_digest_' . $timestamp->id . '_' . getmypid() . '.txt';
         $otsFilePath = $digestFile . '.ots';
 
         try {
