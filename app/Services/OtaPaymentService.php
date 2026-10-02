@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PaymentMethod;
 use App\Models\Reservation;
 use App\Models\Transaction;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Log;
 
 class OtaPaymentService
@@ -20,9 +21,12 @@ class OtaPaymentService
      * Idempotent — hanya membuat transaksi sebesar SELISIH yang belum tercatat,
      * jadi aman dipanggil berulang kali (sync email, update nomor OTA, dsb).
      *
+     * @param  CarbonInterface|null  $at  Tanggal bisnis transaksi (default: sekarang).
+     *                                    Dipakai saat backfill data lama supaya pendapatan
+     *                                    masuk ke periode yang benar, bukan menumpuk hari ini.
      * @return Transaction|null Transaksi baru, atau null kalau tidak ada yang perlu dicatat
      */
-    public function record(Reservation $reservation, float $otaPaidAmount, ?string $paymentMethod = null): ?Transaction
+    public function record(Reservation $reservation, float $otaPaidAmount, ?string $paymentMethod = null, ?CarbonInterface $at = null): ?Transaction
     {
         if ($otaPaidAmount <= 0) {
             return null;
@@ -36,6 +40,7 @@ class OtaPaymentService
 
         $method = $this->resolvePaymentMethod($paymentMethod, $reservation->ota_source);
         $total = (float) $reservation->total_amount;
+        $paidAt = $at ?? now();
 
         $transaction = Transaction::create([
             'transaction_number' => 'TRX-'.strtoupper(uniqid()),
@@ -46,12 +51,14 @@ class OtaPaymentService
             'source_type' => 'ota',
             'notes' => 'Pembayaran OTA '.$method.' — '.str_replace('_', ' ', $reservation->ota_payment_status ?? 'paid ota').' (auto dari sync OTA)',
             'created_by' => auth()->id() ?? 1,
+            'created_at' => $paidAt,
+            'updated_at' => $paidAt,
         ]);
 
         $reservation->paid_amount = (float) $reservation->paid_amount + $delta;
 
         if ($total > 0 && (float) $reservation->paid_amount >= $total && ! $reservation->paid_date) {
-            $reservation->paid_date = now();
+            $reservation->paid_date = $paidAt;
         }
 
         $reservation->save();
@@ -61,6 +68,7 @@ class OtaPaymentService
             'reservation_number' => $reservation->reservation_number,
             'amount' => $delta,
             'payment_method' => $method,
+            'business_date' => $paidAt->toDateTimeString(),
             'paid_amount' => (float) $reservation->paid_amount,
         ]);
 
