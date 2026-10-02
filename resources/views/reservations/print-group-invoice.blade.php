@@ -253,11 +253,11 @@
                 $firstReservation->invoice_signature = $sigService->generate($firstReservation);
                 $firstReservation->saveQuietly();
             }
-            // ≡ƒöÉ OTS: Timestamp invoice saat pertama dicetak (jika belum)
-            if (!$firstReservation->ots_proof) {
-                app(\App\Services\OpenTimestampService::class)->timestampInvoice($firstReservation);
-                $firstReservation->refresh();
-            }
+            // 🔐 OTS: Timestamp invoice saat dicetak (idempotent).
+            // Lihat catatan di print-invoice.blade.php — tanpa ini, revision
+            // OTS tidak ikut ter-update saat data reservasi berubah.
+            app(\App\Services\OpenTimestampService::class)->timestampInvoice($firstReservation);
+            $firstReservation->refresh();
             $baseUrl = config('app.url');
             $shortSig = substr($firstReservation->invoice_signature, 0, 16);
             $invoiceUrl = $baseUrl . '/invoice/' . $firstReservation->reservation_number . '?sig=' . $shortSig;

@@ -288,11 +288,14 @@
             $reservation->invoice_signature = $sigService->generate($reservation);
             $reservation->saveQuietly();
         }
-        // 🔐 OTS: Timestamp invoice saat pertama dicetak (jika belum)
-        if (!$reservation->ots_proof) {
-            app(\App\Services\OpenTimestampService::class)->timestampInvoice($reservation);
-            $reservation->refresh();
-        }
+        // 🔐 OTS: Timestamp invoice saat dicetak.
+        // JANGAN diguard pakai `!$reservation->ots_proof`: kalau data reservasi
+        // berubah setelah cetak pertama (bayar, ganti status, dll), guard itu
+        // bikin revision OTS tidak pernah diperbarui → halaman invoice publik
+        // salah menampilkan "DATA TELAH BERUBAH".
+        // timestampInvoice() sudah idempotent: hash sama → skip, hash beda → revision baru.
+        app(\App\Services\OpenTimestampService::class)->timestampInvoice($reservation);
+        $reservation->refresh();
         $baseUrl = config('app.url');
         $shortSig = substr($reservation->invoice_signature, 0, 16);
         $invoiceUrl = $baseUrl . '/invoice/' . $reservation->reservation_number . '?sig=' . $shortSig;
