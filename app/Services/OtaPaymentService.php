@@ -32,7 +32,7 @@ class OtaPaymentService
             return null;
         }
 
-        $delta = round($otaPaidAmount - $this->recordedAmount($reservation), 2);
+        $delta = round($otaPaidAmount - $this->alreadyRecorded($reservation), 2);
 
         if ($delta <= 0) {
             return null;
@@ -79,7 +79,24 @@ class OtaPaymentService
     }
 
     /**
-     * Total nominal OTA yang sudah tercatat sebagai transaksi.
+     * Nominal yang sudah dianggap tercatat untuk pembayaran OTA ini.
+     *
+     * Dipakai untuk mencegah dobel input. Diambil dari nilai TERBESAR antara:
+     *   - jumlah transaksi OTA yang sudah ada (source_type = ota), dan
+     *   - paid_amount reservasi (staff mungkin sudah input manual, mis. lewat
+     *     "Input Pembayaran" dengan metode cash/qris sehingga source_type-nya
+     *     bukan 'ota').
+     */
+    public function alreadyRecorded(Reservation $reservation): float
+    {
+        return max(
+            $this->recordedAmount($reservation),
+            (float) $reservation->paid_amount
+        );
+    }
+
+    /**
+     * Total nominal OTA yang sudah tercatat sebagai transaksi (source_type = ota).
      */
     public function recordedAmount(Reservation $reservation): float
     {
