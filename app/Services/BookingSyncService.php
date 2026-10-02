@@ -160,6 +160,15 @@ class BookingSyncService
 
                     $existing->update($reservationData);
 
+                    // Catat pembayaran OTA ke Riwayat Pembayaran (idempotent, hanya selisih)
+                    if ($otaPaymentStatus === 'paid_ota') {
+                        app(OtaPaymentService::class)->record(
+                            $existing->fresh(),
+                            (float) $otaPaidAmount,
+                            $reservationData['payment_method'] ?? null
+                        );
+                    }
+
                     Log::info('BookingSync: Reservation updated', [
                         'reservation_number' => $existing->reservation_number,
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
@@ -193,9 +202,16 @@ class BookingSyncService
                     $reservationData
                 );
 
-                // NOTE: Transaction TIDAK auto-create di sini.
-                // Payment diinput via 1 form "Input Pembayaran" di halaman detail reservasi.
-                // OTA status & nominal sudah tersimpan di reservation untuk referensi.
+                // Payment OTA otomatis dibuatkan transaksinya supaya muncul di
+                // Riwayat Pembayaran + menambah paid_amount. Idempotent: hanya
+                // selisih yang belum tercatat yang diinput.
+                if ($otaPaymentStatus === 'paid_ota') {
+                    app(OtaPaymentService::class)->record(
+                        $reservation,
+                        (float) $otaPaidAmount,
+                        $reservationData['payment_method'] ?? null
+                    );
+                }
 
                 Log::info('BookingSync: New reservation created', [
                     'reservation_number' => $reservation->reservation_number,

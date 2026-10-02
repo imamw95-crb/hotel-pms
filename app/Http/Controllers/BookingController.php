@@ -9,6 +9,7 @@ use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\Transaction;
 use App\Services\BookingNotificationService;
+use App\Services\OtaPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -247,6 +248,17 @@ class BookingController extends Controller
                 // Jangan gagalkan booking, hanya log error
                 \Log::error('Gagal membuat transaksi awal: '.$e->getMessage());
             }
+        }
+
+        // Pembayaran OTA (Tiket.com/Traveloka/dll) sudah masuk ke hotel → catat sebagai
+        // transaksi supaya muncul di Riwayat Pembayaran dan menambah paid_amount.
+        $otaPaidAmount = (float) ($validated['ota_paid_amount'] ?? 0);
+        if ($otaPaidAmount > 0 && in_array($validated['ota_payment_status'] ?? '', ['paid_ota', 'partial_ota'], true)) {
+            app(OtaPaymentService::class)->record(
+                $reservation,
+                $otaPaidAmount,
+                $validated['ota_source'] ?? null
+            );
         }
 
         // Trigger notification — only for OTA bookings, not direct PMS bookings
