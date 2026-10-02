@@ -26,10 +26,32 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule): void {
-        // OTA Email Autopilot — run every minute
+        // ─── Scheduler Heartbeat ───────────────────────────────────
+        // Monitoring: kalau timestamp ini berhenti update → cron mati.
+        $schedule->command('scheduler:heartbeat')
+            ->everyMinute();
+
+        // ─── OTA Email Autopilot ───────────────────────────────────
         $schedule->command('hotel:read-emails')
             ->everyMinute()
             ->withoutOverlapping()
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/ota-autopilot.log'));
+
+        // ─── Auto-Cancel Pending Web Bookings ──────────────────────
+        $schedule->command('hotel:auto-cancel-pending')
+            ->everyTenMinutes()
+            ->withoutOverlapping(15)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
+
+        // ─── OTS Proof Upgrader (blockchain Bitcoin) ───────────────
+        // Konfirmasi proof OpenTimestamps ke blockchain Bitcoin.
+        // WAJIB ada di sini: schedule() di App\Console\Kernel TIDAK dipakai
+        // lagi sejak bootstrap/app.php pakai withSchedule() (Laravel 11+).
+        $schedule->command('ots:upgrade --limit=100')
+            ->everyTenMinutes()
+            ->withoutOverlapping(10)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/ots-upgrade.log'));
     })->create();

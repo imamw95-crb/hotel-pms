@@ -24,6 +24,13 @@ class Kernel extends ConsoleKernel
 
     /**
      * Define the application's command schedule.
+     *
+     * ⚠️ CATATAN PENTING — method ini TIDAK PERNAH DIPANGGIL.
+     * Aplikasi ini bootstrap lewat `bootstrap/app.php` dengan `withSchedule()`
+     * (gaya Laravel 11+), sehingga `App\Console\Kernel` diabaikan total.
+     *
+     * Semua perubahan jadwal WAJIB dilakukan di `bootstrap/app.php`.
+     * Biarkan method di bawah hanya sebagai dokumentasi/referensi.
      */
     protected function schedule(Schedule $schedule): void
     {
