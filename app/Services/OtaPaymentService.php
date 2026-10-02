@@ -42,7 +42,9 @@ class OtaPaymentService
         $total = (float) $reservation->total_amount;
         $paidAt = $at ?? now();
 
-        $transaction = Transaction::create([
+        // NB: created_at/updated_at TIDAK ada di $fillable, jadi harus di-set langsung
+        // (mass assignment akan diabaikan dan Eloquent memakai waktu sekarang).
+        $transaction = new Transaction([
             'transaction_number' => 'TRX-'.strtoupper(uniqid()),
             'reservation_id' => $reservation->id,
             'type' => $otaPaidAmount >= $total && $total > 0 ? 'pelunasan' : 'dp',
@@ -51,9 +53,10 @@ class OtaPaymentService
             'source_type' => 'ota',
             'notes' => 'Pembayaran OTA '.$method.' — '.str_replace('_', ' ', $reservation->ota_payment_status ?? 'paid ota').' (auto dari sync OTA)',
             'created_by' => auth()->id() ?? 1,
-            'created_at' => $paidAt,
-            'updated_at' => $paidAt,
         ]);
+        $transaction->created_at = $paidAt;
+        $transaction->updated_at = $paidAt;
+        $transaction->save();
 
         $reservation->paid_amount = (float) $reservation->paid_amount + $delta;
 
