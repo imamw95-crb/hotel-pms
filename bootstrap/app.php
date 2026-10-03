@@ -45,6 +45,15 @@ return Application::configure(basePath: dirname(__DIR__))
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/auto-cancel-pending.log'));
 
+        // ─── Reconciliation Pembayaran OTA ─────────────────────────
+        // Pengaman: pastikan nominal yang sudah dibayar OTA selalu tercatat di
+        // Riwayat Pembayaran + masuk paid_amount. Idempotent (hanya selisih).
+        $schedule->command('ota:sync-payments')
+            ->everyFiveMinutes()
+            ->withoutOverlapping(10)
+            ->runInBackground()
+            ->appendOutputTo(storage_path('logs/ota-payment-sync.log'));
+
         // ─── OTS Proof Upgrader (blockchain Bitcoin) ───────────────
         // Konfirmasi proof OpenTimestamps ke blockchain Bitcoin.
         // WAJIB ada di sini: schedule() di App\Console\Kernel TIDAK dipakai
