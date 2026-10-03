@@ -158,7 +158,26 @@ class BookingSyncService
                         ]);
                     }
 
-                    $existing->update($reservationData);
+                    // ─── JANGAN timpa data yang sudah dimiliki reservasi ───
+                    // paid_amount & paid_date  → pembayaran yang sudah diinput staff
+                    // notes                    → riwayat pindah kamar / catatan staff
+                    // total_amount             → kalau email TIDAK memuat harga, jangan
+                    //                            ditimpa hasil fallback rate kamar
+                    $updateData = $reservationData;
+                    unset($updateData['paid_amount'], $updateData['paid_date'], $updateData['notes'], $updateData['created_by']);
+
+                    if ((float) ($mapped['total_amount'] ?? 0) <= 0 && (float) $existing->total_amount > 0) {
+                        unset($updateData['total_amount']);
+
+                        // Nominal OTA ikut disamakan dengan tagihan yang sudah ada
+                        // supaya tidak muncul "OTA paid > total tagihan".
+                        if ($isOtaPayment) {
+                            $otaPaidAmount = (float) $existing->total_amount;
+                            $updateData['ota_paid_amount'] = $otaPaidAmount;
+                        }
+                    }
+
+                    $existing->update($updateData);
 
                     // Catat pembayaran OTA ke Riwayat Pembayaran (idempotent, hanya selisih)
                     if ($otaPaymentStatus === 'paid_ota') {
@@ -172,9 +191,9 @@ class BookingSyncService
                     Log::info('BookingSync: Reservation updated', [
                         'reservation_number' => $existing->reservation_number,
                         'ota_reservation_number' => $mapped['ota_reservation_number'],
-                        'total_amount' => $reservationData['total_amount'],
+                        'total_amount' => $existing->total_amount,
                         'payment_method' => $reservationData['payment_method'],
-                        'paid_amount' => $reservationData['paid_amount'],
+                        'paid_amount' => $existing->paid_amount,
                     ]);
 
                     return ['reservation' => $existing->fresh(), 'action' => 'updated', 'success' => true];
