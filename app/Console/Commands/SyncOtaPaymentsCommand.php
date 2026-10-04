@@ -58,11 +58,18 @@ class SyncOtaPaymentsCommand extends Command
                 continue;
             }
 
+            // check_in hanya dipakai sebagai tanggal bisnis untuk backfill data lama
+            // (check_in sudah lewat). Kalau check_in masih di depan / tamu belum
+            // check-in, pakai waktu sekarang supaya nominal yang baru diterima tidak
+            // tercatat di periode night audit yang belum berjalan.
+            $checkIn = $reservation->check_in;
+            $businessAt = ($checkIn && $checkIn->lessThan(now())) ? $checkIn : now();
+
             $transaction = $otaPayments->record(
                 $reservation,
                 (float) $reservation->ota_paid_amount,
                 $reservation->payment_method,
-                $reservation->check_in
+                $businessAt
             );
 
             if ($transaction) {

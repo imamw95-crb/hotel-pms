@@ -24,6 +24,9 @@ class OtaPaymentService
      * @param  CarbonInterface|null  $at  Tanggal bisnis transaksi (default: sekarang).
      *                                    Dipakai saat backfill data lama supaya pendapatan
      *                                    masuk ke periode yang benar, bukan menumpuk hari ini.
+     *                                    Jangan pernah diisi tanggal di masa depan — transaksi
+     *                                    seperti itu tidak akan muncul di Night Audit periode
+     *                                    berjalan (query NA memfilter created_at per periode).
      * @return Transaction|null Transaksi baru, atau null kalau tidak ada yang perlu dicatat
      */
     public function record(Reservation $reservation, float $otaPaidAmount, ?string $paymentMethod = null, ?CarbonInterface $at = null): ?Transaction

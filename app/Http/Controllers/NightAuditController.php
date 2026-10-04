@@ -443,30 +443,12 @@ class NightAuditController extends Controller
         // ─── OTA payment method list ───────────────────────────────
         $otaPaymentMethods = ['ota_tiket_com', 'ota_traveloka', 'tiket.com', 'traveloka.com', 'ota_payment'];
 
-        // ─── Cari reservasi yang check-in hari ini ─────────────────
-        // Semua transaksi (termasuk DP lama) dari reservasi ini ikut ditampilkan
-        $todayCheckinResIds = Reservation::where('check_in', '>=', $bizStart)
-            ->where('check_in', '<', $bizEnd)
-            ->where('status', '!=', 'cancelled')
-            ->pluck('id');
-
-        // ─── Revenue Transactions ──────────────────────────────────
-        // Include ALL transactions from today's check-in reservations (including past DP),
-        // plus today's transactions from other active sources
-        $transactions = Transaction::where(function ($q) use ($todayCheckinResIds, $bizStart, $bizEnd) {
-            // Semua transaksi dari reservasi yg check-in hari ini (DP lama ikut)
-            if ($todayCheckinResIds->isNotEmpty()) {
-                $q->whereIn('reservation_id', $todayCheckinResIds);
-            }
-            // Plus transaksi hari ini dari sumber lain (standalone, in-house lain, dll)
-            $q->orWhere(function ($sub) use ($bizStart, $bizEnd, $todayCheckinResIds) {
-                $sub->where('created_at', '>=', $bizStart)
-                    ->where('created_at', '<', $bizEnd);
-                if ($todayCheckinResIds->isNotEmpty()) {
-                    $sub->whereNotIn('reservation_id', $todayCheckinResIds);
-                }
-            });
-        })
+        // ─── Revenue Transactions (basis kas) ──────────────────────
+        // Tiap transaksi dihitung SEKALI saja di periode uang benar-benar diterima
+        // (created_at). Jangan tarik DP dari periode lain ke hari check-in — nominal
+        // yang sama jadi ikut terhitung di dua night audit sekaligus.
+        $transactions = Transaction::where('created_at', '>=', $bizStart)
+            ->where('created_at', '<', $bizEnd)
             ->where(function ($q) use ($bizStart, $bizEnd) {
                 $q->whereDoesntHave('reservation')
                   ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
