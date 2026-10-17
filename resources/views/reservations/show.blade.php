@@ -1344,7 +1344,7 @@
             </div>
             @endif
 
-            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true">
+            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true" data-refresh="true">
                 @csrf
 
                 {{-- Baris 1: Status OTA (jika OTA) + Tipe Pembayaran --}}

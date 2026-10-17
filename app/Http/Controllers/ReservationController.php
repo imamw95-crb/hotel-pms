@@ -152,7 +152,7 @@ class ReservationController extends Controller
     public function addPayment(Request $request, Reservation $reservation)
     {
         if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
-            return back()->with('error', 'Tidak bisa menambah pembayaran untuk reservasi ini.');
+            return $this->paymentError($request, 'Tidak bisa menambah pembayaran untuk reservasi ini.');
         }
 
         $validated = $request->validate([
@@ -171,7 +171,7 @@ class ReservationController extends Controller
         $sisaBayar = max(0, $reservation->total_amount - $reservation->paid_amount);
 
         if ($sisaBayar <= 0) {
-            return back()->with('error', 'Reservasi sudah lunas — tidak ada sisa tagihan yang bisa dibayar.');
+            return $this->paymentError($request, 'Reservasi sudah lunas — tidak ada sisa tagihan yang bisa dibayar. Ubah Total Tagihan dulu jika ada biaya tambahan.');
         }
 
         // Nominal OTA yang sudah pernah tercatat. Form mengirim ulang nilai ota_paid_amount
@@ -179,10 +179,16 @@ class ReservationController extends Controller
         $otaPaidBefore = (float) ($reservation->ota_paid_amount ?? 0);
         $otaDelta = max(0, $otaPaidAmount - $otaPaidBefore);
 
+        // Tolak input tanpa nominal — kalau lolos, tidak ada transaksi yang tercatat
+        // tapi sistem tetap membalas "berhasil".
+        if (($hotelAmount + $otaDelta) <= 0) {
+            return $this->paymentError($request, 'Nominal pembayaran masih 0. Isi nominal bayar hotel atau nominal pembayaran OTA terlebih dahulu.');
+        }
+
         // Validasi: pembayaran baru tidak boleh melebihi sisa bayar
         $totalInput = $hotelAmount + $otaDelta;
         if ($totalInput > $sisaBayar) {
-            return back()->with('error', 'Total pembayaran (Rp '.number_format($totalInput, 0, ',', '.').') melebihi sisa tagihan (Rp '.number_format($sisaBayar, 0, ',', '.').').');
+            return $this->paymentError($request, 'Total pembayaran (Rp '.number_format($totalInput, 0, ',', '.').') melebihi sisa tagihan (Rp '.number_format($sisaBayar, 0, ',', '.').').');
         }
 
         // Cari source_type dari payment method yang dipilih
@@ -269,8 +275,26 @@ class ReservationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->with('error', 'Gagal menyimpan pembayaran: '.$e->getMessage());
+            return $this->paymentError($request, 'Gagal menyimpan pembayaran: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Error response untuk form pembayaran: JSON saat dipanggil via AJAX,
+     * redirect + flash saat submit biasa.
+     */
+    private function paymentError(Request $request, string $message)
+    {
+        if ($request->expectsJson()) {
+            // FormHandler hanya membaca body JSON pada status 2xx,
+            // jadi error dikirim sebagai 200 + success:false agar pesannya tampil.
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('error', $message);
     }
 
     public function cancel(Request $request, Reservation $reservation)
