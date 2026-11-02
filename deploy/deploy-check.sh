@@ -1,13 +1,23 @@
 #!/bin/bash
-# Auto-deploy checker - jalankan via cron setiap 5 menit
-# */5 * * * * /www/wwwroot/icon.cloudnod.my.id/deploy/deploy-check.sh
+# Auto-deploy checker - jalankan via cron setiap 5 menit:
+#   */5 * * * * /www/wwwroot/<site>/deploy/deploy-check.sh
+#
+# Path project diturunkan dari lokasi script ini, jadi file yang sama
+# aman dipakai di semua instalasi (icon, embun, dst) tanpa saling tabrak.
 
-PROJECT_DIR="/www/wwwroot/icon.cloudnod.my.id"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 LOG_FILE="$PROJECT_DIR/storage/logs/deploy.log"
+SITE="$(basename "$PROJECT_DIR")"
 
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$SITE] $1" >> "$LOG_FILE"
 }
+
+if [[ ! -f "$PROJECT_DIR/artisan" ]]; then
+    log "ERROR: bukan project Laravel ($PROJECT_DIR), script dihentikan"
+    exit 1
+fi
 
 log "=== Checking for updates ==="
 
