@@ -23,6 +23,7 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 - **OpenRouterService** - Integrasi dengan OpenRouter API untuk AI chat
 - **AiChatService** - Chat assistant untuk booking & query hotel
 - **Model:** `dots-studio/dots-3-note-preview:free` (default) — bisa diganti dari Admin → Settings → AI Model (`hotel_settings.ai_model`); jika kosong fallback ke `OPENROUTER_MODEL` di `.env`
+- **Reasoning:** `OPENROUTER_REASONING_EFFORT` (default `low`) — model reasoning butuh token budget ekstra; `max_tokens` per fitur: 6144 (email OTA), 4096 (reservasi), 2048 (aksi & chat)
 - **Endpoint:** POST /api/ai/chat
 
 ## Ignore These Folders Completely
