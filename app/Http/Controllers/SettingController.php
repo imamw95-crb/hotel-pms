@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HotelSetting;
+use App\Services\OpenRouterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -33,6 +34,7 @@ class SettingController extends Controller
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'theme' => 'nullable|in:light,dark,system',
             'cutoff_time' => 'nullable|date_format:H:i',
+            'ai_model' => 'nullable|string|max:150',
         ]);
 
         $setting = HotelSetting::first();
@@ -85,6 +87,11 @@ class SettingController extends Controller
         if (isset($validated['theme'])) {
             $setting->theme = $validated['theme'];
         }
+
+        // AI model kosong = ikut default config (OPENROUTER_MODEL)
+        $aiModel = trim((string) ($validated['ai_model'] ?? ''));
+        $setting->ai_model = $aiModel !== '' ? $aiModel : null;
+
         $setting->save();
 
         // Clear cached settings so dashboard picks up changes immediately
@@ -101,5 +108,19 @@ class SettingController extends Controller
 
         return redirect()->route('admin.settings')
             ->with('success', 'Setting hotel berhasil diperbarui.');
+    }
+
+    /**
+     * Daftar model OpenRouter untuk pilihan di form setting.
+     */
+    public function aiModels(OpenRouterService $openRouter)
+    {
+        $models = $openRouter->listModels();
+
+        return response()->json([
+            'success' => ! empty($models),
+            'current' => HotelSetting::aiModelName(),
+            'data' => $models,
+        ]);
     }
 }

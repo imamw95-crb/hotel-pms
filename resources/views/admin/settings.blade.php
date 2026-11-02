@@ -130,6 +130,32 @@
             @enderror
         </div>
 
+        {{-- AI Model (OpenRouter) --}}
+        <div class="p-6 border-b">
+            <label for="ai_model" class="block text-sm font-semibold text-gray-700 mb-2">
+                <i class="fas fa-robot text-blue-500 mr-1"></i> AI Model (OpenRouter)
+            </label>
+            <p class="text-xs text-gray-400 mb-3">
+                Model untuk AI Chat, AI Booking, dan parsing email OTA. Kosongkan untuk memakai default
+                <code class="bg-gray-100 px-1 rounded">{{ config('services.openrouter.model') }}</code>.
+            </p>
+            <div class="flex gap-2">
+                <input type="text" name="ai_model" id="ai_model" list="ai-model-list"
+                       value="{{ old('ai_model', $setting->ai_model) }}"
+                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2.5 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                       placeholder="{{ config('services.openrouter.model') }}">
+                <button type="button" id="load-ai-models"
+                        class="shrink-0 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-4 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i> Daftar Model
+                </button>
+            </div>
+            <datalist id="ai-model-list"></datalist>
+            <p id="ai-model-status" class="text-xs text-gray-400 mt-2">Memuat daftar model dari OpenRouter…</p>
+            @error('ai_model')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Tema Aplikasi --}}
         <div class="p-6 border-b">
             <label class="block text-sm font-semibold text-gray-700 mb-3">
@@ -179,4 +205,55 @@
         </div>
     </form>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('ai_model');
+    const list = document.getElementById('ai-model-list');
+    const btn = document.getElementById('load-ai-models');
+    const status = document.getElementById('ai-model-status');
+    if (!input || !list || !btn || !status) return;
+
+    const url = @json(route('admin.settings.ai-models'));
+    let inFlight = null;
+
+    function loadModels(force) {
+        if (inFlight && !force) return inFlight;
+
+        inFlight = fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function (res) { return res.json(); })
+            .then(function (json) {
+                const models = json.data || [];
+                if (!models.length) {
+                    throw new Error('daftar model kosong');
+                }
+
+                list.innerHTML = '';
+                models.forEach(function (m) {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    if (m.name) opt.label = m.name;
+                    list.appendChild(opt);
+                });
+
+                status.className = 'text-xs text-green-600 mt-2';
+                status.textContent = models.length + ' model tersedia — klik kolom lalu ketik untuk mencari. Model aktif: ' + (json.current || '-');
+            })
+            .catch(function (e) {
+                status.className = 'text-xs text-red-500 mt-2';
+                status.textContent = 'Gagal memuat daftar model (' + e.message + '). Isi model manual jika perlu.';
+            })
+            .finally(function () { inFlight = null; });
+
+        return inFlight;
+    }
+
+    btn.addEventListener('click', function () { loadModels(true); });
+    input.addEventListener('focus', function () { loadModels(false); });
+
+    loadModels(false);
+});
+</script>
 @endsection

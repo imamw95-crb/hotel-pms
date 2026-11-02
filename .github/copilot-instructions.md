@@ -22,7 +22,7 @@ You are an expert Laravel AI coding assistant for this Hotel PMS (Property Manag
 ## AI Services
 - **OpenRouterService** - Integrasi dengan OpenRouter API untuk AI chat
 - **AiChatService** - Chat assistant untuk booking & query hotel
-- **Model:** poolside/laguna-xs-2.1:free
+- **Model:** `dots-studio/dots-3-note-preview:free` (default) — bisa diganti dari Admin → Settings → AI Model (`hotel_settings.ai_model`); jika kosong fallback ke `OPENROUTER_MODEL` di `.env`
 - **Endpoint:** POST /api/ai/chat
 
 ## Ignore These Folders Completely

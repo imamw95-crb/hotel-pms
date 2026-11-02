@@ -295,6 +295,7 @@ Route::middleware(['auth'])->group(function () {
     // Hotel Settings (Owner only)
     Route::middleware(['role:owner'])->group(function () {
         Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings');
+        Route::get('/admin/settings/ai-models', [SettingController::class, 'aiModels'])->name('admin.settings.ai-models');
         Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
     });
 

@@ -57,7 +57,7 @@ return [
     */
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
-        'model' => env('OPENROUTER_MODEL', 'poolside/laguna-s-2.1:free'),
+        'model' => env('OPENROUTER_MODEL', 'dots-studio/dots-3-note-preview:free'),
         'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
         'timeout' => env('OPENROUTER_TIMEOUT', 120),
     ],

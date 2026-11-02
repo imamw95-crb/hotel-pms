@@ -282,7 +282,7 @@ PROMPT;
             ])
                 ->timeout(config('services.openrouter.timeout', 120))
                 ->post(config('services.openrouter.base_url', 'https://openrouter.ai/api/v1').'/chat/completions', [
-                    'model' => config('services.openrouter.model', 'qwen/qwen3-8b'),
+                    'model' => OpenRouterService::resolveModel(),
                     'messages' => [
                         ['role' => 'system', 'content' => $prompt],
                     ],

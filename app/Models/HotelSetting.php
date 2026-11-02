@@ -12,8 +12,22 @@ class HotelSetting extends Model
     protected $fillable = [
         'hotel_name', 'phone', 'email', 'address', 'logo_path', 'website', 'theme',
         'company_video_path', 'company_video_url', 'tv_refresh_interval', 'tv_welcome_message',
-        'cutoff_time',
+        'cutoff_time', 'ai_model',
     ];
+
+    /**
+     * Active OpenRouter model: admin setting overrides config/env.
+     */
+    public static function aiModelName(): string
+    {
+        try {
+            $model = self::get()->ai_model;
+        } catch (\Throwable $e) {
+            $model = null;
+        }
+
+        return $model ?: (string) config('services.openrouter.model');
+    }
 
     /**
      * Get the singleton setting instance (cached for 24 hours).

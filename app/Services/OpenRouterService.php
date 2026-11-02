@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\HotelSetting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -18,10 +19,54 @@ class OpenRouterService
 
     public function __construct()
     {
-        $this->apiKey = config('services.openrouter.api_key');
-        $this->model = config('services.openrouter.model', 'qwen/qwen3-8b');
-        $this->baseUrl = config('services.openrouter.base_url', 'https://openrouter.ai/api/v1');
+        $this->apiKey = (string) config('services.openrouter.api_key');
+        $this->baseUrl = (string) config('services.openrouter.base_url', 'https://openrouter.ai/api/v1');
         $this->timeout = (int) config('services.openrouter.timeout', 120);
+        $this->model = self::resolveModel();
+    }
+
+    /**
+     * Model yang dipakai: setting admin (hotel_settings.ai_model) > config/env OPENROUTER_MODEL.
+     */
+    public static function resolveModel(): string
+    {
+        return HotelSetting::aiModelName();
+    }
+
+    /**
+     * Daftar model yang tersedia di OpenRouter (untuk dropdown setting admin).
+     *
+     * @return array<int, array{id: string, name: string, context: int|null, prompt_price: string|null}>
+     */
+    public function listModels(): array
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->timeout(30)->get("{$this->baseUrl}/models");
+
+            if (! $response->successful()) {
+                Log::warning('OpenRouter models list failed', ['status' => $response->status()]);
+
+                return [];
+            }
+
+            return collect($response->json('data', []))
+                ->map(fn ($m) => [
+                    'id' => $m['id'] ?? null,
+                    'name' => $m['name'] ?? ($m['id'] ?? null),
+                    'context' => $m['context_length'] ?? null,
+                    'prompt_price' => $m['pricing']['prompt'] ?? null,
+                ])
+                ->filter(fn ($m) => ! empty($m['id']))
+                ->sortBy('id')
+                ->values()
+                ->all();
+        } catch (\Throwable $e) {
+            Log::warning('OpenRouter models list exception: '.$e->getMessage());
+
+            return [];
+        }
     }
 
     /**
