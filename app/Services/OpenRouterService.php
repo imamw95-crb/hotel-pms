@@ -34,6 +34,17 @@ class OpenRouterService
     }
 
     /**
+     * Batasi token "thinking" untuk model reasoning (param `reasoning` OpenRouter).
+     * Model non-reasoning mengabaikan parameter ini; kosongkan OPENROUTER_REASONING_EFFORT untuk mematikan.
+     */
+    public static function reasoningParam(): array
+    {
+        $effort = trim((string) config('services.openrouter.reasoning_effort'));
+
+        return $effort === '' ? [] : ['reasoning' => ['effort' => $effort]];
+    }
+
+    /**
      * Daftar model yang tersedia di OpenRouter (untuk dropdown setting admin).
      *
      * @return array<int, array{id: string, name: string, context: int|null, prompt_price: string|null}>
@@ -97,8 +108,9 @@ class OpenRouterService
                     'messages' => [
                         ['role' => 'user', 'content' => $prompt],
                     ],
+                    ...self::reasoningParam(),
                     'temperature' => 0.1,
-                    'max_tokens' => 4096,
+                    'max_tokens' => 6144,
                 ]);
 
             if (! $response->successful()) {
@@ -242,8 +254,9 @@ PROMPT;
                     'messages' => [
                         ['role' => 'user', 'content' => $prompt],
                     ],
+                    ...self::reasoningParam(),
                     'temperature' => 0.1,
-                    'max_tokens' => 1024,
+                    'max_tokens' => 4096,
                 ]);
 
             if (! $response->successful()) {
@@ -317,8 +330,9 @@ PROMPT;
                     'messages' => [
                         ['role' => 'user', 'content' => $prompt],
                     ],
+                    ...self::reasoningParam(),
                     'temperature' => 0.1,
-                    'max_tokens' => 1024,
+                    'max_tokens' => 2048,
                 ]);
 
             if (! $response->successful()) {

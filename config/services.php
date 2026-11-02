@@ -60,6 +60,7 @@ return [
         'model' => env('OPENROUTER_MODEL', 'dots-studio/dots-3-note-preview:free'),
         'base_url' => env('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
         'timeout' => env('OPENROUTER_TIMEOUT', 120),
+        'reasoning_effort' => env('OPENROUTER_REASONING_EFFORT', 'low'),
     ],
 
     /*
