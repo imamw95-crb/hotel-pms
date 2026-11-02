@@ -19,6 +19,12 @@ if [[ ! -f "$PROJECT_DIR/artisan" ]]; then
     exit 1
 fi
 
+# Cegah dua deploy berjalan bersamaan (deploy bisa > 1 menit saat composer install)
+exec 9>"/tmp/deploy-${SITE}.lock"
+if ! flock -n 9; then
+    exit 0
+fi
+
 log "=== Checking for updates ==="
 
 cd "$PROJECT_DIR" || exit 1
