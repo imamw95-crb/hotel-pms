@@ -1770,18 +1770,22 @@ class ReservationController extends Controller
             'payment_type' => 'required|in:dp,pelunasan,tambahan,checkin_payment,refund,extend,ota_payment',
             'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
+            'payment_date' => 'required|date_format:Y-m-d',
         ]);
 
         $oldAmount = $transaction->amount;
+        $paymentDate = Carbon::parse($validated['payment_date'].' '.$transaction->created_at->format('H:i:s'));
 
         DB::beginTransaction();
         try {
             // Update transaction
-            $transaction->update([
+            $transaction->fill([
                 'type' => $validated['payment_type'],
                 'payment_method' => $validated['payment_method'],
                 'amount' => $validated['amount'],
             ]);
+            $transaction->created_at = $paymentDate;
+            $transaction->save();
 
             // Recalculate paid_amount on reservation
             $reservation->paid_amount -= $oldAmount;
@@ -1794,7 +1798,7 @@ class ReservationController extends Controller
 
             // Update paid_date
             if ($reservation->paid_amount >= $reservation->total_amount) {
-                $reservation->paid_date = now();
+                $reservation->paid_date = $paymentDate;
             } else {
                 $reservation->paid_date = null;
             }

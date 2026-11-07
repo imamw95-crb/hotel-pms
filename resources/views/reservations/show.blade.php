@@ -1442,6 +1442,10 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-xs text-gray-500 mb-1">Tanggal Pembayaran</label>
+                            <input type="date" name="payment_date" id="editPaymentDate" class="w-full border rounded px-2 py-2 text-sm" required>
+                        </div>
+                        <div>
                             <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
                             <input type="number" name="amount" id="editPaymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" required>
                         </div>
@@ -1471,6 +1475,7 @@
                         'type' => $t->type,
                         'payment_method' => $t->payment_method,
                         'amount' => $t->amount,
+                        'payment_date' => $t->created_at->format('Y-m-d'),
                     ];
                 });
             @endphp
@@ -1483,6 +1488,7 @@
                 form.action = '{{ url("transactions") }}/' + txnId + '/edit-payment';
                 document.getElementById('editPaymentType').value = txn.type;
                 document.getElementById('editPaymentMethod').value = txn.payment_method;
+                document.getElementById('editPaymentDate').value = txn.payment_date;
                 document.getElementById('editPaymentAmount').value = txn.amount;
                 document.getElementById('editPaymentModal').style.display = 'flex';
             }
