@@ -46,6 +46,10 @@ class OtaPaymentService
         $total = (float) $reservation->total_amount;
         $paidAt = $at ?? now();
 
+        // Nominal historis (belum ada baris transaksi) diambil sebelum transaksi
+        // baru dibuat, supaya tidak hilang saat paid_amount disamakan ke ledger.
+        $legacyPaid = $reservation->unrecordedPaidAmount();
+
         // NB: created_at/updated_at TIDAK ada di $fillable, jadi harus di-set langsung
         // (mass assignment akan diabaikan dan Eloquent memakai waktu sekarang).
         $transaction = new Transaction([
@@ -62,7 +66,7 @@ class OtaPaymentService
         $transaction->updated_at = $paidAt;
         $transaction->save();
 
-        $reservation->paid_amount = (float) $reservation->paid_amount + $delta;
+        $reservation->syncPaidAmount($legacyPaid);
 
         if ($total > 0 && (float) $reservation->paid_amount >= $total && ! $reservation->paid_date) {
             $reservation->paid_date = $paidAt;

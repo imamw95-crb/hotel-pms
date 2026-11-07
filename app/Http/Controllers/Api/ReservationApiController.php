@@ -398,9 +398,13 @@ class ReservationApiController extends Controller
         $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
         $otaPaidAmount = $validated['ota_paid_amount'] ?? 0;
 
-        // Sisa tagihan + hanya SELISIH ota_paid_amount yang dihitung (cegah dobel)
-        $sisaBayar = max(0, $reservation->total_amount - $reservation->paid_amount);
+        // Sisa tagihan + hanya SELISIH ota_paid_amount yang dihitung (cegah dobel).
+        // Nominal terbesar antara paid_amount & ledger dipakai supaya tagihan yang
+        // sudah dibayar (tapi paid_amount belum ikut) tidak ditagih ulang.
+        $alreadyPaid = max((float) $reservation->paid_amount, $reservation->recordedPaidAmount());
+        $sisaBayar = max(0, (float) $reservation->total_amount - $alreadyPaid);
         $otaDelta = max(0, $otaPaidAmount - (float) ($reservation->ota_paid_amount ?? 0));
+        $legacyPaid = $reservation->unrecordedPaidAmount();
 
         if ($sisaBayar <= 0) {
             return response()->json([
@@ -452,10 +456,7 @@ class ReservationApiController extends Controller
                 ]);
             }
 
-            $reservation->paid_amount = min(
-                (float) $reservation->total_amount,
-                (float) $reservation->paid_amount + $otaDelta + $hotelAmount
-            );
+            $reservation->syncPaidAmount($legacyPaid);
 
             if ($reservation->paid_amount >= $reservation->total_amount) {
                 $reservation->paid_date = now();

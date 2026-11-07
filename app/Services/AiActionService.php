@@ -374,8 +374,10 @@ class AiActionService
             return DB::transaction(function () use ($reservation, $amount, $paymentMethod) {
                 if ($amount > 0) {
                     $sourceType = PaymentMethod::where('slug', $paymentMethod)->value('source_type');
+                    $legacyPaid = $reservation->unrecordedPaidAmount();
                     Transaction::create(['reservation_id' => $reservation->id, 'type' => 'checkout_payment', 'amount' => $amount, 'payment_method' => $paymentMethod, 'source_type' => $sourceType, 'notes' => 'Check-out via AI Chat', 'created_by' => auth()->id() ?? 1]);
-                    $reservation->increment('paid_amount', $amount);
+                    $reservation->syncPaidAmount($legacyPaid);
+                    $reservation->save();
                 }
                 $reservation->update(['status' => 'checked_out']);
                 $reservation->room->update(['status' => 'cleaning']);
@@ -447,8 +449,10 @@ class AiActionService
 
         try {
             $sourceType = PaymentMethod::where('slug', $paymentMethod)->value('source_type');
+            $legacyPaid = $reservation->unrecordedPaidAmount();
             Transaction::create(['reservation_id' => $reservation->id, 'type' => $type, 'amount' => $amount, 'payment_method' => $paymentMethod, 'source_type' => $sourceType, 'notes' => 'Pembayaran via AI Chat', 'created_by' => auth()->id() ?? 1]);
-            $reservation->increment('paid_amount', $amount);
+            $reservation->syncPaidAmount($legacyPaid);
+            $reservation->save();
             $fmt = fn ($v) => 'Rp '.number_format($v, 0, ',', '.');
             $remaining = (float) $reservation->fresh()->remaining_payment;
 

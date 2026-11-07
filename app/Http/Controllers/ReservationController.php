@@ -172,8 +172,15 @@ class ReservationController extends Controller
         $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
         $otaPaidAmount = $validated['ota_paid_amount'] ?? 0;
 
-        // Hitung sisa bayar (total - sudah dibayar sebelumnya)
-        $sisaBayar = max(0, $reservation->total_amount - $reservation->paid_amount);
+        // Sisa tagihan dihitung dari nominal terbesar antara paid_amount dan total
+        // transaksi. Kalau ledger lebih besar, paid_amount sedang tertinggal —
+        // jangan sampai tagihan yang sebenarnya sudah dibayar ditagih lagi.
+        $alreadyPaid = max((float) $reservation->paid_amount, $reservation->recordedPaidAmount());
+        $sisaBayar = max(0, (float) $reservation->total_amount - $alreadyPaid);
+
+        // Nominal historis (belum punya baris transaksi) diambil sebelum transaksi
+        // baru dibuat, supaya tidak hilang saat paid_amount disamakan ke ledger.
+        $legacyPaid = $reservation->unrecordedPaidAmount();
 
         if ($sisaBayar <= 0) {
             return $this->paymentError($request, 'Reservasi sudah lunas — tidak ada sisa tagihan yang bisa dibayar. Ubah Total Tagihan dulu jika ada biaya tambahan.');
@@ -243,12 +250,9 @@ class ReservationController extends Controller
                 $otsService->timestampTransaction($hotelTxn);
             }
 
-            // 4. Update paid_amount di reservasi (OTA + Hotel)
-            //    Cegah paid_amount melebihi total tagihan (lebih bayar)
-            $reservation->paid_amount = min(
-                (float) $reservation->total_amount,
-                (float) $reservation->paid_amount + $otaDelta + $hotelAmount
-            );
+            // 4. paid_amount diturunkan dari ledger transaksi (+ nominal historis)
+            //    supaya "Total Dibayar" tidak pernah beda dengan Riwayat Pembayaran.
+            $reservation->syncPaidAmount($legacyPaid);
 
             // 5. Jika sudah lunas, update paid_date & timestamp final invoice
             if ($reservation->paid_amount >= $reservation->total_amount) {
@@ -1014,7 +1018,9 @@ class ReservationController extends Controller
             $paidCount = 0;
 
             foreach ($reservations as $res) {
-                $sisa = $res->total_amount - $res->paid_amount;
+                $legacyPaid = $res->unrecordedPaidAmount();
+                $alreadyPaid = max((float) $res->paid_amount, $res->recordedPaidAmount());
+                $sisa = (float) $res->total_amount - $alreadyPaid;
                 if ($sisa <= 0) {
                     continue; // sudah lunas
                 }
@@ -1036,8 +1042,8 @@ class ReservationController extends Controller
                 // ≡ƒöÉ OTS: Timestamp receipt pelunasan
                 $otsService->timestampTransaction($txn);
 
-                // Update paid_amount
-                $res->paid_amount += $sisa;
+                // Update paid_amount dari ledger transaksi
+                $res->syncPaidAmount($legacyPaid);
                 $res->paid_date = now();
                 $res->payment_method = $validated['payment_method'];
                 $res->save();
@@ -1780,8 +1786,10 @@ class ReservationController extends Controller
             'payment_date' => 'required|date_format:Y-m-d',
         ]);
 
-        $oldAmount = $transaction->amount;
         $paymentDate = Carbon::parse($validated['payment_date'].' '.$transaction->created_at->format('H:i:s'));
+
+        // Nominal historis yang belum punya baris transaksi (ambil sebelum diubah).
+        $legacyPaid = $reservation->unrecordedPaidAmount();
 
         DB::beginTransaction();
         try {
@@ -1794,14 +1802,8 @@ class ReservationController extends Controller
             $transaction->created_at = $paymentDate;
             $transaction->save();
 
-            // Recalculate paid_amount on reservation
-            $reservation->paid_amount -= $oldAmount;
-            $reservation->paid_amount += $validated['amount'];
-
-            // Pastikan paid_amount tidak negatif
-            if ($reservation->paid_amount < 0) {
-                $reservation->paid_amount = 0;
-            }
+            // paid_amount selalu mengikuti ledger transaksi
+            $reservation->syncPaidAmount($legacyPaid);
 
             // Update paid_date
             if ($reservation->paid_amount >= $reservation->total_amount) {
@@ -1844,11 +1846,15 @@ class ReservationController extends Controller
 
         DB::beginTransaction();
         try {
-            // Kurangi paid_amount
-            $reservation->paid_amount -= $transaction->amount;
-            if ($reservation->paid_amount < 0) {
-                $reservation->paid_amount = 0;
-            }
+            // Reset OTS untuk transaction & invoice karena data berubah
+            app(OpenTimestampService::class)->resetTransactionProof($transaction);
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+
+            $transaction->delete();
+
+            // paid_amount dihitung ulang dari ledger (baris tadi sudah terhapus)
+            $reservation->paid_amount = 0;
+            $reservation->syncPaidAmount();
 
             // Update paid_date jika belum lunas
             if ($reservation->paid_amount < $reservation->total_amount) {
@@ -1856,12 +1862,6 @@ class ReservationController extends Controller
             }
 
             $reservation->save();
-
-            // Reset OTS untuk transaction & invoice karena data berubah
-            app(OpenTimestampService::class)->resetTransactionProof($transaction);
-            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
-
-            $transaction->delete();
             DB::commit();
 
             if (request()->expectsJson()) {

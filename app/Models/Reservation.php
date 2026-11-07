@@ -104,6 +104,49 @@ class Reservation extends Model
         return $this->hasMany(RestoTransaction::class);
     }
 
+    /**
+     * Tipe transaksi yang BUKAN pembayaran tagihan kamar:
+     * - additional  : other revenue / service charge (pendapatan terpisah)
+     * - adjustment   : jejak perubahan tanggal (nominal 0)
+     */
+    public const NON_BILL_PAYMENT_TYPES = ['additional', 'adjustment'];
+
+    /**
+     * Total pembayaran yang benar-benar tercatat di Riwayat Pembayaran.
+     *
+     * Tabel transactions adalah sumber kebenaran nominal yang diterima hotel,
+     * jadi paid_amount tidak boleh dihitung manual di tiap controller.
+     */
+    public function recordedPaidAmount(): float
+    {
+        return (float) $this->transactions()
+            ->whereNotIn('type', self::NON_BILL_PAYMENT_TYPES)
+            ->sum('amount');
+    }
+
+    /**
+     * Bagian paid_amount yang belum punya baris transaksi (input manual lama,
+     * sebelum fitur Riwayat Pembayaran ada). Harus diambil SEBELUM transaksi
+     * baru dibuat, supaya nominal historis tidak hilang saat rekonsiliasi.
+     */
+    public function unrecordedPaidAmount(): float
+    {
+        return max(0, (float) $this->paid_amount - $this->recordedPaidAmount());
+    }
+
+    /**
+     * Samakan paid_amount dengan total transaksi pembayaran (+ nominal historis).
+     *
+     * Dipanggil setelah setiap perubahan pembayaran supaya "Total Dibayar" di
+     * halaman reservasi selalu sama dengan jumlah baris di Riwayat Pembayaran.
+     */
+    public function syncPaidAmount(float $legacyOffset = 0.0): float
+    {
+        $this->paid_amount = $this->recordedPaidAmount() + $legacyOffset;
+
+        return (float) $this->paid_amount;
+    }
+
     public function getRemainingPaymentAttribute()
     {
         return $this->total_amount - $this->paid_amount;
