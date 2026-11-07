@@ -159,9 +159,14 @@ class ReservationController extends Controller
             'payment_type' => 'required|in:dp,pelunasan,tambahan',
             'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
+            'payment_date' => 'nullable|date_format:Y-m-d',
             'ota_payment_status' => 'nullable|in:paid_ota,partial_ota,unpaid_ota',
             'ota_paid_amount' => 'nullable|numeric|min:0',
         ]);
+
+        $paymentDate = isset($validated['payment_date'])
+            ? Carbon::parse($validated['payment_date'].' '.now()->format('H:i:s'))
+            : now();
 
         $hotelAmount = $validated['amount'];
         $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
@@ -217,6 +222,7 @@ class ReservationController extends Controller
                     'notes' => 'OTA: '.str_replace(['ota_', '_'], ['', ' '], $validated['payment_method']).' - '.str_replace('_', ' ', $otaPaymentStatus ?? 'unpaid'),
                     'created_by' => auth()->id(),
                 ]);
+                $otaTxn->forceFill(['created_at' => $paymentDate, 'updated_at' => $paymentDate])->saveQuietly();
                 // ≡ƒöÉ OTS: Timestamp receipt OTA
                 $otsService->timestampTransaction($otaTxn);
             }
@@ -232,6 +238,7 @@ class ReservationController extends Controller
                     'source_type' => $sourceType,
                     'created_by' => auth()->id(),
                 ]);
+                $hotelTxn->forceFill(['created_at' => $paymentDate, 'updated_at' => $paymentDate])->saveQuietly();
                 // ≡ƒöÉ OTS: Timestamp receipt pembayaran (DP/Pelunasan/Tambahan)
                 $otsService->timestampTransaction($hotelTxn);
             }
@@ -245,7 +252,7 @@ class ReservationController extends Controller
 
             // 5. Jika sudah lunas, update paid_date & timestamp final invoice
             if ($reservation->paid_amount >= $reservation->total_amount) {
-                $reservation->paid_date = now();
+                $reservation->paid_date = $paymentDate;
                 // ≡ƒöÉ OTS: Timestamp final invoice
                 $otsService->timestampInvoice($reservation);
             } else {

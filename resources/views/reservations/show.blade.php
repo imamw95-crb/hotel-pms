@@ -1379,6 +1379,15 @@
                     </div>
                 </div>
 
+                {{-- Baris 1b: Tanggal Pembayaran (boleh backdate) --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">Tanggal Pembayaran</label>
+                        <input type="date" name="payment_date" id="paymentDate" class="w-full border rounded px-2 py-2 text-sm" value="{{ now()->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}">
+                        <p class="text-[10px] text-gray-400 mt-0.5">Bisa diisi tanggal sebelumnya (backdate)</p>
+                    </div>
+                </div>
+
                 {{-- Baris 2: Nominal OTA (jika OTA partial/paid) + Nominal Bayar Hotel --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                     @if($isOta)
