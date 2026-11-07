@@ -252,12 +252,14 @@ class BookingController extends Controller
 
         // Pembayaran OTA (Tiket.com/Traveloka/dll) sudah masuk ke hotel → catat sebagai
         // transaksi supaya muncul di Riwayat Pembayaran dan menambah paid_amount.
+        // Tanggal transaksi mengikuti check-in (di-cap ke hari ini kalau masih depan).
         $otaPaidAmount = (float) ($validated['ota_paid_amount'] ?? 0);
         if ($otaPaidAmount > 0 && in_array($validated['ota_payment_status'] ?? '', ['paid_ota', 'partial_ota'], true)) {
             app(OtaPaymentService::class)->record(
                 $reservation,
                 $otaPaidAmount,
-                $validated['ota_source'] ?? null
+                $validated['ota_source'] ?? null,
+                OtaPaymentService::businessDate($reservation->check_in)
             );
         }
 

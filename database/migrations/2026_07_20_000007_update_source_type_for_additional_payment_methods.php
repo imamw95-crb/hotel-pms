@@ -26,13 +26,16 @@ return new class extends Migration
             'tiket.com', 'traveloka.com', 'ota_payment', 'ota-traveloka', 'ota_traveloka', 'ota_tiket_com',
         ])->update(['source_type' => 'ota']);
 
-        // Backfill source_type untuk transaksi lama
-        DB::statement('
-            UPDATE transactions t
-            JOIN payment_methods pm ON pm.slug = t.payment_method
-            SET t.source_type = pm.source_type
-            WHERE t.source_type IS NULL AND pm.source_type IS NOT NULL
-        ');
+        // Backfill source_type untuk transaksi lama (portable: jalan di MySQL & SQLite)
+        DB::table('payment_methods')
+            ->whereNotNull('source_type')
+            ->get(['slug', 'source_type'])
+            ->each(function ($method) {
+                DB::table('transactions')
+                    ->whereNull('source_type')
+                    ->where('payment_method', $method->slug)
+                    ->update(['source_type' => $method->source_type]);
+            });
     }
 
     public function down(): void

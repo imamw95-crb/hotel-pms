@@ -3,25 +3,15 @@
 namespace Tests\Unit;
 
 use App\Models\Allotment;
+use App\Models\RoomType;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AllotmentBookedCountTest extends TestCase
 {
     public function test_increment_and_decrement_booked_only_count_nights_before_checkout_day(): void
     {
-        DB::connection()->getSchemaBuilder()->create('allotments', function ($table) {
-            $table->id();
-            $table->unsignedBigInteger('room_type_id');
-            $table->date('date');
-            $table->integer('allotment')->default(0);
-            $table->integer('booked')->default(0);
-            $table->string('channel')->nullable();
-            $table->timestamps();
-        });
-
-        $roomTypeId = 77;
+        $roomTypeId = RoomType::factory()->create()->id;
         $checkIn = Carbon::parse('2026-07-10 14:00');
         $checkOut = Carbon::parse('2026-07-11 12:00');
 

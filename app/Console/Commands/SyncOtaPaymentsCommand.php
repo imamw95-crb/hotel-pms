@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Reservation;
-use App\Models\Transaction;
 use App\Services\OtaPaymentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -58,12 +57,10 @@ class SyncOtaPaymentsCommand extends Command
                 continue;
             }
 
-            // check_in hanya dipakai sebagai tanggal bisnis untuk backfill data lama
-            // (check_in sudah lewat). Kalau check_in masih di depan / tamu belum
-            // check-in, pakai waktu sekarang supaya nominal yang baru diterima tidak
-            // tercatat di periode night audit yang belum berjalan.
-            $checkIn = $reservation->check_in;
-            $businessAt = ($checkIn && $checkIn->lessThan(now())) ? $checkIn : now();
+            // Tanggal bisnis mengikuti check-in (tanggal tamu menginap), di-cap ke
+            // waktu sekarang kalau check-in masih di depan supaya nominal yang baru
+            // diterima tidak tercatat di periode night audit yang belum berjalan.
+            $businessAt = OtaPaymentService::businessDate($reservation->check_in);
 
             $transaction = $otaPayments->record(
                 $reservation,

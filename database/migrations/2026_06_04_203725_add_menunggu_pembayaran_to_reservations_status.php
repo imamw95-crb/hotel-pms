@@ -10,6 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE reservations MODIFY COLUMN status ENUM('pending', 'menunggu_pembayaran', 'checked_in', 'checked_out', 'cancelled', 'no_show') NOT NULL DEFAULT 'pending'");
     }
 
@@ -18,6 +22,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE reservations MODIFY COLUMN status ENUM('pending', 'checked_in', 'checked_out', 'cancelled', 'no_show') NOT NULL DEFAULT 'pending'");
     }
 };

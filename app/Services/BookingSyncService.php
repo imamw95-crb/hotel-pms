@@ -179,12 +179,16 @@ class BookingSyncService
 
                     $existing->update($updateData);
 
-                    // Catat pembayaran OTA ke Riwayat Pembayaran (idempotent, hanya selisih)
+                    // Catat pembayaran OTA ke Riwayat Pembayaran (idempotent, hanya selisih).
+                    // Tanggal transaksi mengikuti check-in supaya pendapatan masuk ke
+                    // periode kunjungan, bukan menumpuk di tanggal sync.
                     if ($otaPaymentStatus === 'paid_ota') {
+                        $fresh = $existing->fresh();
                         app(OtaPaymentService::class)->record(
-                            $existing->fresh(),
+                            $fresh,
                             (float) $otaPaidAmount,
-                            $reservationData['payment_method'] ?? null
+                            $reservationData['payment_method'] ?? null,
+                            OtaPaymentService::businessDate($fresh->check_in)
                         );
                     }
 
@@ -223,12 +227,14 @@ class BookingSyncService
 
                 // Payment OTA otomatis dibuatkan transaksinya supaya muncul di
                 // Riwayat Pembayaran + menambah paid_amount. Idempotent: hanya
-                // selisih yang belum tercatat yang diinput.
+                // selisih yang belum tercatat yang diinput. Tanggal transaksi
+                // mengikuti check-in (di-cap ke hari ini kalau check-in masih depan).
                 if ($otaPaymentStatus === 'paid_ota') {
                     app(OtaPaymentService::class)->record(
                         $reservation,
                         (float) $otaPaidAmount,
-                        $reservationData['payment_method'] ?? null
+                        $reservationData['payment_method'] ?? null,
+                        OtaPaymentService::businessDate($reservation->check_in)
                     );
                 }
 

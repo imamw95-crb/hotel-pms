@@ -27,6 +27,7 @@ class OtaPaymentService
      *                                    Jangan pernah diisi tanggal di masa depan — transaksi
      *                                    seperti itu tidak akan muncul di Night Audit periode
      *                                    berjalan (query NA memfilter created_at per periode).
+     *                                    Pakai {@see self::businessDate()} untuk reservasi OTA.
      * @return Transaction|null Transaksi baru, atau null kalau tidak ada yang perlu dicatat
      */
     public function record(Reservation $reservation, float $otaPaidAmount, ?string $paymentMethod = null, ?CarbonInterface $at = null): ?Transaction
@@ -79,6 +80,20 @@ class OtaPaymentService
         ]);
 
         return $transaction;
+    }
+
+    /**
+     * Tanggal bisnis auto payment OTA: mengikuti tanggal check-in.
+     *
+     * Kalau check-in masih di masa depan (booking jauh hari, tamu belum datang),
+     * pakai waktu sekarang — transaksi bertanggal masa depan tidak akan muncul di
+     * Night Audit periode berjalan, padahal uangnya sudah diterima hari ini.
+     */
+    public static function businessDate(?CarbonInterface $checkIn, ?CarbonInterface $now = null): CarbonInterface
+    {
+        $now = $now ?? now();
+
+        return ($checkIn && $checkIn->lessThan($now)) ? $checkIn : $now;
     }
 
     /**
