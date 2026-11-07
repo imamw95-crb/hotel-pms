@@ -95,6 +95,31 @@ class PaidAmountSyncTest extends TestCase
         $this->assertSame(387000.0, (float) $reservation->fresh()->paid_amount);
     }
 
+    public function test_command_does_not_reduce_paid_amount_silently(): void
+    {
+        // paid_amount lebih besar dari ledger (mis. nominal historis/SC lama)
+        // tidak diturunkan otomatis — hanya dilaporkan.
+        $reservation = Reservation::factory()->create(['total_amount' => 7680000, 'paid_amount' => 3640000]);
+        $this->addTransaction($reservation, 'pelunasan', 3440000);
+
+        $this->artisan('payments:sync --fix')->assertSuccessful();
+
+        $this->assertSame(3640000.0, (float) $reservation->fresh()->paid_amount);
+    }
+
+    public function test_command_skips_cancelled_reservation(): void
+    {
+        $reservation = Reservation::factory()->cancelled()->create([
+            'total_amount' => 1100000,
+            'paid_amount' => 500000,
+        ]);
+        $this->addTransaction($reservation, 'dp', 1100000);
+
+        $this->artisan('payments:sync --fix')->assertSuccessful();
+
+        $this->assertSame(500000.0, (float) $reservation->fresh()->paid_amount);
+    }
+
     public function test_add_payment_keeps_paid_amount_in_sync_with_history(): void
     {
         $this->setUpPaymentMethod();

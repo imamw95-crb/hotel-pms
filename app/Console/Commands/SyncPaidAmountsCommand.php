@@ -21,8 +21,8 @@ class SyncPaidAmountsCommand extends Command
      * (service charge & jejak ubah tanggal bukan pembayaran tagihan kamar).
      *
      * Kasus yang diperbaiki otomatis hanya "uang sudah masuk tapi paid_amount
-     * tertinggal" (recorded > paid dan recorded <= total tagihan). Kasus lain
-     * hanya dilaporkan karena butuh keputusan manual.
+     * tertinggal" (recorded > paid, recorded <= total, bukan reservasi batal).
+     * Kasus lain hanya dilaporkan karena butuh keputusan manual.
      */
     public function handle(): int
     {
@@ -46,8 +46,15 @@ class SyncPaidAmountsCommand extends Command
                 continue;
             }
 
-            if ($recorded > $total) {
-                $manual[] = [$reservation, $recorded, $total];
+            $reason = match (true) {
+                $reservation->status === 'cancelled' => 'reservasi dibatalkan (butuh cek refund)',
+                $recorded > $total => 'transaksi > total tagihan',
+                $recorded < $paid => 'paid_amount lebih besar dari transaksi',
+                default => null,
+            };
+
+            if ($reason !== null) {
+                $manual[] = [$reservation, $recorded, $total, $reason];
 
                 continue;
             }
@@ -69,15 +76,16 @@ class SyncPaidAmountsCommand extends Command
             ));
         }
 
-        foreach ($manual as [$reservation, $recorded, $total]) {
+        foreach ($manual as [$reservation, $recorded, $total, $reason]) {
             $this->warn(sprintf(
-                '  SKIP #%d %-18s %-11s total=%s paid=%s transaksi=%s (transaksi > total tagihan)',
+                '  SKIP #%d %-18s %-11s total=%s paid=%s transaksi=%s — %s',
                 $reservation->id,
                 $reservation->reservation_number,
                 $reservation->status,
                 $this->money($total),
                 $this->money((float) $reservation->paid_amount),
-                $this->money($recorded)
+                $this->money($recorded),
+                $reason
             ));
         }
 
