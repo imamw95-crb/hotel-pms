@@ -83,4 +83,25 @@ class PaymentGuardTest extends TestCase
 
         $this->assertTrue($future->fresh()->created_at->lessThanOrEqualTo(now()));
     }
+
+    public function test_audit_command_runs_and_reports_drift(): void
+    {
+        $reservation = Reservation::factory()->create(['total_amount' => 637000, 'paid_amount' => 1000]);
+        Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'pelunasan',
+            'amount' => 637000,
+        ]);
+
+        $cancelled = Reservation::factory()->cancelled()->create(['total_amount' => 500000, 'paid_amount' => 0]);
+        Transaction::factory()->create([
+            'reservation_id' => $cancelled->id,
+            'type' => 'dp',
+            'amount' => 200000,
+        ]);
+
+        $this->artisan('payments:audit')
+            ->expectsOutputToContain('paid_amount != ledger')
+            ->assertSuccessful();
+    }
 }

@@ -89,7 +89,7 @@ class AuditPaymentsCommand extends Command
 
         // ─── 4. reservasi batal yang masih punya uang masuk ───────
         $cancelled = Reservation::where('status', 'cancelled')
-            ->whereRaw("{$sumSub} > 0")
+            ->whereRaw("(select coalesce(sum(t.amount), 0) from transactions t where t.reservation_id = reservations.id and t.type not in ('additional', 'adjustment')) > 0")
             ->get(['id', 'reservation_number']);
 
         if ($cancelled->isNotEmpty()) {
