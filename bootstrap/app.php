@@ -54,6 +54,15 @@ return Application::configure(basePath: dirname(__DIR__))
             ->runInBackground()
             ->appendOutputTo(storage_path('logs/ota-payment-sync.log'));
 
+        // ─── Audit Pembayaran Harian ───────────────────────────────
+        // Cek selisih paid_amount vs ledger, transaksi bertanggal masa depan,
+        // dan perubahan transaksi pada periode NA yang sudah di-lock.
+        // Read-only: tidak mengubah data, hanya menulis ke payments-audit.log.
+        $schedule->command('payments:audit')
+            ->dailyAt('06:05')
+            ->withoutOverlapping(60)
+            ->appendOutputTo(storage_path('logs/payments-audit-cron.log'));
+
         // ─── OTS Proof Upgrader (blockchain Bitcoin) ───────────────
         // Konfirmasi proof OpenTimestamps ke blockchain Bitcoin.
         // WAJIB ada di sini: schedule() di App\Console\Kernel TIDAK dipakai

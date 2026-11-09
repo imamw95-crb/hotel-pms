@@ -13,7 +13,9 @@ use App\Models\Room;
 use App\Models\Transaction;
 use App\Services\OpenRouterService;
 use App\Services\OpenTimestampService;
+use App\Services\NightAuditLockService;
 use App\Services\PaymentDateService;
+use App\Services\ReservationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -163,11 +165,31 @@ class ReservationController extends Controller
             'payment_date' => 'nullable|date_format:Y-m-d',
             'ota_payment_status' => 'nullable|in:paid_ota,partial_ota,unpaid_ota',
             'ota_paid_amount' => 'nullable|numeric|min:0',
+            'submit_token' => 'nullable|string|max:64',
         ]);
+
+        // Anti double-submit: token yang sama hanya boleh menghasilkan 1 pembayaran.
+        $submitToken = $validated['submit_token'] ?? null;
+        if ($submitToken) {
+            $existing = Transaction::where('idempotency_key', $submitToken)->exists();
+            if ($existing) {
+                return $this->paymentSuccess($request, $reservation, 'Pembayaran ini sudah tersimpan sebelumnya.');
+            }
+        }
 
         $paymentDate = isset($validated['payment_date'])
             ? PaymentDateService::forBusinessDate(Carbon::parse($validated['payment_date']))
             : now();
+
+        // Periode bisnis yang sudah di-lock bersifat final. Koreksi untuk periode
+        // itu dicatat sebagai transaksi baru di periode berjalan supaya laporan
+        // yang sudah locked tidak berubah, tapi uangnya tetap terlihat.
+        $correctionFor = null;
+        if (isset($validated['payment_date']) && NightAuditLockService::isLocked($paymentDate)) {
+            $correctionFor = NightAuditLockService::businessDateOf($paymentDate);
+            $paymentDate = now();
+        }
+        $correctionNote = $correctionFor ? '[Koreksi NA '.$correctionFor.'] ' : '';
 
         $hotelAmount = $validated['amount'];
         $otaPaymentStatus = $validated['ota_payment_status'] ?? null;
@@ -227,7 +249,8 @@ class ReservationController extends Controller
                     'amount' => $otaDelta,
                     'payment_method' => $validated['payment_method'],
                     'source_type' => $sourceType,
-                    'notes' => 'OTA: '.str_replace(['ota_', '_'], ['', ' '], $validated['payment_method']).' - '.str_replace('_', ' ', $otaPaymentStatus ?? 'unpaid'),
+                    'notes' => $correctionNote.'OTA: '.str_replace(['ota_', '_'], ['', ' '], $validated['payment_method']).' - '.str_replace('_', ' ', $otaPaymentStatus ?? 'unpaid'),
+                    'idempotency_key' => $submitToken ? $submitToken.'-ota' : null,
                     'created_by' => auth()->id(),
                 ]);
                 $otaTxn->forceFill(['created_at' => $paymentDate, 'updated_at' => $paymentDate])->saveQuietly();
@@ -244,6 +267,8 @@ class ReservationController extends Controller
                     'amount' => $hotelAmount,
                     'payment_method' => $validated['payment_method'],
                     'source_type' => $sourceType,
+                    'notes' => $correctionNote ?: null,
+                    'idempotency_key' => $submitToken,
                     'created_by' => auth()->id(),
                 ]);
                 $hotelTxn->forceFill(['created_at' => $paymentDate, 'updated_at' => $paymentDate])->saveQuietly();
@@ -272,18 +297,22 @@ class ReservationController extends Controller
             DB::commit();
 
             $typeLabel = $validated['payment_type'] === 'dp' ? 'DP' : ($validated['payment_type'] === 'pelunasan' ? 'Pelunasan' : 'Pembayaran tambahan');
+            $successMessage = "{$typeLabel} sebesar Rp ".number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.';
+            if ($correctionFor) {
+                $successMessage .= ' Periode NA '.$correctionFor.' sudah di-lock, jadi dicatat sebagai koreksi periode berjalan.';
+            }
 
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "{$typeLabel} sebesar Rp ".number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.',
+                    'message' => $successMessage,
                     'redirect_url' => route('reservations.show', $reservation),
                     'reservation' => $reservation,
                 ]);
             }
 
             return redirect()->route('reservations.show', $reservation)
-                ->with('success', "{$typeLabel} sebesar Rp ".number_format($validated['amount'], 0, ',', '.').' berhasil ditambahkan.');
+                ->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -307,6 +336,147 @@ class ReservationController extends Controller
         }
 
         return back()->with('error', $message);
+    }
+
+    /**
+     * Response sukses idempotent: submit ulang dengan token yang sama tidak
+     * membuat transaksi baru, tapi staff tetap melihat pesan berhasil.
+     */
+    private function paymentSuccess(Request $request, Reservation $reservation, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => route('reservations.show', $reservation),
+                'reservation' => $reservation,
+            ]);
+        }
+
+        return redirect()->route('reservations.show', $reservation)->with('success', $message);
+    }
+
+    /**
+     * Koreksi pembayaran yang periodenya sudah di-lock night audit.
+     *
+     * Transaksi asli tidak diubah (laporan locked tetap sama); selisih nominal
+     * dicatat sebagai transaksi baru bertanggal periode berjalan.
+     */
+    private function storeLockedPeriodCorrection(Request $request, Transaction $transaction, array $validated)
+    {
+        $reservation = $transaction->reservation;
+        $newAmount = (float) $validated['amount'];
+        $delta = round($newAmount - (float) $transaction->amount, 2);
+        $businessDate = NightAuditLockService::businessDateOf($transaction->created_at);
+
+        if (abs($delta) < 0.01) {
+            return $this->paymentSuccess(
+                $request,
+                $reservation,
+                "Periode NA {$businessDate} sudah di-lock. Tidak ada selisih nominal, jadi tidak ada koreksi yang dicatat."
+            );
+        }
+
+        $legacyPaid = $reservation->unrecordedPaidAmount();
+        $sourceType = PaymentMethod::where('slug', $validated['payment_method'])->value('source_type');
+
+        DB::beginTransaction();
+        try {
+            $correction = Transaction::create([
+                'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                'reservation_id' => $reservation->id,
+                'type' => 'koreksi',
+                'amount' => $delta,
+                'payment_method' => $validated['payment_method'],
+                'source_type' => $sourceType,
+                'notes' => '[Koreksi NA '.$businessDate.'] '.$transaction->transaction_number
+                    .': '.$transaction->type.' Rp '.number_format((float) $transaction->amount, 0, ',', '.')
+                    .' → '.$validated['payment_type'].' Rp '.number_format($newAmount, 0, ',', '.'),
+                'created_by' => auth()->id(),
+            ]);
+
+            $reservation->syncPaidAmount($legacyPaid);
+            if ($reservation->paid_amount >= $reservation->total_amount) {
+                $reservation->paid_date = $reservation->paid_date ?: now();
+            } else {
+                $reservation->paid_date = null;
+            }
+            $reservation->save();
+
+            app(OpenTimestampService::class)->timestampTransaction($correction);
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal mencatat koreksi pembayaran: '.$e->getMessage());
+        }
+
+        $message = "Periode NA {$businessDate} sudah di-lock, jadi selisih Rp ".number_format(abs($delta), 0, ',', '.')
+            .' dicatat sebagai transaksi koreksi periode berjalan.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => route('reservations.show', $reservation),
+            ]);
+        }
+
+        return redirect()->route('reservations.show', $reservation)->with('success', $message);
+    }
+
+    /**
+     * Batalkan pembayaran yang periodenya sudah di-lock night audit dengan
+     * transaksi koreksi negatif di periode berjalan (baris asli tetap utuh).
+     */
+    private function storeLockedPeriodReversal(Request $request, Transaction $transaction)
+    {
+        $reservation = $transaction->reservation;
+        $businessDate = NightAuditLockService::businessDateOf($transaction->created_at);
+        $legacyPaid = $reservation->unrecordedPaidAmount();
+
+        DB::beginTransaction();
+        try {
+            $reversal = Transaction::create([
+                'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+                'reservation_id' => $reservation->id,
+                'type' => 'koreksi',
+                'amount' => -1 * (float) $transaction->amount,
+                'payment_method' => $transaction->payment_method,
+                'source_type' => $transaction->source_type,
+                'notes' => '[Koreksi NA '.$businessDate.'] Pembatalan '.$transaction->transaction_number,
+                'created_by' => auth()->id(),
+            ]);
+
+            $reservation->syncPaidAmount($legacyPaid);
+            if ($reservation->paid_amount < $reservation->total_amount) {
+                $reservation->paid_date = null;
+            }
+            $reservation->save();
+
+            app(OpenTimestampService::class)->timestampTransaction($reversal);
+            app(OpenTimestampService::class)->resetInvoiceProof($reservation);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Gagal membatalkan pembayaran: '.$e->getMessage());
+        }
+
+        $message = "Periode NA {$businessDate} sudah di-lock. Pembayaran dibatalkan lewat transaksi koreksi negatif di periode berjalan.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => route('reservations.show', $reservation),
+            ]);
+        }
+
+        return redirect()->route('reservations.show', $reservation)->with('success', $message);
     }
 
     public function cancel(Request $request, Reservation $reservation)
@@ -344,6 +514,12 @@ class ReservationController extends Controller
             }
         } catch (\Exception $e) {
             Log::warning('Failed to decrement allotment on cancel: '.$e->getMessage());
+        }
+
+        // Refund dicatat sebagai transaksi negatif di periode berjalan supaya
+        // pendapatan periode ini net dan riwayat pembayaran tetap utuh.
+        if ($request->boolean('confirm_refund') && $reservation->paid_amount > 0) {
+            app(ReservationService::class)->recordRefund($reservation);
         }
 
         $reservation->update(['status' => 'cancelled']);
@@ -1792,6 +1968,13 @@ class ReservationController extends Controller
             $transaction->created_at
         );
 
+        // Transaksi lama yang periodenya sudah di-lock tidak boleh diubah —
+        // laporan locked dibaca dari snapshot. Selisih koreksinya dicatat
+        // sebagai transaksi baru di periode berjalan.
+        if (NightAuditLockService::isLocked($transaction->created_at)) {
+            return $this->storeLockedPeriodCorrection($request, $transaction, $validated);
+        }
+
         // Nominal historis yang belum punya baris transaksi (ambil sebelum diubah).
         $legacyPaid = $reservation->unrecordedPaidAmount();
 
@@ -1843,10 +2026,16 @@ class ReservationController extends Controller
     /**
      * Delete a transaction/payment
      */
-    public function deletePayment($transactionId)
+    public function deletePayment(Request $request, $transactionId)
     {
         $transaction = Transaction::findOrFail($transactionId);
         $reservation = $transaction->reservation;
+
+        // Transaksi di periode yang sudah di-lock tidak dihapus (laporan locked
+        // final) — pembatalannya dicatat sebagai transaksi koreksi negatif.
+        if (NightAuditLockService::isLocked($transaction->created_at)) {
+            return $this->storeLockedPeriodReversal($request, $transaction);
+        }
 
         DB::beginTransaction();
         try {

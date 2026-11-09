@@ -1344,8 +1344,11 @@
             </div>
             @endif
 
-            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true" data-refresh="true">
+            <form action="{{ route('reservations.add-payment', $reservation) }}" method="POST" id="paymentForm" data-ajax="true" data-refresh="true"
+                  onsubmit="var b=this.querySelector('button[type=submit]');if(b){b.disabled=true;setTimeout(function(){b.disabled=false;},3000);}">
                 @csrf
+                {{-- Token idempotensi: submit ganda tidak membuat 2 transaksi --}}
+                <input type="hidden" name="submit_token" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
 
                 {{-- Baris 1: Status OTA (jika OTA) + Tipe Pembayaran --}}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">

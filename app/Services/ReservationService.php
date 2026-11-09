@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\{Reservation, Guest, Room, Allotment};
+use App\Models\PaymentMethod;
+use App\Models\Transaction;
 use App\Jobs\WebBookingCreatedJob;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -157,8 +159,54 @@ class ReservationService
             );
         }
 
+        // Refund dicatat sebagai transaksi negatif (basis kas) supaya uang yang
+        // dikembalikan mengurangi pendapatan periode refund, bukan menghapus
+        // riwayat pembayaran yang sudah dilaporkan.
+        if ($confirmRefund && $reservation->paid_amount > 0) {
+            $this->recordRefund($reservation);
+        }
+
         $reservation->update(['status' => 'cancelled']);
         Log::info('Reservation cancelled', ['id' => $reservation->id, 'user_id' => auth()->id()]);
+    }
+
+    /**
+     * Catat refund pembatalan sebagai transaksi NEGATIF di periode berjalan.
+     *
+     * Nominal tidak boleh melebihi uang yang benar-benar diterima (ledger),
+     * dan nominal historis tanpa baris transaksi tetap dipertahankan.
+     */
+    public function recordRefund(Reservation $reservation, ?float $amount = null): ?Transaction
+    {
+        $recorded = $reservation->recordedPaidAmount();
+        $refund = $amount ?? $recorded;
+        $refund = min($refund, $recorded);
+
+        if ($refund <= 0) {
+            return null;
+        }
+
+        $legacyPaid = $reservation->unrecordedPaidAmount();
+        $method = $reservation->payment_method ?: 'cash';
+
+        $transaction = Transaction::create([
+            'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+            'reservation_id' => $reservation->id,
+            'type' => 'refund',
+            'amount' => -1 * $refund,
+            'payment_method' => $method,
+            'source_type' => PaymentMethod::where('slug', $method)->value('source_type'),
+            'notes' => 'Refund pembatalan '.$reservation->reservation_number,
+            'created_by' => auth()->id() ?? 1,
+        ]);
+
+        $reservation->syncPaidAmount($legacyPaid);
+        if ($reservation->paid_amount < $reservation->total_amount) {
+            $reservation->paid_date = null;
+        }
+        $reservation->saveQuietly();
+
+        return $transaction;
     }
 
     // Additional methods (checkin, checkout, changeRoom) can be added similarly.

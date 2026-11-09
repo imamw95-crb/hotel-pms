@@ -445,20 +445,11 @@ class NightAuditController extends Controller
 
         // ─── Revenue Transactions (basis kas) ──────────────────────
         // Tiap transaksi dihitung SEKALI saja di periode uang benar-benar diterima
-        // (created_at). Jangan tarik DP dari periode lain ke hari check-in — nominal
-        // yang sama jadi ikut terhitung di dua night audit sekaligus.
+        // (created_at). Tidak difilter status reservasi: uang yang diterima tetap
+        // harus muncul walau reservasinya sudah check-out atau dibatalkan (refund
+        // tercatat sebagai transaksi negatif, jadi revenue tetap net).
         $transactions = Transaction::where('created_at', '>=', $bizStart)
             ->where('created_at', '<', $bizEnd)
-            ->where(function ($q) use ($bizStart, $bizEnd) {
-                $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
-                      ->where('check_out', '>=', $bizStart)
-                      ->where('check_out', '<', $bizEnd))
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
-                      ->where('check_in', '>=', $bizStart)
-                      ->where('check_in', '<', $bizEnd));
-            })
             ->with(['reservation.guest', 'reservation.room'])
             ->orderBy('payment_method')
             ->orderBy('created_at', 'desc')
@@ -644,16 +635,6 @@ class NightAuditController extends Controller
         $cashRevenue = Transaction::where('created_at', '>=', $bizStart)
             ->where('created_at', '<', $bizEnd)
             ->where('payment_method', 'cash')
-            ->where(function ($q) use ($bizStart, $bizEnd) {
-                $q->whereDoesntHave('reservation')
-                  ->orWhereHas('reservation', fn ($q2) => $q2->whereNotIn('status', ['checked_out', 'cancelled']))
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
-                      ->where('check_out', '>=', $bizStart)
-                      ->where('check_out', '<', $bizEnd))
-                  ->orWhereHas('reservation', fn ($q2) => $q2->where('status', 'checked_out')
-                      ->where('check_in', '>=', $bizStart)
-                      ->where('check_in', '<', $bizEnd));
-            })
             ->sum('amount');
 
         $cashExpenses = Expense::where('expense_date', '>=', $bizStart)->where('expense_date', '<', $bizEnd)
