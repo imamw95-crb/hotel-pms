@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Expense;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -35,7 +36,10 @@ class ExpenseController extends Controller
      */
     public function create()
     {
-        return view('expenses.create');
+        return view('expenses.create', [
+            'categories' => config('accounting.expense_categories', []),
+            'expenseAccounts' => Account::active()->ofType('expense')->orderBy('code')->get(),
+        ]);
     }
 
     /**
@@ -45,6 +49,8 @@ class ExpenseController extends Controller
     {
         $validated = $request->validate([
             'description' => 'required|string|max:255',
+            'expense_category' => 'nullable|string|max:50',
+            'account_id' => 'nullable|exists:accounts,id',
             'amount' => 'required|numeric|min:0',
             'payment_method' => 'required|string|max:20',
             'expense_date' => 'required|date',

@@ -4,6 +4,12 @@ use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\TvSettingController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
+use App\Http\Controllers\Accounting\DashboardController as AccountingDashboardController;
+use App\Http\Controllers\Accounting\JournalController as AccountingJournalController;
+use App\Http\Controllers\Accounting\PeriodController as AccountingPeriodController;
+use App\Http\Controllers\Accounting\ReportController as AccountingReportController;
+use App\Http\Controllers\Accounting\SettingController as AccountingSettingController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AllotmentController;
 use App\Http\Controllers\AuthController;
@@ -264,6 +270,37 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/revenue/export', [ReportController::class, 'exportRevenue'])->name('reports.revenue.export');
         Route::get('/reports/reservations/export', [ReportController::class, 'exportReservations'])->name('reports.reservations.export');
         Route::get('/reports/group/export', [ReportController::class, 'exportGroupReport'])->name('reports.group.export');
+
+        // ─── Akunting (Accounting) ───────────────────────────────────────
+        Route::prefix('accounting')->name('accounting.')->middleware('permission:view_accounting')->group(function () {
+            Route::get('/', [AccountingDashboardController::class, 'index'])->name('dashboard');
+
+            Route::get('/accounts', [AccountingAccountController::class, 'index'])->name('accounts.index');
+            Route::get('/accounts/create', [AccountingAccountController::class, 'create'])->middleware('permission:manage_accounting')->name('accounts.create');
+            Route::post('/accounts', [AccountingAccountController::class, 'store'])->middleware('permission:manage_accounting')->name('accounts.store');
+            Route::get('/accounts/{account}/edit', [AccountingAccountController::class, 'edit'])->middleware('permission:manage_accounting')->name('accounts.edit');
+            Route::put('/accounts/{account}', [AccountingAccountController::class, 'update'])->middleware('permission:manage_accounting')->name('accounts.update');
+            Route::delete('/accounts/{account}', [AccountingAccountController::class, 'destroy'])->middleware('permission:manage_accounting')->name('accounts.destroy');
+
+            Route::get('/journals', [AccountingJournalController::class, 'index'])->name('journals.index');
+            Route::get('/journals/create', [AccountingJournalController::class, 'create'])->middleware('permission:post_journal')->name('journals.create');
+            Route::post('/journals', [AccountingJournalController::class, 'store'])->middleware('permission:post_journal')->name('journals.store');
+            Route::get('/journals/{journal}', [AccountingJournalController::class, 'show'])->name('journals.show');
+            Route::post('/journals/{journal}/void', [AccountingJournalController::class, 'void'])->middleware('permission:post_journal')->name('journals.void');
+
+            Route::get('/ledger', [AccountingReportController::class, 'generalLedger'])->name('ledger');
+            Route::get('/reports/trial-balance', [AccountingReportController::class, 'trialBalance'])->name('reports.trial-balance');
+            Route::get('/reports/income-statement', [AccountingReportController::class, 'incomeStatement'])->name('reports.income-statement');
+            Route::get('/reports/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
+            Route::get('/reports/cash-flow', [AccountingReportController::class, 'cashFlow'])->name('reports.cash-flow');
+
+            Route::get('/settings', [AccountingSettingController::class, 'index'])->middleware('permission:manage_accounting_settings')->name('settings.index');
+            Route::post('/settings', [AccountingSettingController::class, 'update'])->middleware('permission:manage_accounting_settings')->name('settings.update');
+
+            Route::get('/periods', [AccountingPeriodController::class, 'index'])->name('periods.index');
+            Route::post('/periods/{period}/close', [AccountingPeriodController::class, 'close'])->middleware('permission:close_accounting_period')->name('periods.close');
+            Route::post('/periods/{period}/reopen', [AccountingPeriodController::class, 'reopen'])->middleware('permission:close_accounting_period')->name('periods.reopen');
+        });
     });
 
     // Admin: Permission Management (Owner only)

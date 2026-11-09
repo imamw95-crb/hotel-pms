@@ -305,6 +305,75 @@ return [
             ],
         ],
 
+        // ─── Akunting ────────────────────────────────────────────────
+        [
+            'label' => 'Akunting',
+            'icon' => 'calculator',
+            'roles' => ['owner', 'admin', 'user_manager'],
+            'children' => [
+                [
+                    'label' => 'Dashboard Akuntansi',
+                    'route' => 'accounting.dashboard',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Jurnal Umum',
+                    'route' => 'accounting.journals.index',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Buku Besar',
+                    'route' => 'accounting.ledger',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Neraca Saldo',
+                    'route' => 'accounting.reports.trial-balance',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Laba Rugi',
+                    'route' => 'accounting.reports.income-statement',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Neraca',
+                    'route' => 'accounting.reports.balance-sheet',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Arus Kas',
+                    'route' => 'accounting.reports.cash-flow',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin', 'user_manager'],
+                ],
+                [
+                    'label' => 'Chart of Accounts',
+                    'route' => 'accounting.accounts.index',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin'],
+                ],
+                [
+                    'label' => 'Pemetaan Akun',
+                    'route' => 'accounting.settings.index',
+                    'permission' => 'manage_accounting_settings',
+                    'roles' => ['owner', 'admin'],
+                ],
+                [
+                    'label' => 'Tutup Buku',
+                    'route' => 'accounting.periods.index',
+                    'permission' => 'view_accounting',
+                    'roles' => ['owner', 'admin'],
+                ],
+            ],
+        ],
+
         // ─── Administration ──────────────────────────────────────────
         [
             'label' => 'Administration',

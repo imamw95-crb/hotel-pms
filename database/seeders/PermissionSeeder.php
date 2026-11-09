@@ -82,6 +82,13 @@ class PermissionSeeder extends Seeder
 
             // Out of Order Permissions
             ['name' => 'Manage Out of Order', 'slug' => 'manage_out_of_order', 'group' => 'room', 'description' => 'Dapat mengelola Out of Order kamar'],
+
+            // Accounting Permissions
+            ['name' => 'View Accounting', 'slug' => 'view_accounting', 'group' => 'accounting', 'description' => 'Dapat melihat Chart of Accounts, jurnal, dan laporan keuangan'],
+            ['name' => 'Manage Chart of Accounts', 'slug' => 'manage_accounting', 'group' => 'accounting', 'description' => 'Dapat mengelola Chart of Accounts'],
+            ['name' => 'Post Journal Entry', 'slug' => 'post_journal', 'group' => 'accounting', 'description' => 'Dapat membuat dan membatalkan jurnal manual'],
+            ['name' => 'Close Accounting Period', 'slug' => 'close_accounting_period', 'group' => 'accounting', 'description' => 'Dapat menutup dan membuka periode akuntansi'],
+            ['name' => 'Manage Accounting Settings', 'slug' => 'manage_accounting_settings', 'group' => 'accounting', 'description' => 'Dapat mengatur pemetaan akun otomatis'],
         ];
 
         foreach ($permissions as $permission) {
@@ -105,6 +112,7 @@ class PermissionSeeder extends Seeder
             'manage_lost_found', 'manage_hk_inventory',
             'manage_promo_prices',
             'manage_out_of_order',
+            'view_accounting', 'manage_accounting', 'post_journal', 'manage_accounting_settings',
         ]);
 
         $this->assignPermissionToRole('frontoffice', [
@@ -135,6 +143,7 @@ class PermissionSeeder extends Seeder
             'view_reports',
             'manage_promo_prices',
             'manage_out_of_order',
+            'view_accounting',
         ]);
 
         $this->assignPermissionToRole('owner', [
@@ -142,6 +151,8 @@ class PermissionSeeder extends Seeder
             'manage_promo_prices',
             'manage_users', 'create_user', 'edit_user', 'delete_user',
             'manage_out_of_order',
+            'view_accounting', 'manage_accounting', 'post_journal',
+            'close_accounting_period', 'manage_accounting_settings',
         ]);
     }
 

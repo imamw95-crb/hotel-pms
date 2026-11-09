@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
     {
         // Seed permissions first
         $this->call(PermissionSeeder::class);
+        // Chart of Accounts & pemetaan akun akuntansi
+        $this->call(AccountingSeeder::class);
         // Users
         User::create(['name' => 'Owner Hotel', 'email' => 'owner@hotel.com', 'password' => Hash::make('password'), 'role' => 'owner']);
         User::create(['name' => 'Admin Hotel', 'email' => 'admin@hotel.com', 'password' => Hash::make('password'), 'role' => 'admin']);

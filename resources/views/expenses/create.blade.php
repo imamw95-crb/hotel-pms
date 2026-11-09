@@ -20,6 +20,34 @@
             </div>
 
             <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Kategori Beban</label>
+                <select name="expense_category"
+                    class="w-full border rounded px-3 py-2 @error('expense_category') border-red-500 @enderror">
+                    <option value="">— Pilih Kategori —</option>
+                    @foreach($categories ?? [] as $key => $label)
+                        <option value="{{ $key }}" {{ old('expense_category') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Menentukan akun beban pada jurnal akuntansi.</p>
+                @error('expense_category') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Akun Beban (opsional)</label>
+                <select name="account_id"
+                    class="w-full border rounded px-3 py-2 @error('account_id') border-red-500 @enderror">
+                    <option value="">— Ikuti kategori —</option>
+                    @foreach($expenseAccounts ?? [] as $account)
+                        <option value="{{ $account->id }}" {{ (string) old('account_id') === (string) $account->id ? 'selected' : '' }}>
+                            {{ $account->code }} — {{ $account->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Isi hanya bila ingin menimpa akun default kategori.</p>
+                @error('account_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Jumlah (Rp) <span class="text-red-500">*</span></label>
                 <input type="number" name="amount" value="{{ old('amount') }}" required min="0" step="0.01"
                     class="w-full border rounded px-3 py-2 @error('amount') border-red-500 @enderror"

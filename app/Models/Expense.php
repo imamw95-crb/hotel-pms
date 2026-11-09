@@ -13,7 +13,7 @@ class Expense extends Model
     use Blameable;
 
     protected $fillable = [
-        'expense_number', 'description', 'amount',
+        'expense_number', 'description', 'expense_category', 'account_id', 'amount',
         'payment_method', 'expense_date', 'notes', 'created_by',
     ];
 
@@ -35,5 +35,10 @@ class Expense extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 }

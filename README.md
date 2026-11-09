@@ -23,6 +23,7 @@
 | **Reservation System** | Booking manual & OTA dengan back-to-back support |
 | **Permission System** | Role-based access control (owner, admin, frontoffice) |
 | **Front Office** | Check-in, check-out, housekeeping, issue card |
+| **Modul Akunting** | Double-entry basis kas + COA (USALI), jurnal otomatis dari transaksi, buku besar, neraca saldo, laba rugi, neraca, arus kas, tutup buku |
 
 ## ⚡ Quick Start
 
