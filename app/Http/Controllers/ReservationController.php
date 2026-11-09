@@ -13,6 +13,7 @@ use App\Models\Room;
 use App\Models\Transaction;
 use App\Services\OpenRouterService;
 use App\Services\OpenTimestampService;
+use App\Services\PaymentDateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -165,7 +166,7 @@ class ReservationController extends Controller
         ]);
 
         $paymentDate = isset($validated['payment_date'])
-            ? Carbon::parse($validated['payment_date'].' '.now()->format('H:i:s'))
+            ? PaymentDateService::forBusinessDate(Carbon::parse($validated['payment_date']))
             : now();
 
         $hotelAmount = $validated['amount'];
@@ -1786,7 +1787,10 @@ class ReservationController extends Controller
             'payment_date' => 'required|date_format:Y-m-d',
         ]);
 
-        $paymentDate = Carbon::parse($validated['payment_date'].' '.$transaction->created_at->format('H:i:s'));
+        $paymentDate = PaymentDateService::forBusinessDate(
+            Carbon::parse($validated['payment_date']),
+            $transaction->created_at
+        );
 
         // Nominal historis yang belum punya baris transaksi (ambil sebelum diubah).
         $legacyPaid = $reservation->unrecordedPaidAmount();
