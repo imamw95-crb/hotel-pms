@@ -101,7 +101,7 @@ class PaymentGuardTest extends TestCase
         ]);
 
         $this->artisan('payments:audit')
-            ->expectsOutputToContain('paid_amount != ledger')
+            ->expectsOutputToContain('paid_amount < ledger')
             ->assertSuccessful();
     }
 }
