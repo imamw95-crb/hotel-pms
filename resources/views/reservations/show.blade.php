@@ -708,9 +708,10 @@
                         <span id="extendNights" class="font-bold">0</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Estimasi tambahan biaya:</span>
+                        <span class="text-gray-600">Total tambahan biaya:</span>
                         <span id="extendCost" class="font-bold text-indigo-700">Rp 0</span>
                     </div>
+                    <div id="extendBreakdown" class="hidden max-h-40 overflow-y-auto border-t border-indigo-200 pt-1 mt-1 text-xs"></div>
                 </div>
                 <div class="flex items-center gap-2 pt-2">
                     <button type="button" onclick="submitExtend()"
@@ -728,24 +729,43 @@
     </div>
 
     <script>
-        var extendPricePerNight = {{ $reservation->custom_room_rate ?? ($reservation->room->price_per_night ?? 0) }};
-
         document.getElementById('extendDate')?.addEventListener('change', function() {
-            var currentCheckout = new Date('{{ $reservation->check_out->format("Y-m-d") }}');
-            var newDate = new Date(this.value);
+            var preview = document.getElementById('extendPreview');
+            var breakdownBox = document.getElementById('extendBreakdown');
+
             if (!this.value) {
-                document.getElementById('extendPreview').classList.add('hidden');
+                preview.classList.add('hidden');
+                breakdownBox.classList.add('hidden');
                 return;
             }
-            var diffTime = newDate.getTime() - currentCheckout.getTime();
-            var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 0) {
-                document.getElementById('extendNights').textContent = diffDays + ' malam';
-                document.getElementById('extendCost').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(diffDays * extendPricePerNight);
-                document.getElementById('extendPreview').classList.remove('hidden');
-            } else {
-                document.getElementById('extendPreview').classList.add('hidden');
-            }
+
+            fetch('{{ route("reservations.extend-preview", $reservation) }}?new_check_out=' + encodeURIComponent(this.value), {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (!res.success) {
+                    preview.classList.add('hidden');
+                    breakdownBox.classList.add('hidden');
+                    return;
+                }
+
+                var fmt = new Intl.NumberFormat('id-ID');
+                document.getElementById('extendNights').textContent = res.nights_count + ' malam';
+                document.getElementById('extendCost').textContent = 'Rp ' + fmt.format(res.total);
+                breakdownBox.innerHTML = res.nights.map(function(n) {
+                    return '<div class="flex justify-between py-0.5">' +
+                        '<span class="text-gray-600">' + n.label + '</span>' +
+                        '<span class="font-medium text-gray-800">Rp ' + fmt.format(n.price) + '</span>' +
+                        '</div>';
+                }).join('');
+                preview.classList.remove('hidden');
+                breakdownBox.classList.remove('hidden');
+            })
+            .catch(function() {
+                preview.classList.add('hidden');
+                breakdownBox.classList.add('hidden');
+            });
         });
 
         function openExtendModal() {

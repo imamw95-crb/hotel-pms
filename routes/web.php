@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservations/{reservation}/update-notes', [ReservationController::class, 'updateNotes'])->name('reservations.update-notes');
     Route::post('/reservations/{reservation}/update-guest', [ReservationController::class, 'updateGuest'])->name('reservations.update-guest');
     Route::post('/reservations/{reservation}/extend', [ReservationController::class, 'extendStay'])->name('reservations.extend');
+    Route::get('/reservations/{reservation}/extend-preview', [ReservationController::class, 'extendPreview'])->name('reservations.extend-preview');
 
     // AI Auto-Reservation
     Route::post('/reservations/ai-create', [ReservationController::class, 'aiCreate'])->middleware('permission:create_booking')->name('reservations.ai-create');

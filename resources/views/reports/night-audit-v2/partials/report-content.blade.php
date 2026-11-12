@@ -34,6 +34,7 @@
         <div class="flex flex-wrap gap-1.5 text-xs">
             <span class="font-bold text-gray-600 mr-1 self-center">Lompat ke:</span>
             <a href="#section-room-types" class="px-2 py-1 rounded bg-indigo-100 text-indigo-800 hover:bg-indigo-200 font-medium">Room Types</a>
+            <a href="#section-room-revenue" class="px-2 py-1 rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-medium">Pendapatan/Malam</a>
             <a href="#section-revenue" class="px-2 py-1 rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium">Revenue</a>
             <a href="#section-expenses" class="px-2 py-1 rounded bg-red-100 text-red-800 hover:bg-red-200 font-medium">Expenses</a>
             <a href="#section-resto" class="px-2 py-1 rounded bg-orange-100 text-orange-800 hover:bg-orange-200 font-medium">Resto</a>
@@ -138,6 +139,56 @@
                     </tr>
                     @endforelse
                 </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+
+    {{-- Pendapatan Kamar per Tanggal (Accrual) --}}
+    <div id="section-room-revenue" class="mb-6 collapsible-section">
+        <div class="flex items-center justify-between cursor-pointer select-none border-b-2 border-gray-800 pb-1 mb-3 section-toggle" onclick="toggleSection(this)">
+            <h2 class="text-lg font-bold uppercase"><i class="fas fa-bed text-emerald-600 mr-2"></i>Pendapatan Kamar per Tanggal</h2>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">Accrual {{ $reportDate ?? '-' }}</span>
+                <span class="text-sm font-bold text-emerald-700">Rp {{ number_format($roomNightlyRevenueTotal ?? 0, 0, ',', '.') }}</span>
+                <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
+            </div>
+        </div>
+        <div class="section-body">
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+                <thead>
+                    <tr class="bg-emerald-50 border-b border-emerald-200">
+                        <th class="text-left p-2 font-bold">Kamar</th>
+                        <th class="text-left p-2 font-bold">Tipe</th>
+                        <th class="text-left p-2 font-bold">Tamu</th>
+                        <th class="text-center p-2 font-bold">In / Out</th>
+                        <th class="text-right p-2 font-bold">Harga Malam</th>
+                        <th class="text-right p-2 font-bold">Pendapatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse(collect($roomNightlyRevenue ?? []) as $row)
+                    <tr class="border-b border-gray-100 hover:bg-emerald-50/50">
+                        <td class="p-2 font-bold text-gray-800">{{ $row['room_number'] }}</td>
+                        <td class="p-2 text-gray-600">{{ $row['room_type'] }}</td>
+                        <td class="p-2 text-gray-700">{{ $row['guest_name'] }}</td>
+                        <td class="p-2 text-center text-gray-500">{{ $row['check_in'] }} – {{ $row['check_out'] }}</td>
+                        <td class="p-2 text-right text-gray-600">Rp {{ number_format($row['nightly_price'], 0, ',', '.') }}</td>
+                        <td class="p-2 text-right font-bold text-emerald-700">Rp {{ number_format($row['amount'], 0, ',', '.') }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="p-4 text-center text-gray-400 italic">Tidak ada kamar terisi pada malam ini</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                <tfoot>
+                    <tr class="bg-emerald-50 border-t-2 border-emerald-300">
+                        <td colspan="5" class="p-2 text-right font-bold">Total Pendapatan Kamar (Accrual)</td>
+                        <td class="p-2 text-right font-bold text-emerald-800">Rp {{ number_format($roomNightlyRevenueTotal ?? 0, 0, ',', '.') }}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         </div>

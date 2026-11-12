@@ -729,6 +729,50 @@ class NightAuditController extends Controller
             ->get()
             ->keyBy('room_type_name');
 
+        // ─── Room Revenue per Tanggal (accrual) ────────────────────
+        // Basis kas mencatat uang saat diterima, sehingga booking OTA yang lunas
+        // di hari kedatangan tidak muncul di malam-malam berikutnya. Section ini
+        // menghitung nilai kamar untuk malam pada business date ini, diprorata dari
+        // total_amount reservasi mengikuti harga kamar tiap tanggal.
+        $nightEnd = Carbon::parse($date)->addDay()->setTime(12, 0, 0);
+
+        $roomNightlyRevenue = Reservation::with(['guest', 'room.roomType.datePrices'])
+            ->whereIn('status', ['checked_in', 'checked_out'])
+            ->where('check_in', '<', $nightEnd)
+            ->where('check_out', '>=', $nightEnd)
+            ->orderBy('room_id')
+            ->get()
+            ->map(function ($reservation) use ($date) {
+                $room = $reservation->room;
+                $nightlyPrice = (float) ($room?->getPriceForDate($date) ?? 0);
+
+                $stayPrice = 0.0;
+                $cursor = $reservation->check_in->copy()->startOfDay();
+                $stayEnd = $reservation->check_out->copy()->startOfDay();
+                while ($cursor->lt($stayEnd)) {
+                    $stayPrice += (float) ($room?->getPriceForDate($cursor) ?? 0);
+                    $cursor->addDay();
+                }
+
+                return [
+                    'reservation_number' => $reservation->reservation_number,
+                    'guest_name' => $reservation->guest?->guest_name ?? '-',
+                    'room_number' => $room?->room_number ?? '-',
+                    'room_type' => $room?->room_type_name ?? '-',
+                    'ota_source' => $reservation->ota_source,
+                    'check_in' => $reservation->check_in->format('d/m/Y'),
+                    'check_out' => $reservation->check_out->format('d/m/Y'),
+                    'nightly_price' => $nightlyPrice,
+                    'amount' => $stayPrice > 0
+                        ? round((float) $reservation->total_amount * $nightlyPrice / $stayPrice, 2)
+                        : 0.0,
+                ];
+            })
+            ->values();
+
+        $roomNightlyRevenueTotal = (float) $roomNightlyRevenue->sum('amount');
+        $reportDate = Carbon::parse($date)->format('d/m/Y');
+
         // ─── EDC Settlement (Room Transactions + Service Charges) ──
         $edcMethods = ['edc_bca_room', 'edc_mandiri_room'];
         $edcRoomTransactions = $transactions->filter(fn ($t) => in_array($t->payment_method, $edcMethods));
@@ -780,6 +824,7 @@ class NightAuditController extends Controller
             'otaBookings', 'webBookings', 'directBookings',
             'allReservations',
             'roomTypeSummary',
+            'roomNightlyRevenue', 'roomNightlyRevenueTotal', 'reportDate',
             'edcSettlementList', 'edcRoomTotal', 'edcScTotal', 'edcGrandTotal',
         );
     }

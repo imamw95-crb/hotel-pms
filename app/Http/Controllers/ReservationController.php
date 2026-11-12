@@ -1851,9 +1851,9 @@ class ReservationController extends Controller
 
         DB::beginTransaction();
         try {
-            // Hitung tambahan biaya untuk hari tambahan
-            $originalNights = $reservation->nights;
-            $additionalAmount = $room->calculateTotalForRange($oldCheckOut->copy()->startOfDay(), $newCheckOut->copy()->startOfDay());
+            // Rincian harga per malam tambahan (harga mengikuti tanggal masing-masing)
+            $breakdown = $this->buildExtendBreakdown($reservation, $oldCheckOut, $newCheckOut);
+            $additionalAmount = array_sum(array_column($breakdown, 'price'));
 
             // Update total amount
             $reservation->total_amount += $additionalAmount;
@@ -1861,20 +1861,38 @@ class ReservationController extends Controller
             app(OpenTimestampService::class)->resetInvoiceProof($reservation);
             $reservation->saveQuietly();
 
-            // Catat transaction untuk extend (opsional, sebagai riwayat)
-            if ($additionalAmount > 0) {
-                $paymentMethodSlug = $reservation->payment_method ?? 'cash';
-                $sourceType = PaymentMethod::where('slug', $paymentMethodSlug)->value('source_type');
-                Transaction::create([
-                    'transaction_number' => 'TRX-'.strtoupper(uniqid()),
+            // Satu transaksi per malam, di-tanggal pada malam tersebut, supaya
+            // pendapatan kamar harian di Night Audit sesuai harga per tanggal.
+            $paymentMethodSlug = $reservation->payment_method ?? 'cash';
+            $sourceType = PaymentMethod::where('slug', $paymentMethodSlug)->value('source_type');
+
+            foreach ($breakdown as $night) {
+                if ($night['price'] <= 0) {
+                    continue;
+                }
+
+                $postedAt = $night['date']->copy()->setTime(14, 0, 0);
+
+                $prefix = '';
+                $businessDate = NightAuditLockService::businessDateOf($postedAt);
+                if (NightAuditLockService::isLocked($postedAt)) {
+                    $postedAt = now();
+                    $prefix = '[Koreksi NA '.$businessDate.'] ';
+                }
+
+                $transaction = Transaction::create([
                     'reservation_id' => $reservation->id,
                     'type' => 'extend',
-                    'amount' => $additionalAmount,
+                    'amount' => $night['price'],
                     'payment_method' => $paymentMethodSlug,
                     'source_type' => $sourceType,
-                    'notes' => 'Extend menginap dari '.$oldCheckOut->format('d/m/Y').' ke '.$newCheckOut->format('d/m/Y').' — tambahan Rp '.number_format($additionalAmount, 0, ',', '.'),
+                    'notes' => $prefix.'Extend malam '.$night['date']->format('d/m/Y')
+                        .' (check-out '.$oldCheckOut->format('d/m/Y').' → '.$newCheckOut->format('d/m/Y').')'
+                        .' — Rp '.number_format($night['price'], 0, ',', '.'),
                     'created_by' => auth()->id(),
                 ]);
+                $transaction->created_at = $postedAt;
+                $transaction->saveQuietly();
             }
 
             DB::commit();
@@ -1906,6 +1924,63 @@ class ReservationController extends Controller
 
             return back()->with('error', 'Gagal melakukan extend: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Rincian harga extend per malam. Harga tiap malam mengikuti tanggal malam
+     * tersebut (promo/date price), bukan satu harga rata.
+     */
+    private function buildExtendBreakdown(Reservation $reservation, Carbon $from, Carbon $to): array
+    {
+        $room = $reservation->room;
+        $breakdown = [];
+
+        $cursor = $from->copy()->startOfDay();
+        $end = $to->copy()->startOfDay();
+
+        while ($cursor->lt($end)) {
+            $breakdown[] = [
+                'date' => $cursor->copy(),
+                'label' => $cursor->format('d/m/Y'),
+                'price' => (float) ($room?->getPriceForDate($cursor) ?? 0),
+            ];
+            $cursor->addDay();
+        }
+
+        return $breakdown;
+    }
+
+    /**
+     * Preview biaya extend per tanggal sebelum disimpan.
+     */
+    public function extendPreview(Request $request, Reservation $reservation)
+    {
+        $validated = $request->validate([
+            'new_check_out' => 'required|date',
+        ]);
+
+        $newCheckOut = Carbon::parse($validated['new_check_out'])->setTime(12, 0, 0);
+        $oldCheckOut = $reservation->check_out;
+
+        if ($newCheckOut->lte($oldCheckOut)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal check-out baru harus setelah check-out saat ini ('.$oldCheckOut->format('d/m/Y').').',
+            ], 422);
+        }
+
+        $breakdown = $this->buildExtendBreakdown($reservation, $oldCheckOut, $newCheckOut);
+
+        return response()->json([
+            'success' => true,
+            'nights' => array_map(fn ($n) => [
+                'date' => $n['date']->format('Y-m-d'),
+                'label' => $n['label'],
+                'price' => $n['price'],
+            ], $breakdown),
+            'nights_count' => count($breakdown),
+            'total' => array_sum(array_column($breakdown, 'price')),
+        ]);
     }
 
     /**
