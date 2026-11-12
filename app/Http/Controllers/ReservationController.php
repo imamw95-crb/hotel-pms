@@ -435,7 +435,28 @@ class ReservationController extends Controller
     {
         $reservation = $transaction->reservation;
         $businessDate = NightAuditLockService::businessDateOf($transaction->created_at);
+        $reversalNote = '[Koreksi NA '.$businessDate.'] Pembatalan '.$transaction->transaction_number;
         $legacyPaid = $reservation->unrecordedPaidAmount();
+
+        // Idempoten: satu transaksi hanya boleh dibatalkan satu kali. Tanpa ini,
+        // klik ulang (baris asli tetap tampil karena tidak dihapus) menumpuk koreksi.
+        $existingReversal = Transaction::where('reservation_id', $reservation->id)
+            ->where('notes', $reversalNote)
+            ->first();
+
+        if ($existingReversal) {
+            $message = "Pembayaran {$transaction->transaction_number} sudah dibatalkan lewat koreksi {$existingReversal->transaction_number}.";
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'redirect_url' => route('reservations.show', $reservation),
+                ]);
+            }
+
+            return redirect()->route('reservations.show', $reservation)->with('success', $message);
+        }
 
         DB::beginTransaction();
         try {
@@ -446,7 +467,8 @@ class ReservationController extends Controller
                 'amount' => -1 * (float) $transaction->amount,
                 'payment_method' => $transaction->payment_method,
                 'source_type' => $transaction->source_type,
-                'notes' => '[Koreksi NA '.$businessDate.'] Pembatalan '.$transaction->transaction_number,
+                'idempotency_key' => 'locked-reversal-'.$transaction->id,
+                'notes' => $reversalNote,
                 'created_by' => auth()->id(),
             ]);
 
@@ -460,6 +482,25 @@ class ReservationController extends Controller
             app(OpenTimestampService::class)->resetInvoiceProof($reservation);
 
             DB::commit();
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+
+            // Balapan double-submit: unique index idempotency_key menolak koreksi kedua.
+            if ($e->getCode() === '23000') {
+                $message = "Pembayaran {$transaction->transaction_number} sudah dibatalkan lewat transaksi koreksi.";
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'redirect_url' => route('reservations.show', $reservation),
+                    ]);
+                }
+
+                return redirect()->route('reservations.show', $reservation)->with('success', $message);
+            }
+
+            return back()->with('error', 'Gagal membatalkan pembayaran: '.$e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
 

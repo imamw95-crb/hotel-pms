@@ -140,4 +140,36 @@ class NightAuditLockGuardTest extends TestCase
         $this->assertSame(-445000.0, (float) $reversal->amount);
         $this->assertSame(0.0, (float) $reservation->fresh()->paid_amount);
     }
+
+    public function test_repeated_delete_in_locked_period_does_not_duplicate_reversal(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));
+
+        NightAuditLog::create([
+            'audit_date' => '2026-11-05',
+            'status' => 'locked',
+            'locked_at' => Carbon::parse('2026-11-06 05:00:00'),
+        ]);
+
+        $reservation = Reservation::factory()->create(['total_amount' => 637000, 'paid_amount' => 445000]);
+        $original = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'dp',
+            'amount' => 445000,
+            'payment_method' => 'cash',
+            'created_at' => Carbon::parse('2026-11-05 14:00:00'),
+        ]);
+
+        $user = User::factory()->create(['role' => 'owner']);
+
+        // Baris asli tetap tampil setelah dibatalkan, jadi user bisa menekan hapus berkali-kali
+        $this->actingAs($user)->delete(route('transactions.delete-payment', $original->id));
+        $this->actingAs($user)->delete(route('transactions.delete-payment', $original->id));
+        $this->actingAs($user)->delete(route('transactions.delete-payment', $original->id));
+
+        $this->assertSame(1, Transaction::where('reservation_id', $reservation->id)
+            ->where('type', 'koreksi')
+            ->count());
+        $this->assertSame(0.0, (float) $reservation->fresh()->paid_amount);
+    }
 }
