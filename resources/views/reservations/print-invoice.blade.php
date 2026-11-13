@@ -258,7 +258,7 @@
                 @foreach($transactions as $txn)
                 <tr>
                     <td>{{ $txn->transaction_number }}</td>
-                    <td>{{ $txn->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ $txn->businessDate()->format('d/m/Y H:i') }}</td>
                     <td>{{ ucwords(str_replace('_', ' ', $txn->type)) }}</td>
                     <td>{{ ucwords(str_replace('_', ' ', $txn->payment_method)) }}</td>
                     <td class="text-right">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>

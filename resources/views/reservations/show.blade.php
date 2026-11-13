@@ -1263,7 +1263,7 @@
                 @foreach($transactions as $txn)
                 <tr class="border-b border-gray-100">
                     <td class="p-2 font-medium">{{ $txn->transaction_number }}</td>
-                    <td class="p-2">{{ $txn->created_at->format('d/m/Y H:i') }}</td>
+                    <td class="p-2">{{ $txn->businessDate()->format('d/m/Y H:i') }}</td>
                     <td class="p-2 capitalize">{{ str_replace('_', ' ', $txn->payment_method) }}</td>
                     <td class="p-2">
                         @if($txn->source_type)
@@ -1476,6 +1476,7 @@
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">Tanggal Pembayaran</label>
                             <input type="date" name="payment_date" id="editPaymentDate" class="w-full border rounded px-2 py-2 text-sm" required>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Tanggal periode bisnis (cutoff {{ \App\Services\PaymentDateService::cutoffTime() }})</p>
                         </div>
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
@@ -1507,7 +1508,7 @@
                         'type' => $t->type,
                         'payment_method' => $t->payment_method,
                         'amount' => $t->amount,
-                        'payment_date' => $t->created_at->format('Y-m-d'),
+                        'payment_date' => $t->businessDate()->format('Y-m-d'),
                     ];
                 });
             @endphp

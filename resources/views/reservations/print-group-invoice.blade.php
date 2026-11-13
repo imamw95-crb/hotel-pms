@@ -207,7 +207,7 @@
             <tbody>
                 @forelse($transactions as $txn)
                 <tr>
-                    <td>{{ $txn->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ $txn->businessDate()->format('d/m/Y H:i') }}</td>
                     <td>{{ $txn->reservation->reservation_number ?? '-' }}</td>
                     <td>{{ str_replace('_', ' ', $txn->payment_method) }}</td>
                     <td>{{ strtoupper(str_replace('_', ' ', $txn->type)) }}</td>

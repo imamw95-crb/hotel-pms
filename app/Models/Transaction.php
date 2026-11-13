@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\NightAuditLockService;
+use App\Traits\Blameable;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\Blameable;
 
 class Transaction extends Model
 {
@@ -37,6 +39,20 @@ class Transaction extends Model
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(Reservation::class);
+    }
+
+    /**
+     * Tanggal pembayaran menurut periode bisnis (mengikuti cutoff night audit).
+     *
+     * Transaksi jam 00:00–cutoff (mis. 01:02) masuk periode bisnis hari sebelumnya,
+     * jadi created_at (14/11 01:02) tampil sebagai 13/11. UI dan input tanggal
+     * memakai tanggal bisnis ini supaya konsisten dengan laporan Night Audit.
+     */
+    public function businessDate(): Carbon
+    {
+        return Carbon::parse(
+            NightAuditLockService::businessDateOf($this->created_at).' '.$this->created_at->format('H:i:s')
+        );
     }
 
     public function createdBy(): BelongsTo

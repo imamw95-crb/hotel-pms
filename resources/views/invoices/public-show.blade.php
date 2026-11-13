@@ -593,7 +593,7 @@
                     @php $txnOts = $transactionsOts[$txn->id] ?? null; @endphp
                     <tr>
                         <td class="p-3 border-b border-slate-100 text-slate-600 font-mono text-xs">{{ $txn->transaction_number }}</td>
-                        <td class="p-3 border-b border-slate-100 text-slate-600">{{ $txn->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="p-3 border-b border-slate-100 text-slate-600">{{ $txn->businessDate()->format('d/m/Y H:i') }}</td>
                         <td class="p-3 border-b border-slate-100 text-slate-700 capitalize">{{ str_replace('_', ' ', $txn->type) }}</td>
                         <td class="p-3 border-b border-slate-100 text-slate-600">{{ ucwords(str_replace('_', ' ', $txn->payment_method)) }}</td>
                         <td class="p-3 border-b border-slate-100 text-right font-medium text-slate-700">Rp {{ number_format($txn->amount, 0, ',', '.') }}</td>

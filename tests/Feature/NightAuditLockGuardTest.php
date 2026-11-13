@@ -42,6 +42,25 @@ class NightAuditLockGuardTest extends TestCase
         $this->assertSame('2026-11-08', NightAuditLockService::businessDateOf(Carbon::parse('2026-11-08 06:00:00')));
     }
 
+    public function test_transaction_business_date_follows_cutoff(): void
+    {
+        $reservation = Reservation::factory()->create();
+
+        $beforeCutoff = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'created_at' => Carbon::parse('2026-11-14 01:02:02'),
+        ]);
+        $afterCutoff = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'created_at' => Carbon::parse('2026-11-14 08:15:00'),
+        ]);
+
+        // Transaksi 01:02 milik periode bisnis 13/11, bukan 14/11
+        $this->assertSame('2026-11-13', $beforeCutoff->businessDate()->format('Y-m-d'));
+        $this->assertSame('01:02:02', $beforeCutoff->businessDate()->format('H:i:s'));
+        $this->assertSame('2026-11-14', $afterCutoff->businessDate()->format('Y-m-d'));
+    }
+
     public function test_add_payment_in_locked_period_is_recorded_as_correction(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));
@@ -170,6 +189,33 @@ class NightAuditLockGuardTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertSame('2026-11-09 09:00:00', $original->fresh()->created_at->format('Y-m-d H:i:s'));
+    }
+
+    public function test_edit_payment_with_same_business_date_keeps_timestamp(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-14 02:00:00'));
+
+        $reservation = Reservation::factory()->create(['total_amount' => 587000, 'paid_amount' => 587000]);
+        $original = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'pelunasan',
+            'amount' => 587000,
+            'payment_method' => 'cash',
+            'created_at' => Carbon::parse('2026-11-14 01:02:02'),
+        ]);
+
+        // Tanggal bisnis yang tampil di UI (13/11) disimpan ulang tanpa perubahan
+        $this->actingAs(User::factory()->create(['role' => 'owner']))
+            ->put(route('transactions.edit-payment', $original->id), [
+                'payment_type' => 'pelunasan',
+                'payment_method' => 'cash',
+                'amount' => 587000,
+                'payment_date' => '2026-11-13',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertSame('2026-11-14 01:02:02', $original->fresh()->created_at->format('Y-m-d H:i:s'));
+        $this->assertSame(587000.0, (float) $reservation->fresh()->paid_amount);
     }
 
     public function test_delete_payment_in_locked_period_creates_negative_reversal(): void
