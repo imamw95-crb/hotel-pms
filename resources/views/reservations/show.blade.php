@@ -1473,11 +1473,17 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 mb-1">Tanggal Pembayaran</label>
-                            <input type="date" name="payment_date" id="editPaymentDate" class="w-full border rounded px-2 py-2 text-sm" required>
-                            <p class="text-[10px] text-gray-400 mt-0.5">Tanggal periode bisnis (cutoff {{ \App\Services\PaymentDateService::cutoffTime() }})</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Tanggal Pembayaran</label>
+                                <input type="date" name="payment_date" id="editPaymentDate" class="w-full border rounded px-2 py-2 text-sm" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Jam</label>
+                                <input type="time" name="payment_time" id="editPaymentTime" class="w-full border rounded px-2 py-2 text-sm">
+                            </div>
                         </div>
+                        <p class="text-[10px] text-gray-400 -mt-1">Tanggal = periode bisnis (cutoff {{ \App\Services\PaymentDateService::cutoffTime() }}), jam = waktu uang diterima.</p>
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
                             <input type="number" name="amount" id="editPaymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" required>
@@ -1509,6 +1515,7 @@
                         'payment_method' => $t->payment_method,
                         'amount' => $t->amount,
                         'payment_date' => $t->businessDate()->format('Y-m-d'),
+                        'payment_time' => $t->businessDate()->format('H:i'),
                     ];
                 });
             @endphp
@@ -1522,6 +1529,7 @@
                 document.getElementById('editPaymentType').value = txn.type;
                 document.getElementById('editPaymentMethod').value = txn.payment_method;
                 document.getElementById('editPaymentDate').value = txn.payment_date;
+                document.getElementById('editPaymentTime').value = txn.payment_time;
                 document.getElementById('editPaymentAmount').value = txn.amount;
                 document.getElementById('editPaymentModal').style.display = 'flex';
             }

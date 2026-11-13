@@ -41,6 +41,24 @@ class PaymentDateService
         return $timestamp->lessThan($start) ? $timestamp->addDay() : $timestamp;
     }
 
+    /**
+     * Timestamp untuk tanggal periode bisnis + jam tertentu.
+     *
+     * Jam yang diinput dipertahankan; kalau jam itu masih sebelum cutoff,
+     * tanggalnya digeser satu hari supaya periode bisnisnya tetap sama dengan
+     * tanggal yang dipilih staff.
+     */
+    public static function forBusinessDateAt(CarbonInterface $date, string $time): Carbon
+    {
+        $timestamp = Carbon::parse($date->format('Y-m-d').' '.$time);
+
+        if (NightAuditLockService::businessDateOf($timestamp) !== $date->format('Y-m-d')) {
+            $timestamp->addDay();
+        }
+
+        return $timestamp;
+    }
+
     public static function cutoffTime(): string
     {
         $cutoff = HotelSetting::get()->cutoff_time ?? '06:00';

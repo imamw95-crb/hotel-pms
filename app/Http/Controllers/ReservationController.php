@@ -2077,39 +2077,31 @@ class ReservationController extends Controller
             'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
             'amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date_format:Y-m-d',
+            'payment_time' => 'nullable|date_format:H:i',
         ]);
 
-        $paymentDate = PaymentDateService::forBusinessDate(
+        // Tanggal = periode bisnis, jam = jam terima uang.
+        $businessTime = $validated['payment_time'] ?? $transaction->businessDate()->format('H:i:s');
+        $paymentDate = PaymentDateService::forBusinessDateAt(
             Carbon::parse($validated['payment_date']),
-            $transaction->created_at
+            $businessTime
         );
 
         $originBusinessDate = NightAuditLockService::businessDateOf($transaction->created_at);
         $targetBusinessDate = NightAuditLockService::businessDateOf($paymentDate);
         $movingDate = $originBusinessDate !== $targetBusinessDate;
-
-        // Jam transaksi dipertahankan, jadi tanggal kalender hari ini tidak bisa
-        // dipakai sebagai periode bisnis saat jamnya masih sebelum cutoff —
-        // dulu kasus ini "berhasil" tanpa mengubah apa pun.
-        $selectedDate = Carbon::parse($validated['payment_date'])->format('Y-m-d');
-        if ($selectedDate !== $targetBusinessDate) {
-            return $this->paymentError(
-                $request,
-                "Tanggal {$selectedDate} tidak bisa dipakai: jam transaksi ini (".$transaction->created_at->format('H:i').") masih sebelum cutoff ".PaymentDateService::cutoffTime()
-                .", jadi transaksi tercatat di periode bisnis {$targetBusinessDate}. Pakai tanggal {$targetBusinessDate}."
-            );
-        }
+        $movingTime = $transaction->businessDate()->format('H:i') !== substr($businessTime, 0, 5);
 
         // Transaksi lama yang periodenya sudah di-lock tidak boleh diubah —
         // laporan locked dibaca dari snapshot. Selisih koreksinya dicatat
         // sebagai transaksi baru di periode berjalan.
         if (NightAuditLockService::isLocked($transaction->created_at)) {
-            // Tanggal tidak bisa dipindah karena laporan periode asalnya final.
-            // Tanpa pesan ini, user melihat "berhasil" padahal tanggalnya tidak berubah.
-            if ($movingDate) {
+            // Tanggal/jam tidak bisa dipindah karena laporan periode asalnya final.
+            // Tanpa pesan ini, user melihat "berhasil" padahal tidak ada yang berubah.
+            if ($movingDate || $movingTime) {
                 return $this->paymentError(
                     $request,
-                    "Periode NA {$originBusinessDate} sudah di-lock, jadi tanggal transaksi ini tidak bisa diubah. Unlock Night Audit tanggal tersebut dulu, edit tanggalnya, lalu lock kembali."
+                    "Periode NA {$originBusinessDate} sudah di-lock, jadi tanggal/jam transaksi ini tidak bisa diubah. Unlock Night Audit tanggal tersebut dulu, edit, lalu lock kembali."
                 );
             }
 
