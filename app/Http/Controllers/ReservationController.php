@@ -2088,6 +2088,18 @@ class ReservationController extends Controller
         $targetBusinessDate = NightAuditLockService::businessDateOf($paymentDate);
         $movingDate = $originBusinessDate !== $targetBusinessDate;
 
+        // Jam transaksi dipertahankan, jadi tanggal kalender hari ini tidak bisa
+        // dipakai sebagai periode bisnis saat jamnya masih sebelum cutoff —
+        // dulu kasus ini "berhasil" tanpa mengubah apa pun.
+        $selectedDate = Carbon::parse($validated['payment_date'])->format('Y-m-d');
+        if ($selectedDate !== $targetBusinessDate) {
+            return $this->paymentError(
+                $request,
+                "Tanggal {$selectedDate} tidak bisa dipakai: jam transaksi ini (".$transaction->created_at->format('H:i').") masih sebelum cutoff ".PaymentDateService::cutoffTime()
+                .", jadi transaksi tercatat di periode bisnis {$targetBusinessDate}. Pakai tanggal {$targetBusinessDate}."
+            );
+        }
+
         // Transaksi lama yang periodenya sudah di-lock tidak boleh diubah —
         // laporan locked dibaca dari snapshot. Selisih koreksinya dicatat
         // sebagai transaksi baru di periode berjalan.

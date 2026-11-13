@@ -218,6 +218,31 @@ class NightAuditLockGuardTest extends TestCase
         $this->assertSame(587000.0, (float) $reservation->fresh()->paid_amount);
     }
 
+    public function test_edit_payment_rejects_calendar_date_outside_business_period(): void
+    {
+        $reservation = Reservation::factory()->create(['total_amount' => 587000, 'paid_amount' => 587000]);
+        $original = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'pelunasan',
+            'amount' => 587000,
+            'payment_method' => 'cash',
+            'created_at' => Carbon::parse('2026-11-14 01:02:02'),
+        ]);
+
+        // 14/11 01:02 masih periode bisnis 13/11 — memilih 14/11 dulu tidak
+        // mengubah apa pun tapi tetap dibalas "berhasil".
+        $this->actingAs(User::factory()->create(['role' => 'owner']))
+            ->put(route('transactions.edit-payment', $original->id), [
+                'payment_type' => 'pelunasan',
+                'payment_method' => 'cash',
+                'amount' => 587000,
+                'payment_date' => '2026-11-14',
+            ])
+            ->assertSessionHas('error');
+
+        $this->assertSame('2026-11-14 01:02:02', $original->fresh()->created_at->format('Y-m-d H:i:s'));
+    }
+
     public function test_delete_payment_in_locked_period_creates_negative_reversal(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));
