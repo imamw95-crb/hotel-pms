@@ -108,6 +108,70 @@ class NightAuditLockGuardTest extends TestCase
         $this->assertSame(500000.0, (float) $reservation->fresh()->paid_amount);
     }
 
+    public function test_edit_payment_date_change_in_locked_period_is_rejected(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));
+
+        NightAuditLog::create([
+            'audit_date' => '2026-11-05',
+            'status' => 'locked',
+            'locked_at' => Carbon::parse('2026-11-06 05:00:00'),
+        ]);
+
+        $reservation = Reservation::factory()->create(['total_amount' => 637000, 'paid_amount' => 445000]);
+        $original = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'dp',
+            'amount' => 445000,
+            'payment_method' => 'cash',
+            'created_at' => Carbon::parse('2026-11-05 14:00:00'),
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'owner']))
+            ->put(route('transactions.edit-payment', $original->id), [
+                'payment_type' => 'dp',
+                'payment_method' => 'cash',
+                'amount' => 445000,
+                'payment_date' => '2026-11-06',
+            ])
+            ->assertSessionHas('error');
+
+        // Tanggal transaksi tidak berpindah dan tidak ada koreksi yang tercatat
+        $this->assertSame('2026-11-05 14:00:00', $original->fresh()->created_at->format('Y-m-d H:i:s'));
+        $this->assertSame(0, Transaction::where('reservation_id', $reservation->id)->where('type', 'koreksi')->count());
+    }
+
+    public function test_edit_payment_cannot_move_date_into_locked_period(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));
+
+        NightAuditLog::create([
+            'audit_date' => '2026-11-05',
+            'status' => 'locked',
+            'locked_at' => Carbon::parse('2026-11-06 05:00:00'),
+        ]);
+
+        $reservation = Reservation::factory()->create(['total_amount' => 637000, 'paid_amount' => 445000]);
+        $original = Transaction::factory()->create([
+            'reservation_id' => $reservation->id,
+            'type' => 'dp',
+            'amount' => 445000,
+            'payment_method' => 'cash',
+            'created_at' => Carbon::parse('2026-11-09 09:00:00'),
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'owner']))
+            ->put(route('transactions.edit-payment', $original->id), [
+                'payment_type' => 'dp',
+                'payment_method' => 'cash',
+                'amount' => 445000,
+                'payment_date' => '2026-11-05',
+            ])
+            ->assertSessionHas('error');
+
+        $this->assertSame('2026-11-09 09:00:00', $original->fresh()->created_at->format('Y-m-d H:i:s'));
+    }
+
     public function test_delete_payment_in_locked_period_creates_negative_reversal(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-09 10:00:00'));

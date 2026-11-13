@@ -2084,11 +2084,33 @@ class ReservationController extends Controller
             $transaction->created_at
         );
 
+        $originBusinessDate = NightAuditLockService::businessDateOf($transaction->created_at);
+        $targetBusinessDate = NightAuditLockService::businessDateOf($paymentDate);
+        $movingDate = $originBusinessDate !== $targetBusinessDate;
+
         // Transaksi lama yang periodenya sudah di-lock tidak boleh diubah —
         // laporan locked dibaca dari snapshot. Selisih koreksinya dicatat
         // sebagai transaksi baru di periode berjalan.
         if (NightAuditLockService::isLocked($transaction->created_at)) {
+            // Tanggal tidak bisa dipindah karena laporan periode asalnya final.
+            // Tanpa pesan ini, user melihat "berhasil" padahal tanggalnya tidak berubah.
+            if ($movingDate) {
+                return $this->paymentError(
+                    $request,
+                    "Periode NA {$originBusinessDate} sudah di-lock, jadi tanggal transaksi ini tidak bisa diubah. Unlock Night Audit tanggal tersebut dulu, edit tanggalnya, lalu lock kembali."
+                );
+            }
+
             return $this->storeLockedPeriodCorrection($request, $transaction, $validated);
+        }
+
+        // Tanggal tidak boleh dipindah ke periode yang sudah di-lock: transaksi
+        // akan hilang dari laporan periode berjalan tanpa masuk laporan final.
+        if ($movingDate && NightAuditLockService::isLocked($paymentDate)) {
+            return $this->paymentError(
+                $request,
+                "Periode NA {$targetBusinessDate} sudah di-lock. Tanggal transaksi tidak bisa dipindah ke periode yang sudah final."
+            );
         }
 
         // Nominal historis yang belum punya baris transaksi (ambil sebelum diubah).
