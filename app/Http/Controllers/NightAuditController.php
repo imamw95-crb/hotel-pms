@@ -72,7 +72,7 @@ class NightAuditController extends Controller
                 'summary' => [
                     'total_rooms' => $data['totalRooms'],
                     'occupied_rooms' => $data['occupiedRooms'],
-                    'total_revenue' => $data['totalRevenue'],
+                    'total_revenue' => $data['totalRevenueAccrual'],
                 ],
             ]);
         }
@@ -97,10 +97,10 @@ class NightAuditController extends Controller
                 'available_rooms' => $data['availableRooms'],
                 'maintenance_rooms' => $data['maintenanceRooms'],
                 'occupancy_rate' => $data['occupancyRate'],
-                'room_revenue' => $data['revenueToday'],
+                'room_revenue' => $data['roomRevenueAccrual'],
                 'resto_revenue' => $data['restoRevenueToday'],
                 'sc_revenue' => $data['serviceChargeRevenueToday'],
-                'total_revenue' => $data['totalRevenue'],
+                'total_revenue' => $data['totalRevenueAccrual'],
                 'checkins_count' => $data['checkinsToday']->count(),
                 'checkouts_count' => $data['checkoutsToday']->count(),
                 'in_house_count' => $data['inHouseGuests']->count(),
@@ -132,10 +132,10 @@ class NightAuditController extends Controller
                 'available_rooms' => $data['availableRooms'],
                 'maintenance_rooms' => $data['maintenanceRooms'],
                 'occupancy_rate' => $data['occupancyRate'],
-                'room_revenue' => $data['revenueToday'],
+                'room_revenue' => $data['roomRevenueAccrual'],
                 'resto_revenue' => $data['restoRevenueToday'],
                 'sc_revenue' => $data['serviceChargeRevenueToday'],
-                'total_revenue' => $data['totalRevenue'],
+                'total_revenue' => $data['totalRevenueAccrual'],
                 'checkins_count' => $data['checkinsToday']->count(),
                 'checkouts_count' => $data['checkoutsToday']->count(),
                 'in_house_count' => $data['inHouseGuests']->count(),
@@ -218,7 +218,18 @@ class NightAuditController extends Controller
             fputcsv($file, ['Maintenance', $data['maintenanceRooms'] ?? 0]);
             fputcsv($file, []);
 
-            fputcsv($file, ['REVENUE']);
+            fputcsv($file, ['REVENUE (AKRUAL — TANGGAL MENGINAP)']);
+            fputcsv($file, ['Pendapatan Kamar', $data['roomRevenueAccrual'] ?? $data['revenueToday'] ?? 0]);
+            fputcsv($file, ['  - OTA', $data['accrualOta'] ?? 0]);
+            fputcsv($file, ['  - Web', $data['accrualWeb'] ?? 0]);
+            fputcsv($file, ['  - Direct / Walk-in', $data['accrualDirect'] ?? 0]);
+            fputcsv($file, ['Pendapatan Resto', $data['restoRevenueToday'] ?? 0]);
+            fputcsv($file, ['Other Revenue', $data['serviceChargeRevenueToday'] ?? 0]);
+            fputcsv($file, ['Deposit Key Card', $data['depositRevenueToday'] ?? 0]);
+            fputcsv($file, ['Total Pendapatan', $data['totalRevenueAccrual'] ?? $data['totalRevenue'] ?? 0]);
+            fputcsv($file, []);
+
+            fputcsv($file, ['PENERIMAAN KAS (BASIS KAS)']);
             fputcsv($file, ['Pendapatan Kamar', $data['revenueToday'] ?? 0]);
             fputcsv($file, ['  - Cash', $data['cashRevenueToday'] ?? 0]);
             fputcsv($file, ['  - OTA', $data['otaRevenueToday'] ?? 0]);
@@ -226,7 +237,7 @@ class NightAuditController extends Controller
             fputcsv($file, ['Pendapatan Resto', $data['restoRevenueToday'] ?? 0]);
             fputcsv($file, ['Other Revenue', $data['serviceChargeRevenueToday'] ?? 0]);
             fputcsv($file, ['Deposit Key Card', $data['depositRevenueToday'] ?? 0]);
-            fputcsv($file, ['Total', $data['totalRevenue'] ?? 0]);
+            fputcsv($file, ['Total Penerimaan Kas', $data['totalRevenue'] ?? 0]);
             fputcsv($file, []);
 
             // Detail per metode pembayaran
@@ -773,6 +784,25 @@ class NightAuditController extends Controller
         $roomNightlyRevenueTotal = (float) $roomNightlyRevenue->sum('amount');
         $reportDate = Carbon::parse($date)->format('d/m/Y');
 
+        // ─── Pendapatan akrual (basis tanggal menginap) ────────────
+        // Pendapatan diakui pada malam kamar terisi, bukan saat uang dibayar,
+        // supaya booking yang dibayar hari ini untuk check-in beberapa hari lagi
+        // tidak menggelembungkan pendapatan hari ini.
+        $accrualOta = 0.0;
+        $accrualWeb = 0.0;
+        $accrualDirect = 0.0;
+        foreach ($roomNightlyRevenue as $row) {
+            if ($row['ota_source'] === 'website') {
+                $accrualWeb += $row['amount'];
+            } elseif (! empty($row['ota_source'])) {
+                $accrualOta += $row['amount'];
+            } else {
+                $accrualDirect += $row['amount'];
+            }
+        }
+        $roomRevenueAccrual = $roomNightlyRevenueTotal;
+        $totalRevenueAccrual = $roomRevenueAccrual + $restoRevenueToday + $serviceChargeRevenueToday;
+
         // ─── EDC Settlement (Room Transactions + Service Charges) ──
         $edcMethods = ['edc_bca_room', 'edc_mandiri_room'];
         $edcRoomTransactions = $transactions->filter(fn ($t) => in_array($t->payment_method, $edcMethods));
@@ -825,6 +855,7 @@ class NightAuditController extends Controller
             'allReservations',
             'roomTypeSummary',
             'roomNightlyRevenue', 'roomNightlyRevenueTotal', 'reportDate',
+            'roomRevenueAccrual', 'totalRevenueAccrual', 'accrualOta', 'accrualWeb', 'accrualDirect',
             'edcSettlementList', 'edcRoomTotal', 'edcScTotal', 'edcGrandTotal',
         );
     }

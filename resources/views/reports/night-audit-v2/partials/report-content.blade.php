@@ -201,7 +201,7 @@
         <div class="flex items-center justify-between cursor-pointer select-none border-b-2 border-gray-800 pb-1 mb-3 section-toggle" onclick="toggleSection(this)">
             <h2 class="text-lg font-bold uppercase">Revenue Summary</h2>
             <div class="flex items-center gap-3">
-                <span class="text-sm font-bold text-green-700">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</span>
+                <span class="text-sm font-bold text-green-700">Rp {{ number_format($totalRevenueAccrual ?? $totalRevenue ?? 0, 0, ',', '.') }}</span>
                 <i class="fas fa-chevron-down text-gray-400 transition-transform section-arrow"></i>
             </div>
         </div>
@@ -210,27 +210,28 @@
         <div class="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-4">
             <div class="flex justify-between items-center">
                 <span class="text-lg font-bold text-green-800">TOTAL PENDAPATAN HARI INI</span>
-                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</span>
+                <span class="text-3xl font-bold text-green-700">Rp {{ number_format($totalRevenueAccrual ?? $totalRevenue ?? 0, 0, ',', '.') }}</span>
             </div>
+            <div class="text-[11px] text-green-700 mt-1">Basis akrual — pendapatan malam {{ $reportDate ?? '-' }} (mengikuti tanggal check-in, bukan tanggal booking/bayar).</div>
 
-            {{-- Room Revenue Breakdown: Cash | OTA | Web --}}
+            {{-- Room Revenue Breakdown (accrual): OTA | Web | Direct --}}
             <div class="mt-3 pt-3 border-t border-green-200">
                 <div class="flex justify-between items-center text-sm mb-1">
                     <span class="font-bold text-gray-700">PENDAPATAN KAMAR</span>
-                    <span class="font-bold text-green-700">Rp {{ number_format($revenueToday ?? 0, 0, ',', '.') }}</span>
+                    <span class="font-bold text-green-700">Rp {{ number_format($roomRevenueAccrual ?? $roomNightlyRevenueTotal ?? 0, 0, ',', '.') }}</span>
                 </div>
                 <div class="ml-4 space-y-1">
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-600"><i class="fas fa-money-bill-wave text-green-500 mr-1"></i>Cash</span>
-                        <span class="font-semibold text-green-700">Rp {{ number_format($cashRevenueToday ?? 0, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
                         <span class="text-gray-600"><i class="fas fa-globe text-purple-500 mr-1"></i>OTA</span>
-                        <span class="font-semibold text-purple-700">Rp {{ number_format($otaRevenueToday ?? 0, 0, ',', '.') }}</span>
+                        <span class="font-semibold text-purple-700">Rp {{ number_format($accrualOta ?? $otaRevenueToday ?? 0, 0, ',', '.') }}</span>
                     </div>
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-gray-600"><i class="fas fa-laptop text-blue-500 mr-1"></i>Web / Direct</span>
-                        <span class="font-semibold text-blue-700">Rp {{ number_format($webRevenueToday ?? 0, 0, ',', '.') }}</span>
+                        <span class="text-gray-600"><i class="fas fa-laptop text-blue-500 mr-1"></i>Web</span>
+                        <span class="font-semibold text-blue-700">Rp {{ number_format($accrualWeb ?? $webRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-600"><i class="fas fa-money-bill-wave text-green-500 mr-1"></i>Direct / Walk-in</span>
+                        <span class="font-semibold text-green-700">Rp {{ number_format($accrualDirect ?? $cashRevenueToday ?? 0, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>
@@ -249,6 +250,45 @@
                 <span class="font-semibold text-teal-600">Rp {{ number_format($depositRevenueToday ?? 0, 0, ',', '.') }}</span>
             </div>
             @endif
+        </div>
+
+        {{-- Penerimaan kas (uang benar-benar masuk pada business date ini) --}}
+        <div class="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-gray-700">PENERIMAAN KAS HARI INI <span class="font-normal text-[11px] text-gray-500">(basis kas)</span></span>
+                <span class="text-xl font-bold text-gray-800">Rp {{ number_format($totalRevenue ?? 0, 0, ',', '.') }}</span>
+            </div>
+
+            <div class="mt-2 pt-2 border-t border-gray-300">
+                <div class="flex justify-between items-center text-xs mb-1">
+                    <span class="font-semibold text-gray-700">Pendapatan Kamar (kas)</span>
+                    <span class="font-semibold text-gray-800">Rp {{ number_format($revenueToday ?? 0, 0, ',', '.') }}</span>
+                </div>
+                <div class="ml-4 space-y-1">
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-gray-600"><i class="fas fa-money-bill-wave text-green-500 mr-1"></i>Cash</span>
+                        <span class="font-semibold text-gray-700">Rp {{ number_format($cashRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-gray-600"><i class="fas fa-globe text-purple-500 mr-1"></i>OTA</span>
+                        <span class="font-semibold text-gray-700">Rp {{ number_format($otaRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px]">
+                        <span class="text-gray-600"><i class="fas fa-laptop text-blue-500 mr-1"></i>Web / Direct</span>
+                        <span class="font-semibold text-gray-700">Rp {{ number_format($webRevenueToday ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-1 text-[11px]">
+                <span class="text-gray-600">Resto / F&amp;B:</span>
+                <span class="font-semibold text-gray-700">Rp {{ number_format($restoRevenueToday ?? 0, 0, ',', '.') }}</span>
+            </div>
+            <div class="flex justify-between items-center text-[11px]">
+                <span class="text-gray-600">Other Revenue:</span>
+                <span class="font-semibold text-gray-700">Rp {{ number_format($serviceChargeRevenueToday ?? 0, 0, ',', '.') }}</span>
+            </div>
+            <div class="text-[10px] text-gray-500 mt-1">Termasuk uang muka/pelunasan booking yang check-in-nya di tanggal lain.</div>
         </div>
 
         @if(!empty($revenueByMethod) && count($revenueByMethod) > 0)
