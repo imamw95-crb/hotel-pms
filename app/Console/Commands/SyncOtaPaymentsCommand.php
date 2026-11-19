@@ -44,19 +44,6 @@ class SyncOtaPaymentsCommand extends Command
                 continue;
             }
 
-            // Jangan buat paid_amount melebihi total tagihan (butuh keputusan manual)
-            if ((float) $reservation->total_amount > 0
-                && (float) $reservation->ota_paid_amount > (float) $reservation->total_amount) {
-                $skipped++;
-                Log::warning('OTASyncPayments: dilewati, nominal OTA melebihi total tagihan', [
-                    'reservation_id' => $reservation->id,
-                    'ota_paid_amount' => (float) $reservation->ota_paid_amount,
-                    'total_amount' => (float) $reservation->total_amount,
-                ]);
-
-                continue;
-            }
-
             // Tanggal bisnis mengikuti check-in (tanggal tamu menginap), di-cap ke
             // waktu sekarang kalau check-in masih di depan supaya nominal yang baru
             // diterima tidak tercatat di periode night audit yang belum berjalan.

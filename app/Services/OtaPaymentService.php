@@ -38,12 +38,20 @@ class OtaPaymentService
 
         $delta = round($otaPaidAmount - $this->alreadyRecorded($reservation), 2);
 
+        // OTA bisa membayar lebih besar dari total tagihan hotel (mis. pajak/
+        // komisi sudah termasuk). Ledger pembayaran tidak boleh melebihi total
+        // reservasi; catat hanya sisa tagihan yang memang belum dibayar.
+        $total = (float) $reservation->total_amount;
+        $alreadyPaid = $this->alreadyRecorded($reservation);
+        if ($total > 0) {
+            $delta = min($delta, max(0, round($total - $alreadyPaid, 2)));
+        }
+
         if ($delta <= 0) {
             return null;
         }
 
         $method = $this->resolvePaymentMethod($paymentMethod, $reservation->ota_source);
-        $total = (float) $reservation->total_amount;
         $paidAt = $at ?? now();
 
         // Nominal historis (belum ada baris transaksi) diambil sebelum transaksi
