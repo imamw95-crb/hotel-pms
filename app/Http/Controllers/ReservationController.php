@@ -2072,8 +2072,8 @@ class ReservationController extends Controller
             return $this->paymentError($request, 'Transaksi ini tidak memiliki reservasi terkait.');
         }
 
-        if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
-            return back()->with('error', 'Tidak bisa mengedit pembayaran untuk reservasi ini.');
+        if ($reservation->status === 'cancelled') {
+            return back()->with('error', 'Tidak bisa mengedit pembayaran untuk reservasi yang dibatalkan.');
         }
 
         $validated = $request->validate([
@@ -2134,6 +2134,20 @@ class ReservationController extends Controller
             ]);
             $transaction->created_at = $paymentDate;
             $transaction->save();
+
+            // Sinkronkan referensi pembayaran OTA jika transaksi yang diedit
+            // berasal dari OTA, supaya ota_paid_amount tidak tetap menunjukkan
+            // nominal lama.
+            if ($transaction->source_type === 'ota') {
+                $otaRecorded = (float) Transaction::where('reservation_id', $reservation->id)
+                    ->where('source_type', 'ota')
+                    ->sum('amount');
+
+                $reservation->ota_paid_amount = $otaRecorded;
+                $reservation->ota_payment_status = $otaRecorded <= 0
+                    ? 'unpaid_ota'
+                    : ($otaRecorded >= (float) $reservation->total_amount ? 'paid_ota' : 'partial_ota');
+            }
 
             // paid_amount selalu mengikuti ledger transaksi
             $reservation->syncPaidAmount($legacyPaid);
