@@ -2068,13 +2068,17 @@ class ReservationController extends Controller
         $transaction = Transaction::findOrFail($transactionId);
         $reservation = $transaction->reservation;
 
+        if (!$reservation) {
+            return $this->paymentError($request, 'Transaksi ini tidak memiliki reservasi terkait.');
+        }
+
         if ($reservation->status === 'cancelled' || $reservation->status === 'checked_out') {
             return back()->with('error', 'Tidak bisa mengedit pembayaran untuk reservasi ini.');
         }
 
         $validated = $request->validate([
-            'payment_type' => 'required|in:dp,pelunasan,tambahan,checkin_payment,refund,extend,ota_payment',
-            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->implode(','),
+            'payment_type' => 'required|in:dp,pelunasan,tambahan,checkin_payment,checkout_payment,additional,refund,extend,ota_payment,adjustment,payment,edc_payment,koreksi',
+            'payment_method' => 'required|in:'.PaymentMethod::where('is_active', true)->pluck('slug')->push($transaction->payment_method)->filter()->unique()->implode(','),
             'amount' => 'required|numeric|min:0',
             'payment_date' => 'required|date_format:Y-m-d',
             'payment_time' => 'nullable|date_format:H:i',
@@ -2172,6 +2176,10 @@ class ReservationController extends Controller
     {
         $transaction = Transaction::findOrFail($transactionId);
         $reservation = $transaction->reservation;
+
+        if (!$reservation) {
+            return $this->paymentError($request, 'Transaksi ini tidak memiliki reservasi terkait.');
+        }
 
         // Transaksi di periode yang sudah di-lock tidak dihapus (laporan locked
         // final) — pembatalannya dicatat sebagai transaksi koreksi negatif.

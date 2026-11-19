@@ -1460,8 +1460,15 @@
                                 <option value="pelunasan">Pelunasan</option>
                                 <option value="tambahan">Tambahan</option>
                                 <option value="checkin_payment">Check-in Payment</option>
+                                <option value="checkout_payment">Check-out Payment</option>
+                                <option value="additional">Additional</option>
                                 <option value="refund">Refund</option>
                                 <option value="extend">Extend</option>
+                                <option value="ota_payment">OTA Payment</option>
+                                <option value="adjustment">Adjustment</option>
+                                <option value="payment">Payment</option>
+                                <option value="edc_payment">EDC Payment</option>
+                                <option value="koreksi">Koreksi</option>
                             </select>
                         </div>
                         <div>
@@ -1526,8 +1533,16 @@
                 if (!txn) return;
                 var form = document.getElementById('editPaymentForm');
                 form.action = '{{ url("transactions") }}/' + txnId + '/edit-payment';
-                document.getElementById('editPaymentType').value = txn.type;
-                document.getElementById('editPaymentMethod').value = txn.payment_method;
+                var typeSelect = document.getElementById('editPaymentType');
+                if (txn.type && !typeSelect.querySelector('option[value="' + txn.type + '"]')) {
+                    typeSelect.add(new Option(txn.type.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }), txn.type));
+                }
+                typeSelect.value = txn.type;
+                var methodSelect = document.getElementById('editPaymentMethod');
+                if (txn.payment_method && !methodSelect.querySelector('option[value="' + txn.payment_method + '"]')) {
+                    methodSelect.add(new Option(txn.payment_method.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }), txn.payment_method));
+                }
+                methodSelect.value = txn.payment_method;
                 document.getElementById('editPaymentDate').value = txn.payment_date;
                 document.getElementById('editPaymentTime').value = txn.payment_time;
                 document.getElementById('editPaymentAmount').value = txn.amount;
