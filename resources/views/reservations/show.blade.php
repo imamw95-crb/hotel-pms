@@ -1491,6 +1491,7 @@
                             </div>
                         </div>
                         <p class="text-[10px] text-gray-400 -mt-1">Tanggal = periode bisnis (cutoff {{ \App\Services\PaymentDateService::cutoffTime() }}), jam = waktu uang diterima.</p>
+                        <div id="editPaymentLockWarning" class="hidden text-[11px] text-amber-700 bg-amber-50 border border-amber-300 rounded px-2 py-1.5 leading-snug"></div>
                         <div>
                             <label class="block text-xs text-gray-500 mb-1">Nominal (Rp)</label>
                             <input type="number" name="amount" id="editPaymentAmount" class="w-full border rounded px-2 py-2 text-sm" min="0" step="any" placeholder="0" required>
@@ -1515,14 +1516,19 @@
         <script>
             // ─── Edit Payment Modal ───
             @php
-                $transactionsJson = $transactions->keyBy('id')->map(function($t) {
+                $lockedAuditDates = \App\Models\NightAuditLog::where('status', 'locked')->pluck('audit_date')
+                    ->map(fn ($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))
+                    ->all();
+                $transactionsJson = $transactions->keyBy('id')->map(function($t) use ($lockedAuditDates) {
+                    $businessDate = $t->businessDate();
                     return [
                         'id' => $t->id,
                         'type' => $t->type,
                         'payment_method' => $t->payment_method,
                         'amount' => $t->amount,
-                        'payment_date' => $t->businessDate()->format('Y-m-d'),
-                        'payment_time' => $t->businessDate()->format('H:i'),
+                        'payment_date' => $businessDate->format('Y-m-d'),
+                        'payment_time' => $businessDate->format('H:i'),
+                        'locked' => in_array(\App\Services\NightAuditLockService::businessDateOf($t->created_at), $lockedAuditDates, true),
                     ];
                 });
             @endphp
@@ -1543,8 +1549,23 @@
                     methodSelect.add(new Option(txn.payment_method.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); }), txn.payment_method));
                 }
                 methodSelect.value = txn.payment_method;
-                document.getElementById('editPaymentDate').value = txn.payment_date;
-                document.getElementById('editPaymentTime').value = txn.payment_time;
+                var dateInput = document.getElementById('editPaymentDate');
+                var timeInput = document.getElementById('editPaymentTime');
+                var lockWarning = document.getElementById('editPaymentLockWarning');
+                dateInput.value = txn.payment_date;
+                timeInput.value = txn.payment_time;
+                // Periode yang sudah di-lock: tanggal & jam dibekukan, server tetap menolak
+                // perubahan tanggal. Nominal/tipe/metode masih bisa dikoreksi.
+                dateInput.readOnly = !!txn.locked;
+                timeInput.readOnly = !!txn.locked;
+                dateInput.classList.toggle('bg-gray-100', !!txn.locked);
+                timeInput.classList.toggle('bg-gray-100', !!txn.locked);
+                if (txn.locked) {
+                    lockWarning.textContent = 'Periode NA ' + txn.payment_date + ' sudah di-lock, jadi tanggal & jam tidak bisa diubah. Untuk memindahkan tanggal: buka Night Audit tanggal tersebut, klik "Unlock & Buat Baru", edit transaksi ini, lalu lock kembali.';
+                    lockWarning.classList.remove('hidden');
+                } else {
+                    lockWarning.classList.add('hidden');
+                }
                 document.getElementById('editPaymentAmount').value = txn.amount;
                 document.getElementById('editPaymentModal').style.display = 'flex';
             }
